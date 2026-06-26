@@ -30,6 +30,46 @@ export async function register(email: string, password: string, name: string, ro
   return userDoc;
 }
 
+export async function createStudentAccount(email: string, password: string, name: string): Promise<User> {
+  const existing = await findUserByEmail(email);
+  if (existing) return existing;
+
+  try {
+    return await register(email, password, name, 'student');
+  } catch {
+    const remoteExisting = await findUserByEmail(email);
+    if (remoteExisting) return remoteExisting;
+    throw new Error(`Could not create account for ${email}`);
+  }
+}
+
+export async function findUserByEmail(email: string): Promise<User | null> {
+  const local = await db.users.where('email').equals(email).first();
+  if (local) return local;
+
+  try {
+    const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.users, [
+      Query.equal('email', email),
+      Query.limit(1),
+    ]);
+    const doc = result.documents[0];
+    if (!doc) return null;
+    const user: User = {
+      $id: doc.$id,
+      email: doc.email,
+      name: doc.name,
+      role: doc.role as UserRole,
+      deviceId: doc.deviceId,
+      lastSyncAt: doc.lastSyncAt,
+      createdAt: doc.createdAt,
+    };
+    await db.users.put(user);
+    return user;
+  } catch {
+    return null;
+  }
+}
+
 export async function login(email: string, password: string): Promise<User> {
   await account.createEmailPasswordSession(email, password);
   const appwriteUser = await account.get();

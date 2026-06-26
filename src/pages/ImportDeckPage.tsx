@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { importDeckFromCsv } from '@/services/flashcard.service';
-import { parseCsvContent, readFileAsText } from '@/utils/csv-parser';
+import { detectMapping, parseCsvContent, readFileAsText } from '@/utils/csv-parser';
 import { Button } from '@/components/common/Button';
 import type { CsvMapping, CsvPreview } from '@/types';
 
@@ -27,9 +27,7 @@ export function ImportDeckPage() {
         setError('No valid cards found in file');
         return;
       }
-      if (preview.headers.length >= 2) {
-        setCsvMapping({ front: preview.headers[0], back: preview.headers[1] });
-      }
+      setCsvMapping(detectMapping(preview.headers));
     } catch {
       setError('Failed to read file');
     }
@@ -117,7 +115,7 @@ export function ImportDeckPage() {
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <div className="flex-1">
                 <label className="text-xs text-gray-500">Front column</label>
                 <select
@@ -138,6 +136,24 @@ export function ImportDeckPage() {
                   {csvPreview.headers.map(h => <option key={h} value={h}>{h}</option>)}
                 </select>
               </div>
+              <OptionalColumnSelect
+                label="Hint column"
+                value={csvMapping.hint || ''}
+                headers={csvPreview.headers}
+                onChange={value => setCsvMapping({ ...csvMapping, hint: value || undefined })}
+              />
+              <OptionalColumnSelect
+                label="Tags column"
+                value={csvMapping.tags || ''}
+                headers={csvPreview.headers}
+                onChange={value => setCsvMapping({ ...csvMapping, tags: value || undefined })}
+              />
+              <OptionalColumnSelect
+                label="Source column"
+                value={csvMapping.source || ''}
+                headers={csvPreview.headers}
+                onChange={value => setCsvMapping({ ...csvMapping, source: value || undefined })}
+              />
             </div>
 
             <div className="border rounded-lg overflow-hidden">
@@ -176,6 +192,32 @@ export function ImportDeckPage() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function OptionalColumnSelect({
+  label,
+  value,
+  headers,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  headers: string[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="flex-1">
+      <label className="text-xs text-gray-500">{label}</label>
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className="w-full text-sm border rounded-lg px-2 py-1.5"
+      >
+        <option value="">None</option>
+        {headers.map(header => <option key={header} value={header}>{header}</option>)}
+      </select>
     </div>
   );
 }

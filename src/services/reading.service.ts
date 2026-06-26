@@ -62,14 +62,21 @@ export async function assignReading(
   readingId: string,
   classId: string,
   dueDate?: string,
+  options: { promptMarkdown?: string; minResponseWords?: number; minQuestions?: number } = {},
 ): Promise<ReadingAssignment> {
   const id = generateId();
+  const now = getTimestamp();
   const assignment: ReadingAssignment = {
     $id: id,
     readingId,
     classId,
-    assignedAt: getTimestamp(),
+    promptMarkdown: options.promptMarkdown || '',
+    minResponseWords: options.minResponseWords || 0,
+    minQuestions: options.minQuestions || 0,
+    status: 'published',
+    assignedAt: now,
     dueDate: dueDate || null,
+    publishedAt: now,
   };
 
   await db.reading_assignments.put(assignment);
@@ -77,8 +84,13 @@ export async function assignReading(
     await databases.createDocument(DATABASE_ID, COLLECTIONS.reading_assignments, id, {
       readingId,
       classId,
+      promptMarkdown: assignment.promptMarkdown,
+      minResponseWords: assignment.minResponseWords,
+      minQuestions: assignment.minQuestions,
+      status: assignment.status,
       assignedAt: assignment.assignedAt,
       dueDate: assignment.dueDate,
+      publishedAt: assignment.publishedAt,
     });
   } catch {
     await addToQueue('', 'reading_assignment', id, 'create', assignment);
@@ -178,8 +190,13 @@ export async function syncReadingsFromServer(): Promise<void> {
         $id: doc.$id,
         readingId: doc.readingId,
         classId: doc.classId,
+        promptMarkdown: doc.promptMarkdown || '',
+        minResponseWords: doc.minResponseWords || 0,
+        minQuestions: doc.minQuestions || 0,
+        status: doc.status || 'published',
         assignedAt: doc.assignedAt,
         dueDate: doc.dueDate,
+        publishedAt: doc.publishedAt || doc.assignedAt || null,
       });
     }
   } catch {

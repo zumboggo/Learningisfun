@@ -2,8 +2,26 @@ import { databases, DATABASE_ID, COLLECTIONS } from '@/lib/appwrite';
 import { db } from '@/db/schema';
 import { generateId, generateJoinCode, getTimestamp } from '@/utils/helpers';
 import { addToQueue } from './sync.service';
+import { createStudentAccount, findUserByEmail } from './auth.service';
+import { parseCsvLine, readFileAsText } from '@/utils/csv-parser';
 import { Query } from 'appwrite';
 import type { Class, ClassMember } from '@/types';
+
+export interface RosterImportRow {
+  name: string;
+  email: string;
+  password: string;
+  status: 'created' | 'existing' | 'skipped' | 'error';
+  message: string;
+}
+
+export interface RosterImportResult {
+  created: number;
+  existing: number;
+  added: number;
+  skipped: number;
+  rows: RosterImportRow[];
+}
 
 export async function createClass(
   teacherId: string,
@@ -139,6 +157,75 @@ export async function getClassMembers(classId: string): Promise<ClassMember[]> {
   return db.class_members.where('classId').equals(classId).toArray();
 }
 
+export async function importClassRoster(
+  classId: string,
+  teacherId: string,
+  file: File,
+): Promise<RosterImportResult> {
+  const content = await readFileAsText(file);
+  const rosterRows = parseRosterCsv(content);
+  const result: RosterImportResult = { created: 0, existing: 0, added: 0, skipped: 0, rows: [] };
+
+  for (const row of rosterRows) {
+    if (!row.email || !row.name) {
+      result.skipped++;
+      result.rows.push({ name: row.name, email: row.email, password: row.password, status: 'skipped', message: 'Missing name or email' });
+      continue;
+    }
+
+    const password = row.password || generateTemporaryPassword();
+    const existedBefore = Boolean(await findUserByEmail(row.email));
+    try {
+      const student = await createStudentAccount(row.email, password, row.name);
+      const existingMember = await db.class_members
+        .where('[classId+userId]')
+        .equals([classId, student.$id])
+        .first();
+      if (!existingMember) {
+        const member: ClassMember = {
+          $id: generateId(),
+          classId,
+          userId: student.$id,
+          role: 'student',
+          joinedAt: getTimestamp(),
+        };
+        await db.class_members.put(member);
+        try {
+          await databases.createDocument(DATABASE_ID, COLLECTIONS.class_members, member.$id, {
+            classId,
+            userId: student.$id,
+            role: 'student',
+            joinedAt: member.joinedAt,
+          });
+        } catch {
+          await addToQueue(teacherId, 'class_member', member.$id, 'create', member);
+        }
+        result.added++;
+      }
+      if (existedBefore) result.existing++;
+      else result.created++;
+      result.rows.push({
+        name: student.name,
+        email: student.email,
+        password,
+        status: existedBefore ? 'existing' : 'created',
+        message: existingMember ? 'Already in class' : 'Added to class',
+      });
+    } catch (error) {
+      result.skipped++;
+      result.rows.push({
+        name: row.name,
+        email: row.email,
+        password,
+        status: 'error',
+        message: error instanceof Error ? error.message : 'Import failed',
+      });
+    }
+  }
+
+  return result;
+}
+
 export async function regenerateJoinCode(classId: string, teacherId: string): Promise<string> {
   const newCode = generateJoinCode();
   await db.classes.update(classId, { joinCode: newCode });
@@ -163,6 +250,36 @@ export async function removeStudent(classId: string, userId: string): Promise<vo
       // Will sync later
     }
   }
+}
+
+function parseRosterCsv(content: string): Array<{ name: string; email: string; password: string }> {
+  const lines = content.split(/\r?\n/).filter(line => line.trim());
+  if (lines.length === 0) return [];
+  const headers = parseCsvLine(lines[0]);
+  const normalized = headers.map(header => header.toLowerCase().trim().replace(/[^a-z0-9]/g, ''));
+  const nameIndex = findHeader(normalized, ['name', 'fullname', 'studentname']);
+  const emailIndex = findHeader(normalized, ['email', 'emailaddress', 'login']);
+  const passwordIndex = findHeader(normalized, ['password', 'tempassword', 'temporarypassword', 'initialpassword']);
+
+  return lines.slice(1).map(line => {
+    const values = parseCsvLine(line);
+    return {
+      name: nameIndex >= 0 ? values[nameIndex]?.trim() || '' : '',
+      email: emailIndex >= 0 ? values[emailIndex]?.trim().toLowerCase() || '' : '',
+      password: passwordIndex >= 0 ? values[passwordIndex]?.trim() || '' : '',
+    };
+  });
+}
+
+function findHeader(headers: string[], candidates: string[]): number {
+  return headers.findIndex(header => candidates.includes(header));
+}
+
+function generateTemporaryPassword(): string {
+  const bytes = new Uint8Array(6);
+  crypto.getRandomValues(bytes);
+  const token = Array.from(bytes, byte => byte.toString(36).padStart(2, '0')).join('').slice(0, 10);
+  return `Edu-${token}!`;
 }
 
 export async function syncClassesFromServer(userId: string): Promise<void> {

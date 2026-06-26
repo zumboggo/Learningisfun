@@ -16,6 +16,7 @@ import {
 } from '@/services/annotation.service';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
+import { Markdown } from '@/components/common/Markdown';
 import type { Annotation, AnnotationType } from '@/types';
 
 export function ReadingPage() {
@@ -29,6 +30,25 @@ export function ReadingPage() {
     () => (id && user ? getReadingAnnotations(id, user.$id) : []),
     [id, user?.$id],
   );
+  const sessionLink = useLiveQuery(async () => {
+    if (!id || !user) return '';
+    const [assignments, memberships] = await Promise.all([
+      db.reading_assignments.where('readingId').equals(id).toArray(),
+      db.class_members.where('userId').equals(user.$id).toArray(),
+    ]);
+    const classIds = new Set(memberships.map(member => member.classId));
+    const sessions = [];
+    for (const assignment of assignments.filter(item => classIds.has(item.classId))) {
+      const linked = await db.class_sessions.where('assignmentId').equals(assignment.$id).toArray();
+      sessions.push(...linked);
+    }
+    const best = sessions.sort((a, b) => {
+      if (a.status === 'active' && b.status !== 'active') return -1;
+      if (b.status === 'active' && a.status !== 'active') return 1;
+      return b.sessionDate.localeCompare(a.sessionDate);
+    })[0];
+    return best ? `/sessions/${best.$id}` : '';
+  }, [id, user?.$id]);
 
   const [fontSize, setFontSize] = useState(18);
   const [lineHeight, setLineHeight] = useState(1.8);
@@ -151,7 +171,7 @@ export function ReadingPage() {
   const goToQuestion = () => {
     if (!id) return;
     setShowToolbar(false);
-    navigate(`/readings/${id}/questions`);
+    navigate(sessionLink || `/readings/${id}/questions`);
   };
 
   if (!reading) {
@@ -174,7 +194,7 @@ export function ReadingPage() {
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setShowSettings(!showSettings)} className="text-gray-500 p-1">⚙️</button>
-          <button onClick={() => navigate(`/readings/${id}/questions`)} className="text-gray-500 p-1">❓</button>
+          <button onClick={goToQuestion} className="text-gray-500 p-1">?</button>
         </div>
       </div>
 
@@ -247,9 +267,13 @@ export function ReadingPage() {
             </div>
           )}
 
-          <div className="whitespace-pre-wrap leading-relaxed">
-            {reading.content}
-          </div>
+          {reading.contentFormat === 'markdown' ? (
+            <Markdown content={reading.content} />
+          ) : (
+            <div className="whitespace-pre-wrap leading-relaxed">
+              {reading.content}
+            </div>
+          )}
         </div>
 
         {highlightAnnotations.length > 0 && (

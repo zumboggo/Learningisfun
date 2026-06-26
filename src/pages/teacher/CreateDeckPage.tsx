@@ -1,13 +1,20 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { createDeck, addCard, publishDeck, assignDeck, importDeckFromCsv } from '@/services/flashcard.service';
-import { parseCsvContent, readFileAsText } from '@/utils/csv-parser';
+import { createDeck, addCard, publishDeck, assignDeck } from '@/services/flashcard.service';
+import { detectMapping, parseCsvContent, readFileAsText } from '@/utils/csv-parser';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
 import type { CsvMapping, CsvPreview } from '@/types';
+
+interface PendingCard {
+  front: string;
+  back: string;
+  hint: string;
+  tags: string[];
+}
 
 export function CreateDeckPage() {
   const { user } = useAuth();
@@ -15,12 +22,15 @@ export function CreateDeckPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [selectedClasses, setSelectedClasses] = useState<Set<string>>(new Set());
+  const [dailyTarget, setDailyTarget] = useState(10);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const [cards, setCards] = useState<{ front: string; back: string }[]>([]);
+  const [cards, setCards] = useState<PendingCard[]>([]);
   const [front, setFront] = useState('');
   const [back, setBack] = useState('');
+  const [hint, setHint] = useState('');
+  const [tags, setTags] = useState('');
 
   const [showCsvImport, setShowCsvImport] = useState(false);
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -34,9 +44,16 @@ export function CreateDeckPage() {
 
   const addManualCard = () => {
     if (!front.trim() || !back.trim()) return;
-    setCards(prev => [...prev, { front: front.trim(), back: back.trim() }]);
+    setCards(prev => [...prev, {
+      front: front.trim(),
+      back: back.trim(),
+      hint: hint.trim(),
+      tags: parseTags(tags),
+    }]);
     setFront('');
     setBack('');
+    setHint('');
+    setTags('');
   };
 
   const removeCard = (index: number) => {
@@ -45,13 +62,10 @@ export function CreateDeckPage() {
 
   const handleCsvFile = async (file: File) => {
     setCsvFile(file);
-    const content = await readFileAsText(file);
-    const preview = parseCsvContent(content, null);
-    setCsvPreview(preview);
-    if (preview.headers.length >= 2) {
-      const mapping: CsvMapping = { front: preview.headers[0], back: preview.headers[1] };
-      setCsvMapping(mapping);
-    }
+      const content = await readFileAsText(file);
+      const preview = parseCsvContent(content, null);
+      setCsvPreview(preview);
+      setCsvMapping(detectMapping(preview.headers));
   };
 
   const confirmCsvImport = async () => {
@@ -61,6 +75,11 @@ export function CreateDeckPage() {
     const newCards = preview.rows.map(row => ({
       front: row[csvMapping.front] || '',
       back: row[csvMapping.back] || '',
+      hint: csvMapping.hint ? row[csvMapping.hint] || '' : '',
+      tags: [
+        ...parseTags(csvMapping.tags ? row[csvMapping.tags] || '' : ''),
+        ...parseTags(csvMapping.source ? row[csvMapping.source] || '' : ''),
+      ],
     })).filter(c => c.front && c.back);
     setCards(prev => [...prev, ...newCards]);
     setShowCsvImport(false);
@@ -85,11 +104,11 @@ export function CreateDeckPage() {
     try {
       const deck = await createDeck(user.$id, title, description, 'teacher');
       for (const c of cards) {
-        await addCard(deck.$id, c.front, c.back);
+        await addCard(deck.$id, c.front, c.back, { hint: c.hint, tags: c.tags });
       }
       await publishDeck(deck.$id, user.$id);
       for (const classId of selectedClasses) {
-        await assignDeck(deck.$id, classId, false);
+        await assignDeck(deck.$id, classId, false, dailyTarget || null);
       }
       navigate('/decks');
     } catch {
@@ -124,6 +143,16 @@ export function CreateDeckPage() {
               className="w-full px-3 py-2.5 border border-gray-300 rounded-lg"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Daily target for assigned classes</label>
+            <input
+              type="number"
+              min={0}
+              value={dailyTarget}
+              onChange={e => setDailyTarget(Math.max(0, Number(e.target.value) || 0))}
+              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg"
+            />
+          </div>
         </div>
 
         <div className="border-t border-gray-200 pt-4">
@@ -136,20 +165,34 @@ export function CreateDeckPage() {
             </div>
           </div>
 
-          <div className="flex gap-2 mb-3">
+          <div className="grid grid-cols-1 gap-2 mb-3 sm:grid-cols-2">
             <input
               value={front}
               onChange={e => setFront(e.target.value)}
-              placeholder="Front"
+              placeholder="Front Markdown"
               className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
             />
             <input
               value={back}
               onChange={e => setBack(e.target.value)}
-              placeholder="Back"
+              placeholder="Back Markdown"
               className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
             />
-            <Button onClick={addManualCard} size="sm">Add</Button>
+            <input
+              value={hint}
+              onChange={e => setHint(e.target.value)}
+              placeholder="Hint (optional)"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+            <div className="flex gap-2">
+              <input
+                value={tags}
+                onChange={e => setTags(e.target.value)}
+                placeholder="Tags, comma separated"
+                className="min-w-0 flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+              <Button onClick={addManualCard} size="sm">Add</Button>
+            </div>
           </div>
 
           {cards.length > 0 && (
@@ -159,6 +202,7 @@ export function CreateDeckPage() {
                   <span className="flex-1 truncate">{c.front}</span>
                   <span className="text-gray-400">→</span>
                   <span className="flex-1 truncate">{c.back}</span>
+                  {c.tags.length > 0 && <span className="text-xs text-gray-400">{c.tags.join(', ')}</span>}
                   <button onClick={() => removeCard(i)} className="text-gray-400 hover:text-red-500">×</button>
                 </div>
               ))}
@@ -216,7 +260,7 @@ export function CreateDeckPage() {
                 {csvPreview.duplicates > 0 && ` · ${csvPreview.duplicates} duplicates removed`}
               </div>
 
-              <div className="flex gap-2 mb-3">
+              <div className="grid grid-cols-2 gap-2 mb-3">
                 <div>
                   <label className="text-xs text-gray-500">Front column</label>
                   <select
@@ -237,6 +281,24 @@ export function CreateDeckPage() {
                     {csvPreview.headers.map(h => <option key={h} value={h}>{h}</option>)}
                   </select>
                 </div>
+                <OptionalColumnSelect
+                  label="Hint column"
+                  value={csvMapping.hint || ''}
+                  headers={csvPreview.headers}
+                  onChange={value => setCsvMapping({ ...csvMapping, hint: value || undefined })}
+                />
+                <OptionalColumnSelect
+                  label="Tags column"
+                  value={csvMapping.tags || ''}
+                  headers={csvPreview.headers}
+                  onChange={value => setCsvMapping({ ...csvMapping, tags: value || undefined })}
+                />
+                <OptionalColumnSelect
+                  label="Source column"
+                  value={csvMapping.source || ''}
+                  headers={csvPreview.headers}
+                  onChange={value => setCsvMapping({ ...csvMapping, source: value || undefined })}
+                />
               </div>
 
               <div className="max-h-40 overflow-y-auto border rounded-lg">
@@ -264,4 +326,34 @@ export function CreateDeckPage() {
       </Modal>
     </div>
   );
+}
+
+function OptionalColumnSelect({
+  label,
+  value,
+  headers,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  headers: string[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div>
+      <label className="text-xs text-gray-500">{label}</label>
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className="block w-full text-sm border rounded px-2 py-1"
+      >
+        <option value="">None</option>
+        {headers.map(header => <option key={header} value={header}>{header}</option>)}
+      </select>
+    </div>
+  );
+}
+
+function parseTags(value: string): string[] {
+  return [...new Set(value.split(/[;,]/).map(tag => tag.trim()).filter(Boolean))];
 }

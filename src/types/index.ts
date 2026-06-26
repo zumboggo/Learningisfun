@@ -48,8 +48,41 @@ export interface ReadingAssignment {
   $id: string;
   readingId: string;
   classId: string;
+  promptMarkdown: string;
+  minResponseWords: number;
+  minQuestions: number;
+  status: 'draft' | 'published' | 'archived';
   assignedAt: string;
   dueDate: string | null;
+  publishedAt: string | null;
+}
+
+export interface ClassSession {
+  $id: string;
+  classId: string;
+  assignmentId: string | null;
+  title: string;
+  sessionDate: string;
+  status: 'draft' | 'active' | 'published' | 'archived';
+  votesPerStudent: number;
+  allowStackedVotes: boolean;
+  notesMarkdown: string;
+  publishedNotesMarkdown: string;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  syncStatus: SyncStatus;
+}
+
+export interface ClassSessionItem {
+  $id: string;
+  classSessionId: string;
+  type: 'question' | 'submission' | 'note';
+  sourceId: string;
+  sortOrder: number;
+  snapshotMarkdown: string;
+  createdAt: string;
+  syncStatus: SyncStatus;
 }
 
 export type AnnotationType = 'highlight' | 'private_note' | 'teacher_visible_note';
@@ -78,12 +111,15 @@ export interface DiscussionQuestion {
   $id: string;
   readingId: string;
   assignmentId: string;
+  classSessionId: string;
   authorId: string;
   questionText: string;
   selectedPassage: string;
   voteCount: number;
   moderationStatus: 'visible' | 'hidden' | 'removed';
   discussionStatus: 'none' | 'selected' | 'discussed' | 'archived';
+  discussionNotesMarkdown: string;
+  notesUpdatedAt: string | null;
   isTeacherQuestion: boolean;
   teacherVisibleBeforeSubmission: boolean;
   createdAt: string;
@@ -93,8 +129,25 @@ export interface DiscussionQuestion {
 export interface QuestionVote {
   $id: string;
   questionId: string;
+  classSessionId: string;
   userId: string;
+  weight: number;
   createdAt: string;
+  updatedAt: string;
+  syncStatus: SyncStatus;
+}
+
+export interface Submission {
+  $id: string;
+  assignmentId: string;
+  classId: string;
+  userId: string;
+  responseMarkdown: string;
+  wordCount: number;
+  belowMinimum: boolean;
+  status: 'draft' | 'submitted';
+  submittedAt: string | null;
+  updatedAt: string;
   syncStatus: SyncStatus;
 }
 
@@ -114,6 +167,10 @@ export interface FlashcardCard {
   deckId: string;
   front: string;
   back: string;
+  frontMarkdown: string;
+  backMarkdown: string;
+  hint: string;
+  tags: string[];
   sortOrder: number;
   createdAt: string;
 }
@@ -123,6 +180,7 @@ export interface DeckAssignment {
   deckId: string;
   classId: string;
   isRequired: boolean;
+  dailyTarget: number | null;
   assignedAt: string;
 }
 
@@ -152,8 +210,43 @@ export interface StudentCardState {
   fsrsState: string;
   dueDate: string;
   status: CardStatus;
+  intervalDays: number;
+  stability: number;
+  difficulty: number;
+  learningSteps: number;
+  repetitions: number;
+  lapses: number;
   lastReviewAt: string;
   reviewCount: number;
+}
+
+export interface FlashcardReviewEvent {
+  $id: string;
+  userId: string;
+  classId: string | null;
+  deckId: string;
+  cardId: string;
+  sessionId: string;
+  rating: ReviewRating;
+  reviewedAt: string;
+  elapsedSeconds: number;
+  syncStatus: SyncStatus;
+}
+
+export interface FlashcardStudySession {
+  $id: string;
+  userId: string;
+  classId: string | null;
+  deckId: string;
+  startedAt: string;
+  endedAt: string | null;
+  activeSeconds: number;
+  cardsReviewed: number;
+  againCount: number;
+  hardCount: number;
+  goodCount: number;
+  easyCount: number;
+  syncStatus: SyncStatus;
 }
 
 export interface StudentDeckNote {
@@ -194,6 +287,10 @@ export interface SyncOperation {
 export interface CsvMapping {
   front: string;
   back: string;
+  hint?: string;
+  tags?: string;
+  source?: string;
+  initialStatus?: string;
 }
 
 export interface CsvPreview {

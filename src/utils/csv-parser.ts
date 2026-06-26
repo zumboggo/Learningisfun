@@ -27,18 +27,35 @@ export function parseCsvLine(line: string, delimiter = ','): string[] {
 
 const KNOWN_FRONT_HEADERS = ['front', 'term', 'question', 'word', 'english', 'hanzi', 'kanji'];
 const KNOWN_BACK_HEADERS = ['back', 'definition', 'answer', 'meaning', 'translation', 'pinyin', 'reading'];
+const OPTIONAL_FIELD_HEADERS: Record<Exclude<keyof CsvMapping, 'front' | 'back'>, string[]> = {
+  hint: ['hint', 'clue', 'example'],
+  tags: ['tags', 'tag', 'category', 'categories'],
+  source: ['source', 'lesson', 'unit'],
+  initialStatus: ['initialstatus', 'status', 'startingstatus'],
+};
 
 export function detectMapping(headers: string[]): CsvMapping | null {
   const lower = headers.map(h => h.toLowerCase().trim());
   const frontIdx = lower.findIndex(h => KNOWN_FRONT_HEADERS.includes(h));
   const backIdx = lower.findIndex(h => KNOWN_BACK_HEADERS.includes(h));
+  const optional = detectOptionalMappings(headers);
   if (frontIdx >= 0 && backIdx >= 0) {
-    return { front: headers[frontIdx], back: headers[backIdx] };
+    return { front: headers[frontIdx], back: headers[backIdx], ...optional };
   }
   if (lower.length >= 2) {
-    return { front: headers[0], back: headers[1] };
+    return { front: headers[0], back: headers[1], ...optional };
   }
   return null;
+}
+
+function detectOptionalMappings(headers: string[]): Partial<CsvMapping> {
+  const lower = headers.map(h => h.toLowerCase().trim().replace(/[^a-z0-9]/g, ''));
+  const output: Partial<CsvMapping> = {};
+  for (const [field, candidates] of Object.entries(OPTIONAL_FIELD_HEADERS) as Array<[keyof CsvMapping, string[]]>) {
+    const idx = lower.findIndex(h => candidates.includes(h));
+    if (idx >= 0) output[field] = headers[idx];
+  }
+  return output;
 }
 
 export function parseCsvContent(

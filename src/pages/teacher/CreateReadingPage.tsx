@@ -15,6 +15,10 @@ export function CreateReadingPage() {
   const [description, setDescription] = useState('');
   const [content, setContent] = useState('');
   const [contentFormat, setContentFormat] = useState<'plain' | 'markdown'>('plain');
+  const [promptMarkdown, setPromptMarkdown] = useState('');
+  const [minResponseWords, setMinResponseWords] = useState(0);
+  const [minQuestions, setMinQuestions] = useState(0);
+  const [dueDate, setDueDate] = useState('');
   const [selectedClasses, setSelectedClasses] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -35,7 +39,11 @@ export function CreateReadingPage() {
       });
       await publishReading(reading.$id, user.$id);
       for (const classId of selectedClasses) {
-        await assignReading(reading.$id, classId);
+        await assignReading(reading.$id, classId, dueDate || undefined, {
+          promptMarkdown,
+          minResponseWords,
+          minQuestions,
+        });
       }
       navigate('/readings');
     } catch {
@@ -125,6 +133,51 @@ export function CreateReadingPage() {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-y font-mono text-sm"
             placeholder="Paste the reading text here…"
           />
+        </div>
+
+        <div className="border-t border-gray-200 pt-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Writing prompt</label>
+            <textarea
+              value={promptMarkdown}
+              onChange={e => setPromptMarkdown(e.target.value)}
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-y font-mono text-sm"
+              placeholder="Optional Markdown prompt students respond to after reading"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Minimum words</label>
+              <input
+                type="number"
+                min={0}
+                value={minResponseWords}
+                onChange={e => setMinResponseWords(Math.max(0, Number(e.target.value) || 0))}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Minimum questions</label>
+              <input
+                type="number"
+                min={0}
+                value={minQuestions}
+                onChange={e => setMinQuestions(Math.max(0, Number(e.target.value) || 0))}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Due date</label>
+              <input
+                type="date"
+                value={dueDate}
+                onChange={e => setDueDate(e.target.value)}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg"
+              />
+            </div>
+          </div>
         </div>
 
         {classes && classes.length > 0 && (

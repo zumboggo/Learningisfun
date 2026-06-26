@@ -82,7 +82,7 @@ export async function processQueue(): Promise<void> {
 }
 
 async function executeSyncOperation(op: SyncOperation): Promise<void> {
-  const { entityType, operationType, payload } = op;
+  const { entityType, entityId, operationType, payload } = op;
   const data = payload as Record<string, unknown>;
 
   if (entityType === 'annotation' && operationType === 'create') {
@@ -110,23 +110,41 @@ async function executeSyncOperation(op: SyncOperation): Promise<void> {
     });
     await db.annotations.update(data.$id as string, { syncStatus: 'synced' });
   } else if (entityType === 'question' && operationType === 'create') {
-    await functions.createExecution(FUNCTION_IDS.submitQuestion, JSON.stringify({
-      assignmentId: data.assignmentId,
-      readingId: data.readingId,
-      questionText: data.questionText,
-      selectedPassage: data.selectedPassage || '',
-    }));
+    if (data.classSessionId) {
+      await upsertDocument(COLLECTIONS.discussion_questions, data);
+    } else {
+      await functions.createExecution(FUNCTION_IDS.submitQuestion, JSON.stringify({
+        assignmentId: data.assignmentId,
+        readingId: data.readingId,
+        questionText: data.questionText,
+        selectedPassage: data.selectedPassage || '',
+      }));
+    }
+    await db.discussion_questions.update(data.$id as string, { syncStatus: 'synced' });
+  } else if (entityType === 'question' && operationType === 'update') {
+    await upsertDocument(COLLECTIONS.discussion_questions, data);
     await db.discussion_questions.update(data.$id as string, { syncStatus: 'synced' });
   } else if (entityType === 'vote' && operationType === 'create') {
-    await functions.createExecution(FUNCTION_IDS.toggleVote, JSON.stringify({
-      questionId: data.questionId,
-    }));
+    if (data.classSessionId) {
+      await upsertDocument(COLLECTIONS.question_votes, data);
+    } else {
+      await functions.createExecution(FUNCTION_IDS.toggleVote, JSON.stringify({
+        questionId: data.questionId,
+      }));
+    }
+    await db.question_votes.update(data.$id as string, { syncStatus: 'synced' });
+  } else if (entityType === 'vote' && operationType === 'update') {
+    await upsertDocument(COLLECTIONS.question_votes, data);
     await db.question_votes.update(data.$id as string, { syncStatus: 'synced' });
   } else if (entityType === 'vote' && operationType === 'delete') {
-    await functions.createExecution(FUNCTION_IDS.toggleVote, JSON.stringify({
-      questionId: data.questionId,
-      remove: true,
-    }));
+    if (data.classSessionId) {
+      await databases.deleteDocument(DATABASE_ID, COLLECTIONS.question_votes, data.$id as string);
+    } else {
+      await functions.createExecution(FUNCTION_IDS.toggleVote, JSON.stringify({
+        questionId: data.questionId,
+        remove: true,
+      }));
+    }
   } else if (entityType === 'card_review' && operationType === 'create') {
     await databases.createDocument(DATABASE_ID, COLLECTIONS.card_reviews, data.$id as string, {
       userId: data.userId,
@@ -159,6 +177,75 @@ async function executeSyncOperation(op: SyncOperation): Promise<void> {
       });
     }
     await db.reading_progress.update(data.$id as string, { syncStatus: 'synced' });
+  } else {
+    const collection = collectionForEntity(entityType);
+    if (!collection) return;
+    const documentId = (data.$id as string | undefined) || entityId;
+    if (operationType === 'delete') {
+      await databases.deleteDocument(DATABASE_ID, collection, documentId);
+    } else if (operationType === 'create' && data.$id) {
+      await upsertDocument(collection, data);
+      await markEntitySynced(entityType, documentId);
+    } else {
+      await databases.updateDocument(DATABASE_ID, collection, documentId, toRemoteDocument(data));
+      await markEntitySynced(entityType, documentId);
+    }
+  }
+}
+
+async function upsertDocument(collectionId: string, data: Record<string, unknown>): Promise<void> {
+  const id = data.$id as string;
+  try {
+    await databases.createDocument(DATABASE_ID, collectionId, id, toRemoteDocument(data));
+  } catch {
+    await databases.updateDocument(DATABASE_ID, collectionId, id, toRemoteDocument(data));
+  }
+}
+
+function toRemoteDocument(data: Record<string, unknown>): Record<string, unknown> {
+  const output: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (key === '$id' || key === 'syncStatus' || value === undefined) continue;
+    output[key] = value;
+  }
+  return output;
+}
+
+function collectionForEntity(entityType: string): string | null {
+  switch (entityType) {
+    case 'class_session': return COLLECTIONS.class_sessions;
+    case 'class_session_item': return COLLECTIONS.class_session_items;
+    case 'submission': return COLLECTIONS.submissions;
+    case 'flashcard_review_event': return COLLECTIONS.flashcard_review_events;
+    case 'flashcard_study_session': return COLLECTIONS.flashcard_study_sessions;
+    case 'reading': return COLLECTIONS.readings;
+    case 'reading_assignment': return COLLECTIONS.reading_assignments;
+    case 'deck': return COLLECTIONS.flashcard_decks;
+    case 'card': return COLLECTIONS.flashcard_cards;
+    case 'deck_assignment': return COLLECTIONS.deck_assignments;
+    case 'class': return COLLECTIONS.classes;
+    case 'class_member': return COLLECTIONS.class_members;
+    default: return null;
+  }
+}
+
+async function markEntitySynced(entityType: string, entityId: string): Promise<void> {
+  switch (entityType) {
+    case 'class_session':
+      await db.class_sessions.update(entityId, { syncStatus: 'synced' });
+      break;
+    case 'class_session_item':
+      await db.class_session_items.update(entityId, { syncStatus: 'synced' });
+      break;
+    case 'submission':
+      await db.submissions.update(entityId, { syncStatus: 'synced' });
+      break;
+    case 'flashcard_review_event':
+      await db.flashcard_review_events.update(entityId, { syncStatus: 'synced' });
+      break;
+    case 'flashcard_study_session':
+      await db.flashcard_study_sessions.update(entityId, { syncStatus: 'synced' });
+      break;
   }
 }
 

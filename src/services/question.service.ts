@@ -18,12 +18,15 @@ export async function submitQuestion(
     $id: id,
     readingId,
     assignmentId,
+    classSessionId: '',
     authorId: userId,
     questionText,
     selectedPassage,
     voteCount: 0,
     moderationStatus: 'visible',
     discussionStatus: 'none',
+    discussionNotesMarkdown: '',
+    notesUpdatedAt: null,
     isTeacherQuestion: false,
     teacherVisibleBeforeSubmission: false,
     createdAt: now,
@@ -43,6 +46,41 @@ export async function submitQuestion(
     await addToQueue(userId, 'question', id, 'create', question);
   }
 
+  return question;
+}
+
+export async function submitSessionQuestion(
+  userId: string,
+  classSessionId: string,
+  questionText: string,
+  selectedPassage: string = '',
+): Promise<DiscussionQuestion> {
+  const session = await db.class_sessions.get(classSessionId);
+  if (!session) throw new Error('Class session not found');
+  const assignment = session.assignmentId ? await db.reading_assignments.get(session.assignmentId) : undefined;
+  const id = generateId();
+  const now = getTimestamp();
+  const question: DiscussionQuestion = {
+    $id: id,
+    readingId: assignment?.readingId || '',
+    assignmentId: session.assignmentId || '',
+    classSessionId,
+    authorId: userId,
+    questionText,
+    selectedPassage,
+    voteCount: 0,
+    moderationStatus: 'visible',
+    discussionStatus: 'none',
+    discussionNotesMarkdown: '',
+    notesUpdatedAt: null,
+    isTeacherQuestion: false,
+    teacherVisibleBeforeSubmission: false,
+    createdAt: now,
+    syncStatus: 'local',
+  };
+
+  await db.discussion_questions.put(question);
+  await addToQueue(userId, 'question', id, 'create', question);
   return question;
 }
 
@@ -116,8 +154,11 @@ export async function toggleVote(
   const vote: QuestionVote = {
     $id: voteId,
     questionId,
+    classSessionId: question.classSessionId || '',
     userId,
+    weight: 1,
     createdAt: now,
+    updatedAt: now,
     syncStatus: 'local',
   };
 
@@ -134,6 +175,106 @@ export async function toggleVote(
   }
 
   return true;
+}
+
+export async function getSessionQuestions(classSessionId: string): Promise<DiscussionQuestion[]> {
+  const questions = await db.discussion_questions
+    .where('classSessionId')
+    .equals(classSessionId)
+    .and(q => q.moderationStatus === 'visible')
+    .toArray();
+  return sortQuestionsForDiscussion(questions);
+}
+
+export async function getSessionQuestionsWithAuthorship(classSessionId: string): Promise<DiscussionQuestion[]> {
+  const questions = await db.discussion_questions
+    .where('classSessionId')
+    .equals(classSessionId)
+    .toArray();
+  return sortQuestionsForDiscussion(questions);
+}
+
+export async function getSessionVoteCount(userId: string, classSessionId: string): Promise<number> {
+  const votes = await db.question_votes
+    .where('classSessionId')
+    .equals(classSessionId)
+    .and(v => v.userId === userId)
+    .toArray();
+  return votes.reduce((sum, vote) => sum + Math.max(1, vote.weight || 1), 0);
+}
+
+export async function getQuestionVoteWeight(userId: string, questionId: string): Promise<number> {
+  const vote = await db.question_votes
+    .where('[questionId+userId]')
+    .equals([questionId, userId])
+    .first();
+  return vote?.weight || 0;
+}
+
+export async function toggleSessionVote(
+  userId: string,
+  questionId: string,
+): Promise<{ voted: boolean; usedVotes: number }> {
+  const question = await db.discussion_questions.get(questionId);
+  if (!question || !question.classSessionId) return { voted: false, usedVotes: 0 };
+  if (question.authorId === userId) return { voted: false, usedVotes: await getSessionVoteCount(userId, question.classSessionId) };
+
+  const session = await db.class_sessions.get(question.classSessionId);
+  const voteBudget = session?.votesPerStudent ?? 4;
+  const allowStacked = Boolean(session?.allowStackedVotes);
+  const existingVote = await db.question_votes
+    .where('[questionId+userId]')
+    .equals([questionId, userId])
+    .first();
+  const usedVotes = await getSessionVoteCount(userId, question.classSessionId);
+
+  if (existingVote && !allowStacked) {
+    await db.question_votes.delete(existingVote.$id);
+    await updateQuestionVoteCount(questionId);
+    await addToQueue(userId, 'vote', existingVote.$id, 'delete', existingVote);
+    return { voted: false, usedVotes: Math.max(0, usedVotes - existingVote.weight) };
+  }
+
+  if (usedVotes >= voteBudget) return { voted: Boolean(existingVote), usedVotes };
+
+  const now = getTimestamp();
+  if (existingVote && allowStacked) {
+    await db.question_votes.update(existingVote.$id, {
+      weight: existingVote.weight + 1,
+      updatedAt: now,
+      syncStatus: 'local',
+    });
+    const updatedVote = await db.question_votes.get(existingVote.$id);
+    if (updatedVote) await addToQueue(userId, 'vote', existingVote.$id, 'update', updatedVote);
+    await updateQuestionVoteCount(questionId);
+    return { voted: true, usedVotes: usedVotes + 1 };
+  }
+
+  const vote: QuestionVote = {
+    $id: generateId(),
+    questionId,
+    classSessionId: question.classSessionId,
+    userId,
+    weight: 1,
+    createdAt: now,
+    updatedAt: now,
+    syncStatus: 'local',
+  };
+  await db.question_votes.put(vote);
+  await addToQueue(userId, 'vote', vote.$id, 'create', vote);
+  await updateQuestionVoteCount(questionId);
+  return { voted: true, usedVotes: usedVotes + 1 };
+}
+
+export async function clearSessionVote(userId: string, questionId: string): Promise<void> {
+  const vote = await db.question_votes
+    .where('[questionId+userId]')
+    .equals([questionId, userId])
+    .first();
+  if (!vote) return;
+  await db.question_votes.delete(vote.$id);
+  await addToQueue(userId, 'vote', vote.$id, 'delete', vote);
+  await updateQuestionVoteCount(questionId);
 }
 
 export async function hasVoted(userId: string, questionId: string): Promise<boolean> {
@@ -177,15 +318,33 @@ export async function moderateQuestion(
 export async function markForDiscussion(
   questionId: string,
   status: 'none' | 'selected' | 'discussed' | 'archived',
+  userId: string = '',
 ): Promise<void> {
-  await db.discussion_questions.update(questionId, { discussionStatus: status });
+  await db.discussion_questions.update(questionId, { discussionStatus: status, syncStatus: 'local' });
   try {
     await databases.updateDocument(DATABASE_ID, COLLECTIONS.discussion_questions, questionId, {
       discussionStatus: status,
     });
+    await db.discussion_questions.update(questionId, { syncStatus: 'synced' });
   } catch {
-    // Will sync later
+    const question = await db.discussion_questions.get(questionId);
+    if (question) await addToQueue(userId, 'question', questionId, 'update', question);
   }
+}
+
+export async function updateQuestionDiscussionNotes(
+  questionId: string,
+  userId: string,
+  notesMarkdown: string,
+): Promise<void> {
+  const now = getTimestamp();
+  await db.discussion_questions.update(questionId, {
+    discussionNotesMarkdown: notesMarkdown,
+    notesUpdatedAt: now,
+    syncStatus: 'local',
+  });
+  const question = await db.discussion_questions.get(questionId);
+  if (question) await addToQueue(userId, 'question', questionId, 'update', question);
 }
 
 export async function syncQuestionsFromServer(assignmentId: string): Promise<void> {
@@ -194,10 +353,29 @@ export async function syncQuestionsFromServer(assignmentId: string): Promise<voi
     if (result.responseBody) {
       const questions = JSON.parse(result.responseBody) as DiscussionQuestion[];
       for (const q of questions) {
-        await db.discussion_questions.put({ ...q, syncStatus: 'synced' });
+        await db.discussion_questions.put({
+          ...q,
+          classSessionId: q.classSessionId || '',
+          discussionNotesMarkdown: q.discussionNotesMarkdown || '',
+          notesUpdatedAt: q.notesUpdatedAt || null,
+          syncStatus: 'synced',
+        });
       }
     }
   } catch {
     // Offline
   }
+}
+
+export function sortQuestionsForDiscussion(questions: DiscussionQuestion[]): DiscussionQuestion[] {
+  return [...questions].sort((a, b) => {
+    if (b.voteCount !== a.voteCount) return b.voteCount - a.voteCount;
+    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+  });
+}
+
+async function updateQuestionVoteCount(questionId: string): Promise<void> {
+  const votes = await db.question_votes.where('questionId').equals(questionId).toArray();
+  const voteCount = votes.reduce((sum, vote) => sum + Math.max(1, vote.weight || 1), 0);
+  await db.discussion_questions.update(questionId, { voteCount, syncStatus: 'local' });
 }

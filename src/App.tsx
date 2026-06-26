@@ -11,6 +11,11 @@ import { DecksListPage } from '@/pages/DecksListPage';
 import { QuestionBoardPage } from '@/pages/QuestionBoardPage';
 import { ClassesListPage } from '@/pages/ClassesListPage';
 import { ClassDetailPage } from '@/pages/ClassDetailPage';
+import { ClassSessionPage } from '@/pages/ClassSessionPage';
+import { ResponsePage } from '@/pages/ResponsePage';
+import { SubmissionReviewPage } from '@/pages/SubmissionReviewPage';
+import { ParticipationReportPage } from '@/pages/ParticipationReportPage';
+import { FlashcardAnalyticsPage } from '@/pages/FlashcardAnalyticsPage';
 import { ImportDeckPage } from '@/pages/ImportDeckPage';
 import { CreateClassPage } from '@/pages/teacher/CreateClassPage';
 import { CreateReadingPage } from '@/pages/teacher/CreateReadingPage';
@@ -64,6 +69,8 @@ export default function App() {
           <Route path="/readings" element={<ProtectedRoute><ReadingsListPage /></ProtectedRoute>} />
           <Route path="/readings/:id" element={<ProtectedRoute><ReadingPage /></ProtectedRoute>} />
           <Route path="/readings/:readingId/questions" element={<ProtectedRoute><QuestionBoardPage /></ProtectedRoute>} />
+          <Route path="/assignments/:assignmentId/respond" element={<ProtectedRoute><ResponsePage /></ProtectedRoute>} />
+          <Route path="/assignments/:assignmentId/submissions" element={<ProtectedRoute><TeacherRoute><SubmissionReviewPage /></TeacherRoute></ProtectedRoute>} />
 
           <Route path="/decks" element={<ProtectedRoute><DecksListPage /></ProtectedRoute>} />
           <Route path="/decks/:deckId/review" element={<ProtectedRoute><FlashcardReviewPage /></ProtectedRoute>} />
@@ -71,6 +78,9 @@ export default function App() {
 
           <Route path="/classes" element={<ProtectedRoute><ClassesListPage /></ProtectedRoute>} />
           <Route path="/classes/:classId" element={<ProtectedRoute><ClassDetailPage /></ProtectedRoute>} />
+          <Route path="/classes/:classId/reports" element={<ProtectedRoute><TeacherRoute><ParticipationReportPage /></TeacherRoute></ProtectedRoute>} />
+          <Route path="/classes/:classId/decks/:deckId/progress" element={<ProtectedRoute><TeacherRoute><FlashcardAnalyticsPage /></TeacherRoute></ProtectedRoute>} />
+          <Route path="/sessions/:sessionId" element={<ProtectedRoute><ClassSessionPage /></ProtectedRoute>} />
 
           <Route path="/readings/new" element={<ProtectedRoute><TeacherRoute><CreateReadingPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/decks/new" element={<ProtectedRoute><TeacherRoute><CreateDeckPage /></TeacherRoute></ProtectedRoute>} />

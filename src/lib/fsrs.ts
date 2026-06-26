@@ -1,12 +1,14 @@
-import { fsrs, generatorParameters, type Card, type RecordLogItem, Rating, State, createEmptyCard } from 'ts-fsrs';
+import { fsrs, type Card, type RecordLogItem, Rating, State, createEmptyCard } from 'ts-fsrs';
 
-const params = generatorParameters({
+const f = fsrs({
   request_retention: 0.9,
   maximum_interval: 365,
-  w: [0.4, 0.6, 2.4, 5.8, 4.93, 0.94, 0.86, 0.01, 1.49, 0.14, 0.94, 2.18, 0.05, 0.34, 1.26, 0.29, 2.61],
+  enable_short_term: true,
+  learning_steps: ['1m', '5m'],
+  relearning_steps: ['1m', '5m'],
 });
 
-const f = fsrs(params);
+export type MasteryBucket = 'new' | 'familiar' | 'known';
 
 export function createNewCard(): Card {
   return createEmptyCard(new Date());
@@ -33,6 +35,33 @@ export function getCardFromState(stateJson: string): Card {
 
 export function cardToJson(card: Card): string {
   return JSON.stringify(card);
+}
+
+export function getCardIntervalDays(card: Card): number {
+  return Math.max(0, Math.round(card.scheduled_days ?? 0));
+}
+
+export function getCardMastery(card: Card, knownIntervalDays = 14): MasteryBucket {
+  if (card.state === State.New && (card.reps ?? 0) === 0) return 'new';
+  return getCardIntervalDays(card) >= knownIntervalDays ? 'known' : 'familiar';
+}
+
+export function getCardReviewFields(card: Card): {
+  intervalDays: number;
+  stability: number;
+  difficulty: number;
+  learningSteps: number;
+  repetitions: number;
+  lapses: number;
+} {
+  return {
+    intervalDays: getCardIntervalDays(card),
+    stability: round(card.stability),
+    difficulty: round(card.difficulty),
+    learningSteps: Math.max(0, Math.round(card.learning_steps ?? 0)),
+    repetitions: Math.max(0, Math.round(card.reps ?? 0)),
+    lapses: Math.max(0, Math.round(card.lapses ?? 0)),
+  };
 }
 
 export function getNextDueDate(card: Card): Date {
@@ -64,3 +93,7 @@ export function toFsrsRating(rating: 'again' | 'hard' | 'good' | 'easy'): Rating
 }
 
 export { Rating, State };
+
+function round(value: number): number {
+  return Number.isFinite(value) ? Number(value.toFixed(4)) : 0;
+}

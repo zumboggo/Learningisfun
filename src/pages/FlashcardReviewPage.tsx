@@ -1,10 +1,18 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
-import { getDueCards, getNewCards, reviewCard, getDeckCards, getDeckProgress } from '@/services/flashcard.service';
+import {
+  buildFlashcardQueue,
+  finishFlashcardStudySession,
+  getDeckProgress,
+  reviewCard,
+  startFlashcardStudySession,
+  type FlashcardQueueMode,
+} from '@/services/flashcard.service';
 import { Button } from '@/components/common/Button';
+import { Markdown } from '@/components/common/Markdown';
 import type { FlashcardCard, ReviewRating } from '@/types';
 
 export function FlashcardReviewPage() {
@@ -17,6 +25,19 @@ export function FlashcardReviewPage() {
     () => (deckId && user ? getDeckProgress(user.$id, deckId) : undefined),
     [deckId, user?.$id],
   );
+  const classId = useLiveQuery(async () => {
+    if (!deckId || !user) return null;
+    const memberships = await db.class_members.where('userId').equals(user.$id).toArray();
+    for (const membership of memberships) {
+      const assignment = await db.deck_assignments
+        .where('classId')
+        .equals(membership.classId)
+        .and(item => item.deckId === deckId)
+        .first();
+      if (assignment) return membership.classId;
+    }
+    return null;
+  }, [deckId, user?.$id]);
 
   const [cards, setCards] = useState<FlashcardCard[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -24,48 +45,88 @@ export function FlashcardReviewPage() {
   const [sessionStarted, setSessionStarted] = useState(false);
   const [sessionComplete, setSessionComplete] = useState(false);
   const [reviewedCount, setReviewedCount] = useState(0);
+  const [queueMode, setQueueMode] = useState<FlashcardQueueMode>('mixed');
+  const [studySessionId, setStudySessionId] = useState('');
+  const [activeSeconds, setActiveSeconds] = useState(0);
+  const [emptyMessage, setEmptyMessage] = useState('');
+  const cardStartedAt = useRef(Date.now());
+  const activeSecondsRef = useRef(0);
+  const studySessionIdRef = useRef('');
+
+  useEffect(() => {
+    studySessionIdRef.current = studySessionId;
+  }, [studySessionId]);
+
+  useEffect(() => () => {
+    if (studySessionIdRef.current && user) {
+      void finishFlashcardStudySession(studySessionIdRef.current, user.$id, activeSecondsRef.current);
+    }
+  }, [user]);
 
   const currentCard = cards[currentIndex];
 
-  const startSession = async (mode: 'due' | 'new' | 'all') => {
+  const startSession = async (mode: FlashcardQueueMode) => {
     if (!deckId || !user) return;
-    let sessionCards: FlashcardCard[] = [];
-
-    if (mode === 'due') {
-      sessionCards = await getDueCards(user.$id, deckId);
-    } else if (mode === 'new') {
-      sessionCards = await getNewCards(user.$id, deckId);
-    } else {
-      sessionCards = await getDeckCards(deckId);
+    const sessionCards = await buildFlashcardQueue(user.$id, deckId, mode, 30);
+    if (sessionCards.length === 0) {
+      setEmptyMessage(mode === 'due' ? 'No due cards right now.' : mode === 'new' ? 'No new cards left in this deck.' : 'No cards available.');
+      return;
     }
 
-    if (sessionCards.length === 0) return;
-
+    const studySession = await startFlashcardStudySession(user.$id, deckId, classId || null);
+    activeSecondsRef.current = 0;
+    setActiveSeconds(0);
+    setStudySessionId(studySession.$id);
+    setQueueMode(mode);
     setCards(sessionCards);
     setCurrentIndex(0);
     setShowAnswer(false);
     setSessionStarted(true);
     setSessionComplete(false);
     setReviewedCount(0);
+    setEmptyMessage('');
+    cardStartedAt.current = Date.now();
+  };
+
+  const finishSession = async () => {
+    if (!studySessionId || !user) return;
+    await finishFlashcardStudySession(studySessionId, user.$id, activeSecondsRef.current);
+    setStudySessionId('');
+  };
+
+  const handleExit = async () => {
+    await finishSession();
+    setSessionStarted(false);
+    setSessionComplete(false);
   };
 
   const handleRate = async (rating: ReviewRating) => {
     if (!user || !currentCard || !deckId) return;
-    await reviewCard(user.$id, currentCard.$id, deckId, rating);
+    const elapsedSeconds = Math.max(1, Math.round((Date.now() - cardStartedAt.current) / 1000));
+    activeSecondsRef.current += elapsedSeconds;
+    setActiveSeconds(activeSecondsRef.current);
+
+    await reviewCard(user.$id, currentCard.$id, deckId, rating, {
+      classId: classId || null,
+      sessionId: studySessionId,
+      elapsedSeconds,
+    });
     setReviewedCount(prev => prev + 1);
 
     if (currentIndex + 1 >= cards.length) {
+      await finishSession();
       setSessionComplete(true);
     } else {
       setCurrentIndex(prev => prev + 1);
       setShowAnswer(false);
+      cardStartedAt.current = Date.now();
     }
   };
 
   if (!deck) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-400">Loading deck…</div>
+        <div className="text-gray-400">Loading deck...</div>
       </div>
     );
   }
@@ -73,40 +134,30 @@ export function FlashcardReviewPage() {
   if (!sessionStarted) {
     return (
       <div className="p-4 max-w-lg mx-auto">
-        <button onClick={() => navigate(-1)} className="text-gray-500 mb-4">← Back</button>
+        <button onClick={() => navigate(-1)} className="text-gray-500 mb-4">Back</button>
         <h1 className="text-2xl font-bold mb-2">{deck.title}</h1>
         {deck.description && <p className="text-gray-500 mb-6">{deck.description}</p>}
 
         {progress && (
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            <div className="bg-blue-50 rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold text-blue-700">{progress.newCount}</div>
-              <div className="text-xs text-blue-600">New</div>
-            </div>
-            <div className="bg-yellow-50 rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold text-yellow-700">{progress.learning}</div>
-              <div className="text-xs text-yellow-600">Learning</div>
-            </div>
-            <div className="bg-green-50 rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold text-green-700">{progress.due}</div>
-              <div className="text-xs text-green-600">Due</div>
-            </div>
+          <div className="grid grid-cols-4 gap-3 mb-6">
+            <ProgressStat label="New" value={progress.newCount} tone="blue" />
+            <ProgressStat label="Familiar" value={progress.familiar} tone="yellow" />
+            <ProgressStat label="Known" value={progress.known} tone="green" />
+            <ProgressStat label="Due" value={progress.due} tone="red" />
           </div>
         )}
 
+        {emptyMessage && <div className="mb-4 rounded-lg bg-gray-100 p-3 text-sm text-gray-600">{emptyMessage}</div>}
+
         <div className="space-y-3">
-          {(progress?.due || 0) > 0 && (
-            <Button onClick={() => void startSession('due')} className="w-full" size="lg">
-              Review due cards ({progress?.due})
-            </Button>
-          )}
-          {(progress?.newCount || 0) > 0 && (
-            <Button onClick={() => void startSession('new')} variant="secondary" className="w-full" size="lg">
-              Learn new cards ({progress?.newCount})
-            </Button>
-          )}
-          <Button onClick={() => void startSession('all')} variant="ghost" className="w-full">
-            Study all cards
+          <Button onClick={() => void startSession('mixed')} className="w-full" size="lg">
+            Mixed review
+          </Button>
+          <Button onClick={() => void startSession('due')} variant="secondary" className="w-full" size="lg">
+            Due cards ({progress?.due || 0})
+          </Button>
+          <Button onClick={() => void startSession('new')} variant="secondary" className="w-full" size="lg">
+            New cards ({progress?.newCount || 0})
           </Button>
         </div>
       </div>
@@ -116,9 +167,10 @@ export function FlashcardReviewPage() {
   if (sessionComplete) {
     return (
       <div className="p-4 max-w-lg mx-auto text-center">
-        <div className="text-6xl mb-4">🎉</div>
-        <h2 className="text-2xl font-bold mb-2">Session complete!</h2>
-        <p className="text-gray-500 mb-6">You reviewed {reviewedCount} cards</p>
+        <h2 className="text-2xl font-bold mb-2">Session complete</h2>
+        <p className="text-gray-500 mb-6">
+          You reviewed {reviewedCount} cards in {Math.round(activeSeconds / 60)} minutes.
+        </p>
         <div className="space-y-3">
           <Button onClick={() => setSessionStarted(false)} className="w-full">
             Back to deck
@@ -134,9 +186,9 @@ export function FlashcardReviewPage() {
   return (
     <div className="p-4 max-w-lg mx-auto">
       <div className="flex items-center justify-between mb-4">
-        <button onClick={() => setSessionStarted(false)} className="text-gray-500">← Exit</button>
+        <button onClick={() => void handleExit()} className="text-gray-500">Exit</button>
         <span className="text-sm text-gray-400">
-          {currentIndex + 1} / {cards.length}
+          {queueMode} | {currentIndex + 1} / {cards.length}
         </span>
       </div>
 
@@ -148,14 +200,25 @@ export function FlashcardReviewPage() {
       </div>
 
       {currentCard && (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm min-h-[300px] flex flex-col">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm min-h-[340px] flex flex-col">
           <div className="flex-1 p-6 flex items-center justify-center">
-            <p className="text-xl text-center leading-relaxed">{currentCard.front}</p>
+            <Markdown
+              content={currentCard.frontMarkdown || currentCard.front}
+              className="text-center text-xl leading-relaxed"
+            />
           </div>
 
           {showAnswer && (
-            <div className="border-t border-gray-100 p-6">
-              <p className="text-lg text-center leading-relaxed text-gray-700">{currentCard.back}</p>
+            <div className="border-t border-gray-100 p-6 space-y-4">
+              <Markdown
+                content={currentCard.backMarkdown || currentCard.back}
+                className="text-center text-lg leading-relaxed text-gray-700"
+              />
+              {currentCard.hint && (
+                <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-500">
+                  Hint: {currentCard.hint}
+                </div>
+              )}
             </div>
           )}
 
@@ -166,35 +229,44 @@ export function FlashcardReviewPage() {
               </Button>
             ) : (
               <div className="grid grid-cols-4 gap-2">
-                <button
-                  onClick={() => void handleRate('again')}
-                  className="py-3 px-2 bg-red-50 text-red-700 rounded-xl text-sm font-medium hover:bg-red-100"
-                >
-                  Again
-                </button>
-                <button
-                  onClick={() => void handleRate('hard')}
-                  className="py-3 px-2 bg-orange-50 text-orange-700 rounded-xl text-sm font-medium hover:bg-orange-100"
-                >
-                  Hard
-                </button>
-                <button
-                  onClick={() => void handleRate('good')}
-                  className="py-3 px-2 bg-green-50 text-green-700 rounded-xl text-sm font-medium hover:bg-green-100"
-                >
-                  Good
-                </button>
-                <button
-                  onClick={() => void handleRate('easy')}
-                  className="py-3 px-2 bg-blue-50 text-blue-700 rounded-xl text-sm font-medium hover:bg-blue-100"
-                >
-                  Easy
-                </button>
+                <RatingButton label="Again" tone="red" onClick={() => void handleRate('again')} />
+                <RatingButton label="Hard" tone="orange" onClick={() => void handleRate('hard')} />
+                <RatingButton label="Good" tone="green" onClick={() => void handleRate('good')} />
+                <RatingButton label="Easy" tone="blue" onClick={() => void handleRate('easy')} />
               </div>
             )}
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+function ProgressStat({ label, value, tone }: { label: string; value: number; tone: 'blue' | 'yellow' | 'green' | 'red' }) {
+  const classes = {
+    blue: 'bg-blue-50 text-blue-700',
+    yellow: 'bg-yellow-50 text-yellow-700',
+    green: 'bg-green-50 text-green-700',
+    red: 'bg-red-50 text-red-700',
+  };
+  return (
+    <div className={`rounded-xl p-3 text-center ${classes[tone]}`}>
+      <div className="text-2xl font-bold">{value}</div>
+      <div className="text-xs">{label}</div>
+    </div>
+  );
+}
+
+function RatingButton({ label, tone, onClick }: { label: string; tone: 'red' | 'orange' | 'green' | 'blue'; onClick: () => void }) {
+  const classes = {
+    red: 'bg-red-50 text-red-700 hover:bg-red-100',
+    orange: 'bg-orange-50 text-orange-700 hover:bg-orange-100',
+    green: 'bg-green-50 text-green-700 hover:bg-green-100',
+    blue: 'bg-blue-50 text-blue-700 hover:bg-blue-100',
+  };
+  return (
+    <button onClick={onClick} className={`py-3 px-2 rounded-xl text-sm font-medium ${classes[tone]}`}>
+      {label}
+    </button>
   );
 }
