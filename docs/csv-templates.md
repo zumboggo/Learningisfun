@@ -1,6 +1,6 @@
 # CSV Template Examples
 
-EduSpark supports importing flashcard decks from CSV files. The CSV parser handles UTF-8 encoding and supports Unicode characters (Chinese, accented characters, etc.).
+Learning is Fun supports importing flashcard decks from CSV files. The CSV parser handles UTF-8 encoding and supports Unicode characters (Chinese, accented characters, etc.).
 
 ## Supported Column Headers
 

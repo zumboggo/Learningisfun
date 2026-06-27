@@ -2,7 +2,7 @@
 
 ## Architecture Overview
 
-EduSpark uses a local-first architecture where all data is stored in IndexedDB first, then synchronized to Appwrite Cloud when online.
+Learning is Fun uses a local-first architecture where all data is stored in IndexedDB first, then synchronized to Appwrite Cloud when online.
 
 ```
 ┌─────────────────┐     ┌─────────────────┐

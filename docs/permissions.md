@@ -2,7 +2,7 @@
 
 ## Role-Based Access Control
 
-EduSpark implements RBAC at three layers:
+Learning is Fun implements RBAC at three layers:
 1. **UI Layer** - Components conditionally render based on user role
 2. **Service Layer** - Business logic enforces access rules
 3. **Database Layer** - Appwrite document permissions enforce server-side

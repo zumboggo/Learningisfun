@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
@@ -11,6 +11,8 @@ import {
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
 import { Markdown, countMarkdownWords } from '@/components/common/Markdown';
+import { MarkdownToolbar } from '@/components/common/MarkdownToolbar';
+import { StatusBadge } from '@/components/common/StatusBadge';
 
 export function ResponsePage() {
   const { assignmentId } = useParams<{ assignmentId: string }>();
@@ -19,6 +21,7 @@ export function ResponsePage() {
   const [responseMarkdown, setResponseMarkdown] = useState('');
   const [busy, setBusy] = useState(false);
   const [savedAt, setSavedAt] = useState('');
+  const responseRef = useRef<HTMLTextAreaElement>(null);
 
   const assignment = useLiveQuery(
     () => (assignmentId ? db.reading_assignments.get(assignmentId) : undefined),
@@ -121,15 +124,15 @@ export function ResponsePage() {
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Your response</h2>
-            <span className={`text-sm ${belowMinimum ? 'text-orange-600' : 'text-gray-500'}`}>
-              {wordCount} words
-            </span>
+            <StatusBadge status={belowMinimum ? 'short' : existingSubmission?.status || 'draft'} label={`${wordCount} words`} />
           </div>
+          <MarkdownToolbar textareaRef={responseRef} value={responseMarkdown} onChange={setResponseMarkdown} />
           <textarea
+            ref={responseRef}
             value={responseMarkdown}
             onChange={e => setResponseMarkdown(e.target.value)}
             rows={18}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm"
+            className="w-full rounded-b-lg border border-gray-300 px-3 py-2 font-mono text-sm"
             placeholder="Write in Markdown. Bold and italics are welcome."
           />
           <div className="flex flex-wrap items-center gap-2">
@@ -137,9 +140,7 @@ export function ResponsePage() {
             <Button onClick={() => void submit()} loading={busy} disabled={!responseMarkdown.trim()}>Submit</Button>
             {savedAt && <span className="text-sm text-gray-400">Saved {savedAt}</span>}
             {belowMinimum && (
-              <span className="rounded bg-orange-50 px-2 py-1 text-sm text-orange-700">
-                Short submission flag
-              </span>
+              <StatusBadge status="short" label="Short submission flag" />
             )}
           </div>
         </section>
@@ -157,7 +158,10 @@ export function ResponsePage() {
           <Card>
             <h2 className="font-semibold mb-3">Status</h2>
             <div className="space-y-2 text-sm text-gray-600">
-              <p>Submission: <span className="font-medium">{existingSubmission?.status || 'not started'}</span></p>
+              <p className="flex items-center justify-between gap-3">
+                <span>Submission</span>
+                <StatusBadge status={existingSubmission?.status || 'not started'} />
+              </p>
               <p>Words: <span className="font-medium">{wordCount}</span></p>
               {assignment.minResponseWords > 0 && (
                 <p>Minimum: <span className="font-medium">{assignment.minResponseWords}</span></p>

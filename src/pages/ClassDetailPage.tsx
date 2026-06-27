@@ -14,7 +14,9 @@ import { createClassSession, todayKey } from '@/services/class-session.service';
 import { downloadCsv } from '@/services/report.service';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
+import { EmptyState } from '@/components/common/EmptyState';
 import { Modal } from '@/components/common/Modal';
+import { StatusBadge } from '@/components/common/StatusBadge';
 
 export function ClassDetailPage() {
   const { classId } = useParams<{ classId: string }>();
@@ -203,7 +205,7 @@ export function ClassDetailPage() {
                       <h3 className="font-medium">{session.title}</h3>
                       <p className="text-sm text-gray-500">{session.sessionDate}</p>
                     </div>
-                    <span className="text-xs rounded bg-gray-100 px-2 py-1 text-gray-600">{session.status}</span>
+                    <StatusBadge status={session.status} />
                   </div>
                   <p className="mt-2 text-xs text-gray-500">
                     {session.votesPerStudent} votes each{session.allowStackedVotes ? ' | stacking enabled' : ''}
@@ -213,10 +215,11 @@ export function ClassDetailPage() {
             ))}
           </div>
         ) : (
-          <Card className="text-center py-8">
-            <p className="text-gray-400 mb-4">No class periods yet</p>
-            {isOwner && <Button onClick={() => setShowSessionModal(true)}>Start first period</Button>}
-          </Card>
+          <EmptyState
+            title="No class periods yet"
+            message="Start a period to gather questions, run voting, publish notes, and present anonymous responses."
+            action={isOwner && <Button onClick={() => setShowSessionModal(true)}>Start first period</Button>}
+          />
         )}
       </section>
 
@@ -244,9 +247,13 @@ export function ClassDetailPage() {
               ))}
             </div>
           ) : (
-            <p className="text-gray-400 text-sm">No readings assigned</p>
+            <EmptyState
+              title="No readings assigned"
+              message="Add a reading with an optional Markdown writing prompt and word minimum."
+              action={isOwner && <Link to="/readings/new"><Button size="sm" variant="secondary">Add reading</Button></Link>}
+            />
           )}
-          {isOwner && (
+          {isOwner && readingRows && readingRows.length > 0 && (
             <Link to="/readings/new" className="mt-3 inline-block">
               <Button size="sm" variant="secondary">Add reading</Button>
             </Link>
@@ -280,9 +287,13 @@ export function ClassDetailPage() {
               ))}
             </div>
           ) : (
-            <p className="text-gray-400 text-sm">No decks assigned</p>
+            <EmptyState
+              title="No flashcard decks assigned"
+              message="Import a vocabulary CSV or create a deck so students can study with FSRS scheduling."
+              action={isOwner && <Link to="/decks/new"><Button size="sm" variant="secondary">Add deck</Button></Link>}
+            />
           )}
-          {isOwner && (
+          {isOwner && deckRows && deckRows.length > 0 && (
             <Link to="/decks/new" className="mt-3 inline-block">
               <Button size="sm" variant="secondary">Add deck</Button>
             </Link>
@@ -312,7 +323,10 @@ export function ClassDetailPage() {
             ))}
           </div>
         ) : (
-          <p className="text-gray-400 text-sm">No students yet</p>
+          <EmptyState
+            title="No students yet"
+            message="Import a roster CSV or share the join code so students can enter the class."
+          />
         )}
       </section>
 

@@ -35,7 +35,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
         <Link to="/dashboard" className="text-lg font-bold text-blue-700">
-          EduSpark
+          Learning is Fun
         </Link>
         <div className="flex items-center gap-3">
           <SyncIndicator {...syncState} online={online} />

@@ -2,7 +2,7 @@
 
 ## Overview
 
-EduSpark uses two storage layers:
+Learning is Fun uses two storage layers:
 - **Appwrite Cloud** - Server-side database for authoritative data
 - **IndexedDB (Dexie)** - Client-side database for offline-first access
 

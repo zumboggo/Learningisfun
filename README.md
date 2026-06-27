@@ -1,4 +1,4 @@
-# Learning Is Fun
+# Learning is Fun
 
 Offline-first educational flashcard and reading Progressive Web App.
 

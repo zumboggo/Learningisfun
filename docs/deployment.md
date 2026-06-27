@@ -2,7 +2,7 @@
 
 ## Overview
 
-EduSpark is a static PWA that can be deployed to any static hosting service. The build output is in the `dist/` directory.
+Learning is Fun is a static PWA that can be deployed to any static hosting service. The build output is in the `dist/` directory.
 
 ## Build for Production
 

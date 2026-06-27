@@ -13,7 +13,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons/icon-192.png', 'icons/icon-512.png'],
       manifest: {
-        name: 'Learning Is Fun',
+        name: 'Learning is Fun',
         short_name: 'Learning',
         description: 'Offline-first educational flashcard and reading app',
         theme_color: '#1e40af',

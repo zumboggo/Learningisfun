@@ -7,7 +7,9 @@ import { addSessionItem } from '@/services/class-session.service';
 import { getAssignmentSubmissions } from '@/services/submission.service';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
+import { EmptyState } from '@/components/common/EmptyState';
 import { Markdown } from '@/components/common/Markdown';
+import { StatusBadge } from '@/components/common/StatusBadge';
 import type { Submission, User } from '@/types';
 
 interface SubmissionRow {
@@ -21,6 +23,7 @@ export function SubmissionReviewPage() {
   const navigate = useNavigate();
   const [selectedSubmissionId, setSelectedSubmissionId] = useState('');
   const [selectedSessionId, setSelectedSessionId] = useState('');
+  const [presentationOpen, setPresentationOpen] = useState(false);
 
   const assignment = useLiveQuery(
     () => (assignmentId ? db.reading_assignments.get(assignmentId) : undefined),
@@ -48,10 +51,17 @@ export function SubmissionReviewPage() {
     () => rows?.find(row => row.submission.$id === selectedSubmissionId) || rows?.[0],
     [rows, selectedSubmissionId],
   );
+  const selectedIndex = Math.max(0, rows?.findIndex(row => row.submission.$id === selectedRow?.submission.$id) ?? 0);
 
   const addPresentationSample = async () => {
     if (!user || !selectedRow || !selectedSessionId) return;
     await addSessionItem(selectedSessionId, user.$id, 'submission', selectedRow.submission);
+  };
+
+  const moveSelection = (direction: -1 | 1) => {
+    if (!rows || rows.length === 0) return;
+    const nextIndex = (selectedIndex + direction + rows.length) % rows.length;
+    setSelectedSubmissionId(rows[nextIndex].submission.$id);
   };
 
   if (!assignment || !reading) {
@@ -91,20 +101,17 @@ export function SubmissionReviewPage() {
                       <h3 className="font-medium">{row.user?.name || 'Unknown student'}</h3>
                       <p className="text-sm text-gray-500">{row.user?.email}</p>
                     </div>
-                    <span className={`rounded px-2 py-1 text-xs ${
-                      row.submission.belowMinimum ? 'bg-orange-50 text-orange-700' : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {row.submission.wordCount} words
-                    </span>
+                    <StatusBadge status={row.submission.belowMinimum ? 'short' : row.submission.status} label={`${row.submission.wordCount} words`} />
                   </div>
-                  <p className="mt-2 text-xs text-gray-500">{row.submission.status}</p>
+                  <div className="mt-2"><StatusBadge status={row.submission.status} /></div>
                 </Card>
               </button>
             ))
           ) : (
-            <Card className="text-center py-8">
-              <p className="text-gray-400">No responses yet</p>
-            </Card>
+            <EmptyState
+              title="No responses yet"
+              message="Submitted student responses will appear here for marking and anonymous presentation."
+            />
           )}
         </section>
 
@@ -115,9 +122,12 @@ export function SubmissionReviewPage() {
                 <h2 className="text-lg font-semibold">Anonymous presentation</h2>
                 <p className="text-sm text-gray-500">Student identity is hidden in this panel.</p>
               </div>
-              {selectedRow?.submission.belowMinimum && (
-                <span className="rounded bg-orange-50 px-2 py-1 text-sm text-orange-700">Below word minimum</span>
-              )}
+              <div className="flex flex-wrap gap-2">
+                {selectedRow?.submission.belowMinimum && <StatusBadge status="short" label="Below word minimum" />}
+                <Button size="sm" onClick={() => setPresentationOpen(true)} disabled={!selectedRow}>
+                  Full screen
+                </Button>
+              </div>
             </div>
 
             {selectedRow ? (
@@ -151,6 +161,27 @@ export function SubmissionReviewPage() {
           )}
         </section>
       </div>
+
+      {presentationOpen && selectedRow && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-white">
+          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+            <div>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">Anonymous sample</h2>
+              <p className="text-xs text-gray-400">{selectedIndex + 1} of {rows?.length || 0}</p>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" variant="secondary" onClick={() => moveSelection(-1)}>Previous</Button>
+              <Button size="sm" variant="secondary" onClick={() => moveSelection(1)}>Next</Button>
+              <Button size="sm" variant="ghost" onClick={() => setPresentationOpen(false)}>Close</Button>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto px-6 py-8 md:px-16 md:py-12">
+            <div className="mx-auto max-w-4xl">
+              <Markdown content={selectedRow.submission.responseMarkdown} className="text-2xl leading-relaxed text-gray-950 md:text-3xl" />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

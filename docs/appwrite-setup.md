@@ -1,6 +1,6 @@
 # Appwrite Cloud Setup Guide
 
-This guide walks through setting up Appwrite Cloud for EduSpark.
+This guide walks through setting up Appwrite Cloud for Learning is Fun.
 
 ## Step 1: Create Appwrite Project
 
@@ -8,7 +8,7 @@ This guide walks through setting up Appwrite Cloud for EduSpark.
 2. Sign up or log in
 3. Create a new project
 4. Select **Singapore** region if available
-5. Name the project (e.g., "EduSpark")
+5. Name the project (e.g., "Learning is Fun")
 6. Copy the **Project ID** → set as `VITE_APPWRITE_PROJECT_ID` in `.env`
 
 ## Step 2: Configure Authentication
@@ -21,7 +21,7 @@ This guide walks through setting up Appwrite Cloud for EduSpark.
 ## Step 3: Create Database
 
 1. Go to **Databases**
-2. Create a new database named "EduSpark"
+2. Create a new database named "Learning is Fun"
 3. Copy the **Database ID** → set as `VITE_APPWRITE_DATABASE_ID` in `.env`
 
 ## Step 4: Create Collections

@@ -46,6 +46,7 @@ export function FlashcardReviewPage() {
   const [sessionComplete, setSessionComplete] = useState(false);
   const [reviewedCount, setReviewedCount] = useState(0);
   const [queueMode, setQueueMode] = useState<FlashcardQueueMode>('mixed');
+  const [selectedQueueMode, setSelectedQueueMode] = useState<FlashcardQueueMode>('mixed');
   const [studySessionId, setStudySessionId] = useState('');
   const [activeSeconds, setActiveSeconds] = useState(0);
   const [emptyMessage, setEmptyMessage] = useState('');
@@ -64,6 +65,32 @@ export function FlashcardReviewPage() {
   }, [user]);
 
   const currentCard = cards[currentIndex];
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!sessionStarted || sessionComplete) return;
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
+      if (!showAnswer && event.code === 'Space') {
+        event.preventDefault();
+        setShowAnswer(true);
+        return;
+      }
+      if (!showAnswer) return;
+      const ratingByKey: Record<string, ReviewRating> = {
+        '1': 'again',
+        '2': 'hard',
+        '3': 'good',
+        '4': 'easy',
+      };
+      const rating = ratingByKey[event.key];
+      if (rating) {
+        event.preventDefault();
+        void handleRate(rating);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [sessionStarted, sessionComplete, showAnswer, currentCard?.$id, currentIndex, studySessionId]);
 
   const startSession = async (mode: FlashcardQueueMode) => {
     if (!deckId || !user) return;
@@ -149,17 +176,15 @@ export function FlashcardReviewPage() {
 
         {emptyMessage && <div className="mb-4 rounded-lg bg-gray-100 p-3 text-sm text-gray-600">{emptyMessage}</div>}
 
-        <div className="space-y-3">
-          <Button onClick={() => void startSession('mixed')} className="w-full" size="lg">
-            Mixed review
-          </Button>
-          <Button onClick={() => void startSession('due')} variant="secondary" className="w-full" size="lg">
-            Due cards ({progress?.due || 0})
-          </Button>
-          <Button onClick={() => void startSession('new')} variant="secondary" className="w-full" size="lg">
-            New cards ({progress?.newCount || 0})
-          </Button>
+        <div className="mb-4 grid grid-cols-3 rounded-lg bg-gray-100 p-1">
+          <QueueModeButton label="Mixed" active={selectedQueueMode === 'mixed'} onClick={() => setSelectedQueueMode('mixed')} />
+          <QueueModeButton label={`Due ${progress?.due || 0}`} active={selectedQueueMode === 'due'} onClick={() => setSelectedQueueMode('due')} />
+          <QueueModeButton label={`New ${progress?.newCount || 0}`} active={selectedQueueMode === 'new'} onClick={() => setSelectedQueueMode('new')} />
         </div>
+
+        <Button onClick={() => void startSession(selectedQueueMode)} className="w-full" size="lg">
+          Start {selectedQueueMode} session
+        </Button>
       </div>
     );
   }
@@ -225,20 +250,34 @@ export function FlashcardReviewPage() {
           <div className="p-4 border-t border-gray-100">
             {!showAnswer ? (
               <Button onClick={() => setShowAnswer(true)} className="w-full" size="lg">
-                Show answer
+                Show answer <span className="ml-2 text-xs opacity-80">Space</span>
               </Button>
             ) : (
               <div className="grid grid-cols-4 gap-2">
-                <RatingButton label="Again" tone="red" onClick={() => void handleRate('again')} />
-                <RatingButton label="Hard" tone="orange" onClick={() => void handleRate('hard')} />
-                <RatingButton label="Good" tone="green" onClick={() => void handleRate('good')} />
-                <RatingButton label="Easy" tone="blue" onClick={() => void handleRate('easy')} />
+                <RatingButton label="Again" shortcut="1" tone="red" onClick={() => void handleRate('again')} />
+                <RatingButton label="Hard" shortcut="2" tone="orange" onClick={() => void handleRate('hard')} />
+                <RatingButton label="Good" shortcut="3" tone="green" onClick={() => void handleRate('good')} />
+                <RatingButton label="Easy" shortcut="4" tone="blue" onClick={() => void handleRate('easy')} />
               </div>
             )}
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+function QueueModeButton({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+        active ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+      }`}
+    >
+      {label}
+    </button>
   );
 }
 
@@ -257,7 +296,7 @@ function ProgressStat({ label, value, tone }: { label: string; value: number; to
   );
 }
 
-function RatingButton({ label, tone, onClick }: { label: string; tone: 'red' | 'orange' | 'green' | 'blue'; onClick: () => void }) {
+function RatingButton({ label, shortcut, tone, onClick }: { label: string; shortcut: string; tone: 'red' | 'orange' | 'green' | 'blue'; onClick: () => void }) {
   const classes = {
     red: 'bg-red-50 text-red-700 hover:bg-red-100',
     orange: 'bg-orange-50 text-orange-700 hover:bg-orange-100',
@@ -266,7 +305,8 @@ function RatingButton({ label, tone, onClick }: { label: string; tone: 'red' | '
   };
   return (
     <button onClick={onClick} className={`py-3 px-2 rounded-xl text-sm font-medium ${classes[tone]}`}>
-      {label}
+      <span className="block">{label}</span>
+      <span className="text-xs opacity-75">{shortcut}</span>
     </button>
   );
 }

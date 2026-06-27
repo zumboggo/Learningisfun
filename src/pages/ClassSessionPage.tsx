@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
@@ -18,7 +18,10 @@ import {
 } from '@/services/question.service';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
+import { EmptyState } from '@/components/common/EmptyState';
 import { Markdown } from '@/components/common/Markdown';
+import { MarkdownToolbar } from '@/components/common/MarkdownToolbar';
+import { StatusBadge } from '@/components/common/StatusBadge';
 import type { DiscussionQuestion } from '@/types';
 
 export function ClassSessionPage() {
@@ -31,6 +34,7 @@ export function ClassSessionPage() {
   const [sessionNotes, setSessionNotes] = useState('');
   const [notesDrafts, setNotesDrafts] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const sessionNotesRef = useRef<HTMLTextAreaElement>(null);
 
   const session = useLiveQuery(() => (sessionId ? db.class_sessions.get(sessionId) : undefined), [sessionId]);
   const cls = useLiveQuery(() => (session ? db.classes.get(session.classId) : undefined), [session?.classId]);
@@ -161,9 +165,7 @@ export function ClassSessionPage() {
               <Button size="sm">Open response</Button>
             </Link>
             {assignment.minResponseWords > 0 && (
-              <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600">
-                {assignment.minResponseWords}+ words
-              </span>
+              <StatusBadge status="ready" label={`${assignment.minResponseWords}+ words`} />
             )}
           </div>
         </Card>
@@ -174,12 +176,17 @@ export function ClassSessionPage() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold">Question board</h2>
-              <p className="text-sm text-gray-500">
-                {questions?.length || 0} questions
-                {!isTeacher && ` | ${usedVotes || 0}/${session.votesPerStudent} votes used`}
-              </p>
+              <p className="text-sm text-gray-500">{questions?.length || 0} questions</p>
             </div>
           </div>
+
+          {!isTeacher && (
+            <VoteBudgetMeter
+              usedVotes={usedVotes || 0}
+              voteBudget={session.votesPerStudent}
+              allowStackedVotes={session.allowStackedVotes}
+            />
+          )}
 
           {questions && questions.length > 0 ? (
             questions.map(question => (
@@ -202,9 +209,11 @@ export function ClassSessionPage() {
               />
             ))
           ) : (
-            <Card className="text-center py-8">
-              <p className="text-gray-400">No questions yet</p>
-            </Card>
+            <EmptyState
+              title="No questions yet"
+              message={isTeacher ? 'Start with a teacher question, or ask students to add one from the panel.' : 'Add the first question so the class has something to discuss and vote on.'}
+              action={!isTeacher && <Button onClick={() => document.getElementById('session-question-input')?.focus()} variant="secondary">Ask first question</Button>}
+            />
           )}
         </section>
 
@@ -212,6 +221,7 @@ export function ClassSessionPage() {
           <Card>
             <h2 className="font-semibold mb-3">Add a question</h2>
             <textarea
+              id="session-question-input"
               value={questionText}
               onChange={e => setQuestionText(e.target.value)}
               rows={4}
@@ -238,11 +248,13 @@ export function ClassSessionPage() {
           {isTeacher && (
             <Card>
               <h2 className="font-semibold mb-3">Class notes</h2>
+              <MarkdownToolbar textareaRef={sessionNotesRef} value={sessionNotes} onChange={setSessionNotes} />
               <textarea
+                ref={sessionNotesRef}
                 value={sessionNotes}
                 onChange={e => setSessionNotes(e.target.value)}
                 rows={8}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-y font-mono text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-b-lg resize-y font-mono text-sm"
                 placeholder="Markdown notes for the day"
               />
               <Button onClick={() => void saveSessionNotes()} className="mt-3 w-full" variant="secondary">
@@ -259,6 +271,44 @@ export function ClassSessionPage() {
         </aside>
       </div>
     </div>
+  );
+}
+
+function VoteBudgetMeter({
+  usedVotes,
+  voteBudget,
+  allowStackedVotes,
+}: {
+  usedVotes: number;
+  voteBudget: number;
+  allowStackedVotes: boolean;
+}) {
+  const remaining = Math.max(0, voteBudget - usedVotes);
+  return (
+    <Card className="bg-blue-50 border-blue-100">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="font-semibold text-blue-900">{remaining} votes left</h3>
+          <p className="text-sm text-blue-700">
+            {usedVotes} of {voteBudget} used{allowStackedVotes ? ' | multiple votes per question allowed' : ''}
+          </p>
+        </div>
+        <div className="flex gap-1">
+          {Array.from({ length: Math.max(voteBudget, 1) }).map((_, index) => (
+            <span
+              key={index}
+              className={`h-3 w-3 rounded-full ${index < usedVotes ? 'bg-blue-700' : 'bg-white border border-blue-200'}`}
+              aria-hidden="true"
+            />
+          ))}
+        </div>
+      </div>
+      {remaining === 0 && (
+        <p className="mt-3 rounded bg-white px-3 py-2 text-sm text-blue-800">
+          You have used all your votes. Tap a question you already voted for to change your mind.
+        </p>
+      )}
+    </Card>
   );
 }
 
@@ -289,9 +339,19 @@ function QuestionSessionCard({
   onSaveNotes: () => void;
   onStatusChange: (status: DiscussionQuestion['discussionStatus']) => void;
 }) {
+  const notesRef = useRef<HTMLTextAreaElement>(null);
   const isAuthor = question.authorId === currentUserId;
   const canAddVote = !isAuthor && usedVotes < voteBudget;
   const canClickVote = voteWeight > 0 || canAddVote;
+  const voteHelp = isAuthor
+    ? 'You cannot vote on your own question.'
+    : usedVotes >= voteBudget && voteWeight === 0
+      ? 'All votes used. Remove a vote from another question to choose this one.'
+      : allowStackedVotes
+        ? 'Add one vote to this question.'
+        : voteWeight > 0
+          ? 'Remove your vote.'
+          : 'Vote for this question.';
 
   return (
     <Card className={question.discussionStatus === 'selected' ? 'ring-2 ring-blue-500' : ''}>
@@ -326,9 +386,10 @@ function QuestionSessionCard({
           )}
           <div className="mt-3 flex flex-wrap gap-2 text-xs">
             {isTeacher && <span className="rounded bg-gray-100 px-2 py-1 text-gray-600">Author: {question.authorId}</span>}
-            {isAuthor && <span className="rounded bg-blue-100 px-2 py-1 text-blue-700">Your question</span>}
-            <span className="rounded bg-gray-100 px-2 py-1 text-gray-600">{question.discussionStatus}</span>
+            {isAuthor && <StatusBadge status="selected" label="Your question" />}
+            <StatusBadge status={question.discussionStatus} />
           </div>
+          {!isTeacher && <p className="mt-2 text-xs text-gray-400">{voteHelp}</p>}
 
           {question.discussionNotesMarkdown && !isTeacher && (
             <div className="mt-4 rounded-lg bg-gray-50 p-3">
@@ -349,12 +410,15 @@ function QuestionSessionCard({
                 <Button size="sm" variant="ghost" onClick={() => onStatusChange('none')}>
                   Clear
                 </Button>
+                <StatusBadge status={question.discussionStatus} />
               </div>
+              <MarkdownToolbar textareaRef={notesRef} value={notesDraft} onChange={onNotesDraftChange} />
               <textarea
+                ref={notesRef}
                 value={notesDraft}
                 onChange={e => onNotesDraftChange(e.target.value)}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-y font-mono text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-b-lg resize-y font-mono text-sm"
                 placeholder="Markdown notes under this question"
               />
               <Button size="sm" onClick={onSaveNotes}>Save question notes</Button>

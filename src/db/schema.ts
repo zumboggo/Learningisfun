@@ -24,7 +24,7 @@ import type {
   AppMetadata,
 } from '@/types';
 
-const db = new Dexie('EduSparkDB') as Dexie & {
+const db = new Dexie('LearningIsFunDB') as Dexie & {
   users: EntityTable<User, '$id'>;
   classes: EntityTable<Class, '$id'>;
   class_members: EntityTable<ClassMember, '$id'>;
