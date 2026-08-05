@@ -44,8 +44,8 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
 }
 
 function TeacherRoute({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
-  if (!user || (user.role !== 'teacher' && user.role !== 'admin')) {
+  const { user, isTeacher } = useAuth();
+  if (!user || !isTeacher) {
     return <Navigate to="/dashboard" replace />;
   }
   return <>{children}</>;

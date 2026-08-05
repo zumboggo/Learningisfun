@@ -6,8 +6,7 @@ import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 
 export function ClassesListPage() {
-  const { user } = useAuth();
-  const isTeacher = user?.role === 'teacher' || user?.role === 'admin';
+  const { user, isTeacher } = useAuth();
 
   const classes = useLiveQuery(async () => {
     if (!user) return [];

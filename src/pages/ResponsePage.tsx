@@ -16,7 +16,7 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 
 export function ResponsePage() {
   const { assignmentId } = useParams<{ assignmentId: string }>();
-  const { user } = useAuth();
+  const { user, isTeacher } = useAuth();
   const navigate = useNavigate();
   const [responseMarkdown, setResponseMarkdown] = useState('');
   const [busy, setBusy] = useState(false);
@@ -47,7 +47,6 @@ export function ResponsePage() {
 
   const wordCount = useMemo(() => countMarkdownWords(responseMarkdown), [responseMarkdown]);
   const belowMinimum = Boolean(assignment?.minResponseWords && wordCount < assignment.minResponseWords);
-  const isTeacher = user?.role === 'teacher' || user?.role === 'admin';
 
   const saveDraft = async () => {
     if (!user || !assignmentId) return;

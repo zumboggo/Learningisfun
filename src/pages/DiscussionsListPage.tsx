@@ -15,8 +15,7 @@ interface DiscussionSessionRow {
 }
 
 export function DiscussionsListPage() {
-  const { user } = useAuth();
-  const isTeacher = user?.role === 'teacher' || user?.role === 'admin';
+  const { user, isTeacher } = useAuth();
 
   const rows = useLiveQuery(async (): Promise<DiscussionSessionRow[]> => {
     if (!user) return [];

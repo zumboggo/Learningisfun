@@ -6,8 +6,7 @@ import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 
 export function ReadingsListPage() {
-  const { user } = useAuth();
-  const isTeacher = user?.role === 'teacher' || user?.role === 'admin';
+  const { user, isTeacher } = useAuth();
 
   const readings = useLiveQuery(async () => {
     if (!user) return [];

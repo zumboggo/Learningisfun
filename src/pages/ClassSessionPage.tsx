@@ -42,7 +42,7 @@ type SessionTab = 'text' | 'questions' | 'responses' | 'flashcards' | 'notes';
 
 export function ClassSessionPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
-  const { user } = useAuth();
+  const { user, isTeacher } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<SessionTab>('text');
   const [refreshKey, setRefreshKey] = useState(0);
@@ -63,8 +63,6 @@ export function ClassSessionPage() {
     () => (assignment ? db.readings.get(assignment.readingId) : undefined),
     [assignment?.readingId],
   );
-
-  const isTeacher = user?.role === 'teacher' || user?.role === 'admin' || cls?.teacherId === user?.$id;
 
   const questions = useLiveQuery(
     () => (sessionId ? (isTeacher ? getSessionQuestionsWithAuthorship(sessionId) : getSessionQuestions(sessionId)) : []),

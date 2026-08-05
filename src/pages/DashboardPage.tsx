@@ -25,10 +25,8 @@ interface DeckAction {
 }
 
 export function DashboardPage() {
-  const { user } = useAuth();
+  const { user, isTeacher } = useAuth();
   if (!user) return null;
-
-  const isTeacher = user.role === 'teacher' || user.role === 'admin';
 
   return isTeacher ? <TeacherDashboard /> : <StudentDashboard />;
 }

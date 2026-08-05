@@ -13,6 +13,11 @@ interface AuthContextType {
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  viewAsStudent: boolean;
+  setViewAsStudent: (value: boolean) => void;
+  effectiveRole: 'student' | 'teacher' | 'admin' | null;
+  isTeacher: boolean;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -20,6 +25,11 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [viewAsStudent, setViewAsStudent] = useState(false);
+
+  const effectiveRole = user ? (viewAsStudent ? 'student' : user.role) : null;
+  const isTeacher = effectiveRole === 'teacher' || effectiveRole === 'admin';
+  const isAdmin = effectiveRole === 'admin';
 
   const syncUserData = useCallback(async (userId: string) => {
     await classService.syncClassesFromServer(userId);
@@ -88,6 +98,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       register: registerHandler,
       logout: logoutHandler,
       refreshUser,
+      viewAsStudent,
+      setViewAsStudent,
+      effectiveRole,
+      isTeacher,
+      isAdmin,
     }}>
       {children}
     </AuthContext.Provider>

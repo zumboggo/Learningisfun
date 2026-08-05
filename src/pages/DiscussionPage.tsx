@@ -18,12 +18,11 @@ import type {
   ClassSession,
   Class,
   TeacherSettings,
-  User,
 } from '@/types';
 
 export function DiscussionPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
-  const { user } = useAuth();
+  const { user, isTeacher } = useAuth();
 
   const [questionText, setQuestionText] = useState('');
   const [selectedPassage, setSelectedPassage] = useState('');
@@ -51,11 +50,6 @@ export function DiscussionPage() {
   const teacherSettings = useLiveQuery(
     () => (cls ? db.teacher_settings.where('classId').equals(cls.$id).first() : undefined),
     [cls?.$id],
-  );
-
-  const isTeacher = useMemo(
-    () => user?.role === 'teacher' || user?.role === 'admin' || cls?.teacherId === user?.$id,
-    [user?.role, user?.$id, cls?.teacherId],
   );
 
   const allQuestions = useLiveQuery(

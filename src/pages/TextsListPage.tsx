@@ -15,8 +15,7 @@ interface ReadingWithClasses {
 }
 
 export function TextsListPage() {
-  const { user } = useAuth();
-  const isTeacher = user?.role === 'teacher' || user?.role === 'admin';
+  const { user, isTeacher } = useAuth();
 
   const teacherData = useLiveQuery(async (): Promise<ReadingWithClasses[]> => {
     if (!user || !isTeacher) return [];

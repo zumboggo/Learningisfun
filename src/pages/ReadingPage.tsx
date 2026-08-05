@@ -20,7 +20,7 @@ import type { Annotation, AnnotationType } from '@/types';
 
 export function ReadingPage() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, isTeacher } = useAuth();
   const navigate = useNavigate();
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -33,8 +33,6 @@ export function ReadingPage() {
     () => (id ? getTeacherVisibleAnnotations(id) : []),
     [id],
   );
-
-  const isTeacher = user?.role === 'teacher' || user?.role === 'admin';
 
   const classSettings = useLiveQuery(async () => {
     if (!id || !isTeacher) return null;

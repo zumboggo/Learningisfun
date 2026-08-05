@@ -10,12 +10,12 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const { user, logout } = useAuth();
+  const { user, logout, isTeacher, viewAsStudent, setViewAsStudent } = useAuth();
   const location = useLocation();
   const syncState = useSyncStatus();
   const online = useOnlineStatus();
 
-  const isTeacher = user?.role === 'teacher' || user?.role === 'admin';
+  const isActualTeacher = user?.role === 'teacher' || user?.role === 'admin';
 
   const navItems = isTeacher
     ? [
@@ -37,6 +37,19 @@ export function AppLayout({ children }: AppLayoutProps) {
     return (
       <div className="student-shell min-h-screen">
         <div className="fixed right-4 top-4 z-30 flex items-center gap-2 rounded-full border border-white/70 bg-white/80 px-3 py-2 shadow-sm backdrop-blur">
+          {isActualTeacher && (
+            <button
+              onClick={() => setViewAsStudent(!viewAsStudent)}
+              className={`text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${
+                viewAsStudent
+                  ? 'bg-blue-100 border-blue-200 text-blue-700'
+                  : 'bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200'
+              }`}
+              title={viewAsStudent ? 'Viewing as student' : 'Viewing as teacher'}
+            >
+              {viewAsStudent ? 'Student' : 'Teacher'}
+            </button>
+          )}
           <SyncIndicator {...syncState} online={online} />
           <button
             onClick={() => void logout()}
@@ -71,12 +84,25 @@ export function AppLayout({ children }: AppLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col md:pl-56">
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
         <Link to="/dashboard" className="text-lg font-bold text-blue-700">
           Learning is Fun
         </Link>
         <div className="flex items-center gap-3">
+          {isActualTeacher && (
+            <button
+              onClick={() => setViewAsStudent(!viewAsStudent)}
+              className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
+                viewAsStudent
+                  ? 'bg-blue-100 border-blue-200 text-blue-700'
+                  : 'bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200'
+              }`}
+              title={viewAsStudent ? 'Viewing as student' : 'Viewing as teacher'}
+            >
+              {viewAsStudent ? 'Student view' : 'Teacher view'}
+            </button>
+          )}
           <SyncIndicator {...syncState} online={online} />
           <button
             onClick={() => void logout()}
@@ -135,10 +161,6 @@ export function AppLayout({ children }: AppLayoutProps) {
           {user?.name} - {user?.role}
         </div>
       </nav>
-
-      <div className="hidden md:block ml-56">
-        {/* Spacer for desktop nav */}
-      </div>
     </div>
   );
 }

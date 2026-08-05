@@ -20,7 +20,7 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 
 export function ClassDetailPage() {
   const { classId } = useParams<{ classId: string }>();
-  const { user } = useAuth();
+  const { user, isTeacher } = useAuth();
   const [newCode, setNewCode] = useState('');
   const [showDiscussionModal, setShowDiscussionModal] = useState(false);
   const [discussionTitle, setDiscussionTitle] = useState('Class discussion');
@@ -36,8 +36,7 @@ export function ClassDetailPage() {
     [classId],
   );
 
-  const isOwner = cls?.teacherId === user?.$id;
-  const isTeacher = user?.role === 'teacher' || user?.role === 'admin';
+  const isOwner = cls?.teacherId === user?.$id && isTeacher;
   const memberIds = useMemo(() => members?.map(m => m.userId) || [], [members]);
 
   const students = useLiveQuery(async () => {
