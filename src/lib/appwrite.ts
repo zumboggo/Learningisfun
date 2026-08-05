@@ -19,6 +19,7 @@ export const COLLECTIONS = {
   class_members: 'class_members',
   readings: 'readings',
   reading_assignments: 'reading_assignments',
+  paragraph_observations: 'paragraph_observations',
   class_sessions: 'class_sessions',
   class_session_items: 'class_session_items',
   annotations: 'annotations',

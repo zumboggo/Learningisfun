@@ -71,7 +71,13 @@ export async function findUserByEmail(email: string): Promise<User | null> {
 }
 
 export async function login(email: string, password: string): Promise<User> {
-  await account.createEmailPasswordSession(email, password);
+  try {
+    await account.createEmailPasswordSession(email, password);
+  } catch (err) {
+    const localTeacher = await loginLocalDevelopmentTeacher(email, password);
+    if (localTeacher) return localTeacher;
+    throw err;
+  }
   const appwriteUser = await account.get();
 
   let user: User;
@@ -110,6 +116,27 @@ export async function login(email: string, password: string): Promise<User> {
     }
   }
 
+  await db.users.put(user);
+  await db.app_metadata.put({ key: 'currentUserId', value: user.$id });
+  return user;
+}
+
+async function loginLocalDevelopmentTeacher(email: string, password: string): Promise<User | null> {
+  const devEmail = import.meta.env.VITE_DEV_TEACHER_EMAIL;
+  const devPassword = import.meta.env.VITE_DEV_TEACHER_PASSWORD;
+  if (!devEmail || !devPassword) return null;
+  if (email.trim().toLowerCase() !== devEmail.trim().toLowerCase() || password !== devPassword) return null;
+
+  const now = getTimestamp();
+  const user: User = {
+    $id: 'local-teacher',
+    email: devEmail,
+    name: 'Teacher',
+    role: 'teacher',
+    deviceId: generateDeviceId(),
+    lastSyncAt: now,
+    createdAt: now,
+  };
   await db.users.put(user);
   await db.app_metadata.put({ key: 'currentUserId', value: user.$id });
   return user;

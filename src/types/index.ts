@@ -57,6 +57,21 @@ export interface ReadingAssignment {
   publishedAt: string | null;
 }
 
+export interface ParagraphObservation {
+  $id: string;
+  readingId: string;
+  assignmentId: string;
+  classSessionId: string;
+  paragraphIndex: number;
+  teacherId: string;
+  observationMarkdown: string;
+  keyQuestionMarkdown: string;
+  vocabularyMarkdown: string;
+  createdAt: string;
+  updatedAt: string;
+  syncStatus: SyncStatus;
+}
+
 export interface ClassSession {
   $id: string;
   classId: string;

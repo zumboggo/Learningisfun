@@ -220,6 +220,7 @@ function collectionForEntity(entityType: string): string | null {
     case 'flashcard_study_session': return COLLECTIONS.flashcard_study_sessions;
     case 'reading': return COLLECTIONS.readings;
     case 'reading_assignment': return COLLECTIONS.reading_assignments;
+    case 'paragraph_observation': return COLLECTIONS.paragraph_observations;
     case 'deck': return COLLECTIONS.flashcard_decks;
     case 'card': return COLLECTIONS.flashcard_cards;
     case 'deck_assignment': return COLLECTIONS.deck_assignments;
@@ -239,6 +240,9 @@ async function markEntitySynced(entityType: string, entityId: string): Promise<v
       break;
     case 'submission':
       await db.submissions.update(entityId, { syncStatus: 'synced' });
+      break;
+    case 'paragraph_observation':
+      await db.paragraph_observations.update(entityId, { syncStatus: 'synced' });
       break;
     case 'flashcard_review_event':
       await db.flashcard_review_events.update(entityId, { syncStatus: 'synced' });

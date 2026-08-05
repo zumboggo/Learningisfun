@@ -1,7 +1,8 @@
 import { db } from '@/db/schema';
 import { generateId, getTimestamp } from '@/utils/helpers';
 import { addToQueue } from './sync.service';
-import type { ClassSession, ClassSessionItem, Submission, DiscussionQuestion } from '@/types';
+import { paragraphNotesMarkdown } from './paragraph-observation.service';
+import type { ClassSession, ClassSessionItem, Submission, DiscussionQuestion, ParagraphObservation } from '@/types';
 
 export async function createClassSession(
   classId: string,
@@ -71,14 +72,8 @@ export async function updateClassSession(
 }
 
 export async function publishClassNotes(sessionId: string, userId: string): Promise<void> {
-  const session = await db.class_sessions.get(sessionId);
-  if (!session) return;
-  const questions = await db.discussion_questions
-    .where('classSessionId')
-    .equals(sessionId)
-    .and(q => q.moderationStatus === 'visible' && (q.discussionStatus === 'selected' || q.discussionStatus === 'discussed'))
-    .toArray();
-  const publishedNotesMarkdown = buildPublishedNotes(session, questions);
+  const publishedNotesMarkdown = await buildClassNotesPreview(sessionId);
+  if (!publishedNotesMarkdown) return;
   const now = getTimestamp();
   await db.class_sessions.update(sessionId, {
     publishedNotesMarkdown,
@@ -89,6 +84,21 @@ export async function publishClassNotes(sessionId: string, userId: string): Prom
   });
   const updated = await db.class_sessions.get(sessionId);
   if (updated) await addToQueue(userId, 'class_session', sessionId, 'update', updated);
+}
+
+export async function buildClassNotesPreview(sessionId: string): Promise<string> {
+  const session = await db.class_sessions.get(sessionId);
+  if (!session) return '';
+  const questions = await db.discussion_questions
+    .where('classSessionId')
+    .equals(sessionId)
+    .and(q => q.moderationStatus === 'visible' && (q.discussionStatus === 'selected' || q.discussionStatus === 'discussed'))
+    .toArray();
+  const observations = await db.paragraph_observations
+    .where('classSessionId')
+    .equals(sessionId)
+    .toArray();
+  return buildPublishedNotes(session, questions, observations);
 }
 
 export async function addSessionItem(
@@ -128,9 +138,15 @@ function normalizeVoteBudget(value: number | undefined): number {
   return Math.min(20, Math.max(0, Math.round(value || 4)));
 }
 
-function buildPublishedNotes(session: ClassSession, questions: DiscussionQuestion[]): string {
+function buildPublishedNotes(
+  session: ClassSession,
+  questions: DiscussionQuestion[],
+  observations: ParagraphObservation[],
+): string {
   const sections = [`# ${session.title}`];
   if (session.notesMarkdown.trim()) sections.push(session.notesMarkdown.trim());
+  const paragraphNotes = paragraphNotesMarkdown(observations.sort((a, b) => a.paragraphIndex - b.paragraphIndex));
+  if (paragraphNotes) sections.push(paragraphNotes);
   const selected = [...questions].sort((a, b) => b.voteCount - a.voteCount);
   if (selected.length > 0) {
     sections.push('## Discussed Questions');

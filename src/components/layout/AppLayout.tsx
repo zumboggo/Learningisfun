@@ -19,16 +19,17 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const navItems = isTeacher
     ? [
-        { to: '/dashboard', label: 'Dashboard', icon: '📊' },
-        { to: '/classes', label: 'Classes', icon: '👥' },
-        { to: '/readings', label: 'Readings', icon: '📖' },
-        { to: '/decks', label: 'Decks', icon: '🃏' },
+        { to: '/dashboard', label: 'Dashboard', icon: 'D' },
+        { to: '/lessons/new', label: 'Lesson', icon: '+' },
+        { to: '/classes', label: 'Classes', icon: 'C' },
+        { to: '/decks', label: 'Decks', icon: 'V' },
+        { to: '/setup', label: 'Setup', icon: '?' },
       ]
     : [
-        { to: '/dashboard', label: 'Home', icon: '🏠' },
-        { to: '/readings', label: 'Readings', icon: '📖' },
-        { to: '/decks', label: 'Cards', icon: '🃏' },
-        { to: '/classes', label: 'Classes', icon: '👥' },
+        { to: '/dashboard', label: 'Home', icon: 'H' },
+        { to: '/readings', label: 'Readings', icon: 'R' },
+        { to: '/decks', label: 'Cards', icon: 'V' },
+        { to: '/classes', label: 'Classes', icon: 'C' },
       ];
 
   return (
@@ -58,14 +59,16 @@ export function AppLayout({ children }: AppLayoutProps) {
             <Link
               key={item.to}
               to={item.to}
-              className={`flex flex-col items-center py-2 px-3 min-w-[64px] ${
+              className={`flex min-w-[58px] flex-col items-center px-2 py-2 ${
                 location.pathname.startsWith(item.to)
                   ? 'text-blue-600'
                   : 'text-gray-500'
               }`}
             >
-              <span className="text-xl">{item.icon}</span>
-              <span className="text-xs mt-1">{item.label}</span>
+              <span className="flex h-6 w-6 items-center justify-center rounded bg-gray-100 text-xs font-bold">
+                {item.icon}
+              </span>
+              <span className="mt-1 text-[11px]">{item.label}</span>
             </Link>
           ))}
         </div>
@@ -83,13 +86,15 @@ export function AppLayout({ children }: AppLayoutProps) {
                   : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
-              <span>{item.icon}</span>
+              <span className="flex h-6 w-6 items-center justify-center rounded bg-gray-100 text-xs font-bold">
+                {item.icon}
+              </span>
               <span>{item.label}</span>
             </Link>
           ))}
         </div>
         <div className="p-4 border-t border-gray-100 text-xs text-gray-400">
-          {user?.name} · {user?.role}
+          {user?.name} - {user?.role}
         </div>
       </nav>
 

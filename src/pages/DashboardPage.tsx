@@ -230,9 +230,14 @@ function TeacherDashboard() {
           <h1 className="text-2xl font-bold">Teacher Dashboard</h1>
           <p className="text-gray-500 text-sm">Today’s class tools in one place.</p>
         </div>
-        <Link to="/classes/new">
-          <Button size="sm">New class</Button>
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link to="/setup">
+            <Button size="sm" variant="secondary">Setup guide</Button>
+          </Link>
+          <Link to="/lessons/new">
+            <Button size="sm">New lesson</Button>
+          </Link>
+        </div>
       </div>
 
       <section>
@@ -269,7 +274,7 @@ function TeacherDashboard() {
           <EmptyState
             title="No active class period"
             message="Open a class and start a period to collect questions, votes, notes, and anonymous submissions."
-            action={<Link to="/classes"><Button variant="secondary">Open classes</Button></Link>}
+            action={<Link to="/lessons/new"><Button variant="secondary">Build a lesson</Button></Link>}
           />
         )}
       </section>
@@ -395,13 +400,14 @@ async function buildTeacherClassRows(classes: Class[]): Promise<Array<{
 }>> {
   const rows = [];
   for (const cls of classes) {
-    const [memberCount, readingAssignments] = await Promise.all([
+    const [memberCount, readingAssignments, sessions] = await Promise.all([
       db.class_members.where('classId').equals(cls.$id).and(member => member.role === 'student').count(),
       db.reading_assignments.where('classId').equals(cls.$id).toArray(),
+      db.class_sessions.where('classId').equals(cls.$id).toArray(),
     ]);
     let questionCount = 0;
-    for (const assignment of readingAssignments) {
-      questionCount += await db.discussion_questions.where('assignmentId').equals(assignment.$id).count();
+    for (const session of sessions) {
+      questionCount += await db.discussion_questions.where('classSessionId').equals(session.$id).count();
     }
     rows.push({ cls, memberCount, readingCount: readingAssignments.length, questionCount });
   }

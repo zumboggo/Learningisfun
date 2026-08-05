@@ -20,6 +20,8 @@ import { ImportDeckPage } from '@/pages/ImportDeckPage';
 import { CreateClassPage } from '@/pages/teacher/CreateClassPage';
 import { CreateReadingPage } from '@/pages/teacher/CreateReadingPage';
 import { CreateDeckPage } from '@/pages/teacher/CreateDeckPage';
+import { LessonBuilderPage } from '@/pages/teacher/LessonBuilderPage';
+import { TeacherSetupPage } from '@/pages/teacher/TeacherSetupPage';
 import { QuestionModerationPage } from '@/pages/teacher/QuestionModerationPage';
 import type { ReactNode } from 'react';
 
@@ -83,6 +85,8 @@ export default function App() {
           <Route path="/sessions/:sessionId" element={<ProtectedRoute><ClassSessionPage /></ProtectedRoute>} />
 
           <Route path="/readings/new" element={<ProtectedRoute><TeacherRoute><CreateReadingPage /></TeacherRoute></ProtectedRoute>} />
+          <Route path="/lessons/new" element={<ProtectedRoute><TeacherRoute><LessonBuilderPage /></TeacherRoute></ProtectedRoute>} />
+          <Route path="/setup" element={<ProtectedRoute><TeacherRoute><TeacherSetupPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/decks/new" element={<ProtectedRoute><TeacherRoute><CreateDeckPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/classes/new" element={<ProtectedRoute><TeacherRoute><CreateClassPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/questions/:assignmentId/moderate" element={<ProtectedRoute><TeacherRoute><QuestionModerationPage /></TeacherRoute></ProtectedRoute>} />

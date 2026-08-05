@@ -33,7 +33,7 @@ export function LoginPage() {
           <p className="text-gray-500 mt-2">Offline-first learning</p>
         </div>
 
-        <form onSubmit={void handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
           {error && (
             <div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg">{error}</div>
           )}
