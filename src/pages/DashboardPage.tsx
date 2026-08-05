@@ -231,11 +231,11 @@ function TeacherDashboard() {
           <p className="text-gray-500 text-sm">Today’s class tools in one place.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link to="/setup">
-            <Button size="sm" variant="secondary">Setup guide</Button>
+          <Link to="/settings">
+            <Button size="sm" variant="secondary">Settings</Button>
           </Link>
-          <Link to="/lessons/new">
-            <Button size="sm">New lesson</Button>
+          <Link to="/texts/new">
+            <Button size="sm">New text</Button>
           </Link>
         </div>
       </div>
@@ -273,8 +273,8 @@ function TeacherDashboard() {
         ) : (
           <EmptyState
             title="No active class period"
-            message="Open a class and start a period to collect questions, votes, notes, and anonymous submissions."
-            action={<Link to="/lessons/new"><Button variant="secondary">Build a lesson</Button></Link>}
+            message="Open a class and start a discussion to collect questions, votes, notes, and anonymous submissions."
+            action={<Link to="/classes"><Button variant="secondary">Go to classes</Button></Link>}
           />
         )}
       </section>

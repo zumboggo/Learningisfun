@@ -20,14 +20,16 @@ export function AppLayout({ children }: AppLayoutProps) {
   const navItems = isTeacher
     ? [
         { to: '/dashboard', label: 'Dashboard', icon: 'D' },
-        { to: '/lessons/new', label: 'Lesson', icon: '+' },
-        { to: '/classes', label: 'Classes', icon: 'C' },
+        { to: '/texts', label: 'Texts', icon: 'T' },
+        { to: '/discussions', label: 'Discussions', icon: 'Q' },
         { to: '/decks', label: 'Decks', icon: 'V' },
-        { to: '/setup', label: 'Setup', icon: '?' },
+        { to: '/classes', label: 'Classes', icon: 'C' },
+        { to: '/settings', label: 'Settings', icon: '?' },
       ]
     : [
         { to: '/dashboard', label: 'Home', icon: 'H' },
-        { to: '/readings', label: 'Readings', icon: 'R' },
+        { to: '/texts', label: 'Texts', icon: 'T' },
+        { to: '/discussions', label: 'Discussions', icon: 'Q' },
         { to: '/decks', label: 'Cards', icon: 'V' },
         { to: '/classes', label: 'Classes', icon: 'C' },
       ];

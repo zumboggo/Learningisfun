@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/db/schema';
@@ -21,12 +21,10 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 export function ClassDetailPage() {
   const { classId } = useParams<{ classId: string }>();
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [newCode, setNewCode] = useState('');
-  const [showSessionModal, setShowSessionModal] = useState(false);
-  const [sessionTitle, setSessionTitle] = useState('Class discussion');
-  const [sessionDate, setSessionDate] = useState(todayKey());
-  const [sessionAssignmentId, setSessionAssignmentId] = useState('');
+  const [showDiscussionModal, setShowDiscussionModal] = useState(false);
+  const [discussionTitle, setDiscussionTitle] = useState('Class discussion');
+  const [discussionDate, setDiscussionDate] = useState(todayKey());
   const [votesPerStudent, setVotesPerStudent] = useState(4);
   const [allowStackedVotes, setAllowStackedVotes] = useState(false);
   const [rosterImporting, setRosterImporting] = useState(false);
@@ -68,10 +66,15 @@ export function ClassDetailPage() {
     return rows.sort((a, b) => b.assignment.assignedAt.localeCompare(a.assignment.assignedAt));
   }, [classId]);
 
-  const sessions = useLiveQuery(
-    () => (classId ? db.class_sessions.where('classId').equals(classId).reverse().sortBy('sessionDate') : []),
-    [classId],
-  );
+  const discussions = useLiveQuery(async () => {
+    if (!classId) return [];
+    const sessions = await db.class_sessions.where('classId').equals(classId).reverse().sortBy('sessionDate');
+    const rows = await Promise.all(sessions.map(async session => ({
+      session,
+      questionCount: await db.discussion_questions.where('classSessionId').equals(session.$id).count(),
+    })));
+    return rows;
+  }, [classId]);
 
   const handleRegenerateCode = async () => {
     if (!classId || !user) return;
@@ -84,17 +87,16 @@ export function ClassDetailPage() {
     await removeStudent(classId, userId);
   };
 
-  const handleCreateSession = async () => {
+  const handleCreateDiscussion = async () => {
     if (!classId || !user) return;
     const session = await createClassSession(classId, user.$id, {
-      title: sessionTitle,
-      sessionDate,
-      assignmentId: sessionAssignmentId || null,
+      title: discussionTitle,
+      sessionDate: discussionDate,
+      assignmentId: null,
       votesPerStudent,
       allowStackedVotes,
     });
-    setShowSessionModal(false);
-    navigate(`/sessions/${session.$id}`);
+    setShowDiscussionModal(false);
   };
 
   const handleRosterFile = async (file: File) => {
@@ -137,7 +139,7 @@ export function ClassDetailPage() {
         </div>
         {isOwner && (
           <div className="flex flex-wrap gap-2">
-            <Button onClick={() => setShowSessionModal(true)} size="sm">Start class period</Button>
+            <Button onClick={() => setShowDiscussionModal(true)} size="sm">Start discussion</Button>
             <Link to={`/classes/${cls.$id}/reports`}>
               <Button size="sm" variant="secondary">Reports</Button>
             </Link>
@@ -188,90 +190,95 @@ export function ClassDetailPage() {
         </Card>
       )}
 
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold">Class periods</h2>
-          {isOwner && sessions && sessions.length > 0 && (
-            <Button onClick={() => setShowSessionModal(true)} size="sm" variant="secondary">New period</Button>
-          )}
-        </div>
-        {sessions && sessions.length > 0 ? (
-          <div className="grid gap-3 sm:grid-cols-2">
-            {sessions.map(session => (
-              <Link key={session.$id} to={`/sessions/${session.$id}`}>
-                <Card>
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="font-medium">{session.title}</h3>
-                      <p className="text-sm text-gray-500">{session.sessionDate}</p>
-                    </div>
-                    <StatusBadge status={session.status} />
-                  </div>
-                  <p className="mt-2 text-xs text-gray-500">
-                    {session.votesPerStudent} votes each{session.allowStackedVotes ? ' | stacking enabled' : ''}
-                  </p>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            title="No class periods yet"
-            message="Start a period to gather questions, run voting, publish notes, and present anonymous responses."
-            action={isOwner && <Button onClick={() => setShowSessionModal(true)}>Start first period</Button>}
-          />
-        )}
-      </section>
-
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-3">
         <section>
-          <h2 className="text-lg font-semibold mb-3">Readings ({readingRows?.length || 0})</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold">Texts ({readingRows?.length || 0})</h2>
+            {isOwner && <Link to="/texts/new"><Button size="sm" variant="secondary">+</Button></Link>}
+          </div>
           {readingRows && readingRows.length > 0 ? (
             <div className="space-y-2">
-              {readingRows.map(({ assignment, reading }) => (
-                <Card key={assignment.$id}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <Link to={`/readings/${assignment.readingId}`} className="font-medium hover:text-blue-700">
-                        {reading?.title || 'Unknown reading'}
+              {readingRows.slice(0, 5).map(({ assignment, reading }) => (
+                <Link key={assignment.$id} to={`/texts/${assignment.readingId}`}>
+                  <Card>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h3 className="font-medium text-sm">{reading?.title || reading?.$id}</h3>
+                        {reading?.author && <p className="text-xs text-gray-500">{reading.author}</p>}
+                      </div>
+                      <Link to={isTeacher ? `/assignments/${assignment.$id}/submissions` : `/assignments/${assignment.$id}/respond`}>
+                        <Button size="sm" variant="secondary">{isTeacher ? 'View' : 'Read'}</Button>
                       </Link>
-                      {assignment.promptMarkdown && (
-                        <p className="text-sm text-gray-500 mt-1 line-clamp-2">{assignment.promptMarkdown}</p>
-                      )}
                     </div>
-                    <Link to={isTeacher ? `/assignments/${assignment.$id}/submissions` : `/assignments/${assignment.$id}/respond`}>
-                      <Button size="sm" variant="secondary">{isTeacher ? 'Responses' : 'Respond'}</Button>
-                    </Link>
-                  </div>
-                </Card>
+                  </Card>
+                </Link>
               ))}
+              {readingRows.length > 5 && (
+                <Link to="/texts" className="text-sm text-blue-600 hover:underline block">
+                  +{readingRows.length - 5} more texts
+                </Link>
+              )}
             </div>
           ) : (
             <EmptyState
-              title="No readings assigned"
-              message="Add a reading with an optional Markdown writing prompt and word minimum."
-              action={isOwner && <Link to="/readings/new"><Button size="sm" variant="secondary">Add reading</Button></Link>}
+              title="No texts yet"
+              message="Add reading material for students."
+              action={isOwner && <Link to="/texts/new"><Button size="sm" variant="secondary">Add text</Button></Link>}
             />
-          )}
-          {isOwner && readingRows && readingRows.length > 0 && (
-            <Link to="/readings/new" className="mt-3 inline-block">
-              <Button size="sm" variant="secondary">Add reading</Button>
-            </Link>
           )}
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold mb-3">Flashcard decks ({deckRows?.length || 0})</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold">Discussions ({discussions?.length || 0})</h2>
+            {isOwner && <Button onClick={() => setShowDiscussionModal(true)} size="sm" variant="secondary">+</Button>}
+          </div>
+          {discussions && discussions.length > 0 ? (
+            <div className="space-y-2">
+              {discussions.slice(0, 5).map(({ session, questionCount }) => (
+                <Link key={session.$id} to={`/discussions/${session.$id}`}>
+                  <Card>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h3 className="font-medium text-sm">{session.title}</h3>
+                        <p className="text-xs text-gray-500">{session.sessionDate}</p>
+                      </div>
+                      <StatusBadge status={session.status} />
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">{questionCount} questions</p>
+                  </Card>
+                </Link>
+              ))}
+              {discussions.length > 5 && (
+                <Link to="/discussions" className="text-sm text-blue-600 hover:underline block">
+                  +{discussions.length - 5} more discussions
+                </Link>
+              )}
+            </div>
+          ) : (
+            <EmptyState
+              title="No discussions yet"
+              message="Start a discussion to collect questions and votes."
+              action={isOwner && <Button onClick={() => setShowDiscussionModal(true)} size="sm" variant="secondary">Start discussion</Button>}
+            />
+          )}
+        </section>
+
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold">Decks ({deckRows?.length || 0})</h2>
+            {isOwner && <Link to="/decks/new"><Button size="sm" variant="secondary">+</Button></Link>}
+          </div>
           {deckRows && deckRows.length > 0 ? (
             <div className="space-y-2">
-              {deckRows.map(({ assignment, deck }) => (
+              {deckRows.slice(0, 5).map(({ assignment, deck }) => (
                 <Card key={assignment.$id}>
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start justify-between gap-2">
                     <div>
-                      <Link to={`/decks/${assignment.deckId}/review`} className="font-medium hover:text-blue-700">
+                      <Link to={`/decks/${assignment.deckId}/review`} className="font-medium text-sm hover:text-blue-700">
                         {deck?.title || 'Unknown deck'}
                       </Link>
-                      {deck?.description && <p className="text-sm text-gray-500">{deck.description}</p>}
+                      {deck?.description && <p className="text-xs text-gray-500">{deck.description}</p>}
                     </div>
                     {isTeacher ? (
                       <Link to={`/classes/${cls.$id}/decks/${assignment.deckId}/progress`}>
@@ -288,15 +295,10 @@ export function ClassDetailPage() {
             </div>
           ) : (
             <EmptyState
-              title="No flashcard decks assigned"
-              message="Import a vocabulary CSV or create a deck so students can study with FSRS scheduling."
-              action={isOwner && <Link to="/decks/new"><Button size="sm" variant="secondary">Add deck</Button></Link>}
+              title="No decks yet"
+              message="Import flashcards for vocabulary study."
+              action={isOwner && <Link to="/decks/import"><Button size="sm" variant="secondary">Import deck</Button></Link>}
             />
-          )}
-          {isOwner && deckRows && deckRows.length > 0 && (
-            <Link to="/decks/new" className="mt-3 inline-block">
-              <Button size="sm" variant="secondary">Add deck</Button>
-            </Link>
           )}
         </section>
       </div>
@@ -330,13 +332,13 @@ export function ClassDetailPage() {
         )}
       </section>
 
-      <Modal open={showSessionModal} onClose={() => setShowSessionModal(false)} title="Start class period">
+      <Modal open={showDiscussionModal} onClose={() => setShowDiscussionModal(false)} title="Start discussion">
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
             <input
-              value={sessionTitle}
-              onChange={e => setSessionTitle(e.target.value)}
+              value={discussionTitle}
+              onChange={e => setDiscussionTitle(e.target.value)}
               className="w-full px-3 py-2.5 border border-gray-300 rounded-lg"
             />
           </div>
@@ -345,8 +347,8 @@ export function ClassDetailPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
               <input
                 type="date"
-                value={sessionDate}
-                onChange={e => setSessionDate(e.target.value)}
+                value={discussionDate}
+                onChange={e => setDiscussionDate(e.target.value)}
                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg"
               />
             </div>
@@ -362,19 +364,6 @@ export function ClassDetailPage() {
               />
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Linked reading assignment</label>
-            <select
-              value={sessionAssignmentId}
-              onChange={e => setSessionAssignmentId(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg"
-            >
-              <option value="">No linked assignment</option>
-              {readingRows?.map(({ assignment, reading }) => (
-                <option key={assignment.$id} value={assignment.$id}>{reading?.title || assignment.$id}</option>
-              ))}
-            </select>
-          </div>
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -384,8 +373,8 @@ export function ClassDetailPage() {
             />
             <span>Allow students to put multiple votes on one question</span>
           </label>
-          <Button onClick={() => void handleCreateSession()} className="w-full">
-            Create class period
+          <Button onClick={() => void handleCreateDiscussion()} className="w-full">
+            Create discussion
           </Button>
         </div>
       </Modal>

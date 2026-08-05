@@ -318,6 +318,24 @@ export interface CsvPreview {
   longFields: number;
 }
 
+export interface TeacherSettings {
+  $id: string;
+  classId: string;
+  commentThreshold: number;
+  hideStudentNicknames: boolean;
+}
+
+export interface DiscussionAnswer {
+  $id: string;
+  questionId: string;
+  authorId: string;
+  authorName: string;
+  answerText: string;
+  createdAt: string;
+  updatedAt: string;
+  syncStatus: SyncStatus;
+}
+
 export interface AppMetadata {
   key: string;
   value: string;

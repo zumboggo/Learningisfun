@@ -5,10 +5,11 @@ import { LoginPage } from '@/pages/LoginPage';
 import { RegisterPage } from '@/pages/RegisterPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { ReadingPage } from '@/pages/ReadingPage';
-import { ReadingsListPage } from '@/pages/ReadingsListPage';
+import { TextsListPage } from '@/pages/TextsListPage';
 import { FlashcardReviewPage } from '@/pages/FlashcardReviewPage';
 import { DecksListPage } from '@/pages/DecksListPage';
-import { QuestionBoardPage } from '@/pages/QuestionBoardPage';
+import { DiscussionsListPage } from '@/pages/DiscussionsListPage';
+import { DiscussionPage } from '@/pages/DiscussionPage';
 import { ClassesListPage } from '@/pages/ClassesListPage';
 import { ClassDetailPage } from '@/pages/ClassDetailPage';
 import { ClassSessionPage } from '@/pages/ClassSessionPage';
@@ -20,8 +21,7 @@ import { ImportDeckPage } from '@/pages/ImportDeckPage';
 import { CreateClassPage } from '@/pages/teacher/CreateClassPage';
 import { CreateReadingPage } from '@/pages/teacher/CreateReadingPage';
 import { CreateDeckPage } from '@/pages/teacher/CreateDeckPage';
-import { LessonBuilderPage } from '@/pages/teacher/LessonBuilderPage';
-import { TeacherSetupPage } from '@/pages/teacher/TeacherSetupPage';
+import { TeacherSettingsPage } from '@/pages/TeacherSettingsPage';
 import { QuestionModerationPage } from '@/pages/teacher/QuestionModerationPage';
 import type { ReactNode } from 'react';
 
@@ -68,28 +68,33 @@ export default function App() {
 
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
 
-          <Route path="/readings" element={<ProtectedRoute><ReadingsListPage /></ProtectedRoute>} />
-          <Route path="/readings/:id" element={<ProtectedRoute><ReadingPage /></ProtectedRoute>} />
-          <Route path="/readings/:readingId/questions" element={<ProtectedRoute><QuestionBoardPage /></ProtectedRoute>} />
-          <Route path="/assignments/:assignmentId/respond" element={<ProtectedRoute><ResponsePage /></ProtectedRoute>} />
-          <Route path="/assignments/:assignmentId/submissions" element={<ProtectedRoute><TeacherRoute><SubmissionReviewPage /></TeacherRoute></ProtectedRoute>} />
+          <Route path="/texts" element={<ProtectedRoute><TextsListPage /></ProtectedRoute>} />
+          <Route path="/texts/:id" element={<ProtectedRoute><ReadingPage /></ProtectedRoute>} />
+          <Route path="/texts/new" element={<ProtectedRoute><TeacherRoute><CreateReadingPage /></TeacherRoute></ProtectedRoute>} />
+
+          <Route path="/discussions" element={<ProtectedRoute><DiscussionsListPage /></ProtectedRoute>} />
+          <Route path="/discussions/:sessionId" element={<ProtectedRoute><DiscussionPage /></ProtectedRoute>} />
 
           <Route path="/decks" element={<ProtectedRoute><DecksListPage /></ProtectedRoute>} />
           <Route path="/decks/:deckId/review" element={<ProtectedRoute><FlashcardReviewPage /></ProtectedRoute>} />
           <Route path="/decks/import" element={<ProtectedRoute><ImportDeckPage /></ProtectedRoute>} />
+          <Route path="/decks/new" element={<ProtectedRoute><TeacherRoute><CreateDeckPage /></TeacherRoute></ProtectedRoute>} />
 
           <Route path="/classes" element={<ProtectedRoute><ClassesListPage /></ProtectedRoute>} />
           <Route path="/classes/:classId" element={<ProtectedRoute><ClassDetailPage /></ProtectedRoute>} />
           <Route path="/classes/:classId/reports" element={<ProtectedRoute><TeacherRoute><ParticipationReportPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/classes/:classId/decks/:deckId/progress" element={<ProtectedRoute><TeacherRoute><FlashcardAnalyticsPage /></TeacherRoute></ProtectedRoute>} />
+
+          <Route path="/settings" element={<ProtectedRoute><TeacherRoute><TeacherSettingsPage /></TeacherRoute></ProtectedRoute>} />
+
           <Route path="/sessions/:sessionId" element={<ProtectedRoute><ClassSessionPage /></ProtectedRoute>} />
+          <Route path="/assignments/:assignmentId/respond" element={<ProtectedRoute><ResponsePage /></ProtectedRoute>} />
+          <Route path="/assignments/:assignmentId/submissions" element={<ProtectedRoute><TeacherRoute><SubmissionReviewPage /></TeacherRoute></ProtectedRoute>} />
 
           <Route path="/readings/new" element={<ProtectedRoute><TeacherRoute><CreateReadingPage /></TeacherRoute></ProtectedRoute>} />
-          <Route path="/lessons/new" element={<ProtectedRoute><TeacherRoute><LessonBuilderPage /></TeacherRoute></ProtectedRoute>} />
-          <Route path="/setup" element={<ProtectedRoute><TeacherRoute><TeacherSetupPage /></TeacherRoute></ProtectedRoute>} />
-          <Route path="/decks/new" element={<ProtectedRoute><TeacherRoute><CreateDeckPage /></TeacherRoute></ProtectedRoute>} />
-          <Route path="/classes/new" element={<ProtectedRoute><TeacherRoute><CreateClassPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/questions/:assignmentId/moderate" element={<ProtectedRoute><TeacherRoute><QuestionModerationPage /></TeacherRoute></ProtectedRoute>} />
+
+          <Route path="/classes/new" element={<ProtectedRoute><TeacherRoute><CreateClassPage /></TeacherRoute></ProtectedRoute>} />
 
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
