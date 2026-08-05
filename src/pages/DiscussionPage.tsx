@@ -626,6 +626,7 @@ function QuestionCard({
   const isAuthor = question.authorId === currentUserId;
   const canAddVote = !isAuthor && usedVotes < voteBudget;
   const canRemoveVote = voteWeight > 0;
+  const noVotesLeft = usedVotes >= voteBudget;
 
   const modBadge = question.moderationStatus !== 'visible' ? question.moderationStatus : null;
   const discBadge =
@@ -645,7 +646,14 @@ function QuestionCard({
         <div className="flex w-14 shrink-0 flex-col items-center gap-1">
           {!isTeacher && (
             <>
-              {allowStackedVotes ? (
+              {isAuthor ? (
+                <span
+                  className="h-10 w-10 rounded-lg bg-gray-100 text-[10px] font-medium text-gray-500 flex items-center justify-center"
+                  title="You can't vote on your own question"
+                >
+                  Yours
+                </span>
+              ) : allowStackedVotes ? (
                 <div className="flex flex-col items-center gap-1">
                   <button
                     onClick={onVote}
@@ -655,7 +663,7 @@ function QuestionCard({
                         ? 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-700'
                         : 'bg-gray-50 text-gray-300 cursor-not-allowed'
                     }`}
-                    title="Add one vote"
+                    title={noVotesLeft ? 'No votes left' : 'Add one vote'}
                   >
                     +1
                   </button>
@@ -680,7 +688,13 @@ function QuestionCard({
                         ? 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-700'
                         : 'bg-gray-50 text-gray-300 cursor-not-allowed'
                   }`}
-                  title={voteWeight > 0 ? 'Remove vote' : 'Vote'}
+                  title={
+                    voteWeight > 0
+                      ? 'Remove vote'
+                      : noVotesLeft
+                        ? 'No votes left'
+                        : 'Vote'
+                  }
                 >
                   {voteWeight > 0 ? '✓' : 'Vote'}
                 </button>
