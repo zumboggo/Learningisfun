@@ -51,9 +51,129 @@ input, textarea, select, button {
   background: #9ca3af;
 }
 
+.card-dismiss-left {
+  animation: dismissLeft 0.3s ease-out forwards;
+}
+.card-dismiss-right {
+  animation: dismissRight 0.3s ease-out forwards;
+}
+.card-dismiss-up {
+  animation: dismissUp 0.3s ease-out forwards;
+}
+.card-dismiss-down {
+  animation: dismissDown 0.3s ease-out forwards;
+}
+
+@keyframes dismissLeft {
+  to {
+    transform: translateX(-150%) rotate(-15deg);
+    opacity: 0;
+  }
+}
+@keyframes dismissRight {
+  to {
+    transform: translateX(150%) rotate(15deg);
+    opacity: 0;
+  }
+}
+@keyframes dismissUp {
+  to {
+    transform: translateY(-150%) rotate(-5deg);
+    opacity: 0;
+  }
+}
+@keyframes dismissDown {
+  to {
+    transform: translateY(150%) rotate(5deg);
+    opacity: 0;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   .dark-mode {
     background-color: #111827;
     color: #f9fafb;
   }
+}
+
+.goal-rings-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.goal-ring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: white;
+  border-radius: 1rem;
+  border: 1px solid #e5e7eb;
+  padding: 1rem 0.5rem;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.goal-ring:active {
+  border-color: #a5b4fc;
+}
+.goal-ring-complete {
+  border-color: #a855f7;
+}
+
+.goal-ring-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 0.5rem 0;
+}
+
+.goal-ring-svg {
+  width: 88px;
+  height: 88px;
+}
+
+.goal-ring-track {
+  fill: none;
+  stroke: #e5e7eb;
+  stroke-width: 6;
+}
+
+.goal-ring-fill {
+  fill: none;
+  stroke-width: 6;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  transition: stroke-dashoffset 0.5s ease-out, filter 0.3s;
+}
+
+.goal-ring-bonus {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  transition: stroke-dashoffset 0.5s ease-out, opacity 0.3s;
+}
+
+.goal-ring-count {
+  font-size: 1.25rem;
+  font-weight: 700;
+  fill: #111827;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.goal-ring-label {
+  font-size: 0.55rem;
+  fill: #9ca3af;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.goal-ring-total {
+  font-size: 0.65rem;
+  color: #9ca3af;
+  margin: 0.5rem 0 0 0;
 }

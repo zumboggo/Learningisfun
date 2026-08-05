@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
 import { Card } from '@/components/common/Card';
 import { EmptyState } from '@/components/common/EmptyState';
+import { GoalRing } from '@/components/common/GoalRing';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { joinClass } from '@/services/class.service';
 import { Button } from '@/components/common/Button';
@@ -38,6 +39,7 @@ function StudentDashboard() {
   const [joinError, setJoinError] = useState('');
   const [showJoin, setShowJoin] = useState(false);
   const [joining, setJoining] = useState(false);
+  const navigate = useNavigate();
 
   const memberships = useLiveQuery(
     () => db.class_members.where('userId').equals(user!.$id).toArray(),
@@ -45,6 +47,26 @@ function StudentDashboard() {
   );
 
   const classIds = useMemo(() => memberships?.map(c => c.classId) || [], [memberships]);
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  const annotationsCount = useLiveQuery(
+    async () => {
+      if (!user) return 0;
+      const annotations = await db.annotations.where('userId').equals(user.$id).toArray();
+      return annotations.filter(a => a.createdAt.slice(0, 10) === today).length;
+    },
+    [user?.$id],
+  );
+
+  const flashcardsCount = useLiveQuery(
+    async () => {
+      if (!user) return 0;
+      const reviews = await db.card_reviews.where('userId').equals(user.$id).toArray();
+      return reviews.filter(r => r.reviewAt.slice(0, 10) === today).length;
+    },
+    [user?.$id],
+  );
 
   const doNow = useLiveQuery(async () => {
     if (!user || classIds.length === 0) return { sessions: [], readings: [], decks: [] };
@@ -122,6 +144,26 @@ function StudentDashboard() {
           </Button>
         </div>
       </Modal>
+
+      <div className="goal-rings-row grid grid-cols-2 gap-4 mb-6">
+        <GoalRing
+          title="Annotations"
+          value={annotationsCount ?? 0}
+          goal={5}
+          unit="notes"
+          color="#a855f7"
+          bonusGoal={9}
+          onStart={() => navigate('/texts')}
+        />
+        <GoalRing
+          title="Flashcards"
+          value={flashcardsCount ?? 0}
+          goal={30}
+          unit="cards"
+          color="#ec4899"
+          onStart={() => navigate('/decks')}
+        />
+      </div>
 
       <section>
         <h2 className="text-lg font-semibold mb-3">Do now</h2>

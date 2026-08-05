@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -13,7 +13,15 @@ import {
 } from '@/services/flashcard.service';
 import { Button } from '@/components/common/Button';
 import { Markdown } from '@/components/common/Markdown';
+import { useSwipeCard, type SwipeDir } from '@/hooks/useSwipeCard';
 import type { FlashcardCard, ReviewRating } from '@/types';
+
+const RATING_BY_SWIPE: Record<SwipeDir, ReviewRating> = {
+  left: 'again',
+  up: 'hard',
+  right: 'good',
+  down: 'easy',
+};
 
 export function FlashcardReviewPage() {
   const { deckId } = useParams<{ deckId: string }>();
@@ -65,32 +73,6 @@ export function FlashcardReviewPage() {
   }, [user]);
 
   const currentCard = cards[currentIndex];
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (!sessionStarted || sessionComplete) return;
-      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
-      if (!showAnswer && event.code === 'Space') {
-        event.preventDefault();
-        setShowAnswer(true);
-        return;
-      }
-      if (!showAnswer) return;
-      const ratingByKey: Record<string, ReviewRating> = {
-        '1': 'again',
-        '2': 'hard',
-        '3': 'good',
-        '4': 'easy',
-      };
-      const rating = ratingByKey[event.key];
-      if (rating) {
-        event.preventDefault();
-        void handleRate(rating);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [sessionStarted, sessionComplete, showAnswer, currentCard?.$id, currentIndex, studySessionId]);
 
   const startSession = async (mode: FlashcardQueueMode) => {
     if (!deckId || !user) return;
@@ -149,6 +131,54 @@ export function FlashcardReviewPage() {
       cardStartedAt.current = Date.now();
     }
   };
+
+  const handleRateRef = useRef<(rating: ReviewRating) => Promise<void>>(async () => {});
+  handleRateRef.current = handleRate;
+
+  const dismissRef = useRef<((dir: SwipeDir) => void) | null>(null);
+
+  const handleSwipe = useCallback((dir: SwipeDir) => {
+    dismissRef.current?.(dir);
+  }, []);
+
+  const handleDismissed = useCallback((dir: SwipeDir) => {
+    void handleRateRef.current(RATING_BY_SWIPE[dir]);
+  }, []);
+
+  const swipeHandle = useSwipeCard({
+    enabled: sessionStarted && !sessionComplete && showAnswer,
+    onSwipe: handleSwipe,
+    onDismissed: handleDismissed,
+    haptics: true,
+  });
+
+  dismissRef.current = swipeHandle.dismiss;
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!sessionStarted || sessionComplete) return;
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
+      if (!showAnswer && event.code === 'Space') {
+        event.preventDefault();
+        setShowAnswer(true);
+        return;
+      }
+      if (!showAnswer) return;
+      const ratingByKey: Record<string, ReviewRating> = {
+        '1': 'again',
+        '2': 'hard',
+        '3': 'good',
+        '4': 'easy',
+      };
+      const rating = ratingByKey[event.key];
+      if (rating) {
+        event.preventDefault();
+        void handleRate(rating);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [sessionStarted, sessionComplete, showAnswer, currentCard?.$id, currentIndex, studySessionId]);
 
   if (!deck) {
     return (
@@ -225,7 +255,12 @@ export function FlashcardReviewPage() {
       </div>
 
       {currentCard && (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm min-h-[340px] flex flex-col">
+        <div
+          key={swipeHandle.animKey}
+          ref={swipeHandle.cardRef}
+          className={`bg-white rounded-2xl border border-gray-200 shadow-sm min-h-[340px] flex flex-col select-none ${swipeHandle.dismissClass}`}
+          {...swipeHandle.handlers}
+        >
           <div className="flex-1 p-6 flex items-center justify-center">
             <Markdown
               content={currentCard.frontMarkdown || currentCard.front}
