@@ -45,7 +45,7 @@ export function CreateReadingPage() {
           minQuestions,
         });
       }
-      navigate('/readings');
+      navigate('/texts');
     } catch {
       setError('Failed to create reading');
     } finally {
@@ -65,7 +65,7 @@ export function CreateReadingPage() {
   return (
     <div className="p-4 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">Create Reading</h1>
-      <form onSubmit={void handleSubmit} className="space-y-4">
+      <form onSubmit={e => { void handleSubmit(e); }} className="space-y-4">
         {error && <div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg">{error}</div>}
 
         <div>

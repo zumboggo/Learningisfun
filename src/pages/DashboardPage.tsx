@@ -265,12 +265,52 @@ function TeacherDashboard() {
     return { activeSessions, classRows };
   }, [classIds, classes]);
 
+  const vocabProgress = useLiveQuery(async () => {
+    if (!user) return null;
+    const decks = await db.flashcard_decks.where('creatorId').equals(user.$id).toArray();
+    const deckIds = decks.map(d => d.$id);
+
+    let totalCards = 0;
+    for (const deckId of deckIds) {
+      totalCards += await db.flashcard_cards.where('deckId').equals(deckId).count();
+    }
+
+    const assignments = await db.deck_assignments.where('deckId').anyOf(deckIds).toArray();
+    const assignedDeckIds = [...new Set(assignments.map(a => a.deckId))];
+
+    let cardsInAssignedDecks = 0;
+    for (const deckId of assignedDeckIds) {
+      cardsInAssignedDecks += await db.flashcard_cards.where('deckId').equals(deckId).count();
+    }
+
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const weekAgoStr = weekAgo.toISOString();
+
+    let cardsStudiedThisWeek = 0;
+    for (const deckId of deckIds) {
+      const reviews = await db.card_reviews
+        .where('deckId').equals(deckId)
+        .and(r => r.reviewAt >= weekAgoStr)
+        .toArray();
+      cardsStudiedThisWeek += reviews.length;
+    }
+
+    return {
+      totalDecks: deckIds.length,
+      assignedDecks: assignedDeckIds.length,
+      totalCards,
+      cardsInAssignedDecks,
+      cardsStudiedThisWeek,
+    };
+  }, [user?.$id]);
+
   return (
     <div className="p-4 max-w-5xl mx-auto space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Teacher Dashboard</h1>
-          <p className="text-gray-500 text-sm">Today’s class tools in one place.</p>
+          <p className="text-gray-500 text-sm">Today's class tools in one place.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link to="/settings">
@@ -282,8 +322,38 @@ function TeacherDashboard() {
         </div>
       </div>
 
+      {vocabProgress && (
+        <Card>
+          <h3 className="font-semibold text-lg mb-3">Vocabulary Progress</h3>
+          <div className="text-sm text-gray-600 space-y-1 mb-3">
+            <p>Total decks: {vocabProgress.totalDecks} ({vocabProgress.assignedDecks} assigned)</p>
+            <p>Total cards: {vocabProgress.totalCards}</p>
+            <p>Cards studied this week: {vocabProgress.cardsStudiedThisWeek}</p>
+            <p className="text-green-600 font-medium">
+              {vocabProgress.cardsStudiedThisWeek} cards studied this week — keep it up!
+            </p>
+            <p>Cards assigned to classes: {vocabProgress.cardsInAssignedDecks} of {vocabProgress.totalCards}</p>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2.5">
+            <div
+              className="bg-blue-600 h-2.5 rounded-full transition-all"
+              style={{
+                width: vocabProgress.totalCards > 0
+                  ? `${Math.round((vocabProgress.cardsInAssignedDecks / vocabProgress.totalCards) * 100)}%`
+                  : '0%',
+              }}
+            />
+          </div>
+          <p className="text-xs text-gray-400 mt-1">
+            {vocabProgress.totalCards > 0
+              ? Math.round((vocabProgress.cardsInAssignedDecks / vocabProgress.totalCards) * 100)
+              : 0}% of cards assigned to classes
+          </p>
+        </Card>
+      )}
+
       <section>
-        <h2 className="text-lg font-semibold mb-3">Today’s class</h2>
+        <h2 className="text-lg font-semibold mb-3">Today's class</h2>
         {dashboard && dashboard.activeSessions.length > 0 ? (
           <div className="grid gap-3 lg:grid-cols-2">
             {dashboard.activeSessions.map(row => (

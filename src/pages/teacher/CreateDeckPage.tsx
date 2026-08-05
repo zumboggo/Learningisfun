@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { createDeck, addCard, publishDeck, assignDeck } from '@/services/flashcard.service';
@@ -15,6 +15,8 @@ interface PendingCard {
   hint: string;
   tags: string[];
 }
+
+type ImportMode = 'new' | 'add' | 'update';
 
 export function CreateDeckPage() {
   const { user } = useAuth();
@@ -37,10 +39,23 @@ export function CreateDeckPage() {
   const [csvPreview, setCsvPreview] = useState<CsvPreview | null>(null);
   const [csvMapping, setCsvMapping] = useState<CsvMapping | null>(null);
 
+  const [importMode, setImportMode] = useState<ImportMode>('new');
+  const [targetDeckId, setTargetDeckId] = useState('');
+
   const classes = useLiveQuery(
     () => (user ? db.classes.where('teacherId').equals(user.$id).toArray() : []),
     [user?.$id],
   );
+
+  const existingDecks = useLiveQuery(
+    () => (user ? db.flashcard_decks.where('creatorId').equals(user.$id).toArray() : []),
+    [user?.$id],
+  );
+
+  const existingClassIds = useMemo(() => {
+    if (!targetDeckId) return new Set<string>();
+    return new Set<string>();
+  }, [targetDeckId]);
 
   const addManualCard = () => {
     if (!front.trim() || !back.trim()) return;
@@ -98,18 +113,58 @@ export function CreateDeckPage() {
   };
 
   const handleSubmit = async () => {
-    if (!user || !title.trim() || cards.length === 0) return;
+    if (!user) return;
+    if (importMode === 'new' && (!title.trim() || cards.length === 0)) return;
+    if ((importMode === 'add' || importMode === 'update') && (!targetDeckId || cards.length === 0)) return;
     setLoading(true);
     setError('');
+
     try {
-      const deck = await createDeck(user.$id, title, description, 'teacher');
-      for (const c of cards) {
-        await addCard(deck.$id, c.front, c.back, { hint: c.hint, tags: c.tags });
+      let deckId: string;
+
+      if (importMode === 'new') {
+        const deck = await createDeck(user.$id, title, description, 'teacher');
+        deckId = deck.$id;
+        for (const c of cards) {
+          await addCard(deckId, c.front, c.back, { hint: c.hint, tags: c.tags });
+        }
+        await publishDeck(deckId, user.$id);
+        for (const classId of selectedClasses) {
+          await assignDeck(deckId, classId, false, dailyTarget || null);
+        }
+      } else if (importMode === 'add') {
+        deckId = targetDeckId;
+        for (const c of cards) {
+          await addCard(deckId, c.front, c.back, { hint: c.hint, tags: c.tags });
+        }
+        for (const classId of selectedClasses) {
+          await assignDeck(deckId, classId, false, dailyTarget || null);
+        }
+      } else {
+        deckId = targetDeckId;
+        const existingCards = await db.flashcard_cards.where('deckId').equals(deckId).toArray();
+        const existingFrontsLower = new Map(
+          existingCards.map(card => [card.front.trim().toLowerCase(), card]),
+        );
+        for (const c of cards) {
+          const frontLower = c.front.trim().toLowerCase();
+          const duplicate = existingFrontsLower.get(frontLower);
+          if (duplicate) {
+            await db.flashcard_cards.update(duplicate.$id, {
+              back: c.back,
+              backMarkdown: c.back,
+              hint: c.hint,
+              tags: c.tags,
+            });
+          } else {
+            await addCard(deckId, c.front, c.back, { hint: c.hint, tags: c.tags });
+          }
+        }
+        for (const classId of selectedClasses) {
+          await assignDeck(deckId, classId, false, dailyTarget || null);
+        }
       }
-      await publishDeck(deck.$id, user.$id);
-      for (const classId of selectedClasses) {
-        await assignDeck(deck.$id, classId, false, dailyTarget || null);
-      }
+
       navigate('/decks');
     } catch {
       setError('Failed to create deck');
@@ -117,6 +172,11 @@ export function CreateDeckPage() {
       setLoading(false);
     }
   };
+
+  const showTitleFields = importMode === 'new';
+  const canSubmit = importMode === 'new'
+    ? title.trim() && cards.length > 0
+    : targetDeckId && cards.length > 0;
 
   return (
     <div className="p-4 max-w-2xl mx-auto">
@@ -126,23 +186,27 @@ export function CreateDeckPage() {
 
       <div className="space-y-6">
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Deck title</label>
-            <input
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              required
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <input
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg"
-            />
-          </div>
+          {showTitleFields && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Deck title</label>
+                <input
+                  value={title}
+                  onChange={e => setTitle(e.target.value)}
+                  required
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <input
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg"
+                />
+              </div>
+            </>
+          )}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Daily target for assigned classes</label>
             <input
@@ -210,9 +274,54 @@ export function CreateDeckPage() {
           )}
         </div>
 
+        <div className="border-t border-gray-200 pt-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Import mode</label>
+          <div className="flex rounded-lg overflow-hidden border border-gray-300 mb-4">
+            <button
+              type="button"
+              onClick={() => { setImportMode('new'); setTargetDeckId(''); }}
+              className={`flex-1 py-2 px-3 text-sm font-medium transition-colors ${importMode === 'new' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+            >
+              Create new deck
+            </button>
+            <button
+              type="button"
+              onClick={() => setImportMode('add')}
+              className={`flex-1 py-2 px-3 text-sm font-medium border-l border-gray-300 transition-colors ${importMode === 'add' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+            >
+              Add to existing deck
+            </button>
+            <button
+              type="button"
+              onClick={() => setImportMode('update')}
+              className={`flex-1 py-2 px-3 text-sm font-medium border-l border-gray-300 transition-colors ${importMode === 'update' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+            >
+              Update duplicates
+            </button>
+          </div>
+
+          {(importMode === 'add' || importMode === 'update') && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Target deck</label>
+              <select
+                value={targetDeckId}
+                onChange={e => setTargetDeckId(e.target.value)}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg"
+              >
+                <option value="">Select a deck...</option>
+                {existingDecks?.map(deck => (
+                  <option key={deck.$id} value={deck.$id}>{deck.title}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
         {classes && classes.length > 0 && (
           <div className="border-t border-gray-200 pt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Assign to classes</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {importMode === 'new' ? 'Assign to classes' : 'Additionally assign to classes'}
+            </label>
             <div className="space-y-2">
               {classes.map(cls => (
                 <label key={cls.$id} className="flex items-center gap-2">
@@ -232,11 +341,15 @@ export function CreateDeckPage() {
         <Button
           onClick={() => void handleSubmit()}
           loading={loading}
-          disabled={!title.trim() || cards.length === 0}
+          disabled={!canSubmit}
           className="w-full"
           size="lg"
         >
-          Create & publish deck ({cards.length} cards)
+          {importMode === 'new'
+            ? `Create & publish deck (${cards.length} cards)`
+            : importMode === 'add'
+              ? `Add ${cards.length} cards to deck`
+              : `Add/update ${cards.length} cards in deck`}
         </Button>
       </div>
 
