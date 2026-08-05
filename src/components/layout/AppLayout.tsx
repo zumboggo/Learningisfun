@@ -27,12 +27,48 @@ export function AppLayout({ children }: AppLayoutProps) {
         { to: '/settings', label: 'Settings', icon: '?' },
       ]
     : [
-        { to: '/dashboard', label: 'Home', icon: 'H' },
-        { to: '/texts', label: 'Texts', icon: 'T' },
-        { to: '/discussions', label: 'Discussions', icon: 'Q' },
-        { to: '/decks', label: 'Cards', icon: 'V' },
-        { to: '/classes', label: 'Classes', icon: 'C' },
+        { to: '/dashboard', label: 'Home', icon: 'home' },
+        { to: '/decks', label: 'Flashcards', icon: 'cards' },
+        { to: '/texts', label: 'Texts', icon: 'book' },
+        { to: '/discussions', label: 'Discussions', icon: 'chat' },
       ];
+
+  if (!isTeacher) {
+    return (
+      <div className="student-shell min-h-screen">
+        <div className="fixed right-4 top-4 z-30 flex items-center gap-2 rounded-full border border-white/70 bg-white/80 px-3 py-2 shadow-sm backdrop-blur">
+          <SyncIndicator {...syncState} online={online} />
+          <button
+            onClick={() => void logout()}
+            className="text-xs font-medium text-slate-500 hover:text-slate-800"
+          >
+            Sign out
+          </button>
+        </div>
+
+        <main className="pb-32">
+          {children}
+        </main>
+
+        <nav className="student-floating-nav safe-area-bottom">
+          {navItems.map(item => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={`student-floating-nav-item ${
+                location.pathname.startsWith(item.to)
+                  ? 'student-floating-nav-item-active'
+                  : ''
+              }`}
+            >
+              <NavIcon name={item.icon} />
+              <span>{item.label}</span>
+            </Link>
+          ))}
+        </nav>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -104,5 +140,43 @@ export function AppLayout({ children }: AppLayoutProps) {
         {/* Spacer for desktop nav */}
       </div>
     </div>
+  );
+}
+
+function NavIcon({ name }: { name: string }) {
+  if (name === 'home') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 11.5 12 4l9 7.5" />
+        <path d="M5.5 10.5V20h4.8v-5.4h3.4V20h4.8v-9.5" />
+      </svg>
+    );
+  }
+  if (name === 'cards') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="4" y="5" width="11" height="14" rx="2" />
+        <path d="M9 3h8a2 2 0 0 1 2 2v11" />
+        <path d="M7.5 10h4" />
+        <path d="M7.5 14h3" />
+      </svg>
+    );
+  }
+  if (name === 'book') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H7a3 3 0 0 0-3 3V5.5Z" />
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+        <path d="M8 7h8" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M5 6.5h14a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-7l-4.5 3v-3H5a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2Z" />
+      <path d="M8 11h.01" />
+      <path d="M12 11h.01" />
+      <path d="M16 11h.01" />
+    </svg>
   );
 }

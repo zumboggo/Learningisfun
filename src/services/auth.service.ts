@@ -122,17 +122,16 @@ export async function login(email: string, password: string): Promise<User> {
 }
 
 async function loginLocalDevelopmentTeacher(email: string, password: string): Promise<User | null> {
-  const devEmail = import.meta.env.VITE_DEV_TEACHER_EMAIL;
-  const devPassword = import.meta.env.VITE_DEV_TEACHER_PASSWORD;
-  if (!devEmail || !devPassword) return null;
-  if (email.trim().toLowerCase() !== devEmail.trim().toLowerCase() || password !== devPassword) return null;
+  if (!import.meta.env.DEV) return null;
+  const localLogin = getLocalDevelopmentLogin(email, password);
+  if (!localLogin) return null;
 
   const now = getTimestamp();
   const user: User = {
-    $id: 'local-teacher',
-    email: devEmail,
-    name: 'Teacher',
-    role: 'teacher',
+    $id: localLogin.id,
+    email: localLogin.email,
+    name: localLogin.name,
+    role: localLogin.role,
     deviceId: generateDeviceId(),
     lastSyncAt: now,
     createdAt: now,
@@ -140,6 +139,34 @@ async function loginLocalDevelopmentTeacher(email: string, password: string): Pr
   await db.users.put(user);
   await db.app_metadata.put({ key: 'currentUserId', value: user.$id });
   return user;
+}
+
+function getLocalDevelopmentLogin(
+  email: string,
+  password: string,
+): { id: string; email: string; name: string; role: UserRole } | null {
+  const candidates = [
+    {
+      id: 'local-teacher',
+      email: import.meta.env.VITE_DEV_TEACHER_EMAIL,
+      password: import.meta.env.VITE_DEV_TEACHER_PASSWORD,
+      name: 'Teacher',
+      role: 'teacher' as const,
+    },
+    {
+      id: 'local-student',
+      email: import.meta.env.VITE_DEV_STUDENT_EMAIL,
+      password: import.meta.env.VITE_DEV_STUDENT_PASSWORD,
+      name: import.meta.env.VITE_DEV_STUDENT_NICKNAME || 'Sunny',
+      role: 'student' as const,
+    },
+  ];
+  return candidates.find(candidate =>
+    candidate.email
+    && candidate.password
+    && email.trim().toLowerCase() === candidate.email.trim().toLowerCase()
+    && password === candidate.password,
+  ) || null;
 }
 
 export async function logout(): Promise<void> {

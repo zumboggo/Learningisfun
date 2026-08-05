@@ -68,6 +68,46 @@ function StudentDashboard() {
     [user?.$id],
   );
 
+  const studentHomeStats = useLiveQuery(
+    async () => {
+      if (!user || classIds.length === 0) {
+        return { totalCards: 0, knownCards: 0, familiarCards: 0, newCards: 0, movedThisWeek: 0, nextGoal: 50 };
+      }
+      const deckAssignments = await db.deck_assignments.where('classId').anyOf(classIds).toArray();
+      const deckIds = [...new Set(deckAssignments.map(assignment => assignment.deckId))];
+      const cards = deckIds.length
+        ? await db.flashcard_cards.where('deckId').anyOf(deckIds).toArray()
+        : [];
+      const states = await db.student_card_state
+        .where('userId')
+        .equals(user.$id)
+        .and(state => deckIds.includes(state.deckId))
+        .toArray();
+      const stateByCard = new Map(states.map(state => [state.cardId, state]));
+      let knownCards = 0;
+      let familiarCards = 0;
+      for (const card of cards) {
+        const state = stateByCard.get(card.$id);
+        if (!state || state.reviewCount === 0) continue;
+        if ((state.intervalDays || 0) >= 14) knownCards++;
+        else familiarCards++;
+      }
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      const movedThisWeek = states.filter(state => state.lastReviewAt >= weekAgo.toISOString()).length;
+      const knownMilestone = Math.ceil(Math.max(knownCards + 1, 50) / 50) * 50;
+      return {
+        totalCards: cards.length,
+        knownCards,
+        familiarCards,
+        newCards: Math.max(0, cards.length - knownCards - familiarCards),
+        movedThisWeek,
+        nextGoal: knownMilestone,
+      };
+    },
+    [user?.$id, classIds],
+  );
+
   const doNow = useLiveQuery(async () => {
     if (!user || classIds.length === 0) return { sessions: [], readings: [], decks: [] };
     const [sessions, readingAssignments, deckAssignments] = await Promise.all([
@@ -114,17 +154,18 @@ function StudentDashboard() {
 
   const pendingReadings = doNow?.readings.filter(row => row.submission?.status !== 'submitted') || [];
 
+  const stats = studentHomeStats || { totalCards: 0, knownCards: 0, familiarCards: 0, newCards: 0, movedThisWeek: 0, nextGoal: 50 };
+  const wordsToGoal = Math.max(0, stats.nextGoal - stats.knownCards);
+  const progressPercent = stats.nextGoal > 0 ? Math.min(100, (stats.knownCards / stats.nextGoal) * 100) : 0;
+
   return (
-    <div className="p-4 max-w-4xl mx-auto space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Welcome, {user?.name}</h1>
-          <p className="text-gray-500 text-sm">Start with the next thing your class needs.</p>
-        </div>
-        <Button onClick={() => setShowJoin(true)} size="sm">
-          Join class
-        </Button>
-      </div>
+    <div className="student-home mx-auto min-h-screen max-w-5xl px-4 pb-4 pt-4 sm:px-6 lg:px-8">
+      <section className="student-home-hero" aria-label="Learning is Fun">
+        <img
+          src={`${import.meta.env.BASE_URL}images/learning-is-fun-home-reference.png`}
+          alt="Learning is fun illustrated student header"
+        />
+      </section>
 
       <Modal open={showJoin} onClose={() => setShowJoin(false)} title="Join a class">
         <div className="space-y-4">
@@ -145,28 +186,67 @@ function StudentDashboard() {
         </div>
       </Modal>
 
-      <div className="goal-rings-row grid grid-cols-2 gap-4 mb-6">
-        <GoalRing
-          title="Annotations"
-          value={annotationsCount ?? 0}
-          goal={5}
-          unit="notes"
-          color="#a855f7"
-          bonusGoal={9}
-          onStart={() => navigate('/texts')}
-        />
-        <GoalRing
-          title="Flashcards"
-          value={flashcardsCount ?? 0}
-          goal={30}
-          unit="cards"
-          color="#ec4899"
-          onStart={() => navigate('/decks')}
-        />
-      </div>
+      <section className="student-study-card">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="flex items-end gap-3">
+              <span className="student-known-number">{stats.knownCards}</span>
+              <span className="pb-2 text-base font-bold text-slate-900 sm:text-lg">words known</span>
+            </div>
+            <p className="mt-1 text-sm font-semibold text-emerald-700">
+              ▲ {stats.movedThisWeek} moved up this week
+            </p>
+          </div>
+          <Button onClick={() => setShowJoin(true)} size="sm" variant="secondary" className="self-start bg-white/80">
+            Join class
+          </Button>
+        </div>
 
-      <section>
-        <h2 className="text-lg font-semibold mb-3">Do now</h2>
+        <div className="mt-5">
+          <div className="student-progress-track">
+            <div className="student-progress-fill" style={{ width: `${progressPercent}%` }} />
+          </div>
+          <div className="mt-3 flex justify-between text-sm font-semibold text-slate-500">
+            <span>{Math.max(0, stats.nextGoal - 50)}</span>
+            <span>{wordsToGoal} to go</span>
+            <span>{stats.nextGoal}</span>
+          </div>
+        </div>
+
+        <div className="student-goal-grid">
+          <GoalRing
+            title="Flashcards studied"
+            value={flashcardsCount ?? 0}
+            goal={30}
+            unit="cards"
+            color="#e94c9d"
+            onStart={() => navigate('/decks')}
+          />
+          <GoalRing
+            title="Annotations added"
+            value={annotationsCount ?? 0}
+            goal={5}
+            unit="notes"
+            color="#5b7cff"
+            bonusGoal={9}
+            onStart={() => navigate('/texts')}
+          />
+        </div>
+
+        <div className="student-mini-stats">
+          <StudentMiniStat label="New" value={stats.newCards} />
+          <StudentMiniStat label="Familiar" value={stats.familiarCards} />
+          <StudentMiniStat label="Known" value={stats.knownCards} />
+        </div>
+      </section>
+
+      <section className="student-section">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-bold text-slate-950">Do now</h2>
+            <p className="text-sm text-slate-500">Start with the next thing your class needs.</p>
+          </div>
+        </div>
         {doNow && (doNow.sessions.length > 0 || pendingReadings.length > 0 || doNow.decks.length > 0) ? (
           <div className="grid gap-3 md:grid-cols-3">
             {doNow.sessions.slice(0, 2).map(session => (
@@ -209,7 +289,7 @@ function StudentDashboard() {
         )}
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="student-section grid gap-6 lg:grid-cols-2">
         <DashboardList title="Assigned readings">
           {doNow?.readings.map(({ assignment, reading, submission }) => (
             <Link key={assignment.$id} to={`/assignments/${assignment.$id}/respond`}>
@@ -242,6 +322,15 @@ function StudentDashboard() {
           ))}
         </DashboardList>
       </div>
+    </div>
+  );
+}
+
+function StudentMiniStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div>
+      <div className="text-lg font-bold text-slate-950">{value}</div>
+      <div className="text-xs font-medium text-slate-500">{label}</div>
     </div>
   );
 }
