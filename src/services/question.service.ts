@@ -7,8 +7,6 @@ import type { DiscussionQuestion, QuestionVote } from '@/types';
 
 export async function submitQuestion(
   userId: string,
-  readingId: string,
-  assignmentId: string,
   questionText: string,
   selectedPassage: string = '',
 ): Promise<DiscussionQuestion> {
@@ -16,8 +14,6 @@ export async function submitQuestion(
   const now = getTimestamp();
   const question: DiscussionQuestion = {
     $id: id,
-    readingId,
-    assignmentId,
     classSessionId: '',
     authorId: userId,
     questionText,
@@ -36,8 +32,6 @@ export async function submitQuestion(
   await db.discussion_questions.put(question);
   try {
     await functions.createExecution(FUNCTION_IDS.submitQuestion, JSON.stringify({
-      assignmentId,
-      readingId,
       questionText,
       selectedPassage,
     }));
@@ -57,13 +51,10 @@ export async function submitSessionQuestion(
 ): Promise<DiscussionQuestion> {
   const session = await db.class_sessions.get(classSessionId);
   if (!session) throw new Error('Class session not found');
-  const assignment = session.assignmentId ? await db.reading_assignments.get(session.assignmentId) : undefined;
   const id = generateId();
   const now = getTimestamp();
   const question: DiscussionQuestion = {
     $id: id,
-    readingId: assignment?.readingId || '',
-    assignmentId: session.assignmentId || '',
     classSessionId,
     authorId: userId,
     questionText,
@@ -84,38 +75,38 @@ export async function submitSessionQuestion(
   return question;
 }
 
-export async function hasSubmittedQuestion(userId: string, assignmentId: string): Promise<boolean> {
+export async function hasSubmittedQuestion(userId: string, classSessionId: string): Promise<boolean> {
   const existing = await db.discussion_questions
-    .where('assignmentId')
-    .equals(assignmentId)
+    .where('classSessionId')
+    .equals(classSessionId)
     .and(q => q.authorId === userId && q.moderationStatus !== 'removed')
     .first();
   return !!existing;
 }
 
-export async function getVisibleQuestions(assignmentId: string, userId: string): Promise<DiscussionQuestion[]> {
-  const hasSubmitted = await hasSubmittedQuestion(userId, assignmentId);
+export async function getVisibleQuestions(classSessionId: string, userId: string): Promise<DiscussionQuestion[]> {
+  const hasSubmitted = await hasSubmittedQuestion(userId, classSessionId);
   if (!hasSubmitted) {
     return db.discussion_questions
-      .where('assignmentId')
-      .equals(assignmentId)
+      .where('classSessionId')
+      .equals(classSessionId)
       .and(q => q.isTeacherQuestion && q.teacherVisibleBeforeSubmission)
       .toArray();
   }
 
   const questions = await db.discussion_questions
-    .where('assignmentId')
-    .equals(assignmentId)
+    .where('classSessionId')
+    .equals(classSessionId)
     .and(q => q.moderationStatus === 'visible')
     .toArray();
 
   return questions;
 }
 
-export async function getQuestionsWithAuthorship(assignmentId: string): Promise<DiscussionQuestion[]> {
+export async function getQuestionsWithAuthorship(classSessionId: string): Promise<DiscussionQuestion[]> {
   return db.discussion_questions
-    .where('assignmentId')
-    .equals(assignmentId)
+    .where('classSessionId')
+    .equals(classSessionId)
     .toArray();
 }
 
@@ -286,10 +277,10 @@ export async function hasVoted(userId: string, questionId: string): Promise<bool
   return !!vote;
 }
 
-export async function getUserVoteCount(userId: string, assignmentId: string): Promise<number> {
+export async function getUserVoteCount(userId: string, classSessionId: string): Promise<number> {
   const questions = await db.discussion_questions
-    .where('assignmentId')
-    .equals(assignmentId)
+    .where('classSessionId')
+    .equals(classSessionId)
     .toArray();
   const questionIds = new Set(questions.map(q => q.$id));
 
@@ -347,9 +338,9 @@ export async function updateQuestionDiscussionNotes(
   if (question) await addToQueue(userId, 'question', questionId, 'update', question);
 }
 
-export async function syncQuestionsFromServer(assignmentId: string): Promise<void> {
+export async function syncQuestionsFromServer(classSessionId: string): Promise<void> {
   try {
-    const result = await functions.createExecution(FUNCTION_IDS.getQuestions, JSON.stringify({ assignmentId }));
+    const result = await functions.createExecution(FUNCTION_IDS.getQuestions, JSON.stringify({ classSessionId }));
     if (result.responseBody) {
       const questions = JSON.parse(result.responseBody) as DiscussionQuestion[];
       for (const q of questions) {

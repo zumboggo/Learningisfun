@@ -15,9 +15,7 @@ export function TeacherSetupPage() {
     const rosterCount = classIds.length
       ? await db.class_members.where('classId').anyOf(classIds).and(member => member.role === 'student').count()
       : 0;
-    const readingCount = classIds.length
-      ? await db.reading_assignments.where('classId').anyOf(classIds).count()
-      : 0;
+    const readingCount = 0;
     const deckCount = classIds.length
       ? await db.deck_assignments.where('classId').anyOf(classIds).count()
       : 0;

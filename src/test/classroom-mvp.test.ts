@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { countMarkdownWords } from '@/components/common/Markdown';
-import { isBelowMinimum } from '@/services/submission.service';
 import { masteryBucketForState } from '@/services/flashcard.service';
 import { sortQuestionsForDiscussion } from '@/services/question.service';
 import { detectMapping, parseCsvContent } from '@/utils/csv-parser';
@@ -11,11 +10,6 @@ describe('Classroom MVP rules', () => {
     expect(countMarkdownWords('**Bold idea** and *careful* `code` [link text](https://example.com)')).toBe(7);
   });
 
-  it('flags short submissions without blocking them', () => {
-    expect(isBelowMinimum(199, 200)).toBe(true);
-    expect(isBelowMinimum(200, 200)).toBe(false);
-    expect(isBelowMinimum(50, 0)).toBe(false);
-  });
 
   it('detects optional flashcard CSV columns', () => {
     const mapping = detectMapping(['term', 'definition', 'hint', 'tags', 'source']);
@@ -55,8 +49,6 @@ describe('Classroom MVP rules', () => {
 function question(questionText: string, voteCount: number, createdAt: string): DiscussionQuestion {
   return {
     $id: questionText,
-    readingId: '',
-    assignmentId: '',
     classSessionId: 'session',
     authorId: 'student',
     questionText,

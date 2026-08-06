@@ -85,31 +85,7 @@ async function executeSyncOperation(op: SyncOperation): Promise<void> {
   const { entityType, entityId, operationType, payload } = op;
   const data = payload as Record<string, unknown>;
 
-  if (entityType === 'annotation' && operationType === 'create') {
-    await databases.createDocument(DATABASE_ID, COLLECTIONS.annotations, data.$id as string, {
-      userId: data.userId,
-      readingId: data.readingId,
-      type: data.type,
-      selectedText: data.selectedText,
-      textBefore: data.textBefore,
-      textAfter: data.textAfter,
-      startOffset: data.startOffset,
-      endOffset: data.endOffset,
-      blockId: data.blockId,
-      color: data.color,
-      noteText: data.noteText,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
-    });
-    await db.annotations.update(data.$id as string, { syncStatus: 'synced' });
-  } else if (entityType === 'annotation' && operationType === 'update') {
-    await databases.updateDocument(DATABASE_ID, COLLECTIONS.annotations, data.$id as string, {
-      noteText: data.noteText,
-      color: data.color,
-      updatedAt: data.updatedAt,
-    });
-    await db.annotations.update(data.$id as string, { syncStatus: 'synced' });
-  } else if (entityType === 'question' && operationType === 'create') {
+  if (entityType === 'question' && operationType === 'create') {
     if (data.classSessionId) {
       await upsertDocument(COLLECTIONS.discussion_questions, data);
     } else {
@@ -158,32 +134,14 @@ async function executeSyncOperation(op: SyncOperation): Promise<void> {
       operationId: data.operationId,
     });
     await db.card_reviews.update(data.$id as string, { syncStatus: 'synced' });
-  } else if (entityType === 'reading_progress' && operationType === 'update') {
-    try {
-      await databases.updateDocument(DATABASE_ID, COLLECTIONS.reading_progress, data.$id as string, {
-        scrollPercent: data.scrollPercent,
-        lastPosition: data.lastPosition,
-        bookmarked: data.bookmarked,
-        updatedAt: data.updatedAt,
-      });
-    } catch {
-      await databases.createDocument(DATABASE_ID, COLLECTIONS.reading_progress, data.$id as string, {
-        userId: data.userId,
-        readingId: data.readingId,
-        scrollPercent: data.scrollPercent,
-        lastPosition: data.lastPosition,
-        bookmarked: data.bookmarked,
-        updatedAt: data.updatedAt,
-      });
-    }
-    await db.reading_progress.update(data.$id as string, { syncStatus: 'synced' });
   } else {
     const collection = collectionForEntity(entityType);
     if (!collection) return;
     const documentId = (data.$id as string | undefined) || entityId;
-    if (operationType === 'delete') {
+    const opType: string = operationType;
+    if (opType === 'delete') {
       await databases.deleteDocument(DATABASE_ID, collection, documentId);
-    } else if (operationType === 'create' && data.$id) {
+    } else if (opType === 'create' && data.$id) {
       await upsertDocument(collection, data);
       await markEntitySynced(entityType, documentId);
     } else {
@@ -215,12 +173,8 @@ function collectionForEntity(entityType: string): string | null {
   switch (entityType) {
     case 'class_session': return COLLECTIONS.class_sessions;
     case 'class_session_item': return COLLECTIONS.class_session_items;
-    case 'submission': return COLLECTIONS.submissions;
     case 'flashcard_review_event': return COLLECTIONS.flashcard_review_events;
     case 'flashcard_study_session': return COLLECTIONS.flashcard_study_sessions;
-    case 'reading': return COLLECTIONS.readings;
-    case 'reading_assignment': return COLLECTIONS.reading_assignments;
-    case 'paragraph_observation': return COLLECTIONS.paragraph_observations;
     case 'deck': return COLLECTIONS.flashcard_decks;
     case 'card': return COLLECTIONS.flashcard_cards;
     case 'deck_assignment': return COLLECTIONS.deck_assignments;
@@ -237,12 +191,6 @@ async function markEntitySynced(entityType: string, entityId: string): Promise<v
       break;
     case 'class_session_item':
       await db.class_session_items.update(entityId, { syncStatus: 'synced' });
-      break;
-    case 'submission':
-      await db.submissions.update(entityId, { syncStatus: 'synced' });
-      break;
-    case 'paragraph_observation':
-      await db.paragraph_observations.update(entityId, { syncStatus: 'synced' });
       break;
     case 'flashcard_review_event':
       await db.flashcard_review_events.update(entityId, { syncStatus: 'synced' });

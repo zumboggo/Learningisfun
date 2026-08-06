@@ -1,8 +1,7 @@
 import { db } from '@/db/schema';
 import { generateId, getTimestamp } from '@/utils/helpers';
 import { addToQueue } from './sync.service';
-import { paragraphNotesMarkdown } from './paragraph-observation.service';
-import type { ClassSession, ClassSessionItem, Submission, DiscussionQuestion, ParagraphObservation } from '@/types';
+import type { ClassSession, ClassSessionItem, DiscussionQuestion } from '@/types';
 
 export async function createClassSession(
   classId: string,
@@ -19,7 +18,7 @@ export async function createClassSession(
   const session: ClassSession = {
     $id: generateId(),
     classId,
-    assignmentId: input.assignmentId || null,
+    assignmentId: input.assignmentId || undefined,
     title: input.title.trim() || 'Class discussion',
     sessionDate: input.sessionDate || todayKey(),
     status: 'active',
@@ -94,23 +93,17 @@ export async function buildClassNotesPreview(sessionId: string): Promise<string>
     .equals(sessionId)
     .and(q => q.moderationStatus === 'visible' && (q.discussionStatus === 'selected' || q.discussionStatus === 'discussed'))
     .toArray();
-  const observations = await db.paragraph_observations
-    .where('classSessionId')
-    .equals(sessionId)
-    .toArray();
-  return buildPublishedNotes(session, questions, observations);
+  return buildPublishedNotes(session, questions);
 }
 
 export async function addSessionItem(
   sessionId: string,
   userId: string,
   type: ClassSessionItem['type'],
-  source: DiscussionQuestion | Submission,
+  source: DiscussionQuestion,
 ): Promise<ClassSessionItem> {
   const count = await db.class_session_items.where('classSessionId').equals(sessionId).count();
-  const snapshotMarkdown = type === 'question'
-    ? (source as DiscussionQuestion).questionText
-    : (source as Submission).responseMarkdown;
+  const snapshotMarkdown = source.questionText;
   const item: ClassSessionItem = {
     $id: generateId(),
     classSessionId: sessionId,
@@ -141,12 +134,9 @@ function normalizeVoteBudget(value: number | undefined): number {
 function buildPublishedNotes(
   session: ClassSession,
   questions: DiscussionQuestion[],
-  observations: ParagraphObservation[],
 ): string {
   const sections = [`# ${session.title}`];
   if (session.notesMarkdown.trim()) sections.push(session.notesMarkdown.trim());
-  const paragraphNotes = paragraphNotesMarkdown(observations.sort((a, b) => a.paragraphIndex - b.paragraphIndex));
-  if (paragraphNotes) sections.push(paragraphNotes);
   const selected = [...questions].sort((a, b) => b.voteCount - a.voteCount);
   if (selected.length > 0) {
     sections.push('## Discussed Questions');

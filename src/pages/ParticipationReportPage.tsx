@@ -13,21 +13,12 @@ import { Card } from '@/components/common/Card';
 
 export function ParticipationReportPage() {
   const { classId } = useParams<{ classId: string }>();
-  const [assignmentId, setAssignmentId] = useState('');
   const [classSessionId, setClassSessionId] = useState('');
   const [deckId, setDeckId] = useState('');
   const [rows, setRows] = useState<ParticipationRow[]>([]);
   const [loading, setLoading] = useState(false);
 
   const cls = useLiveQuery(() => (classId ? db.classes.get(classId) : undefined), [classId]);
-  const assignments = useLiveQuery(async () => {
-    if (!classId) return [];
-    const items = await db.reading_assignments.where('classId').equals(classId).toArray();
-    return Promise.all(items.map(async assignment => ({
-      assignment,
-      reading: await db.readings.get(assignment.readingId),
-    })));
-  }, [classId]);
   const sessions = useLiveQuery(
     () => (classId ? db.class_sessions.where('classId').equals(classId).toArray() : []),
     [classId],
@@ -45,13 +36,12 @@ export function ParticipationReportPage() {
     if (!classId) return;
     setLoading(true);
     void buildClassParticipationRows(classId, {
-      assignmentId: assignmentId || undefined,
       classSessionId: classSessionId || undefined,
       deckId: deckId || undefined,
     })
       .then(setRows)
       .finally(() => setLoading(false));
-  }, [classId, assignmentId, classSessionId, deckId]);
+  }, [classId, classSessionId, deckId]);
 
   const exportCsv = () => {
     if (!cls) return;
@@ -74,20 +64,7 @@ export function ParticipationReportPage() {
       </div>
 
       <Card>
-        <div className="grid gap-3 md:grid-cols-3">
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Writing assignment</label>
-            <select
-              value={assignmentId}
-              onChange={e => setAssignmentId(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-            >
-              <option value="">All / none selected</option>
-              {assignments?.map(({ assignment, reading }) => (
-                <option key={assignment.$id} value={assignment.$id}>{reading?.title || assignment.$id}</option>
-              ))}
-            </select>
-          </div>
+        <div className="grid gap-3 md:grid-cols-2">
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">Class period</label>
             <select

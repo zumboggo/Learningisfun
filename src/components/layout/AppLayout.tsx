@@ -20,7 +20,6 @@ export function AppLayout({ children }: AppLayoutProps) {
   const navItems = isTeacher
     ? [
         { to: '/dashboard', label: 'Dashboard', icon: 'D' },
-        { to: '/texts', label: 'Texts', icon: 'T' },
         { to: '/discussions', label: 'Discussions', icon: 'Q' },
         { to: '/decks', label: 'Decks', icon: 'V' },
         { to: '/classes', label: 'Classes', icon: 'C' },
@@ -29,7 +28,6 @@ export function AppLayout({ children }: AppLayoutProps) {
     : [
         { to: '/dashboard', label: 'Home', icon: 'home' },
         { to: '/decks', label: 'Flashcards', icon: 'cards' },
-        { to: '/texts', label: 'Texts', icon: 'book' },
         { to: '/discussions', label: 'Discussions', icon: 'chat' },
       ];
 
@@ -181,15 +179,6 @@ function NavIcon({ name }: { name: string }) {
         <path d="M9 3h8a2 2 0 0 1 2 2v11" />
         <path d="M7.5 10h4" />
         <path d="M7.5 14h3" />
-      </svg>
-    );
-  }
-  if (name === 'book') {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H7a3 3 0 0 0-3 3V5.5Z" />
-        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-        <path d="M8 7h8" />
       </svg>
     );
   }

@@ -165,8 +165,6 @@ export function DiscussionPage() {
       const now = getTimestamp();
       const question: DiscussionQuestion = {
         $id: id,
-        readingId: '',
-        assignmentId: session.assignmentId || '',
         classSessionId: sessionId,
         authorId: user.$id,
         questionText: questionText.trim(),

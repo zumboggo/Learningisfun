@@ -45,16 +45,6 @@ export function ClassDetailPage() {
     return users.filter((u): u is NonNullable<typeof u> => Boolean(u));
   }, [memberIds]);
 
-  const readingRows = useLiveQuery(async () => {
-    if (!classId) return [];
-    const assignments = await db.reading_assignments.where('classId').equals(classId).toArray();
-    const rows = await Promise.all(assignments.map(async assignment => ({
-      assignment,
-      reading: await db.readings.get(assignment.readingId),
-    })));
-    return rows.sort((a, b) => b.assignment.assignedAt.localeCompare(a.assignment.assignedAt));
-  }, [classId]);
-
   const deckRows = useLiveQuery(async () => {
     if (!classId) return [];
     const assignments = await db.deck_assignments.where('classId').equals(classId).toArray();
@@ -189,44 +179,7 @@ export function ClassDetailPage() {
         </Card>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold">Texts ({readingRows?.length || 0})</h2>
-            {isOwner && <Link to="/texts/new"><Button size="sm" variant="secondary">+</Button></Link>}
-          </div>
-          {readingRows && readingRows.length > 0 ? (
-            <div className="space-y-2">
-              {readingRows.slice(0, 5).map(({ assignment, reading }) => (
-                <Link key={assignment.$id} to={`/texts/${assignment.readingId}`}>
-                  <Card>
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <h3 className="font-medium text-sm">{reading?.title || reading?.$id}</h3>
-                        {reading?.author && <p className="text-xs text-gray-500">{reading.author}</p>}
-                      </div>
-                      <Link to={isTeacher ? `/assignments/${assignment.$id}/submissions` : `/assignments/${assignment.$id}/respond`}>
-                        <Button size="sm" variant="secondary">{isTeacher ? 'View' : 'Read'}</Button>
-                      </Link>
-                    </div>
-                  </Card>
-                </Link>
-              ))}
-              {readingRows.length > 5 && (
-                <Link to="/texts" className="text-sm text-blue-600 hover:underline block">
-                  +{readingRows.length - 5} more texts
-                </Link>
-              )}
-            </div>
-          ) : (
-            <EmptyState
-              title="No texts yet"
-              message="Add reading material for students."
-              action={isOwner && <Link to="/texts/new"><Button size="sm" variant="secondary">Add text</Button></Link>}
-            />
-          )}
-        </section>
-
+      <div className="grid gap-6 lg:grid-cols-2">
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold">Discussions ({discussions?.length || 0})</h2>

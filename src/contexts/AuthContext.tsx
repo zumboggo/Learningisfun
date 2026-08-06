@@ -3,7 +3,7 @@ import type { User } from '@/types';
 import * as authService from '@/services/auth.service';
 import * as syncService from '@/services/sync.service';
 import * as classService from '@/services/class.service';
-import * as readingService from '@/services/reading.service';
+
 import * as flashcardService from '@/services/flashcard.service';
 
 interface AuthContextType {
@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const syncUserData = useCallback(async (userId: string) => {
     await classService.syncClassesFromServer(userId);
-    await readingService.syncReadingsFromServer();
+
     await flashcardService.syncDecksFromServer();
   }, []);
 

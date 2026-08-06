@@ -17,15 +17,11 @@ export const COLLECTIONS = {
   users: 'users',
   classes: 'classes',
   class_members: 'class_members',
-  readings: 'readings',
-  reading_assignments: 'reading_assignments',
-  paragraph_observations: 'paragraph_observations',
   class_sessions: 'class_sessions',
   class_session_items: 'class_session_items',
-  annotations: 'annotations',
   discussion_questions: 'discussion_questions',
   question_votes: 'question_votes',
-  submissions: 'submissions',
+
   flashcard_decks: 'flashcard_decks',
   flashcard_cards: 'flashcard_cards',
   deck_assignments: 'deck_assignments',
@@ -34,7 +30,7 @@ export const COLLECTIONS = {
   flashcard_study_sessions: 'flashcard_study_sessions',
   student_card_state: 'student_card_state',
   student_deck_notes: 'student_deck_notes',
-  reading_progress: 'reading_progress',
+
 } as const;
 
 export const FUNCTION_IDS = {

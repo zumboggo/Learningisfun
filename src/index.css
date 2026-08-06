@@ -390,3 +390,172 @@ input, textarea, select, button {
   color: #9ca3af;
   margin: 0.5rem 0 0 0;
 }
+
+/* Milestone journey (hero card progress bar) */
+.milestone-journey {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+}
+
+.milestone-journey-headline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.milestone-journey-count {
+  font-size: clamp(2.65rem, 8vw, 4.1rem);
+  font-weight: 950;
+  line-height: 1;
+  color: #102347;
+}
+
+.milestone-journey-label {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #4a5b7c;
+}
+
+.milestone-journey-delta {
+  width: 100%;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #15803d;
+}
+
+.milestone-journey-bar {
+  height: 16px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(16, 35, 63, 0.1);
+  box-shadow: inset 0 1px 3px rgba(16, 35, 63, 0.12);
+}
+
+.milestone-journey-fill {
+  height: 100%;
+  min-width: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e94c9d, #ae6ee9);
+  transition: width 0.6s ease;
+}
+
+.milestone-journey-legend {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #4a5b7c;
+}
+
+.milestone-journey-next {
+  color: #102347;
+}
+
+/* Hero content overlay */
+.hero-content-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  padding: clamp(24px, 5vw, 48px);
+  background: linear-gradient(90deg, rgba(255, 227, 189, 0.92) 0 45%, rgba(255, 227, 189, 0.32) 65%, transparent 78%);
+}
+
+/* Heatmap */
+.progress-heatmap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.heatmap-with-labels {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+
+.heatmap-weekdays {
+  display: grid;
+  grid-template-rows: repeat(7, 13px);
+  gap: 5px;
+  padding: 4px 0 8px;
+  color: #94a3b8;
+  font-size: 0.64rem;
+  font-weight: 900;
+  line-height: 13px;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.heatmap-grid {
+  display: grid;
+  grid-template-rows: repeat(7, 13px);
+  grid-auto-flow: column;
+  grid-auto-columns: 13px;
+  gap: 5px;
+  align-items: center;
+  overflow-x: auto;
+  padding: 4px 2px 8px;
+}
+
+.heat-cell {
+  width: 13px;
+  height: 13px;
+  border-radius: 4px;
+  border: 1px solid rgba(16, 35, 63, 0.08);
+  background: rgba(255, 255, 255, 0.58);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.heat-1 { background: #dbeafe; }
+.heat-2 { background: #93c5fd; }
+.heat-3 { background: #38bdf8; }
+.heat-4 { background: #0284c7; }
+
+.heatmap-caption {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #64748b;
+  padding: 0 4px;
+}
+
+/* Encouragement toast */
+.student-encouragement {
+  padding: 11px 18px;
+  border: 1px solid rgba(22, 163, 74, 0.25);
+  border-radius: 999px;
+  background: rgba(220, 252, 231, 0.9);
+  color: #166534;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-align: center;
+  box-shadow: 0 12px 28px rgba(16, 35, 63, 0.1);
+}
+
+/* Student progress section */
+.student-progress-section {
+  border-top: 1px solid rgba(16, 35, 71, 0.08);
+  padding-top: 1.25rem;
+}
+
+/* Student mini stats single column */
+.student-goal-grid:has(.goal-ring:only-child) {
+  grid-template-columns: 1fr;
+  max-width: 240px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (max-width: 760px) {
+  .hero-content-overlay {
+    background: linear-gradient(180deg, rgba(255, 227, 189, 0.92) 0 48%, rgba(255, 227, 189, 0.34) 70%, transparent 100%);
+  }
+}

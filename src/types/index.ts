@@ -30,52 +30,10 @@ export interface ClassMember {
   joinedAt: string;
 }
 
-export interface Reading {
-  $id: string;
-  teacherId: string;
-  title: string;
-  author: string;
-  sourceUrl: string;
-  description: string;
-  content: string;
-  contentFormat: 'plain' | 'markdown';
-  status: 'draft' | 'published' | 'archived';
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ReadingAssignment {
-  $id: string;
-  readingId: string;
-  classId: string;
-  promptMarkdown: string;
-  minResponseWords: number;
-  minQuestions: number;
-  status: 'draft' | 'published' | 'archived';
-  assignedAt: string;
-  dueDate: string | null;
-  publishedAt: string | null;
-}
-
-export interface ParagraphObservation {
-  $id: string;
-  readingId: string;
-  assignmentId: string;
-  classSessionId: string;
-  paragraphIndex: number;
-  teacherId: string;
-  observationMarkdown: string;
-  keyQuestionMarkdown: string;
-  vocabularyMarkdown: string;
-  createdAt: string;
-  updatedAt: string;
-  syncStatus: SyncStatus;
-}
-
 export interface ClassSession {
   $id: string;
   classId: string;
-  assignmentId: string | null;
+  assignmentId?: string;
   title: string;
   sessionDate: string;
   status: 'draft' | 'active' | 'published' | 'archived';
@@ -100,32 +58,10 @@ export interface ClassSessionItem {
   syncStatus: SyncStatus;
 }
 
-export type AnnotationType = 'highlight' | 'private_note' | 'teacher_visible_note';
-
-export interface Annotation {
-  $id: string;
-  userId: string;
-  readingId: string;
-  type: AnnotationType;
-  selectedText: string;
-  textBefore: string;
-  textAfter: string;
-  startOffset: number;
-  endOffset: number;
-  blockId: string;
-  color: string;
-  noteText: string;
-  createdAt: string;
-  updatedAt: string;
-  syncStatus: SyncStatus;
-}
-
 export type SyncStatus = 'local' | 'syncing' | 'synced' | 'conflict';
 
 export interface DiscussionQuestion {
   $id: string;
-  readingId: string;
-  assignmentId: string;
   classSessionId: string;
   authorId: string;
   questionText: string;
@@ -148,20 +84,6 @@ export interface QuestionVote {
   userId: string;
   weight: number;
   createdAt: string;
-  updatedAt: string;
-  syncStatus: SyncStatus;
-}
-
-export interface Submission {
-  $id: string;
-  assignmentId: string;
-  classId: string;
-  userId: string;
-  responseMarkdown: string;
-  wordCount: number;
-  belowMinimum: boolean;
-  status: 'draft' | 'submitted';
-  submittedAt: string | null;
   updatedAt: string;
   syncStatus: SyncStatus;
 }
@@ -270,17 +192,6 @@ export interface StudentDeckNote {
   cardId: string;
   personalNote: string;
   personalExample: string;
-}
-
-export interface ReadingProgress {
-  $id: string;
-  userId: string;
-  readingId: string;
-  scrollPercent: number;
-  lastPosition: number;
-  bookmarked: boolean;
-  updatedAt: string;
-  syncStatus: SyncStatus;
 }
 
 export interface SyncOperation {

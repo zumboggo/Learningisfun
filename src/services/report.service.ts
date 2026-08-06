@@ -31,9 +31,6 @@ export async function buildClassParticipationRows(
 
   for (const member of members) {
     const user = users.get(member.userId);
-    const submission = options.assignmentId
-      ? await db.submissions.where('[assignmentId+userId]').equals([options.assignmentId, member.userId]).first()
-      : undefined;
     const questionsSubmitted = options.classSessionId
       ? await db.discussion_questions
           .where('classSessionId')
@@ -57,9 +54,9 @@ export async function buildClassParticipationRows(
       email: user?.email || '',
       questionsSubmitted,
       votesUsed: votes.reduce((sum, vote) => sum + Math.max(1, vote.weight || 1), 0),
-      responseStatus: submission?.status || 'missing',
-      responseWords: submission?.wordCount || 0,
-      belowMinimum: Boolean(submission?.belowMinimum),
+      responseStatus: 'n/a',
+      responseWords: 0,
+      belowMinimum: false,
       flashcardMinutes: round1(flashcard.minutes),
       cardsReviewed: flashcard.reviewed,
       newCards: flashcard.newCards,
