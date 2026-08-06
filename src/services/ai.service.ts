@@ -52,14 +52,14 @@ export async function generateFlashcardsFromNotes(
 
 Rules:
 - Return a JSON array of objects with keys: front, back, hint, tags
-- "front" is the question or prompt side
-- "back" is the answer side
-- "hint" is an optional short hint to help the student
+- Generate UP TO 12 potential flashcards from the content
+- FAVOR vocabulary words, key terms, and specific facts over general summaries
+- For vocabulary cards: "front" should be the word/term, "back" should be a SHORT definition (7-12 words max), and "hint" should be an example sentence using the word in context
+- For fact cards: "front" should be a clear question, "back" should be a concise answer
 - "tags" is an array of topic tags
-- Generate 5-15 cards depending on the content
-- Focus on key concepts, vocabulary, and important facts
-- Make cards clear and unambiguous
+- Make cards clear, specific, and unambiguous
 - Use the same language as the notes
+- Prioritize the most important 8-12 pieces of information
 
 Return ONLY valid JSON, no markdown fences, no explanation.`;
 

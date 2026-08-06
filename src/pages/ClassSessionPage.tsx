@@ -49,6 +49,7 @@ export function ClassSessionPage() {
   const [generatedCards, setGeneratedCards] = useState<GeneratedCard[] | null>(null);
   const [showGeneratedModal, setShowGeneratedModal] = useState(false);
   const [aiError, setAiError] = useState('');
+  const [maxCardsToSave, setMaxCardsToSave] = useState(8);
   const sessionNotesRef = useRef<HTMLTextAreaElement>(null);
 
   const session = useLiveQuery(() => (sessionId ? db.class_sessions.get(sessionId) : undefined), [sessionId, refreshKey]);
@@ -159,6 +160,7 @@ export function ClassSessionPage() {
 
   const handleSaveGeneratedCards = async () => {
     if (!generatedCards || !cls) return;
+    const cardsToSave = generatedCards.slice(0, maxCardsToSave);
     const deckId = ID.unique();
     await db.flashcard_decks.add({
       $id: deckId,
@@ -170,8 +172,8 @@ export function ClassSessionPage() {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
-    for (let i = 0; i < generatedCards.length; i++) {
-      const card = generatedCards[i];
+    for (let i = 0; i < cardsToSave.length; i++) {
+      const card = cardsToSave[i];
       await db.flashcard_cards.add({
         $id: ID.unique(),
         deckId,
@@ -308,6 +310,8 @@ export function ClassSessionPage() {
             cards={generatedCards}
             onClose={() => { setShowGeneratedModal(false); setGeneratedCards(null); }}
             onSave={() => void handleSaveGeneratedCards()}
+            maxCards={maxCardsToSave}
+            onMaxCardsChange={setMaxCardsToSave}
           />
         </>
       )}
@@ -777,11 +781,15 @@ function GeneratedCardsModal({
   cards,
   onClose,
   onSave,
+  maxCards,
+  onMaxCardsChange,
 }: {
   open: boolean;
   cards: GeneratedCard[] | null;
   onClose: () => void;
   onSave: () => void;
+  maxCards: number;
+  onMaxCardsChange: (value: number) => void;
 }) {
   const [saving, setSaving] = useState(false);
   const [editedCards, setEditedCards] = useState<GeneratedCard[]>([]);
@@ -820,6 +828,19 @@ function GeneratedCardsModal({
         <p className="text-sm text-gray-500">
           {editedCards.length} cards generated. Review, edit, or remove cards before saving.
         </p>
+
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-medium text-gray-700">Save up to:</label>
+          <select
+            value={maxCards}
+            onChange={e => onMaxCardsChange(Number(e.target.value))}
+            className="px-2 py-1 border border-gray-300 rounded text-sm"
+          >
+            {[4, 6, 8, 10, 12].map(n => (
+              <option key={n} value={n}>{n} cards</option>
+            ))}
+          </select>
+        </div>
 
         {editedCards.map((card, i) => (
           <div key={i} className="rounded-lg border border-gray-200 p-3 space-y-2">
@@ -874,7 +895,7 @@ function GeneratedCardsModal({
 
         <div className="flex gap-2 pt-2">
           <Button onClick={handleSave} loading={saving} disabled={editedCards.length === 0}>
-            Save {editedCards.length} cards to deck
+            Save {Math.min(editedCards.length, maxCards)} cards to deck
           </Button>
           <Button onClick={onClose} variant="secondary">Cancel</Button>
         </div>

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import type { User } from '@/types';
+import type { User, UserRole } from '@/types';
 import * as authService from '@/services/auth.service';
 import * as syncService from '@/services/sync.service';
 import * as classService from '@/services/class.service';
@@ -10,7 +10,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<void>;
+  register: (email: string, password: string, name: string, role?: UserRole) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   viewAsStudent: boolean;
@@ -79,8 +79,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void syncUserData(u.$id);
   }, [syncUserData]);
 
-  const registerHandler = useCallback(async (email: string, password: string, name: string) => {
-    const u = await authService.register(email, password, name);
+  const registerHandler = useCallback(async (email: string, password: string, name: string, role?: UserRole) => {
+    const u = await authService.register(email, password, name, role || 'student');
     setUser(u);
     syncService.setupSyncListeners();
   }, []);
