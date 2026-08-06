@@ -251,3 +251,51 @@ export interface AppMetadata {
   key: string;
   value: string;
 }
+
+export interface ReadingProgress {
+  $id: string;
+  userId: string;
+  readingId: string;
+  progress: number;
+  lastReadAt: string;
+}
+
+export interface Quiz {
+  $id: string;
+  classId: string;
+  createdBy: string;
+  title: string;
+  sourceType: 'discussion' | 'flashcards' | 'mixed';
+  notesWeight: number;
+  flashcardWeight: number;
+  questionCount: number;
+  timeLimitMinutes: number | null;
+  status: 'draft' | 'published' | 'archived';
+  publishedAt: string | null;
+  createdAt: string;
+  syncStatus: SyncStatus;
+}
+
+export interface QuizQuestion {
+  $id: string;
+  quizId: string;
+  type: 'mc' | 'cloze';
+  questionText: string;
+  options: string;
+  correctIndex: number;
+  clozeAnswer: string;
+  explanation: string;
+  sortOrder: number;
+}
+
+export interface QuizAttempt {
+  $id: string;
+  quizId: string;
+  userId: string;
+  startedAt: string;
+  completedAt: string | null;
+  score: number;
+  totalQuestions: number;
+  answers: string;
+  syncStatus: SyncStatus;
+}

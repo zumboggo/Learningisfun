@@ -7,6 +7,7 @@ import { db } from '@/db/schema';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { EmptyState } from '@/components/common/EmptyState';
+import { getApiKey, setApiKey, testApiKey } from '@/services/ai.service';
 import type { TeacherSettings, Class } from '@/types';
 
 export function TeacherSettingsPage() {
@@ -52,6 +53,8 @@ export function TeacherSettingsPage() {
   return (
     <div className="p-4 max-w-5xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold">Teacher Settings</h1>
+
+      <ApiKeyCard />
 
       {classes.map(cls => (
         <ClassSettingsCard
@@ -120,11 +123,11 @@ function ClassSettingsCard({
             htmlFor={`threshold-${cls.$id}`}
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Comment threshold
+            Question threshold
           </label>
           <p className="text-xs text-gray-500 mb-2">
-            Number of annotations a student must post before they can see
-            peers&apos; comments on texts.
+            Number of questions a student must submit before they can see
+            peers&apos; questions in discussions.
           </p>
           <input
             id={`threshold-${cls.$id}`}
@@ -166,6 +169,82 @@ function ClassSettingsCard({
         </Button>
         {saved && (
           <span className="text-sm text-green-600 font-medium">Saved!</span>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+function ApiKeyCard() {
+  const [apiKey, setApiKeyState] = useState('');
+  const [loaded, setLoaded] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; error?: string } | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useState(() => {
+    getApiKey().then(key => {
+      if (key) setApiKeyState(key);
+      setLoaded(true);
+    });
+  });
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await setApiKey(apiKey.trim());
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleTest = async () => {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const result = await testApiKey(apiKey.trim());
+      setTestResult(result);
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  if (!loaded) return null;
+
+  return (
+    <Card>
+      <h2 className="text-lg font-semibold mb-2">AI Settings</h2>
+      <p className="text-xs text-gray-500 mb-4">
+        Enter your OpenRouter API key to enable AI-powered flashcard generation from discussion notes and quiz creation.
+        Get a key at <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">openrouter.ai</a>
+      </p>
+
+      <div className="space-y-3">
+        <div>
+          <label htmlFor="api-key" className="block text-sm font-medium text-gray-700 mb-1">API Key</label>
+          <input
+            id="api-key"
+            type="password"
+            value={apiKey}
+            onChange={e => { setApiKeyState(e.target.value); setTestResult(null); }}
+            placeholder="sk-or-v1-..."
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono"
+          />
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button onClick={handleSave} loading={saving} size="sm">Save key</Button>
+          <Button onClick={handleTest} loading={testing} size="sm" variant="secondary">Test connection</Button>
+          {saved && <span className="text-sm text-green-600 font-medium">Saved!</span>}
+        </div>
+
+        {testResult && (
+          <div className={`text-sm p-3 rounded-lg ${testResult.ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+            {testResult.ok ? '✓ API key works!' : `✗ ${testResult.error}`}
+          </div>
         )}
       </div>
     </Card>

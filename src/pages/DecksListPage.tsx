@@ -23,7 +23,7 @@ export function DecksListPage() {
   return (
     <div className="p-4 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Flashcard Decks</h1>
+        <h1 className="text-2xl font-bold">Cards</h1>
         {isTeacher ? (
           <Link to="/decks/new">
             <Button size="sm">New deck</Button>
@@ -37,7 +37,7 @@ export function DecksListPage() {
 
       {teacherDecks.length > 0 && (
         <section className="mb-6">
-          <h2 className="text-lg font-semibold mb-3">Assigned Decks</h2>
+          <h2 className="text-lg font-semibold mb-3">Assigned</h2>
           <div className="space-y-3">
             {teacherDecks.map(deck => (
               <Link key={deck.$id} to={`/decks/${deck.$id}/review`}>
@@ -53,7 +53,7 @@ export function DecksListPage() {
 
       {!isTeacher && personalDecks.length > 0 && (
         <section>
-          <h2 className="text-lg font-semibold mb-3">My Decks</h2>
+          <h2 className="text-lg font-semibold mb-3">My Cards</h2>
           <div className="space-y-3">
             {personalDecks.map(deck => (
               <Link key={deck.$id} to={`/decks/${deck.$id}/review`}>

@@ -74,7 +74,7 @@ export function DiscussionsListPage() {
   return (
     <div className="p-4 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Discussions</h1>
+        <h1 className="text-2xl font-bold">Questions</h1>
         {isTeacher && (
           <Link to="/classes">
             <Button size="sm">Start discussion</Button>
@@ -105,8 +105,8 @@ export function DiscussionsListPage() {
         </div>
       ) : (
         <EmptyState
-          title="No discussions yet"
-          message={isTeacher ? 'Start a class period from one of your classes to begin a discussion.' : "Your teacher hasn't started any discussions yet."}
+          title="No questions yet"
+          message={isTeacher ? 'Start a class period from one of your classes to begin collecting questions.' : "Your teacher hasn't started any question sessions yet."}
           action={isTeacher ? (
             <Link to="/classes">
               <Button size="sm">Go to classes</Button>

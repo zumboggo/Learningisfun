@@ -19,6 +19,10 @@ import type {
   TeacherSettings,
   DiscussionAnswer,
   AppMetadata,
+  Quiz,
+  QuizQuestion,
+  QuizAttempt,
+  ReadingProgress,
 } from '@/types';
 
 const db = new Dexie('LearningIsFunDB') as Dexie & {
@@ -39,6 +43,10 @@ const db = new Dexie('LearningIsFunDB') as Dexie & {
   student_card_state: EntityTable<StudentCardState, '$id'>;
   student_deck_notes: EntityTable<StudentDeckNote, '$id'>;
   teacher_settings: EntityTable<TeacherSettings, '$id'>;
+  reading_progress: EntityTable<ReadingProgress, '$id'>;
+  quizzes: EntityTable<Quiz, '$id'>;
+  quiz_questions: EntityTable<QuizQuestion, '$id'>;
+  quiz_attempts: EntityTable<QuizAttempt, '$id'>;
   sync_queue: EntityTable<SyncOperation, 'id'>;
   app_metadata: EntityTable<AppMetadata, 'key'>;
 };
@@ -139,6 +147,32 @@ db.version(5).stores({
   student_card_state: '$id, userId, cardId, deckId, dueDate, status',
   student_deck_notes: '$id, userId, cardId',
   teacher_settings: '$id, classId',
+  sync_queue: '++id, operationId, userId, entityType, entityId, syncStatus, createdAt',
+  app_metadata: 'key',
+});
+
+db.version(6).stores({
+  users: '$id, email, role',
+  classes: '$id, teacherId, joinCode, status',
+  class_members: '$id, classId, userId, [classId+userId]',
+  class_sessions: '$id, classId, sessionDate, status, syncStatus',
+  class_session_items: '$id, classSessionId, type, sourceId, sortOrder, syncStatus',
+  discussion_questions: '$id, classSessionId, authorId, moderationStatus, discussionStatus',
+  discussion_answers: '$id, questionId, authorId, syncStatus',
+  question_votes: '$id, questionId, classSessionId, userId, [questionId+userId], syncStatus',
+  flashcard_decks: '$id, creatorId, type, status',
+  flashcard_cards: '$id, deckId, sortOrder',
+  deck_assignments: '$id, deckId, classId',
+  card_reviews: '$id, userId, cardId, deckId, operationId',
+  flashcard_review_events: '$id, userId, classId, deckId, cardId, sessionId, reviewedAt, syncStatus',
+  flashcard_study_sessions: '$id, userId, classId, deckId, startedAt, syncStatus',
+  student_card_state: '$id, userId, cardId, deckId, dueDate, status',
+  student_deck_notes: '$id, userId, cardId',
+  teacher_settings: '$id, classId',
+  reading_progress: '$id, userId, readingId',
+  quizzes: '$id, classId, createdBy, status, createdAt, syncStatus',
+  quiz_questions: '$id, quizId, sortOrder',
+  quiz_attempts: '$id, quizId, userId, completedAt, syncStatus',
   sync_queue: '++id, operationId, userId, entityType, entityId, syncStatus, createdAt',
   app_metadata: 'key',
 });

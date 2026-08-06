@@ -182,7 +182,7 @@ export function ClassDetailPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold">Discussions ({discussions?.length || 0})</h2>
+            <h2 className="text-lg font-semibold">Questions ({discussions?.length || 0})</h2>
             {isOwner && <Button onClick={() => setShowDiscussionModal(true)} size="sm" variant="secondary">+</Button>}
           </div>
           {discussions && discussions.length > 0 ? (
@@ -203,13 +203,13 @@ export function ClassDetailPage() {
               ))}
               {discussions.length > 5 && (
                 <Link to="/discussions" className="text-sm text-blue-600 hover:underline block">
-                  +{discussions.length - 5} more discussions
+                  +{discussions.length - 5} more question sessions
                 </Link>
               )}
             </div>
           ) : (
             <EmptyState
-              title="No discussions yet"
+              title="No question sessions yet"
               message="Start a discussion to collect questions and votes."
               action={isOwner && <Button onClick={() => setShowDiscussionModal(true)} size="sm" variant="secondary">Start discussion</Button>}
             />
@@ -218,7 +218,7 @@ export function ClassDetailPage() {
 
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold">Decks ({deckRows?.length || 0})</h2>
+            <h2 className="text-lg font-semibold">Cards ({deckRows?.length || 0})</h2>
             {isOwner && <Link to="/decks/new"><Button size="sm" variant="secondary">+</Button></Link>}
           </div>
           {deckRows && deckRows.length > 0 ? (
@@ -265,14 +265,24 @@ export function ClassDetailPage() {
                   <div className="font-medium">{student.name}</div>
                   <div className="text-sm text-gray-500">{student.email}</div>
                 </div>
-                {isOwner && (
-                  <button
-                    onClick={() => void handleRemoveStudent(student.$id)}
-                    className="text-sm text-red-500 hover:text-red-700"
-                  >
-                    Remove
-                  </button>
-                )}
+                <div className="flex items-center gap-2">
+                  {isOwner && (
+                    <Link
+                      to={`/classes/${classId}/students/${student.$id}/progress`}
+                      className="text-sm text-blue-600 hover:underline"
+                    >
+                      Progress
+                    </Link>
+                  )}
+                  {isOwner && (
+                    <button
+                      onClick={() => void handleRemoveStudent(student.$id)}
+                      className="text-sm text-red-500 hover:text-red-700"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
               </Card>
             ))}
           </div>

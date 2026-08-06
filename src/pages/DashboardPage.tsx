@@ -145,6 +145,7 @@ function StudentDashboard() {
   const [joining, setJoining] = useState(false);
   const [statsExpanded, setStatsExpanded] = useState(false);
   const [encouragement, setEncouragement] = useState<string | null>(null);
+  const [selectedDeckIds, setSelectedDeckIds] = useState<string[] | null>(null);
   const navigate = useNavigate();
 
   const memberships = useLiveQuery(
@@ -152,6 +153,38 @@ function StudentDashboard() {
     [user?.$id],
   );
   const classIds = useMemo(() => memberships?.map(c => c.classId) || [], [memberships]);
+
+  useEffect(() => {
+    if (!user) return;
+    db.app_metadata.get(`selectedDecks_${user.$id}`).then(entry => {
+      if (entry) {
+        try { setSelectedDeckIds(JSON.parse(entry.value)); }
+        catch { setSelectedDeckIds(null); }
+      } else {
+        setSelectedDeckIds(null);
+      }
+    });
+  }, [user?.$id]);
+
+  const saveSelectedDecks = async (ids: string[]) => {
+    if (!user) return;
+    setSelectedDeckIds(ids);
+    await db.app_metadata.put({ key: `selectedDecks_${user.$id}`, value: JSON.stringify(ids) });
+  };
+
+  const toggleDeckSelection = (deckId: string) => {
+    const current = selectedDeckIds || [];
+    const next = current.includes(deckId)
+      ? current.filter(id => id !== deckId)
+      : [...current, deckId];
+    void saveSelectedDecks(next);
+  };
+
+  const allAssignedDeckIds = useLiveQuery(async () => {
+    if (!user || classIds.length === 0) return [];
+    const assignments = await db.deck_assignments.where('classId').anyOf(classIds).toArray();
+    return [...new Set(assignments.map(a => a.deckId))];
+  }, [user?.$id, classIds]);
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -167,7 +200,10 @@ function StudentDashboard() {
       };
     }
     const deckAssignments = await db.deck_assignments.where('classId').anyOf(classIds).toArray();
-    const deckIds = [...new Set(deckAssignments.map(a => a.deckId))];
+    const allDeckIds = [...new Set(deckAssignments.map(a => a.deckId))];
+    const deckIds = selectedDeckIds !== null
+      ? allDeckIds.filter(id => selectedDeckIds.includes(id))
+      : allDeckIds;
 
     const cards = deckIds.length
       ? await db.flashcard_cards.where('deckId').anyOf(deckIds).toArray()
@@ -249,6 +285,19 @@ function StudentDashboard() {
       sessions: sessions.sort((a, b) => b.sessionDate.localeCompare(a.sessionDate)),
       decks: decks.sort((a, b) => b.assignment.assignedAt.localeCompare(a.assignment.assignedAt)),
     };
+  }, [user?.$id, classIds]);
+
+  const questionsToday = useLiveQuery(async () => {
+    if (!user || classIds.length === 0) return 0;
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const sessions = await db.class_sessions.where('classId').anyOf(classIds).toArray();
+    const sessionIds = sessions.map(s => s.$id);
+    if (sessionIds.length === 0) return 0;
+    const questions = await db.discussion_questions
+      .where('classSessionId').anyOf(sessionIds)
+      .and(q => q.authorId === user.$id && q.createdAt.slice(0, 10) === todayStr)
+      .toArray();
+    return questions.length;
   }, [user?.$id, classIds]);
 
   useEffect(() => {
@@ -333,6 +382,16 @@ function StudentDashboard() {
 
         <div className="student-goal-grid">
           <GoalRing
+            title="Questions asked"
+            value={questionsToday ?? 0}
+            goal={2}
+            unit="questions"
+            color="#5b7cff"
+            bonusGoal={3}
+            bonusLabel="all 3!"
+            onStart={() => navigate('/discussions')}
+          />
+          <GoalRing
             title="Flashcards studied"
             value={stats.flashcardsToday}
             goal={30}
@@ -396,7 +455,7 @@ function StudentDashboard() {
                 title={session.title}
                 detail={`${session.votesPerStudent} votes available`}
                 to={`/discussions/${session.$id}`}
-                action="Open discussion"
+                action="Open questions"
                 status={session.status}
               />
             ))}
@@ -450,22 +509,51 @@ function StudentDashboard() {
       </div>
 
       <div className="student-section">
-        <h2 className="text-lg font-bold text-slate-950 mb-3">Flashcard decks</h2>
-        {doNow?.decks && doNow.decks.length > 0 ? (
-          <div className="space-y-3">
-            {doNow.decks.map(({ assignment, deck }) => (
-              <Link key={assignment.$id} to={`/decks/${assignment.deckId}/review`}>
-                <Card>
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="font-medium">{deck?.title || 'Unknown deck'}</h3>
-                      {deck?.description && <p className="text-sm text-gray-500">{deck.description}</p>}
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-bold text-slate-950">My decks</h2>
+          {selectedDeckIds !== null && (
+            <span className="text-xs text-slate-400">
+              {selectedDeckIds.length === 0 ? 'None selected' : `${selectedDeckIds.length} selected`}
+            </span>
+          )}
+        </div>
+        {allAssignedDeckIds && allAssignedDeckIds.length > 0 ? (
+          <div className="space-y-2">
+            {allAssignedDeckIds.map(deckId => {
+              const deck = doNow?.decks.find(d => d.deck?.$id === deckId)?.deck;
+              const assignment = doNow?.decks.find(d => d.deck?.$id === deckId)?.assignment;
+              const isSelected = selectedDeckIds === null || (selectedDeckIds || []).includes(deckId);
+              return (
+                <div key={deckId} className="flex items-center gap-3 rounded-xl bg-white/60 border border-white/70 px-4 py-3">
+                  <button
+                    onClick={() => toggleDeckSelection(deckId)}
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors ${
+                      isSelected
+                        ? 'bg-blue-600 border-blue-600 text-white'
+                        : 'border-gray-300 hover:border-blue-400'
+                    }`}
+                    aria-label={isSelected ? 'Deselect deck' : 'Select deck'}
+                  >
+                    {isSelected && (
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </button>
+                  <Link to={`/decks/${deckId}/review`} className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <h3 className="font-medium text-sm">{deck?.title || 'Unknown deck'}</h3>
+                        {deck?.description && <p className="text-xs text-gray-500 truncate">{deck.description}</p>}
+                      </div>
+                      {assignment?.dailyTarget && (
+                        <span className="text-xs text-blue-600 font-medium shrink-0">{assignment.dailyTarget}/day</span>
+                      )}
                     </div>
-                    {assignment.dailyTarget ? <StatusBadge status="ready" label={`${assignment.dailyTarget}/day`} /> : <StatusBadge status="practice" />}
-                  </div>
-                </Card>
-              </Link>
-            ))}
+                  </Link>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <p className="text-gray-400 text-sm">No flashcard decks assigned yet.</p>
@@ -603,7 +691,7 @@ function TeacherDashboard() {
                   <Metric value={row.deckCount} label="Decks" />
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Link to={`/discussions/${row.session.$id}`}><Button size="sm">Open discussion</Button></Link>
+                  <Link to={`/discussions/${row.session.$id}`}><Button size="sm">Open questions</Button></Link>
                   {row.cls && <Link to={`/classes/${row.cls.$id}/reports`}><Button size="sm" variant="secondary">Report</Button></Link>}
                 </div>
               </Card>

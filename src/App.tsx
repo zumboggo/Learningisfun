@@ -9,6 +9,9 @@ import { FlashcardReviewPage } from '@/pages/FlashcardReviewPage';
 import { DecksListPage } from '@/pages/DecksListPage';
 import { DiscussionsListPage } from '@/pages/DiscussionsListPage';
 import { DiscussionPage } from '@/pages/DiscussionPage';
+import { QuizzesPage } from '@/pages/QuizzesPage';
+import { QuizTakingPage } from '@/pages/QuizTakingPage';
+import { StudentProgressPage } from '@/pages/StudentProgressPage';
 import { ClassesListPage } from '@/pages/ClassesListPage';
 import { ClassDetailPage } from '@/pages/ClassDetailPage';
 import { ClassSessionPage } from '@/pages/ClassSessionPage';
@@ -69,6 +72,9 @@ export default function App() {
           <Route path="/discussions" element={<ProtectedRoute><DiscussionsListPage /></ProtectedRoute>} />
           <Route path="/discussions/:sessionId" element={<ProtectedRoute><DiscussionPage /></ProtectedRoute>} />
 
+          <Route path="/quizzes" element={<ProtectedRoute><QuizzesPage /></ProtectedRoute>} />
+          <Route path="/quizzes/:quizId/take" element={<ProtectedRoute><QuizTakingPage /></ProtectedRoute>} />
+
           <Route path="/decks" element={<ProtectedRoute><DecksListPage /></ProtectedRoute>} />
           <Route path="/decks/:deckId/review" element={<ProtectedRoute><FlashcardReviewPage /></ProtectedRoute>} />
           <Route path="/decks/import" element={<ProtectedRoute><ImportDeckPage /></ProtectedRoute>} />
@@ -78,6 +84,7 @@ export default function App() {
           <Route path="/classes/:classId" element={<ProtectedRoute><ClassDetailPage /></ProtectedRoute>} />
           <Route path="/classes/:classId/reports" element={<ProtectedRoute><TeacherRoute><ParticipationReportPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/classes/:classId/decks/:deckId/progress" element={<ProtectedRoute><TeacherRoute><FlashcardAnalyticsPage /></TeacherRoute></ProtectedRoute>} />
+          <Route path="/classes/:classId/students/:studentId/progress" element={<ProtectedRoute><TeacherRoute><StudentProgressPage /></TeacherRoute></ProtectedRoute>} />
 
           <Route path="/settings" element={<ProtectedRoute><TeacherRoute><TeacherSettingsPage /></TeacherRoute></ProtectedRoute>} />
 

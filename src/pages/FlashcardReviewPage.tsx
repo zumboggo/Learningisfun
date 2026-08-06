@@ -23,6 +23,16 @@ const RATING_BY_SWIPE: Record<SwipeDir, ReviewRating> = {
   down: 'easy',
 };
 
+const CARD_TIME_CAP_SECONDS = 60;
+const HEALTHY_TIME_MIN = 3;
+const HEALTHY_TIME_MAX = 8;
+
+interface CardTimeRecord {
+  cardId: string;
+  rating: ReviewRating;
+  elapsedSeconds: number;
+}
+
 export function FlashcardReviewPage() {
   const { deckId } = useParams<{ deckId: string }>();
   const { user } = useAuth();
@@ -58,9 +68,11 @@ export function FlashcardReviewPage() {
   const [studySessionId, setStudySessionId] = useState('');
   const [activeSeconds, setActiveSeconds] = useState(0);
   const [emptyMessage, setEmptyMessage] = useState('');
+  const [cardTimes, setCardTimes] = useState<CardTimeRecord[]>([]);
   const cardStartedAt = useRef(Date.now());
   const activeSecondsRef = useRef(0);
   const studySessionIdRef = useRef('');
+  const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     studySessionIdRef.current = studySessionId;
@@ -94,6 +106,7 @@ export function FlashcardReviewPage() {
     setSessionComplete(false);
     setReviewedCount(0);
     setEmptyMessage('');
+    setCardTimes([]);
     cardStartedAt.current = Date.now();
   };
 
@@ -111,9 +124,16 @@ export function FlashcardReviewPage() {
 
   const handleRate = async (rating: ReviewRating) => {
     if (!user || !currentCard || !deckId) return;
-    const elapsedSeconds = Math.max(1, Math.round((Date.now() - cardStartedAt.current) / 1000));
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = null;
+    }
+    const rawElapsed = Math.round((Date.now() - cardStartedAt.current) / 1000);
+    const elapsedSeconds = Math.min(CARD_TIME_CAP_SECONDS, Math.max(1, rawElapsed));
     activeSecondsRef.current += elapsedSeconds;
     setActiveSeconds(activeSecondsRef.current);
+
+    setCardTimes(prev => [...prev, { cardId: currentCard.$id, rating, elapsedSeconds }]);
 
     await reviewCard(user.$id, currentCard.$id, deckId, rating, {
       classId: classId || null,
@@ -180,6 +200,21 @@ export function FlashcardReviewPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [sessionStarted, sessionComplete, showAnswer, currentCard?.$id, currentIndex, studySessionId]);
 
+  useEffect(() => {
+    if (!sessionStarted || sessionComplete || !showAnswer) return;
+    inactivityTimerRef.current = setTimeout(() => {
+      setCardTimes(prev => {
+        if (!currentCard) return prev;
+        const alreadyTimed = prev.some(t => t.cardId === currentCard.$id && t.elapsedSeconds >= CARD_TIME_CAP_SECONDS);
+        if (alreadyTimed) return prev;
+        return [...prev, { cardId: currentCard.$id, rating: 'good', elapsedSeconds: CARD_TIME_CAP_SECONDS }];
+      });
+    }, CARD_TIME_CAP_SECONDS * 1000);
+    return () => {
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+    };
+  }, [sessionStarted, sessionComplete, showAnswer, currentIndex]);
+
   if (!deck) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -220,12 +255,44 @@ export function FlashcardReviewPage() {
   }
 
   if (sessionComplete) {
+    const totalTime = cardTimes.reduce((sum, t) => sum + t.elapsedSeconds, 0);
+    const avgTime = reviewedCount > 0 ? totalTime / reviewedCount : 0;
+    const againCount = cardTimes.filter(t => t.rating === 'again').length;
+    const hardCount = cardTimes.filter(t => t.rating === 'hard').length;
+    const goodCount = cardTimes.filter(t => t.rating === 'good').length;
+    const easyCount = cardTimes.filter(t => t.rating === 'easy').length;
+    const timeHealthy = avgTime >= HEALTHY_TIME_MIN && avgTime <= HEALTHY_TIME_MAX;
+
     return (
-      <div className="p-4 max-w-lg mx-auto text-center">
-        <h2 className="text-2xl font-bold mb-2">Session complete</h2>
+      <div className="p-4 max-w-lg mx-auto text-center relative">
+        <Confetti />
+        <div className="text-5xl mb-4">🎉</div>
+        <h2 className="text-2xl font-bold mb-2">Session complete!</h2>
         <p className="text-gray-500 mb-6">
-          You reviewed {reviewedCount} cards in {Math.round(activeSeconds / 60)} minutes.
+          You reviewed {reviewedCount} cards in {Math.round(totalTime / 60)} minutes.
         </p>
+
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <div className="rounded-xl bg-blue-50 p-4">
+            <div className="text-2xl font-bold text-blue-700">{avgTime.toFixed(1)}s</div>
+            <div className="text-xs text-blue-600">avg per card</div>
+            <div className={`text-xs mt-1 font-medium ${timeHealthy ? 'text-green-600' : 'text-orange-500'}`}>
+              {timeHealthy ? '✓ Good pace' : avgTime < HEALTHY_TIME_MIN ? '⚡ A bit fast' : '🐢 Take your time'}
+            </div>
+          </div>
+          <div className="rounded-xl bg-purple-50 p-4">
+            <div className="text-2xl font-bold text-purple-700">{Math.round(totalTime / 60)}m</div>
+            <div className="text-xs text-purple-600">total time</div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-4 gap-2 mb-6">
+          <RatingBreakdown label="Again" count={againCount} total={reviewedCount} color="red" />
+          <RatingBreakdown label="Hard" count={hardCount} total={reviewedCount} color="orange" />
+          <RatingBreakdown label="Good" count={goodCount} total={reviewedCount} color="green" />
+          <RatingBreakdown label="Easy" count={easyCount} total={reviewedCount} color="blue" />
+        </div>
+
         <div className="space-y-3">
           <Button onClick={() => setSessionStarted(false)} className="w-full">
             Back to deck
@@ -343,5 +410,50 @@ function RatingButton({ label, shortcut, tone, onClick }: { label: string; short
       <span className="block">{label}</span>
       <span className="text-xs opacity-75">{shortcut}</span>
     </button>
+  );
+}
+
+function RatingBreakdown({ label, count, total, color }: { label: string; count: number; total: number; color: 'red' | 'orange' | 'green' | 'blue' }) {
+  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+  const bgColors = { red: 'bg-red-50', orange: 'bg-orange-50', green: 'bg-green-50', blue: 'bg-blue-50' };
+  const textColors = { red: 'text-red-700', orange: 'text-orange-700', green: 'text-green-700', blue: 'text-blue-700' };
+  return (
+    <div className={`rounded-xl p-3 ${bgColors[color]}`}>
+      <div className={`text-lg font-bold ${textColors[color]}`}>{count}</div>
+      <div className="text-xs text-gray-500">{label}</div>
+      <div className="text-xs text-gray-400">{pct}%</div>
+    </div>
+  );
+}
+
+export function Confetti() {
+  const pieces = Array.from({ length: 40 }, (_, i) => ({
+    id: i,
+    left: Math.random() * 100,
+    delay: Math.random() * 0.8,
+    duration: 1.5 + Math.random() * 1.5,
+    color: ['#e94c9d', '#5b7cff', '#22c55e', '#f59e0b', '#a855f7', '#0284c7'][i % 6],
+    size: 6 + Math.random() * 6,
+    rotation: Math.random() * 360,
+  }));
+
+  return (
+    <div className="confetti-container" aria-hidden="true">
+      {pieces.map(p => (
+        <span
+          key={p.id}
+          className="confetti-piece"
+          style={{
+            left: `${p.left}%`,
+            animationDelay: `${p.delay}s`,
+            animationDuration: `${p.duration}s`,
+            backgroundColor: p.color,
+            width: `${p.size}px`,
+            height: `${p.size}px`,
+            transform: `rotate(${p.rotation}deg)`,
+          }}
+        />
+      ))}
+    </div>
   );
 }

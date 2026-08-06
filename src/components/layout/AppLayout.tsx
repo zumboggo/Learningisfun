@@ -20,15 +20,17 @@ export function AppLayout({ children }: AppLayoutProps) {
   const navItems = isTeacher
     ? [
         { to: '/dashboard', label: 'Dashboard', icon: 'D' },
-        { to: '/discussions', label: 'Discussions', icon: 'Q' },
-        { to: '/decks', label: 'Decks', icon: 'V' },
+        { to: '/discussions', label: 'Questions', icon: 'Q' },
+        { to: '/decks', label: 'Cards', icon: 'V' },
         { to: '/classes', label: 'Classes', icon: 'C' },
+        { to: '/quizzes', label: 'Quizzes', icon: 'Z' },
         { to: '/settings', label: 'Settings', icon: '?' },
       ]
     : [
         { to: '/dashboard', label: 'Home', icon: 'home' },
-        { to: '/decks', label: 'Flashcards', icon: 'cards' },
-        { to: '/discussions', label: 'Discussions', icon: 'chat' },
+        { to: '/decks', label: 'Cards', icon: 'cards' },
+        { to: '/discussions', label: 'Questions', icon: 'chat' },
+        { to: '/quizzes', label: 'Quizzes', icon: 'quiz' },
       ];
 
   if (!isTeacher) {
@@ -179,6 +181,18 @@ function NavIcon({ name }: { name: string }) {
         <path d="M9 3h8a2 2 0 0 1 2 2v11" />
         <path d="M7.5 10h4" />
         <path d="M7.5 14h3" />
+      </svg>
+    );
+  }
+  if (name === 'quiz') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="5" y="3" width="14" height="18" rx="2" />
+        <path d="M9 7h6" />
+        <path d="M9 11h6" />
+        <path d="M9 15h3" />
+        <circle cx="15" cy="16" r="2.5" />
+        <path d="M15 14.5v1.5l1 1" />
       </svg>
     );
   }

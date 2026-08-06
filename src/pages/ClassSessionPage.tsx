@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { ID } from 'appwrite';
 import { db } from '@/db/schema';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -22,7 +23,9 @@ import { Card } from '@/components/common/Card';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Markdown } from '@/components/common/Markdown';
 import { MarkdownToolbar } from '@/components/common/MarkdownToolbar';
+import { Modal } from '@/components/common/Modal';
 import { StatusBadge } from '@/components/common/StatusBadge';
+import { getApiKey, generateFlashcardsFromNotes, type GeneratedCard } from '@/services/ai.service';
 import type {
   DeckAssignment,
   DiscussionQuestion,
@@ -42,6 +45,10 @@ export function ClassSessionPage() {
   const [sessionNotes, setSessionNotes] = useState('');
   const [notesDrafts, setNotesDrafts] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [generatedCards, setGeneratedCards] = useState<GeneratedCard[] | null>(null);
+  const [showGeneratedModal, setShowGeneratedModal] = useState(false);
+  const [aiError, setAiError] = useState('');
   const sessionNotesRef = useRef<HTMLTextAreaElement>(null);
 
   const session = useLiveQuery(() => (sessionId ? db.class_sessions.get(sessionId) : undefined), [sessionId, refreshKey]);
@@ -126,6 +133,68 @@ export function ClassSessionPage() {
     if (!user || !sessionId) return;
     await saveSessionNotes();
     await publishClassNotes(sessionId, user.$id);
+    setRefreshKey(key => key + 1);
+  };
+
+  const handleGenerateFlashcards = async () => {
+    const notesToUse = notesPreview || sessionNotes;
+    if (!notesToUse.trim()) return;
+    setGenerating(true);
+    setAiError('');
+    try {
+      const apiKey = await getApiKey();
+      if (!apiKey) {
+        setAiError('No API key configured. Add one in Settings → AI Settings.');
+        return;
+      }
+      const cards = await generateFlashcardsFromNotes(notesToUse, apiKey);
+      setGeneratedCards(cards);
+      setShowGeneratedModal(true);
+    } catch (e) {
+      setAiError(e instanceof Error ? e.message : 'Failed to generate flashcards');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleSaveGeneratedCards = async () => {
+    if (!generatedCards || !cls) return;
+    const deckId = ID.unique();
+    await db.flashcard_decks.add({
+      $id: deckId,
+      creatorId: user!.$id,
+      title: `${session?.title || 'Session'} - AI Generated`,
+      description: `Flashcards generated from class notes on ${session?.sessionDate}`,
+      type: 'teacher',
+      status: 'published',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+    for (let i = 0; i < generatedCards.length; i++) {
+      const card = generatedCards[i];
+      await db.flashcard_cards.add({
+        $id: ID.unique(),
+        deckId,
+        front: card.front,
+        back: card.back,
+        frontMarkdown: card.front,
+        backMarkdown: card.back,
+        hint: card.hint,
+        tags: card.tags,
+        sortOrder: i,
+        createdAt: new Date().toISOString(),
+      });
+    }
+    await db.deck_assignments.add({
+      $id: ID.unique(),
+      deckId,
+      classId: cls.$id,
+      isRequired: false,
+      dailyTarget: null,
+      assignedAt: new Date().toISOString(),
+    });
+    setShowGeneratedModal(false);
+    setGeneratedCards(null);
     setRefreshKey(key => key + 1);
   };
 
@@ -219,15 +288,28 @@ export function ClassSessionPage() {
       )}
 
       {activeTab === 'notes' && (
-        <NotesPanel
-          isTeacher={Boolean(isTeacher)}
-          sessionNotes={sessionNotes}
-          notesPreview={notesPreview || session.publishedNotesMarkdown || ''}
-          sessionNotesRef={sessionNotesRef}
-          onNotesChange={setSessionNotes}
-          onSave={() => void saveSessionNotes()}
-          onPublish={() => void publishNotes()}
-        />
+        <>
+          {aiError && (
+            <div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg">{aiError}</div>
+          )}
+          <NotesPanel
+            isTeacher={Boolean(isTeacher)}
+            sessionNotes={sessionNotes}
+            notesPreview={notesPreview || session.publishedNotesMarkdown || ''}
+            sessionNotesRef={sessionNotesRef}
+            onNotesChange={setSessionNotes}
+            onSave={() => void saveSessionNotes()}
+            onPublish={() => void publishNotes()}
+            onGenerateFlashcards={() => void handleGenerateFlashcards()}
+            generating={generating}
+          />
+          <GeneratedCardsModal
+            open={showGeneratedModal}
+            cards={generatedCards}
+            onClose={() => { setShowGeneratedModal(false); setGeneratedCards(null); }}
+            onSave={() => void handleSaveGeneratedCards()}
+          />
+        </>
       )}
     </div>
   );
@@ -430,6 +512,8 @@ function NotesPanel({
   onNotesChange,
   onSave,
   onPublish,
+  onGenerateFlashcards,
+  generating,
 }: {
   isTeacher: boolean;
   sessionNotes: string;
@@ -438,6 +522,8 @@ function NotesPanel({
   onNotesChange: (value: string) => void;
   onSave: () => void;
   onPublish: () => void;
+  onGenerateFlashcards: () => void;
+  generating: boolean;
 }) {
   if (!isTeacher) {
     return (
@@ -464,6 +550,11 @@ function NotesPanel({
         <div className="mt-3 flex flex-wrap gap-2">
           <Button onClick={onSave} variant="secondary">Save draft</Button>
           <Button onClick={onPublish}>Publish notes</Button>
+          {notesPreview && (
+            <Button onClick={onGenerateFlashcards} loading={generating} variant="secondary">
+              ✨ Generate flashcards
+            </Button>
+          )}
         </div>
       </Card>
       <Card>
@@ -679,4 +770,115 @@ async function buildDeckRows(classId: string): Promise<DeckRow[]> {
     rows.push({ assignment, deck, cardCount });
   }
   return rows.sort((a, b) => b.assignment.assignedAt.localeCompare(a.assignment.assignedAt));
+}
+
+function GeneratedCardsModal({
+  open,
+  cards,
+  onClose,
+  onSave,
+}: {
+  open: boolean;
+  cards: GeneratedCard[] | null;
+  onClose: () => void;
+  onSave: () => void;
+}) {
+  const [saving, setSaving] = useState(false);
+  const [editedCards, setEditedCards] = useState<GeneratedCard[]>([]);
+  const [editIndex, setEditIndex] = useState<number | null>(null);
+
+  useState(() => {
+    if (cards) setEditedCards(cards);
+  });
+
+  useState(() => {
+    if (cards) setEditedCards([...cards]);
+  });
+
+  const handleDelete = (index: number) => {
+    setEditedCards(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleEdit = (index: number, field: 'front' | 'back', value: string) => {
+    setEditedCards(prev => prev.map((c, i) => i === index ? { ...c, [field]: value } : c));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await onSave();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!cards) return null;
+
+  return (
+    <Modal open={open} onClose={onClose} title="AI Generated Flashcards">
+      <div className="space-y-4 max-h-[70vh] overflow-auto">
+        <p className="text-sm text-gray-500">
+          {editedCards.length} cards generated. Review, edit, or remove cards before saving.
+        </p>
+
+        {editedCards.map((card, i) => (
+          <div key={i} className="rounded-lg border border-gray-200 p-3 space-y-2">
+            <div className="flex items-start justify-between gap-2">
+              <span className="text-xs font-medium text-gray-400">Card {i + 1}</span>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => setEditIndex(editIndex === i ? null : i)}
+                  className="text-xs text-blue-600 hover:underline"
+                >
+                  {editIndex === i ? 'Done' : 'Edit'}
+                </button>
+                <button
+                  onClick={() => handleDelete(i)}
+                  className="text-xs text-red-600 hover:underline"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+            {editIndex === i ? (
+              <>
+                <input
+                  value={card.front}
+                  onChange={e => handleEdit(i, 'front', e.target.value)}
+                  className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                  placeholder="Front"
+                />
+                <input
+                  value={card.back}
+                  onChange={e => handleEdit(i, 'back', e.target.value)}
+                  className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                  placeholder="Back"
+                />
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-medium">{card.front}</p>
+                <p className="text-sm text-gray-600">{card.back}</p>
+                {card.hint && <p className="text-xs text-gray-400">Hint: {card.hint}</p>}
+                {card.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {card.tags.map(tag => (
+                      <span key={tag} className="text-xs bg-gray-100 px-2 py-0.5 rounded">{tag}</span>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        ))}
+
+        <div className="flex gap-2 pt-2">
+          <Button onClick={handleSave} loading={saving} disabled={editedCards.length === 0}>
+            Save {editedCards.length} cards to deck
+          </Button>
+          <Button onClick={onClose} variant="secondary">Cancel</Button>
+        </div>
+      </div>
+    </Modal>
+  );
 }
