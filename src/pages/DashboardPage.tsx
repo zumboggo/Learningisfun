@@ -342,12 +342,17 @@ function StudentDashboard() {
   return (
     <div className="student-home mx-auto min-h-screen max-w-5xl px-4 pb-4 pt-4 sm:px-6 lg:px-8">
       <section className="student-home-hero" aria-label="Learning is Fun">
-        <div className="hero-content-overlay">
+        <div className="student-home-hero-text">
+          <h1 className="student-home-hero-heading">
+            Learning <span>is fun</span>
+          </h1>
+          <p className="student-home-hero-tagline">Let's grow a little stronger everyday.</p>
           <MilestoneJourney wordsKnown={stats.knownCards} leveledUpThisWeek={stats.movedThisWeek} />
         </div>
         <img
-          src={`${import.meta.env.BASE_URL}images/learning-is-fun-home-reference.png`}
-          alt="Learning is fun illustrated student header"
+          className="student-home-hero-illustration"
+          src={`${import.meta.env.BASE_URL}images/student-hero-illustration.png`}
+          alt="Excited student ready to learn"
         />
       </section>
 
