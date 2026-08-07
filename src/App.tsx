@@ -20,6 +20,7 @@ import { ParticipationReportPage } from '@/pages/ParticipationReportPage';
 import { FlashcardAnalyticsPage } from '@/pages/FlashcardAnalyticsPage';
 import { ImportDeckPage } from '@/pages/ImportDeckPage';
 import { CreateClassPage } from '@/pages/teacher/CreateClassPage';
+import { AddClassCardsPage } from '@/pages/teacher/AddClassCardsPage';
 
 import { CreateDeckPage } from '@/pages/teacher/CreateDeckPage';
 import { TeacherSettingsPage } from '@/pages/TeacherSettingsPage';
@@ -82,6 +83,7 @@ export default function App() {
 
           <Route path="/classes" element={<ProtectedRoute><ClassesListPage /></ProtectedRoute>} />
           <Route path="/classes/:classId" element={<ProtectedRoute><ClassDetailPage /></ProtectedRoute>} />
+          <Route path="/classes/:classId/cards/new" element={<ProtectedRoute><TeacherRoute><AddClassCardsPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/classes/:classId/reports" element={<ProtectedRoute><TeacherRoute><ParticipationReportPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/classes/:classId/decks/:deckId/progress" element={<ProtectedRoute><TeacherRoute><FlashcardAnalyticsPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/classes/:classId/students/:studentId/progress" element={<ProtectedRoute><TeacherRoute><StudentProgressPage /></TeacherRoute></ProtectedRoute>} />

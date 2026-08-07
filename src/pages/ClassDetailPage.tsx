@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/db/schema';
@@ -21,7 +21,9 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 export function ClassDetailPage() {
   const { classId } = useParams<{ classId: string }>();
   const { user, isTeacher } = useAuth();
+  const navigate = useNavigate();
   const [newCode, setNewCode] = useState('');
+  const [pendingRemoval, setPendingRemoval] = useState<{ id: string; name: string } | null>(null);
   const [showDiscussionModal, setShowDiscussionModal] = useState(false);
   const [discussionTitle, setDiscussionTitle] = useState('Class discussion');
   const [discussionDate, setDiscussionDate] = useState(todayKey());
@@ -51,9 +53,15 @@ export function ClassDetailPage() {
     const rows = await Promise.all(assignments.map(async assignment => ({
       assignment,
       deck: await db.flashcard_decks.get(assignment.deckId),
+      cardCount: await db.flashcard_cards.where('deckId').equals(assignment.deckId).count(),
     })));
     return rows.sort((a, b) => b.assignment.assignedAt.localeCompare(a.assignment.assignedAt));
   }, [classId]);
+
+  const totalCards = useMemo(
+    () => (deckRows || []).reduce((sum, row) => sum + row.cardCount, 0),
+    [deckRows],
+  );
 
   const discussions = useLiveQuery(async () => {
     if (!classId) return [];
@@ -71,9 +79,10 @@ export function ClassDetailPage() {
     setNewCode(code);
   };
 
-  const handleRemoveStudent = async (userId: string) => {
-    if (!classId) return;
-    await removeStudent(classId, userId);
+  const handleRemoveStudent = async () => {
+    if (!classId || !pendingRemoval) return;
+    await removeStudent(classId, pendingRemoval.id);
+    setPendingRemoval(null);
   };
 
   const handleCreateDiscussion = async () => {
@@ -86,6 +95,7 @@ export function ClassDetailPage() {
       allowStackedVotes,
     });
     setShowDiscussionModal(false);
+    navigate(`/discussions/${session.$id}`);
   };
 
   const handleRosterFile = async (file: File) => {
@@ -183,7 +193,16 @@ export function ClassDetailPage() {
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold">Questions ({discussions?.length || 0})</h2>
-            {isOwner && <Button onClick={() => setShowDiscussionModal(true)} size="sm" variant="secondary">+</Button>}
+            {isOwner && (
+              <Button
+                onClick={() => setShowDiscussionModal(true)}
+                size="sm"
+                variant="secondary"
+                aria-label="Start a discussion"
+              >
+                Start
+              </Button>
+            )}
           </div>
           {discussions && discussions.length > 0 ? (
             <div className="space-y-2">
@@ -218,12 +237,23 @@ export function ClassDetailPage() {
 
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold">Cards ({deckRows?.length || 0})</h2>
-            {isOwner && <Link to="/decks/new"><Button size="sm" variant="secondary">+</Button></Link>}
+            <h2 className="text-lg font-semibold">
+              Card decks ({deckRows?.length || 0})
+              {totalCards > 0 && (
+                <span className="ml-2 text-sm font-normal text-gray-500">{totalCards} cards</span>
+              )}
+            </h2>
+            {isOwner && (
+              <Link to={`/classes/${cls.$id}/cards/new`}>
+                <Button size="sm" variant="secondary" aria-label="Add cards to this class">
+                  Add cards
+                </Button>
+              </Link>
+            )}
           </div>
           {deckRows && deckRows.length > 0 ? (
             <div className="space-y-2">
-              {deckRows.slice(0, 5).map(({ assignment, deck }) => (
+              {deckRows.slice(0, 5).map(({ assignment, deck, cardCount }) => (
                 <Card key={assignment.$id}>
                   <div className="flex items-start justify-between gap-2">
                     <div>
@@ -231,6 +261,9 @@ export function ClassDetailPage() {
                         {deck?.title || 'Unknown deck'}
                       </Link>
                       {deck?.description && <p className="text-xs text-gray-500">{deck.description}</p>}
+                      <p className="text-xs text-gray-400 mt-1">
+                        {cardCount} {cardCount === 1 ? 'card' : 'cards'}
+                      </p>
                     </div>
                     {isTeacher ? (
                       <Link to={`/classes/${cls.$id}/decks/${assignment.deckId}/progress`}>
@@ -244,12 +277,22 @@ export function ClassDetailPage() {
                   </div>
                 </Card>
               ))}
+              {deckRows.length > 5 && (
+                <Link to="/decks" className="text-sm text-blue-600 hover:underline block">
+                  +{deckRows.length - 5} more {deckRows.length - 5 === 1 ? 'deck' : 'decks'}
+                </Link>
+              )}
             </div>
           ) : (
             <EmptyState
-              title="No decks yet"
-              message="Import flashcards for vocabulary study."
-              action={isOwner && <Link to="/decks/import"><Button size="sm" variant="secondary">Import deck</Button></Link>}
+              title="No cards yet"
+              message="Type cards in by hand, or import a CSV if you already have a list."
+              action={isOwner && (
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Link to={`/classes/${cls.$id}/cards/new`}><Button size="sm">Add cards</Button></Link>
+                  <Link to="/decks/import"><Button size="sm" variant="secondary">Import CSV</Button></Link>
+                </div>
+              )}
             />
           )}
         </section>
@@ -276,7 +319,7 @@ export function ClassDetailPage() {
                   )}
                   {isOwner && (
                     <button
-                      onClick={() => void handleRemoveStudent(student.$id)}
+                      onClick={() => setPendingRemoval({ id: student.$id, name: student.name })}
                       className="text-sm text-red-500 hover:text-red-700"
                     >
                       Remove
@@ -293,6 +336,27 @@ export function ClassDetailPage() {
           />
         )}
       </section>
+
+      <Modal
+        open={Boolean(pendingRemoval)}
+        onClose={() => setPendingRemoval(null)}
+        title="Remove student"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Remove <strong>{pendingRemoval?.name}</strong> from {cls.name}? They lose access to this
+            class's cards and discussions, and will need the join code to come back.
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row-reverse">
+            <Button variant="danger" onClick={() => void handleRemoveStudent()} className="sm:flex-1">
+              Remove {pendingRemoval?.name}
+            </Button>
+            <Button variant="secondary" onClick={() => setPendingRemoval(null)} className="sm:flex-1">
+              Keep in class
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal open={showDiscussionModal} onClose={() => setShowDiscussionModal(false)} title="Start discussion">
         <div className="space-y-4">

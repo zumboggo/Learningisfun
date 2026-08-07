@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { createDeck, addCard, publishDeck, assignDeck } from '@/services/flashcard.service';
 import { detectMapping, parseCsvContent, readFileAsText } from '@/utils/csv-parser';
+import { parseTags } from '@/utils/helpers';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
 import { Button } from '@/components/common/Button';
@@ -51,11 +52,6 @@ export function CreateDeckPage() {
     () => (user ? db.flashcard_decks.where('creatorId').equals(user.$id).toArray() : []),
     [user?.$id],
   );
-
-  const existingClassIds = useMemo(() => {
-    if (!targetDeckId) return new Set<string>();
-    return new Set<string>();
-  }, [targetDeckId]);
 
   const addManualCard = () => {
     if (!front.trim() || !back.trim()) return;
@@ -465,8 +461,4 @@ function OptionalColumnSelect({
       </select>
     </div>
   );
-}
-
-function parseTags(value: string): string[] {
-  return [...new Set(value.split(/[;,]/).map(tag => tag.trim()).filter(Boolean))];
 }

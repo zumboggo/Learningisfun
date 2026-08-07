@@ -29,6 +29,25 @@ export function isOnline(): boolean {
   return navigator.onLine;
 }
 
+/**
+ * Split a comma/semicolon separated tag string into clean tags.
+ * Collapses inner whitespace and drops case-insensitive duplicates so
+ * "vocab, Vocab" does not become two separate tags.
+ */
+export function parseTags(value: string): string[] {
+  const seen = new Set<string>();
+  const tags: string[] = [];
+  for (const raw of value.split(/[;,]/)) {
+    const tag = raw.trim().replace(/\s+/g, ' ');
+    if (!tag) continue;
+    const key = tag.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    tags.push(tag);
+  }
+  return tags;
+}
+
 export function debounce<T extends (...args: unknown[]) => void>(fn: T, ms: number): T {
   let timer: ReturnType<typeof setTimeout>;
   return ((...args: unknown[]) => {

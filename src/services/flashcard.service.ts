@@ -1,6 +1,6 @@
 import { databases, DATABASE_ID, COLLECTIONS } from '@/lib/appwrite';
 import { db } from '@/db/schema';
-import { generateId, getTimestamp } from '@/utils/helpers';
+import { generateId, getTimestamp, parseTags } from '@/utils/helpers';
 import { addToQueue } from './sync.service';
 import {
   createNewCard,
@@ -654,11 +654,4 @@ export async function syncDecksFromServer(): Promise<void> {
   } catch {
     // Offline
   }
-}
-
-function parseTags(value: string): string[] {
-  return value
-    .split(/[;,]/)
-    .map(tag => tag.trim())
-    .filter(Boolean);
 }
