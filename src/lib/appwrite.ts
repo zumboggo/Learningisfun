@@ -35,6 +35,10 @@ export const COLLECTIONS = {
   writing_submissions: 'writing_submissions',
   peer_reviews: 'peer_reviews',
   teacher_writing_feedback: 'teacher_writing_feedback',
+
+  quizzes: 'quizzes',
+  quiz_questions: 'quiz_questions',
+  quiz_attempts: 'quiz_attempts',
 } as const;
 
 export const FUNCTION_IDS = {

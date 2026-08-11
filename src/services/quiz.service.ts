@@ -39,6 +39,7 @@ export async function generateQuizQuestions(
   quizId: string,
   notes: string,
   flashcardFronts: string[],
+  userId: string,
 ): Promise<QuizQuestion[]> {
   const quiz = await db.quizzes.get(quizId);
   if (!quiz) throw new Error('Quiz not found');
@@ -68,6 +69,7 @@ export async function generateQuizQuestions(
 
   for (const q of questions) {
     await db.quiz_questions.put(q);
+    await addToQueue(userId, 'quiz_question', q.$id, 'create', q);
   }
 
   return questions;

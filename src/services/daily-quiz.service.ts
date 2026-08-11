@@ -170,6 +170,7 @@ export async function commitDailyQuiz(
   }));
   for (const question of questions) {
     await db.quiz_questions.put(question);
+    await addToQueue(createdBy, 'quiz_question', question.$id, 'create', question);
   }
 
   const bundle = buildExportBundle(

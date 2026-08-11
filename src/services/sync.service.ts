@@ -180,6 +180,12 @@ function collectionForEntity(entityType: string): string | null {
     case 'deck_assignment': return COLLECTIONS.deck_assignments;
     case 'class': return COLLECTIONS.classes;
     case 'class_member': return COLLECTIONS.class_members;
+    case 'quiz': return COLLECTIONS.quizzes;
+    case 'quiz_question': return COLLECTIONS.quiz_questions;
+    case 'quiz_attempt': return COLLECTIONS.quiz_attempts;
+    case 'writing_prompt': return COLLECTIONS.writing_prompts;
+    case 'writing_submission': return COLLECTIONS.writing_submissions;
+    case 'peer_review': return COLLECTIONS.peer_reviews;
     default: return null;
   }
 }
@@ -197,6 +203,21 @@ async function markEntitySynced(entityType: string, entityId: string): Promise<v
       break;
     case 'flashcard_study_session':
       await db.flashcard_study_sessions.update(entityId, { syncStatus: 'synced' });
+      break;
+    case 'quiz':
+      await db.quizzes.update(entityId, { syncStatus: 'synced' });
+      break;
+    case 'quiz_attempt':
+      await db.quiz_attempts.update(entityId, { syncStatus: 'synced' });
+      break;
+    case 'writing_prompt':
+      await db.writing_prompts.update(entityId, { syncStatus: 'synced' });
+      break;
+    case 'writing_submission':
+      await db.writing_submissions.update(entityId, { syncStatus: 'synced' });
+      break;
+    case 'peer_review':
+      await db.peer_reviews.update(entityId, { syncStatus: 'synced' });
       break;
   }
 }

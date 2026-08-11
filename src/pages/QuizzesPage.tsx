@@ -184,7 +184,7 @@ function CreateQuizModal({
 
       for (let i = 0; i < aiQuestions.length; i++) {
         const q = aiQuestions[i];
-        await db.quiz_questions.put({
+        const question = {
           $id: ID.unique(),
           quizId: quiz.$id,
           type: q.type,
@@ -194,7 +194,9 @@ function CreateQuizModal({
           clozeAnswer: q.clozeAnswer || '',
           explanation: q.explanation,
           sortOrder: i,
-        });
+        };
+        await db.quiz_questions.put(question);
+        await addToQueue(user.$id, 'quiz_question', question.$id, 'create', question);
       }
 
       setStep('review');
