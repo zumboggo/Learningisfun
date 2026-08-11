@@ -22,6 +22,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         { to: '/dashboard', label: 'Dashboard', icon: 'D' },
         { to: '/discussions', label: 'Questions', icon: 'Q' },
         { to: '/decks', label: 'Cards', icon: 'V' },
+        { to: '/writing', label: 'Writing', icon: 'W' },
         { to: '/classes', label: 'Classes', icon: 'C' },
         { to: '/quizzes', label: 'Quizzes', icon: 'Z' },
         { to: '/settings', label: 'Settings', icon: '?' },
@@ -29,6 +30,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     : [
         { to: '/dashboard', label: 'Home', icon: 'home' },
         { to: '/decks', label: 'Cards', icon: 'cards' },
+        { to: '/writing', label: 'Writing', icon: 'write' },
         { to: '/discussions', label: 'Questions', icon: 'chat' },
         { to: '/quizzes', label: 'Quizzes', icon: 'quiz' },
       ];
@@ -181,6 +183,15 @@ function NavIcon({ name }: { name: string }) {
         <path d="M9 3h8a2 2 0 0 1 2 2v11" />
         <path d="M7.5 10h4" />
         <path d="M7.5 14h3" />
+      </svg>
+    );
+  }
+  if (name === 'write') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 20h14" />
+        <path d="M15.5 4.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z" />
+        <path d="M13.5 6.5l3 3" />
       </svg>
     );
   }

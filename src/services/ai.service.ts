@@ -160,6 +160,91 @@ Return ONLY valid JSON, no markdown fences, no explanation.`;
   return JSON.parse(cleaned);
 }
 
+export interface GeneratedWritingFeedback {
+  www: string;
+  improvements: string[];
+}
+
+/**
+ * Coach-style feedback on a student draft: one "what went well" summary plus
+ * three concrete next actions. Deliberately never returns a grade — scoring is
+ * the peers' and the teacher's job, and seeing a machine mark first would
+ * anchor the student away from the rubric work.
+ */
+export async function generateWritingFeedback(
+  params: {
+    promptTitle: string;
+    promptText: string;
+    rubricSummary: string;
+    studentText: string;
+  },
+  apiKey: string,
+  model: string = DEFAULT_MODEL,
+): Promise<GeneratedWritingFeedback> {
+  const systemPrompt = `You are a supportive but honest writing coach for a school classroom. You are given a writing prompt, its rubric, and one student's draft.
+
+Rules:
+- Return a JSON object with exactly two keys: "www" and "improvements"
+- "www" (What Went Well) is a 2-4 sentence summary of the genuine strengths of THIS draft. Quote or paraphrase specific moments from the student's own writing. Never generic praise.
+- "improvements" is an array of EXACTLY 3 strings. Each one must be specific and actionable: name the exact place in the draft, say what is weak, and say what to do instead. A student should be able to act on it without asking a follow-up question.
+- Tie your points to the rubric criteria where you can.
+- Address the student directly as "you".
+- Do NOT give a grade, score, mark, or percentage.
+- Keep each improvement under 60 words.
+- Write in the same language as the student's draft.
+
+Return ONLY valid JSON, no markdown fences, no explanation.`;
+
+  const userContent = `Prompt title: ${params.promptTitle}
+
+Prompt:
+${params.promptText}
+
+Rubric:
+${params.rubricSummary}
+
+Student draft:
+${params.studentText}`;
+
+  const resp = await fetch(OPENROUTER_API_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userContent },
+      ],
+      temperature: 0.5,
+      max_tokens: 1500,
+    }),
+  });
+
+  if (!resp.ok) {
+    const data = await resp.json().catch(() => ({}));
+    throw new Error(data.error?.message || `API error: HTTP ${resp.status}`);
+  }
+
+  const data = await resp.json();
+  const content = data.choices?.[0]?.message?.content || '';
+
+  let cleaned = content.trim();
+  if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+  }
+
+  const parsed = JSON.parse(cleaned);
+  const improvements = Array.isArray(parsed.improvements)
+    ? parsed.improvements.map(String).filter(Boolean).slice(0, 3)
+    : [];
+  if (!improvements.length) throw new Error('The model did not return any improvements');
+
+  return { www: String(parsed.www || ''), improvements };
+}
+
 export interface QuizQuestion {
   type: 'mc' | 'cloze';
   questionText: string;

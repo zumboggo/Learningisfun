@@ -11,6 +11,9 @@ import { DiscussionsListPage } from '@/pages/DiscussionsListPage';
 import { DiscussionPage } from '@/pages/DiscussionPage';
 import { QuizzesPage } from '@/pages/QuizzesPage';
 import { QuizTakingPage } from '@/pages/QuizTakingPage';
+import { WritingPage } from '@/pages/WritingPage';
+import { WritingWorkspacePage } from '@/pages/WritingWorkspacePage';
+import { WritingResponsesPage } from '@/pages/teacher/WritingResponsesPage';
 import { StudentProgressPage } from '@/pages/StudentProgressPage';
 import { ClassesListPage } from '@/pages/ClassesListPage';
 import { ClassDetailPage } from '@/pages/ClassDetailPage';
@@ -75,6 +78,10 @@ export default function App() {
 
           <Route path="/quizzes" element={<ProtectedRoute><QuizzesPage /></ProtectedRoute>} />
           <Route path="/quizzes/:quizId/take" element={<ProtectedRoute><QuizTakingPage /></ProtectedRoute>} />
+
+          <Route path="/writing" element={<ProtectedRoute><WritingPage /></ProtectedRoute>} />
+          <Route path="/writing/:promptId" element={<ProtectedRoute><WritingWorkspacePage /></ProtectedRoute>} />
+          <Route path="/writing/:promptId/responses" element={<ProtectedRoute><TeacherRoute><WritingResponsesPage /></TeacherRoute></ProtectedRoute>} />
 
           <Route path="/decks" element={<ProtectedRoute><DecksListPage /></ProtectedRoute>} />
           <Route path="/decks/:deckId/review" element={<ProtectedRoute><FlashcardReviewPage /></ProtectedRoute>} />

@@ -31,6 +31,10 @@ export const COLLECTIONS = {
   student_card_state: 'student_card_state',
   student_deck_notes: 'student_deck_notes',
 
+  writing_prompts: 'writing_prompts',
+  writing_submissions: 'writing_submissions',
+  peer_reviews: 'peer_reviews',
+  teacher_writing_feedback: 'teacher_writing_feedback',
 } as const;
 
 export const FUNCTION_IDS = {

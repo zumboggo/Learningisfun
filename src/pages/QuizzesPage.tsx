@@ -14,6 +14,7 @@ import { getTimestamp } from '@/utils/helpers';
 import { addToQueue } from '@/services/sync.service';
 import type { Quiz, QuizQuestion as QuizQuestionType, QuizAttempt } from '@/types';
 import { Modal } from '@/components/common/Modal';
+import { DailyCanvasQuizModal } from '@/components/quizzes/DailyCanvasQuizModal';
 
 export function QuizzesPage() {
   const { user, isTeacher } = useAuth();
@@ -26,6 +27,7 @@ function TeacherQuizzes() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [showCreate, setShowCreate] = useState(false);
+  const [showCanvas, setShowCanvas] = useState(false);
 
   const classes = useLiveQuery(
     () => db.classes.where('teacherId').equals(user!.$id).toArray(),
@@ -57,7 +59,10 @@ function TeacherQuizzes() {
           <h1 className="text-2xl font-bold">Quizzes</h1>
           <p className="text-gray-500 text-sm">Generate and manage quizzes for your classes.</p>
         </div>
-        <Button onClick={() => setShowCreate(true)}>Create quiz</Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setShowCanvas(true)} variant="secondary">Daily Canvas quiz</Button>
+          <Button onClick={() => setShowCreate(true)}>Create quiz</Button>
+        </div>
       </div>
 
       {quizzes && quizzes.length > 0 ? (
@@ -99,6 +104,14 @@ function TeacherQuizzes() {
           classes={classes.map(c => ({ id: c.$id, name: c.name }))}
           onClose={() => setShowCreate(false)}
           onCreated={() => setShowCreate(false)}
+        />
+      )}
+
+      {showCanvas && classes && (
+        <DailyCanvasQuizModal
+          classes={classes.map(c => ({ id: c.$id, name: c.name }))}
+          userId={user!.$id}
+          onClose={() => setShowCanvas(false)}
         />
       )}
     </div>

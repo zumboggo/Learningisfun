@@ -284,6 +284,8 @@ export interface QuizQuestion {
   options: string;
   correctIndex: number;
   clozeAnswer: string;
+  /** JSON-encoded string[] — alternate spellings also accepted for a cloze answer. */
+  clozeVariants?: string;
   explanation: string;
   sortOrder: number;
 }
@@ -297,5 +299,95 @@ export interface QuizAttempt {
   score: number;
   totalQuestions: number;
   answers: string;
+  syncStatus: SyncStatus;
+}
+
+export interface RubricLevel {
+  points: number;
+  label: string;
+  descriptor: string;
+}
+
+export interface RubricCriterion {
+  id: string;
+  name: string;
+  description: string;
+  maxPoints: number;
+  levels: RubricLevel[];
+}
+
+export interface WritingPrompt {
+  $id: string;
+  classId: string;
+  teacherId: string;
+  title: string;
+  promptMarkdown: string;
+  instructions: string;
+  /** JSON-encoded RubricCriterion[] */
+  rubricJson: string;
+  peerReviewsRequired: number;
+  minWords: number;
+  dueAt: string | null;
+  status: 'draft' | 'published' | 'closed';
+  aiFeedbackEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+  syncStatus: SyncStatus;
+}
+
+export interface WritingSubmission {
+  $id: string;
+  promptId: string;
+  classId: string;
+  authorId: string;
+  /** Pseudonym shown to peers; teachers always resolve the real name. */
+  anonymousLabel: string;
+  draftMarkdown: string;
+  submittedMarkdown: string;
+  wordCount: number;
+  status: 'draft' | 'submitted' | 'revised';
+  submittedAt: string | null;
+  finalMarkdown: string;
+  finalUpdatedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  syncStatus: SyncStatus;
+}
+
+export interface PeerReview {
+  $id: string;
+  promptId: string;
+  submissionId: string;
+  reviewerId: string;
+  /** JSON-encoded Record<criterionId, number> */
+  scoresJson: string;
+  /** JSON-encoded string[] — the three specific pieces of feedback */
+  feedbackPointsJson: string;
+  additionalComment: string;
+  status: 'assigned' | 'submitted';
+  assignedAt: string;
+  submittedAt: string | null;
+  syncStatus: SyncStatus;
+}
+
+export interface WritingAiFeedback {
+  $id: string;
+  submissionId: string;
+  wwwSummary: string;
+  /** JSON-encoded string[] — actionable improvements */
+  improvementsJson: string;
+  model: string;
+  generatedAt: string;
+}
+
+export interface TeacherWritingFeedback {
+  $id: string;
+  submissionId: string;
+  teacherId: string;
+  /** JSON-encoded Record<criterionId, number> */
+  scoresJson: string;
+  commentMarkdown: string;
+  createdAt: string;
+  updatedAt: string;
   syncStatus: SyncStatus;
 }

@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Canvas API token and exported quiz bundles — never commit these
+.env.canvas.local
+canvas-quiz-*.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

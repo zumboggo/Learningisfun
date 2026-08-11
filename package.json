@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "canvas:push": "node --env-file=.env.canvas.local scripts/push-to-canvas.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },

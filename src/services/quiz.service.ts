@@ -73,6 +73,16 @@ export async function generateQuizQuestions(
   return questions;
 }
 
+function parseClozeVariants(raw: string | undefined): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function publishQuiz(quizId: string, userId: string): Promise<void> {
   await db.quizzes.update(quizId, {
     status: 'published',
@@ -120,7 +130,13 @@ export async function submitQuizAttempt(
     if (question.type === 'mc') {
       correct = ans.answer === question.correctIndex;
     } else {
-      correct = String(ans.answer).trim().toLowerCase() === question.clozeAnswer.trim().toLowerCase();
+      // Accept the same alternate spellings Canvas does, so a student isn't
+      // marked wrong here for a plural or a hyphen but right over there.
+      const given = String(ans.answer).trim().toLowerCase();
+      const accepted = [question.clozeAnswer, ...parseClozeVariants(question.clozeVariants)]
+        .map(a => a.trim().toLowerCase())
+        .filter(Boolean);
+      correct = accepted.includes(given);
     }
 
     if (correct) score++;
