@@ -167,6 +167,74 @@ export async function assignDeck(
   return assignment;
 }
 
+export async function getDeckAssignments(deckId: string): Promise<DeckAssignment[]> {
+  return db.deck_assignments.where('deckId').equals(deckId).toArray();
+}
+
+export async function unassignDeck(deckId: string, classId: string): Promise<void> {
+  const existing = await db.deck_assignments
+    .where('deckId')
+    .equals(deckId)
+    .and(a => a.classId === classId)
+    .toArray();
+
+  for (const assignment of existing) {
+    await db.deck_assignments.delete(assignment.$id);
+    try {
+      await databases.deleteDocument(DATABASE_ID, COLLECTIONS.deck_assignments, assignment.$id);
+    } catch {
+      await addToQueue('', 'deck_assignment', assignment.$id, 'delete', assignment);
+    }
+  }
+}
+
+/**
+ * Makes the deck's class assignments match `classIds` exactly: adds the missing
+ * ones and removes the ones no longer selected. Existing assignments are left
+ * alone so their daily target and required flag survive an unrelated edit.
+ */
+export async function setDeckClasses(
+  deckId: string,
+  classIds: string[],
+  dailyTarget: number | null = null,
+): Promise<void> {
+  const current = await getDeckAssignments(deckId);
+  const currentIds = new Set(current.map(a => a.classId));
+  const nextIds = new Set(classIds);
+
+  for (const classId of nextIds) {
+    if (!currentIds.has(classId)) await assignDeck(deckId, classId, false, dailyTarget);
+  }
+  for (const classId of currentIds) {
+    if (!nextIds.has(classId)) await unassignDeck(deckId, classId);
+  }
+}
+
+export async function getClassAssignments(classId: string): Promise<DeckAssignment[]> {
+  return db.deck_assignments.where('classId').equals(classId).toArray();
+}
+
+/**
+ * Mirror of setDeckClasses from the class side: makes the class's assigned decks
+ * match `deckIds` exactly.
+ */
+export async function setClassDecks(
+  classId: string,
+  deckIds: string[],
+  dailyTarget: number | null = null,
+): Promise<void> {
+  const current = await getClassAssignments(classId);
+  const currentIds = new Set(current.map(a => a.deckId));
+  const nextIds = new Set(deckIds);
+
+  for (const deckId of nextIds) {
+    if (!currentIds.has(deckId)) await assignDeck(deckId, classId, false, dailyTarget);
+  }
+  for (const deckId of currentIds) {
+    if (!nextIds.has(deckId)) await unassignDeck(deckId, classId);
+  }
+}
+
 export async function publishDeck(deckId: string, creatorId: string): Promise<void> {
   const now = getTimestamp();
   await db.flashcard_decks.update(deckId, { status: 'published', updatedAt: now });

@@ -17,6 +17,7 @@ import { Card } from '@/components/common/Card';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Modal } from '@/components/common/Modal';
 import { StatusBadge } from '@/components/common/StatusBadge';
+import { AddDecksToClassModal } from '@/components/common/AddDecksToClassModal';
 
 export function ClassDetailPage() {
   const { classId } = useParams<{ classId: string }>();
@@ -31,6 +32,7 @@ export function ClassDetailPage() {
   const [allowStackedVotes, setAllowStackedVotes] = useState(false);
   const [rosterImporting, setRosterImporting] = useState(false);
   const [rosterResult, setRosterResult] = useState<RosterImportResult | null>(null);
+  const [showAddDecks, setShowAddDecks] = useState(false);
 
   const cls = useLiveQuery(() => (classId ? db.classes.get(classId) : undefined), [classId]);
   const members = useLiveQuery(
@@ -244,11 +246,21 @@ export function ClassDetailPage() {
               )}
             </h2>
             {isOwner && (
-              <Link to={`/classes/${cls.$id}/cards/new`}>
-                <Button size="sm" variant="secondary" aria-label="Add cards to this class">
-                  Add cards
+              <div className="flex gap-2">
+                <Link to={`/classes/${cls.$id}/cards/new`}>
+                  <Button size="sm" variant="secondary" aria-label="Add cards to this class">
+                    Add cards
+                  </Button>
+                </Link>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  aria-label="Add existing decks to this class"
+                  onClick={() => setShowAddDecks(true)}
+                >
+                  Add decks
                 </Button>
-              </Link>
+              </div>
             )}
           </div>
           {deckRows && deckRows.length > 0 ? (
@@ -290,6 +302,7 @@ export function ClassDetailPage() {
               action={isOwner && (
                 <div className="flex flex-wrap justify-center gap-2">
                   <Link to={`/classes/${cls.$id}/cards/new`}><Button size="sm">Add cards</Button></Link>
+                  <Button size="sm" variant="secondary" onClick={() => setShowAddDecks(true)}>Add decks</Button>
                   <Link to="/decks/import"><Button size="sm" variant="secondary">Import CSV</Button></Link>
                 </div>
               )}
@@ -404,6 +417,15 @@ export function ClassDetailPage() {
           </Button>
         </div>
       </Modal>
+
+      {isOwner && user && (
+        <AddDecksToClassModal
+          open={showAddDecks}
+          classId={cls.$id}
+          teacherId={user.$id}
+          onClose={() => setShowAddDecks(false)}
+        />
+      )}
     </div>
   );
 }
