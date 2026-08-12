@@ -14,6 +14,7 @@ import { createClassSession, todayKey } from '@/services/class-session.service';
 import { downloadCsv } from '@/services/report.service';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
+import { CopyButton } from '@/components/common/CopyButton';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Modal } from '@/components/common/Modal';
 import { StatusBadge } from '@/components/common/StatusBadge';
@@ -42,6 +43,9 @@ export function ClassDetailPage() {
 
   const isOwner = cls?.teacherId === user?.$id && isTeacher;
   const memberIds = useMemo(() => members?.map(m => m.userId) || [], [members]);
+
+  const activeCode = newCode || cls?.joinCode || '';
+  const joinLink = `${window.location.origin}${import.meta.env.BASE_URL}join/${activeCode}`;
 
   const students = useLiveQuery(async () => {
     if (memberIds.length === 0) return [];
@@ -135,8 +139,8 @@ export function ClassDetailPage() {
     <div className="p-4 max-w-5xl mx-auto space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{cls.name}</h1>
-          <p className="text-gray-500">{cls.courseName} | {cls.schoolYear}</p>
+          <h1 className="text-2xl font-bold">{cls.courseName}</h1>
+          <p className="text-gray-500">{cls.name} | {cls.schoolYear}</p>
         </div>
         {isOwner && (
           <div className="flex flex-wrap gap-2">
@@ -155,6 +159,15 @@ export function ClassDetailPage() {
               <h3 className="font-semibold">Class join code</h3>
               <div className="text-2xl font-mono bg-gray-100 px-4 py-2 rounded-lg inline-block mt-1">
                 {newCode || cls.joinCode}
+              </div>
+              <div className="mt-3">
+                <p className="text-sm text-gray-500">
+                  Or send students this link — they can sign up and join in one step:
+                </p>
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  <code className="rounded bg-gray-100 px-2 py-1 text-xs break-all">{joinLink}</code>
+                  <CopyButton text={joinLink} label="Copy link" copiedLabel="Link copied" />
+                </div>
               </div>
             </div>
             <div className="flex flex-col gap-3 md:items-end">
@@ -357,7 +370,7 @@ export function ClassDetailPage() {
       >
         <div className="space-y-4">
           <p className="text-sm text-gray-600">
-            Remove <strong>{pendingRemoval?.name}</strong> from {cls.name}? They lose access to this
+            Remove <strong>{pendingRemoval?.name}</strong> from {cls.courseName}? They lose access to this
             class's cards and discussions, and will need the join code to come back.
           </p>
           <div className="flex flex-col gap-2 sm:flex-row-reverse">

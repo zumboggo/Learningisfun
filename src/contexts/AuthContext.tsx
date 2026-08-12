@@ -9,8 +9,8 @@ import * as flashcardService from '@/services/flashcard.service';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string, role?: UserRole) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
+  register: (email: string, password: string, name: string, role?: UserRole) => Promise<User>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   viewAsStudent: boolean;
@@ -77,12 +77,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(u);
     syncService.setupSyncListeners();
     void syncUserData(u.$id);
+    return u;
   }, [syncUserData]);
 
   const registerHandler = useCallback(async (email: string, password: string, name: string, role?: UserRole) => {
     const u = await authService.register(email, password, name, role || 'student');
     setUser(u);
     syncService.setupSyncListeners();
+    return u;
   }, []);
 
   const logoutHandler = useCallback(async () => {

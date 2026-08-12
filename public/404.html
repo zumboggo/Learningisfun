@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Learning is Fun</title>
+    <script>
+      // GitHub Pages serves this file for any path it cannot match, which lets
+      // hash-free URLs like /Learningisfun/join/ABC123 reach the HashRouter.
+      // BASE must match `base` in vite.config.ts.
+      (function () {
+        var BASE = '/Learningisfun/';
+        var path = window.location.pathname;
+        var rest = path.indexOf(BASE) === 0 ? path.slice(BASE.length) : path.replace(/^\//, '');
+        var parts = rest.split('/').filter(Boolean);
+        var target = BASE;
+
+        if (parts[0] && parts[0].toLowerCase() === 'join') {
+          var query = new URLSearchParams(window.location.search);
+          var code = (parts[1] || query.get('code') || '')
+            .trim()
+            .toUpperCase()
+            .replace(/[^A-Z0-9]/g, '')
+            .slice(0, 6);
+          target = BASE + '#/join' + (code ? '/' + code : '');
+        }
+
+        window.location.replace(target);
+      })();
+    </script>
+  </head>
+  <body>
+    <noscript>
+      <p>Please enable JavaScript, or open <a href="/Learningisfun/#/join">Learning is Fun</a> directly.</p>
+    </noscript>
+  </body>
+</html>

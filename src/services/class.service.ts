@@ -75,36 +75,44 @@ export async function createClass(
   return cls;
 }
 
-export async function joinClass(userId: string, joinCode: string): Promise<Class | null> {
+/**
+ * Resolve a join code to its class without enrolling anyone. The join landing
+ * page uses this to show students which class they are about to join before
+ * they hand over an email address.
+ */
+export async function findClassByJoinCode(joinCode: string): Promise<Class | null> {
   const localClasses = await db.classes.where('joinCode').equals(joinCode).toArray();
-  let cls = localClasses.find(c => c.joinCodeActive && c.status === 'active');
+  const local = localClasses.find(c => c.joinCodeActive && c.status === 'active');
+  if (local) return local;
 
-  if (!cls) {
-    try {
-      const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.classes, [
-        Query.equal('joinCode', joinCode),
-        Query.equal('joinCodeActive', true),
-        Query.equal('status', 'active'),
-      ]);
-      if (result.documents.length === 0) return null;
-      const doc = result.documents[0];
-      cls = {
-        $id: doc.$id,
-        name: doc.name,
-        courseName: doc.courseName,
-        schoolYear: doc.schoolYear,
-        teacherId: doc.teacherId,
-        joinCode: doc.joinCode,
-        joinCodeActive: doc.joinCodeActive,
-        status: doc.status,
-        createdAt: doc.createdAt,
-      };
-      await db.classes.put(cls);
-    } catch {
-      return null;
-    }
+  try {
+    const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.classes, [
+      Query.equal('joinCode', joinCode),
+      Query.equal('joinCodeActive', true),
+      Query.equal('status', 'active'),
+    ]);
+    if (result.documents.length === 0) return null;
+    const doc = result.documents[0];
+    const cls: Class = {
+      $id: doc.$id,
+      name: doc.name,
+      courseName: doc.courseName,
+      schoolYear: doc.schoolYear,
+      teacherId: doc.teacherId,
+      joinCode: doc.joinCode,
+      joinCodeActive: doc.joinCodeActive,
+      status: doc.status,
+      createdAt: doc.createdAt,
+    };
+    await db.classes.put(cls);
+    return cls;
+  } catch {
+    return null;
   }
+}
 
+export async function joinClass(userId: string, joinCode: string): Promise<Class | null> {
+  const cls = await findClassByJoinCode(joinCode);
   if (!cls) return null;
 
   const existing = await db.class_members
