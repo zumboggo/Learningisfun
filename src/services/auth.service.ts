@@ -7,6 +7,11 @@ import { ID, Query } from 'appwrite';
 export async function register(email: string, password: string, name: string, role: UserRole = 'student'): Promise<User> {
   const appwriteUser = await account.create(ID.unique(), email, password, name);
 
+  // account.create() registers the account but does not sign it in. Without a
+  // session the profile write below arrives as a guest, and the users
+  // collection only grants create to authenticated users.
+  await account.createEmailPasswordSession(email, password);
+
   const userDoc: User = {
     $id: appwriteUser.$id,
     email,
@@ -27,6 +32,7 @@ export async function register(email: string, password: string, name: string, ro
   });
 
   await db.users.put(userDoc);
+  await db.app_metadata.put({ key: 'currentUserId', value: userDoc.$id });
   return userDoc;
 }
 
