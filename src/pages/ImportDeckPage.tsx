@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { importDeckFromCsv } from '@/services/flashcard.service';
-import { detectMapping, parseCsvContent, readFileAsText } from '@/utils/csv-parser';
+import { detectMapping, joinBackValues, parseCsvContent, readFileAsText } from '@/utils/csv-parser';
 import { Button } from '@/components/common/Button';
+import { CsvDropzone } from '@/components/common/CsvDropzone';
+import { BackColumnSelect } from '@/components/common/BackColumnSelect';
 import type { CsvMapping, CsvPreview } from '@/types';
 
 export function ImportDeckPage() {
@@ -11,23 +13,32 @@ export function ImportDeckPage() {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [csvPreview, setCsvPreview] = useState<CsvPreview | null>(null);
+  const [csvContent, setCsvContent] = useState<string | null>(null);
   const [csvMapping, setCsvMapping] = useState<CsvMapping | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Derived so the counts and preview rows follow the column choices as they
+  // change, rather than reflecting whatever was auto-detected on upload.
+  const csvPreview: CsvPreview | null = useMemo(
+    () => (csvContent ? parseCsvContent(csvContent, csvMapping) : null),
+    [csvContent, csvMapping],
+  );
 
   const handleFile = async (file: File) => {
     setCsvFile(file);
     setError('');
     try {
       const content = await readFileAsText(file);
-      const preview = parseCsvContent(content, null);
-      setCsvPreview(preview);
-      if (preview.rows.length === 0) {
+      const detected = parseCsvContent(content, null);
+      if (detected.rows.length === 0) {
+        setCsvContent(null);
+        setCsvMapping(null);
         setError('No valid cards found in file');
         return;
       }
-      setCsvMapping(detectMapping(preview.headers));
+      setCsvContent(content);
+      setCsvMapping(detectMapping(detected.headers));
     } catch {
       setError('Failed to read file');
     }
@@ -66,18 +77,11 @@ export function ImportDeckPage() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">CSV file</label>
-          <input
-            type="file"
-            accept=".csv,.txt"
-            onChange={e => {
-              const file = e.target.files?.[0];
-              if (file) void handleFile(file);
-            }}
-            className="w-full"
+          <CsvDropzone
+            file={csvFile}
+            onFile={file => void handleFile(file)}
+            hint="Supports UTF-8 CSV with columns like front/back, term/definition, question/answer"
           />
-          <p className="text-xs text-gray-400 mt-1">
-            Supports UTF-8 CSV with columns like front/back, term/definition, question/answer
-          </p>
         </div>
 
         {csvPreview && csvMapping && (
@@ -126,16 +130,11 @@ export function ImportDeckPage() {
                   {csvPreview.headers.map(h => <option key={h} value={h}>{h}</option>)}
                 </select>
               </div>
-              <div className="flex-1">
-                <label className="text-xs text-gray-500">Back column</label>
-                <select
-                  value={csvMapping.back}
-                  onChange={e => setCsvMapping({ ...csvMapping, back: e.target.value })}
-                  className="w-full text-sm border rounded-lg px-2 py-1.5"
-                >
-                  {csvPreview.headers.map(h => <option key={h} value={h}>{h}</option>)}
-                </select>
-              </div>
+              <BackColumnSelect
+                headers={csvPreview.headers}
+                value={csvMapping.back}
+                onChange={back => setCsvMapping({ ...csvMapping, back })}
+              />
               <OptionalColumnSelect
                 label="Hint column"
                 value={csvMapping.hint || ''}
@@ -168,7 +167,7 @@ export function ImportDeckPage() {
                   {csvPreview.rows.slice(0, 10).map((row, i) => (
                     <tr key={i} className="border-t">
                       <td className="px-3 py-2 truncate max-w-[150px]">{row[csvMapping.front]}</td>
-                      <td className="px-3 py-2 truncate max-w-[150px]">{row[csvMapping.back]}</td>
+                      <td className="px-3 py-2 truncate max-w-[150px]">{joinBackValues(row, csvMapping.back)}</td>
                     </tr>
                   ))}
                 </tbody>

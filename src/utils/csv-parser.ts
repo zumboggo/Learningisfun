@@ -27,23 +27,47 @@ export function parseCsvLine(line: string, delimiter = ','): string[] {
 
 const KNOWN_FRONT_HEADERS = ['front', 'term', 'question', 'word', 'english', 'hanzi', 'kanji'];
 const KNOWN_BACK_HEADERS = ['back', 'definition', 'answer', 'meaning', 'translation', 'pinyin', 'reading'];
-const OPTIONAL_FIELD_HEADERS: Record<Exclude<keyof CsvMapping, 'front' | 'back'>, string[]> = {
-  hint: ['hint', 'clue', 'example'],
+const KNOWN_EXAMPLE_HEADERS = ['example', 'examples', 'sentence', 'usage', 'sample'];
+// 'example' is deliberately absent from `hint`: it belongs on the back of the
+// card alongside the definition, and mapping it here too would duplicate it.
+type OptionalCsvField = Exclude<keyof CsvMapping, 'front' | 'back'>;
+
+const OPTIONAL_FIELD_HEADERS: Record<OptionalCsvField, string[]> = {
+  hint: ['hint', 'clue'],
   tags: ['tags', 'tag', 'category', 'categories'],
   source: ['source', 'lesson', 'unit'],
   initialStatus: ['initialstatus', 'status', 'startingstatus'],
 };
 
+/** Blank line between parts so a definition and an example stay visually distinct. */
+export const BACK_SEPARATOR = '\n\n';
+
+/** Combine the mapped back columns of one row into a single card back. */
+export function joinBackValues(row: Record<string, string>, columns: string[]): string {
+  return columns
+    .map(column => (row[column] || '').trim())
+    .filter(Boolean)
+    .join(BACK_SEPARATOR);
+}
+
 export function detectMapping(headers: string[]): CsvMapping | null {
   const lower = headers.map(h => h.toLowerCase().trim());
   const frontIdx = lower.findIndex(h => KNOWN_FRONT_HEADERS.includes(h));
   const backIdx = lower.findIndex(h => KNOWN_BACK_HEADERS.includes(h));
+  const exampleIdx = lower.findIndex(h => KNOWN_EXAMPLE_HEADERS.includes(h));
   const optional = detectOptionalMappings(headers);
+
   if (frontIdx >= 0 && backIdx >= 0) {
-    return { front: headers[frontIdx], back: headers[backIdx], ...optional };
+    const back = [headers[backIdx]];
+    if (exampleIdx >= 0 && exampleIdx !== backIdx && exampleIdx !== frontIdx) {
+      back.push(headers[exampleIdx]);
+    }
+    return { front: headers[frontIdx], back, ...optional };
   }
   if (lower.length >= 2) {
-    return { front: headers[0], back: headers[1], ...optional };
+    // Unrecognised headers: assume column 1 is the term and columns 2-3 are the
+    // definition and its example.
+    return { front: headers[0], back: headers.slice(1, 3), ...optional };
   }
   return null;
 }
@@ -51,7 +75,7 @@ export function detectMapping(headers: string[]): CsvMapping | null {
 function detectOptionalMappings(headers: string[]): Partial<CsvMapping> {
   const lower = headers.map(h => h.toLowerCase().trim().replace(/[^a-z0-9]/g, ''));
   const output: Partial<CsvMapping> = {};
-  for (const [field, candidates] of Object.entries(OPTIONAL_FIELD_HEADERS) as Array<[keyof CsvMapping, string[]]>) {
+  for (const [field, candidates] of Object.entries(OPTIONAL_FIELD_HEADERS) as Array<[OptionalCsvField, string[]]>) {
     const idx = lower.findIndex(h => candidates.includes(h));
     if (idx >= 0) output[field] = headers[idx];
   }
@@ -74,7 +98,7 @@ export function parseCsvContent(
   }
 
   const frontIdx = headers.indexOf(autoMapping.front);
-  const backIdx = headers.indexOf(autoMapping.back);
+  const backIdxs = autoMapping.back.map(column => headers.indexOf(column)).filter(idx => idx >= 0);
 
   const rows: Record<string, string>[] = [];
   const seen = new Set<string>();
@@ -86,7 +110,10 @@ export function parseCsvContent(
   for (let i = 1; i < lines.length; i++) {
     const values = parseCsvLine(lines[i]);
     const front = values[frontIdx]?.trim() || '';
-    const back = values[backIdx]?.trim() || '';
+    const back = backIdxs
+      .map(idx => values[idx]?.trim() || '')
+      .filter(Boolean)
+      .join(BACK_SEPARATOR);
 
     if (!front && !back) {
       emptyRows++;

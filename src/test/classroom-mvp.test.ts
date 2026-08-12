@@ -15,7 +15,7 @@ describe('Classroom MVP rules', () => {
     const mapping = detectMapping(['term', 'definition', 'hint', 'tags', 'source']);
     expect(mapping).toEqual({
       front: 'term',
-      back: 'definition',
+      back: ['definition'],
       hint: 'hint',
       tags: 'tags',
       source: 'source',

@@ -212,7 +212,11 @@ export interface SyncOperation {
 
 export interface CsvMapping {
   front: string;
-  back: string;
+  /**
+   * One or more columns to combine onto the back of the card, in CSV column
+   * order. A definition and an example usually both belong there.
+   */
+  back: string[];
   hint?: string;
   tags?: string;
   source?: string;

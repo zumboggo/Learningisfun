@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { createDeck, addCard, publishDeck, assignDeck } from '@/services/flashcard.service';
-import { detectMapping, parseCsvContent, readFileAsText } from '@/utils/csv-parser';
+import { detectMapping, joinBackValues, parseCsvContent, readFileAsText } from '@/utils/csv-parser';
 import { parseTags } from '@/utils/helpers';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
+import { CsvDropzone } from '@/components/common/CsvDropzone';
+import { BackColumnSelect } from '@/components/common/BackColumnSelect';
 import type { CsvMapping, CsvPreview } from '@/types';
 
 interface PendingCard {
@@ -85,7 +87,7 @@ export function CreateDeckPage() {
     const preview = parseCsvContent(content, csvMapping);
     const newCards = preview.rows.map(row => ({
       front: row[csvMapping.front] || '',
-      back: row[csvMapping.back] || '',
+      back: joinBackValues(row, csvMapping.back),
       hint: csvMapping.hint ? row[csvMapping.hint] || '' : '',
       tags: [
         ...parseTags(csvMapping.tags ? row[csvMapping.tags] || '' : ''),
@@ -351,15 +353,7 @@ export function CreateDeckPage() {
 
       <Modal open={showCsvImport} onClose={() => setShowCsvImport(false)} title="Import CSV">
         <div className="space-y-4">
-          <input
-            type="file"
-            accept=".csv,.txt"
-            onChange={e => {
-              const file = e.target.files?.[0];
-              if (file) void handleCsvFile(file);
-            }}
-            className="w-full"
-          />
+          <CsvDropzone file={csvFile} onFile={file => void handleCsvFile(file)} />
 
           {csvPreview && csvMapping && (
             <div>
@@ -380,16 +374,11 @@ export function CreateDeckPage() {
                     {csvPreview.headers.map(h => <option key={h} value={h}>{h}</option>)}
                   </select>
                 </div>
-                <div>
-                  <label className="text-xs text-gray-500">Back column</label>
-                  <select
-                    value={csvMapping.back}
-                    onChange={e => setCsvMapping({ ...csvMapping, back: e.target.value })}
-                    className="block w-full text-sm border rounded px-2 py-1"
-                  >
-                    {csvPreview.headers.map(h => <option key={h} value={h}>{h}</option>)}
-                  </select>
-                </div>
+                <BackColumnSelect
+                  headers={csvPreview.headers}
+                  value={csvMapping.back}
+                  onChange={back => setCsvMapping({ ...csvMapping, back })}
+                />
                 <OptionalColumnSelect
                   label="Hint column"
                   value={csvMapping.hint || ''}
@@ -419,7 +408,7 @@ export function CreateDeckPage() {
                     {csvPreview.rows.slice(0, 10).map((row, i) => (
                       <tr key={i} className="border-t">
                         <td className="px-2 py-1 truncate max-w-[150px]">{row[csvMapping.front]}</td>
-                        <td className="px-2 py-1 truncate max-w-[150px]">{row[csvMapping.back]}</td>
+                        <td className="px-2 py-1 truncate max-w-[150px]">{joinBackValues(row, csvMapping.back)}</td>
                       </tr>
                     ))}
                   </tbody>

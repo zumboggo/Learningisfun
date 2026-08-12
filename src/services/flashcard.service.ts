@@ -25,7 +25,7 @@ import type {
   ReviewRating,
   CsvMapping,
 } from '@/types';
-import { parseCsvContent, readFileAsText } from '@/utils/csv-parser';
+import { joinBackValues, parseCsvContent, readFileAsText } from '@/utils/csv-parser';
 
 export async function createDeck(
   creatorId: string,
@@ -121,7 +121,7 @@ export async function importDeckFromCsv(
 
   for (const row of preview.rows) {
     const front = row[mapping.front] || '';
-    const back = row[mapping.back] || '';
+    const back = joinBackValues(row, mapping.back);
     const hint = mapping.hint ? row[mapping.hint] || '' : '';
     const tags = mapping.tags ? parseTags(row[mapping.tags]) : [];
     const source = mapping.source ? row[mapping.source] || '' : '';
