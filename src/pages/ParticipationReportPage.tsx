@@ -58,7 +58,7 @@ export function ParticipationReportPage() {
         <div>
           <Link to={`/classes/${classId}`} className="text-sm text-gray-500">Back to class</Link>
           <h1 className="text-2xl font-bold">Participation report</h1>
-          <p className="text-sm text-gray-500">{cls.name}</p>
+          <p className="text-sm text-gray-500">{cls.courseName}</p>
         </div>
         <Button onClick={exportCsv} disabled={rows.length === 0}>Export CSV</Button>
       </div>

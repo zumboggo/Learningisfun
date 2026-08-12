@@ -115,7 +115,7 @@ function ClassSettingsCard({
 
   return (
     <Card>
-      <h2 className="text-lg font-semibold mb-4">{cls.name}</h2>
+      <h2 className="text-lg font-semibold mb-4">{cls.courseName}</h2>
 
       <div className="space-y-4">
         <div>

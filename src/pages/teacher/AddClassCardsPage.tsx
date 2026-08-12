@@ -187,7 +187,7 @@ export function AddClassCardsPage() {
     <div className="p-4 max-w-4xl mx-auto space-y-6">
       <div>
         <Link to={`/classes/${classId}`} className="text-sm text-blue-600 hover:underline">
-          ← {cls.name}
+          ← {cls.courseName}
         </Link>
         <h1 className="mt-1 text-2xl font-bold">Add cards</h1>
         <p className="text-sm text-gray-500">

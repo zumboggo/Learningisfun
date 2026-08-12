@@ -719,8 +719,8 @@ function TeacherDashboard() {
               <Link key={row.cls.$id} to={`/classes/${row.cls.$id}`}>
                 <Card>
                   <div className="flex items-start justify-between gap-3">
-                    <div><h3 className="font-semibold text-lg">{row.cls.name}</h3>
-                      <p className="text-sm text-gray-500">{row.cls.courseName}</p>
+                    <div><h3 className="font-semibold text-lg">{row.cls.courseName}</h3>
+                      <p className="text-sm text-gray-500">{row.cls.name}</p>
                     </div>
                     <StatusBadge status={row.cls.status} />
                   </div>

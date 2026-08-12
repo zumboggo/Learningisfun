@@ -25,7 +25,7 @@ export function FlashcardAnalyticsPage() {
         <div>
           <Link to={`/classes/${classId}`} className="text-sm text-gray-500">Back to class</Link>
           <h1 className="text-2xl font-bold">Flashcard progress</h1>
-          <p className="text-sm text-gray-500">{cls.name} | {deck.title}</p>
+          <p className="text-sm text-gray-500">{cls.courseName} | {deck.title}</p>
         </div>
         <Link to={`/classes/${classId}/reports`}>
           <Button size="sm" variant="secondary">Full report</Button>

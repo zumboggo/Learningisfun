@@ -34,23 +34,23 @@ export function CreateClassPage() {
       <form onSubmit={e => { void handleSubmit(e); }} className="space-y-4">
         {error && <div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg">{error}</div>}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Class name</label>
-          <input
-            value={name}
-            onChange={e => setName(e.target.value)}
-            required
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg"
-            placeholder="e.g., English 101 - Period 3"
-          />
-        </div>
-        <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Course name</label>
           <input
             value={courseName}
             onChange={e => setCourseName(e.target.value)}
             required
             className="w-full px-3 py-2.5 border border-gray-300 rounded-lg"
-            placeholder="e.g., English Literature"
+            placeholder="e.g., AP English"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
+          <input
+            value={name}
+            onChange={e => setName(e.target.value)}
+            required
+            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg"
+            placeholder="e.g., Section 1"
           />
         </div>
         <div>

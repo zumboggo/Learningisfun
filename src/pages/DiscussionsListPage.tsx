@@ -25,14 +25,14 @@ export function DiscussionsListPage() {
 
     if (isTeacher) {
       const classes = await db.classes.where('teacherId').equals(user.$id).toArray();
-      for (const cls of classes) classMap.set(cls.$id, cls.name);
+      for (const cls of classes) classMap.set(cls.$id, cls.courseName);
       sessionClassIds = classes.map(c => c.$id);
     } else {
       const memberships = await db.class_members.where('userId').equals(user.$id).toArray();
       const classIds = memberships.map(m => m.classId);
       if (classIds.length === 0) return [];
       const classes = await db.classes.where('$id').anyOf(classIds).toArray();
-      for (const cls of classes) classMap.set(cls.$id, cls.name);
+      for (const cls of classes) classMap.set(cls.$id, cls.courseName);
       sessionClassIds = classIds;
     }
 

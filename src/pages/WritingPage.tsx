@@ -59,7 +59,7 @@ function TeacherWriting() {
         const reviews = await db.peer_reviews.where('promptId').equals(prompt.$id).toArray();
         result.push({
           prompt,
-          className: cls.name,
+          className: cls.courseName,
           submitted,
           enrolled,
           reviewsDone: reviews.filter(r => r.status === 'submitted').length,

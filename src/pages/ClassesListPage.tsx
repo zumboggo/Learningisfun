@@ -35,8 +35,8 @@ export function ClassesListPage() {
           {classes.map(cls => (
             <Link key={cls.$id} to={`/classes/${cls.$id}`}>
               <Card>
-                <h3 className="font-medium">{cls.name}</h3>
-                <p className="text-sm text-gray-500">{cls.courseName} · {cls.schoolYear}</p>
+                <h3 className="font-medium">{cls.courseName}</h3>
+                <p className="text-sm text-gray-500">{cls.name} · {cls.schoolYear}</p>
                 {isTeacher && (
                   <div className="mt-1 text-xs text-gray-400">
                     Code: <span className="font-mono bg-gray-100 px-1 rounded">{cls.joinCode}</span>

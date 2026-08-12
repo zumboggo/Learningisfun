@@ -46,7 +46,7 @@ function TeacherQuizzes() {
         const avgScore = completed.length > 0
           ? Math.round(completed.reduce((sum, a) => sum + (a.totalQuestions > 0 ? (a.score / a.totalQuestions) * 100 : 0), 0) / completed.length)
           : null;
-        allQuizzes.push({ quiz, className: cls.name, attemptCount: completed.length, avgScore });
+        allQuizzes.push({ quiz, className: cls.courseName, attemptCount: completed.length, avgScore });
       }
     }
     return allQuizzes.sort((a, b) => b.quiz.createdAt.localeCompare(a.quiz.createdAt));

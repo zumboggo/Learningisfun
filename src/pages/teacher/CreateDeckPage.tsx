@@ -329,7 +329,7 @@ export function CreateDeckPage() {
                     onChange={() => toggleClass(cls.$id)}
                     className="rounded"
                   />
-                  <span>{cls.name}</span>
+                  <span>{cls.courseName} <span className="text-gray-400">({cls.name})</span></span>
                 </label>
               ))}
             </div>
