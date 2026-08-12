@@ -57,9 +57,14 @@ export function DecksListPage() {
             )}
           </Link>
           {isTeacher && (
-            <Button size="sm" variant="secondary" onClick={() => setAssigningDeck(deck)}>
-              Add to Class/es
-            </Button>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Link to={`/decks/${deck.$id}/present`}>
+                <Button size="sm">Present</Button>
+              </Link>
+              <Button size="sm" variant="secondary" onClick={() => setAssigningDeck(deck)}>
+                Add to Class/es
+              </Button>
+            </div>
           )}
         </div>
       </Card>

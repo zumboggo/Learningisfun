@@ -27,6 +27,7 @@ import { CreateClassPage } from '@/pages/teacher/CreateClassPage';
 import { AddClassCardsPage } from '@/pages/teacher/AddClassCardsPage';
 
 import { CreateDeckPage } from '@/pages/teacher/CreateDeckPage';
+import { DeckPresentPage } from '@/pages/teacher/DeckPresentPage';
 import { TeacherSettingsPage } from '@/pages/TeacherSettingsPage';
 
 import type { ReactNode } from 'react';
@@ -54,6 +55,15 @@ function TeacherRoute({ children }: { children: ReactNode }) {
   if (!user || !isTeacher) {
     return <Navigate to="/dashboard" replace />;
   }
+  return <>{children}</>;
+}
+
+/** Signed-in teacher route rendered without the app chrome (slideshow, projector views). */
+function FullscreenTeacherRoute({ children }: { children: ReactNode }) {
+  const { user, isTeacher, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  if (!isTeacher) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 }
 
@@ -90,6 +100,7 @@ export default function App() {
 
           <Route path="/decks" element={<ProtectedRoute><DecksListPage /></ProtectedRoute>} />
           <Route path="/decks/:deckId/review" element={<ProtectedRoute><FlashcardReviewPage /></ProtectedRoute>} />
+          <Route path="/decks/:deckId/present" element={<FullscreenTeacherRoute><DeckPresentPage /></FullscreenTeacherRoute>} />
           <Route path="/decks/import" element={<ProtectedRoute><ImportDeckPage /></ProtectedRoute>} />
           <Route path="/decks/new" element={<ProtectedRoute><TeacherRoute><CreateDeckPage /></TeacherRoute></ProtectedRoute>} />
 

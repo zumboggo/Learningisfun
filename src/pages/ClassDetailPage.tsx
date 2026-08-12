@@ -291,9 +291,14 @@ export function ClassDetailPage() {
                       </p>
                     </div>
                     {isTeacher ? (
-                      <Link to={`/classes/${cls.$id}/decks/${assignment.deckId}/progress`}>
-                        <Button size="sm" variant="secondary">Progress</Button>
-                      </Link>
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <Link to={`/decks/${assignment.deckId}/present`}>
+                          <Button size="sm">Present</Button>
+                        </Link>
+                        <Link to={`/classes/${cls.$id}/decks/${assignment.deckId}/progress`}>
+                          <Button size="sm" variant="secondary">Progress</Button>
+                        </Link>
+                      </div>
                     ) : (
                       <Link to={`/decks/${assignment.deckId}/review`}>
                         <Button size="sm" variant="secondary">Study</Button>

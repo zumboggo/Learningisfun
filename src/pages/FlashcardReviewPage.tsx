@@ -35,7 +35,7 @@ interface CardTimeRecord {
 
 export function FlashcardReviewPage() {
   const { deckId } = useParams<{ deckId: string }>();
-  const { user } = useAuth();
+  const { user, isTeacher } = useAuth();
   const navigate = useNavigate();
 
   const deck = useLiveQuery(() => (deckId ? db.flashcard_decks.get(deckId) : undefined), [deckId]);
@@ -250,6 +250,23 @@ export function FlashcardReviewPage() {
         <Button onClick={() => void startSession(selectedQueueMode)} className="w-full" size="lg">
           Start {selectedQueueMode} session
         </Button>
+
+        {isTeacher && (
+          <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4">
+            <h3 className="font-medium">Teach this deck</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Open a full-screen slideshow to work through the cards with the whole class. Nothing is
+              recorded against your own review history.
+            </p>
+            <Button
+              onClick={() => navigate(`/decks/${deckId}/present`)}
+              variant="secondary"
+              className="mt-3 w-full"
+            >
+              Present to class
+            </Button>
+          </div>
+        )}
       </div>
     );
   }
