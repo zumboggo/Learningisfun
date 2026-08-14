@@ -5,6 +5,11 @@ import type { User, UserRole } from '@/types';
 import { ID, Query } from 'appwrite';
 
 export async function register(email: string, password: string, name: string, role: UserRole = 'student'): Promise<User> {
+  // A stale session left over from a previous student on a shared device makes
+  // createEmailPasswordSession fail below, which used to abandon a brand-new
+  // account halfway through signing up.
+  await clearAnyExistingSession();
+
   const appwriteUser = await account.create(ID.unique(), email, password, name);
 
   // account.create() registers the account but does not sign it in. Without a
@@ -22,18 +27,33 @@ export async function register(email: string, password: string, name: string, ro
     createdAt: getTimestamp(),
   };
 
-  await databases.createDocument(DATABASE_ID, COLLECTIONS.users, appwriteUser.$id, {
-    email,
-    name,
-    role,
-    deviceId: userDoc.deviceId,
-    lastSyncAt: userDoc.lastSyncAt,
-    createdAt: userDoc.createdAt,
-  });
+  try {
+    await databases.createDocument(DATABASE_ID, COLLECTIONS.users, appwriteUser.$id, {
+      email,
+      name,
+      role,
+      deviceId: userDoc.deviceId,
+      lastSyncAt: userDoc.lastSyncAt,
+      createdAt: userDoc.createdAt,
+    });
+  } catch {
+    // The account and its session are real even if the profile document could
+    // not be written. Throwing here would strand the student with an account
+    // they cannot use — and login() recreates a missing profile anyway.
+  }
 
   await db.users.put(userDoc);
   await db.app_metadata.put({ key: 'currentUserId', value: userDoc.$id });
   return userDoc;
+}
+
+/** Drop whatever session the browser is holding, if any. Never throws. */
+async function clearAnyExistingSession(): Promise<void> {
+  try {
+    await account.deleteSession('current');
+  } catch {
+    // No session to clear, or offline.
+  }
 }
 
 export async function createStudentAccount(email: string, password: string, name: string): Promise<User> {
@@ -77,6 +97,9 @@ export async function findUserByEmail(email: string): Promise<User | null> {
 }
 
 export async function login(email: string, password: string): Promise<User> {
+  // Signing in as someone else on a shared device fails while the previous
+  // student's session is still attached to the browser.
+  await clearAnyExistingSession();
   try {
     await account.createEmailPasswordSession(email, password);
   } catch (err) {

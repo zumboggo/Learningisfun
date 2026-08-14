@@ -173,6 +173,7 @@ function collectionForEntity(entityType: string): string | null {
   switch (entityType) {
     case 'class_session': return COLLECTIONS.class_sessions;
     case 'class_session_item': return COLLECTIONS.class_session_items;
+    case 'discussion_answer': return COLLECTIONS.discussion_answers;
     case 'flashcard_review_event': return COLLECTIONS.flashcard_review_events;
     case 'flashcard_study_session': return COLLECTIONS.flashcard_study_sessions;
     case 'deck': return COLLECTIONS.flashcard_decks;
@@ -184,6 +185,7 @@ function collectionForEntity(entityType: string): string | null {
     case 'quiz_question': return COLLECTIONS.quiz_questions;
     case 'quiz_attempt': return COLLECTIONS.quiz_attempts;
     case 'writing_prompt': return COLLECTIONS.writing_prompts;
+    case 'writing_prompt_assignment': return COLLECTIONS.writing_prompt_assignments;
     case 'writing_submission': return COLLECTIONS.writing_submissions;
     case 'peer_review': return COLLECTIONS.peer_reviews;
     default: return null;
@@ -197,6 +199,9 @@ async function markEntitySynced(entityType: string, entityId: string): Promise<v
       break;
     case 'class_session_item':
       await db.class_session_items.update(entityId, { syncStatus: 'synced' });
+      break;
+    case 'discussion_answer':
+      await db.discussion_answers.update(entityId, { syncStatus: 'synced' });
       break;
     case 'flashcard_review_event':
       await db.flashcard_review_events.update(entityId, { syncStatus: 'synced' });

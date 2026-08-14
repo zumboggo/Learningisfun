@@ -175,6 +175,24 @@ const COLLECTIONS = [
     ],
   },
   {
+    // Replies to a discussion question. Without this collection replies never
+    // leave the device that wrote them.
+    id: 'discussion_answers',
+    name: 'Discussion Answers',
+    attributes: [
+      S('questionId', { required: true }),
+      S('authorId', { required: true }),
+      S('authorName', { required: false }),
+      TXT('answerText', { required: false }),
+      DATE('createdAt', { required: true }),
+      DATE('updatedAt', { required: true }),
+    ],
+    indexes: [
+      { key: 'idx_questionId', type: 'key', attributes: ['questionId'] },
+      { key: 'idx_authorId', type: 'key', attributes: ['authorId'] },
+    ],
+  },
+  {
     id: 'flashcard_decks',
     name: 'Flashcard Decks',
     attributes: [
@@ -351,6 +369,21 @@ const COLLECTIONS = [
       { key: 'idx_classId', type: 'key', attributes: ['classId'] },
       { key: 'idx_teacherId', type: 'key', attributes: ['teacherId'] },
       { key: 'idx_status', type: 'key', attributes: ['status'] },
+    ],
+  },
+  {
+    // Lets one prompt be set for several sections, the way deck_assignments
+    // does for flashcard decks.
+    id: 'writing_prompt_assignments',
+    name: 'Writing Prompt Assignments',
+    attributes: [
+      S('promptId', { required: true }),
+      S('classId', { required: true }),
+      DATE('assignedAt', { required: true }),
+    ],
+    indexes: [
+      { key: 'idx_promptId', type: 'key', attributes: ['promptId'] },
+      { key: 'idx_classId', type: 'key', attributes: ['classId'] },
     ],
   },
   {

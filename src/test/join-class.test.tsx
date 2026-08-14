@@ -100,8 +100,28 @@ describe('JoinClassPage', () => {
     await user.type(screen.getByLabelText('Password'), 'password123');
     await user.click(screen.getByRole('button', { name: 'Create account & join' }));
 
-    await waitFor(() => expect(screen.getByText(/did not work/)).toBeInTheDocument());
+    await waitFor(
+      () => expect(screen.getByText(/didn't match a class/)).toBeInTheDocument(),
+      { timeout: 3000 },
+    );
+    // The first lookup can beat the new session into place, so it is retried
+    // once before the code is called bad.
+    expect(joinClass).toHaveBeenCalledTimes(2);
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('enrols on the first try without a retry when the code is good', async () => {
+    joinClass.mockResolvedValue({ $id: 'class-1' });
+    const user = userEvent.setup();
+    await renderPage();
+
+    await user.type(screen.getByLabelText('Nickname'), 'Sam');
+    await user.type(screen.getByLabelText('Email'), 'sam@example.com');
+    await user.type(screen.getByLabelText('Password'), 'password123');
+    await user.click(screen.getByRole('button', { name: 'Create account & join' }));
+
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('/dashboard', { replace: true }));
+    expect(joinClass).toHaveBeenCalledTimes(1);
   });
 
   it('rejects a short password before calling the backend', async () => {

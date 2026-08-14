@@ -11,6 +11,18 @@ function normalizeCode(value: string): string {
   return value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
 }
 
+/** Appwrite's raw messages are unhelpful to a 15-year-old on a phone. */
+function describeAuthError(err: unknown, mode: Mode): string {
+  const message = err instanceof Error ? err.message : '';
+  if (/already exists|already been taken/i.test(message)) {
+    return 'That email already has an account. Tap "I have an account" and sign in with the class code.';
+  }
+  if (/Invalid credentials|password/i.test(message) && mode === 'signin') {
+    return 'That email and password did not match. Check them and try again.';
+  }
+  return message || 'Something went wrong. Please try again.';
+}
+
 /**
  * Public landing page for the link a teacher hands out. A student who has never
  * opened the app can create an account and enrol in one submit; a student who
@@ -50,9 +62,17 @@ export function JoinClassPage() {
   const lookupDone = Boolean(currentLookup);
 
   const enrol = useCallback(async (userId: string) => {
-    const joined = await joinClass(userId, code);
+    // The very first lookup can land before the new session is fully attached,
+    // so a single miss is retried before it is reported as a bad code.
+    let joined = await joinClass(userId, code);
     if (!joined) {
-      setError('Your account is ready, but that class code did not work. Check the code with your teacher and try again.');
+      await new Promise(resolve => setTimeout(resolve, 600));
+      joined = await joinClass(userId, code);
+    }
+    if (!joined) {
+      setError(
+        "You're signed in, but that class code didn't match a class. Check the code with your teacher — you can retype it above and press Join class.",
+      );
       return false;
     }
     navigate('/dashboard', { replace: true });
@@ -79,7 +99,7 @@ export function JoinClassPage() {
         : await login(email, password);
       await enrol(account.$id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setError(describeAuthError(err, mode));
     } finally {
       setSubmitting(false);
     }

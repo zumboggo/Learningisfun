@@ -10,6 +10,7 @@ import type {
   TeacherWritingFeedback,
   WritingAiFeedback,
   WritingPrompt,
+  WritingPromptAssignment,
   WritingSubmission,
 } from '@/types';
 
@@ -321,7 +322,12 @@ export function formatScore(value: number | null, digits = 1): string {
 // ---------------------------------------------------------------------------
 
 export async function createWritingPrompt(params: {
-  classId: string;
+  /**
+   * Every class the prompt is set for. The first one is also stored on the
+   * prompt itself so submissions written before this was a list keep working.
+   * May be empty — a prompt can be written now and assigned later.
+   */
+  classIds: string[];
   teacherId: string;
   title: string;
   promptMarkdown: string;
@@ -335,7 +341,7 @@ export async function createWritingPrompt(params: {
   const now = getTimestamp();
   const prompt: WritingPrompt = {
     $id: ID.unique(),
-    classId: params.classId,
+    classId: params.classIds[0] || '',
     teacherId: params.teacherId,
     title: params.title,
     promptMarkdown: params.promptMarkdown,
@@ -351,8 +357,120 @@ export async function createWritingPrompt(params: {
     syncStatus: 'local',
   };
   await db.writing_prompts.put(prompt);
-  await addToQueue(params.teacherId, 'writing_prompt', prompt.$id, 'create', prompt);
+  // classId is a required field on the server, so a prompt with no class yet is
+  // kept local until one is picked. setPromptClasses pushes it up at that point.
+  if (prompt.classId) {
+    await addToQueue(params.teacherId, 'writing_prompt', prompt.$id, 'create', prompt);
+  }
+  await setPromptClasses(prompt.$id, params.classIds, params.teacherId);
   return prompt;
+}
+
+// ---------------------------------------------------------------------------
+// Class assignment
+//
+// Prompts are assigned the same way flashcard decks are: through a join table,
+// so one prompt can be set for several sections without being retyped, and the
+// classes can be changed after it has been written.
+// ---------------------------------------------------------------------------
+
+export async function getPromptAssignments(promptId: string): Promise<WritingPromptAssignment[]> {
+  return db.writing_prompt_assignments.where('promptId').equals(promptId).toArray();
+}
+
+export async function getPromptClassIds(promptId: string): Promise<string[]> {
+  const assignments = await getPromptAssignments(promptId);
+  return assignments.map(a => a.classId);
+}
+
+export async function assignPromptToClass(
+  promptId: string,
+  classId: string,
+  teacherId: string,
+): Promise<void> {
+  const existing = await db.writing_prompt_assignments
+    .where('[promptId+classId]')
+    .equals([promptId, classId])
+    .first();
+  if (existing) return;
+
+  const assignment: WritingPromptAssignment = {
+    $id: ID.unique(),
+    promptId,
+    classId,
+    assignedAt: getTimestamp(),
+  };
+  await db.writing_prompt_assignments.put(assignment);
+  await addToQueue(teacherId, 'writing_prompt_assignment', assignment.$id, 'create', assignment);
+}
+
+export async function unassignPromptFromClass(
+  promptId: string,
+  classId: string,
+  teacherId: string,
+): Promise<void> {
+  const existing = await db.writing_prompt_assignments
+    .where('[promptId+classId]')
+    .equals([promptId, classId])
+    .toArray();
+  for (const assignment of existing) {
+    await db.writing_prompt_assignments.delete(assignment.$id);
+    await addToQueue(teacherId, 'writing_prompt_assignment', assignment.$id, 'delete', assignment);
+  }
+}
+
+/**
+ * Make the prompt's classes match `classIds` exactly. Untouched assignments are
+ * left alone so removing one section does not disturb another's submissions.
+ */
+export async function setPromptClasses(
+  promptId: string,
+  classIds: string[],
+  teacherId: string,
+): Promise<void> {
+  const currentIds = new Set((await getPromptAssignments(promptId)).map(a => a.classId));
+  const nextIds = new Set(classIds.filter(Boolean));
+
+  for (const classId of nextIds) {
+    if (!currentIds.has(classId)) await assignPromptToClass(promptId, classId, teacherId);
+  }
+  for (const classId of currentIds) {
+    if (!nextIds.has(classId)) await unassignPromptFromClass(promptId, classId, teacherId);
+  }
+
+  // Keep the prompt's own classId pointing at a class it is still set for; a
+  // stale value would send the responses page looking at the wrong roster.
+  const prompt = await db.writing_prompts.get(promptId);
+  const remaining = [...nextIds];
+  if (prompt && !nextIds.has(prompt.classId)) {
+    const classId = remaining[0] || '';
+    await db.writing_prompts.update(promptId, { classId, updatedAt: getTimestamp(), syncStatus: 'local' });
+    const updated = await db.writing_prompts.get(promptId);
+    // 'create' upserts, which is what a prompt that was held back for having no
+    // class needs; for one already on the server it is an ordinary overwrite.
+    if (updated && classId) {
+      await addToQueue(teacherId, 'writing_prompt', promptId, 'create', updated);
+    }
+  }
+}
+
+/** Every prompt set for any of these classes, deduplicated. */
+export async function getPromptsForClasses(classIds: string[]): Promise<WritingPrompt[]> {
+  if (classIds.length === 0) return [];
+  const assignments = await db.writing_prompt_assignments.where('classId').anyOf(classIds).toArray();
+  const promptIds = [...new Set(assignments.map(a => a.promptId))];
+  const prompts = await Promise.all(promptIds.map(id => db.writing_prompts.get(id)));
+  return prompts
+    .filter((p): p is WritingPrompt => Boolean(p))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+/** Every student enrolled in any class the prompt is set for. */
+export async function getPromptStudentIds(promptId: string): Promise<string[]> {
+  const classIds = await getPromptClassIds(promptId);
+  if (classIds.length === 0) return [];
+  const members = await db.class_members.where('classId').anyOf(classIds).toArray();
+  return [...new Set(members.filter(m => m.role === 'student').map(m => m.userId))];
 }
 
 export async function updateWritingPromptStatus(
@@ -366,8 +484,7 @@ export async function updateWritingPromptStatus(
 }
 
 export async function getClassWritingPrompts(classId: string): Promise<WritingPrompt[]> {
-  const prompts = await db.writing_prompts.where('classId').equals(classId).toArray();
-  return prompts.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return getPromptsForClasses([classId]);
 }
 
 // ---------------------------------------------------------------------------

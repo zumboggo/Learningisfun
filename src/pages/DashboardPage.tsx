@@ -11,8 +11,19 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { joinClass } from '@/services/class.service';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
-import { getNextMilestone, getPreviousMilestone } from '@/services/progress-utils';
-import type { Class, ClassSession, DeckAssignment, FlashcardDeck, StudentCardState, FlashcardReviewEvent, FlashcardStudySession } from '@/types';
+import { getNextMilestone } from '@/services/progress-utils';
+import {
+  buildReviewPaceSeries,
+  buildKnownGrowthSeries,
+  buildDeckComposition,
+  type PaceSeries,
+  type KnownGrowthPoint,
+  type DeckComposition,
+} from '@/services/study-insights';
+import { ReviewPaceChart } from '@/components/student/ReviewPaceChart';
+import { KnownGrowthChart } from '@/components/student/KnownGrowthChart';
+import { DeckMakeup } from '@/components/student/DeckMakeup';
+import type { Class, ClassSession, DeckAssignment, FlashcardDeck, FlashcardReviewEvent, FlashcardStudySession } from '@/types';
 
 interface DeckAction {
   assignment: DeckAssignment;
@@ -27,6 +38,11 @@ export function DashboardPage() {
 }
 
 const WORD_MILESTONES = [25, 50, 100, 250, 500, 750, 1000, 1500, 2000, 3000, 5000, 7500, 10000];
+
+/** Days of pace history shown; shorter than the heatmap so points stay legible. */
+const PACE_WINDOW_DAYS = 28;
+
+const EMPTY_PACE: PaceSeries = { points: [], center: null, upperLimit: null, lowerLimit: null };
 
 function useCountUp(value: number, durationMs = 500): number {
   const [displayed, setDisplayed] = useState(0);
@@ -97,7 +113,10 @@ function MilestoneJourney({ wordsKnown, leveledUpThisWeek }: { wordsKnown: numbe
   );
 }
 
-function ProgressHeatmap({ days }: { days: Array<{ date: string; studySeconds: number; activityCount: number }> }) {
+function ProgressHeatmap({ days, longestStreak }: {
+  days: Array<{ date: string; studySeconds: number; activityCount: number }>;
+  longestStreak: number;
+}) {
   const totalMinutes = days.reduce((sum, day) => sum + day.studySeconds, 0) / 60;
   const activeDays = days.filter(day => day.activityCount > 0).length;
   const weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -124,7 +143,8 @@ function ProgressHeatmap({ days }: { days: Array<{ date: string; studySeconds: n
       </div>
       <div className="heatmap-caption">
         <span>{activeDays} study days</span>
-        <span>{totalMinutes.toFixed(0)} minutes tracked</span>
+        <span>{totalMinutes.toFixed(0)} min tracked</span>
+        <span>Best: {longestStreak}d</span>
       </div>
     </div>
   );
@@ -144,6 +164,7 @@ function StudentDashboard() {
   const [showJoin, setShowJoin] = useState(false);
   const [joining, setJoining] = useState(false);
   const [statsExpanded, setStatsExpanded] = useState(false);
+  const [editingDecks, setEditingDecks] = useState(false);
   const [encouragement, setEncouragement] = useState<string | null>(null);
   const [selectedDeckIds, setSelectedDeckIds] = useState<string[] | null>(null);
   const navigate = useNavigate();
@@ -197,6 +218,9 @@ function StudentDashboard() {
         cardsWeek: 0, cardsAll: 0,
         currentStreak: 0, longestStreak: 0,
         studyHeatmap: [] as Array<{ date: string; studySeconds: number; activityCount: number }>,
+        pace: EMPTY_PACE,
+        knownGrowth: [] as KnownGrowthPoint[],
+        deckMakeup: [] as DeckComposition[],
       };
     }
     const deckAssignments = await db.deck_assignments.where('classId').anyOf(classIds).toArray();
@@ -252,7 +276,23 @@ function StudentDashboard() {
     const streak = calculateStreak(heatmap);
     const longest = calculateLongestStreak(heatmap);
 
+    // Insight charts. Pace uses a shorter window than the heatmap so the daily
+    // points stay readable; growth and makeup use the full window.
+    const decks = deckIds.length
+      ? await db.flashcard_decks.where('$id').anyOf(deckIds).toArray()
+      : [];
+    // Deliberately unfiltered by deck: the study minutes in the heatmap cover
+    // every deck, so filtering only the recalls would divide by time the
+    // student spent elsewhere and understate their pace. Distraction and
+    // getting stuck affect a whole session anyway, not one deck.
+    const pace = buildReviewPaceSeries(heatmap.slice(-PACE_WINDOW_DAYS), events);
+    const knownGrowth = buildKnownGrowthSeries(heatmap, states);
+    const deckMakeup = buildDeckComposition(decks, cards, states);
+
     return {
+      pace,
+      knownGrowth,
+      deckMakeup,
       totalCards: cards.length,
       knownCards,
       familiarCards,
@@ -332,15 +372,13 @@ function StudentDashboard() {
     cardsWeek: 0, cardsAll: 0,
     currentStreak: 0, longestStreak: 0,
     studyHeatmap: [],
+    pace: EMPTY_PACE,
+    knownGrowth: [],
+    deckMakeup: [],
   };
 
-  const previousMilestone = getPreviousMilestone(stats.knownCards);
-  const span = Math.max(1, stats.nextGoal - previousMilestone);
-  const progressPercent = Math.min(100, span > 0 ? ((stats.knownCards - previousMilestone) / span) * 100 : 0);
-  const wordsToGoal = Math.max(0, stats.nextGoal - stats.knownCards);
-
   return (
-    <div className="student-home mx-auto min-h-screen max-w-5xl px-4 pb-4 pt-4 sm:px-6 lg:px-8">
+    <div className="student-home">
       <section className="student-home-hero" aria-label="Learning is Fun">
         <div className="student-home-hero-text">
           <h1 className="student-home-hero-heading">
@@ -378,8 +416,8 @@ function StudentDashboard() {
       </Modal>
 
       <section className="student-study-card">
-        <div className="flex items-center justify-between gap-3 mb-4">
-          <h2 className="text-lg font-bold text-slate-950">Today's goals</h2>
+        <div className="student-section-head">
+          <h2 className="student-title">Today's goals</h2>
           <Button onClick={() => setShowJoin(true)} size="sm" variant="secondary" className="bg-white/80">
             Join class
           </Button>
@@ -406,54 +444,60 @@ function StudentDashboard() {
           />
         </div>
 
-        <div className="student-mini-stats">
-          <StudentMiniStat label="New" value={stats.newCards} />
-          <StudentMiniStat label="Familiar" value={stats.familiarCards} />
-          <StudentMiniStat label="Known" value={stats.knownCards} />
-        </div>
-
-        <div className="student-progress-section mt-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-slate-500">Vocabulary progress</span>
-            <span className="text-sm font-bold text-slate-700">{stats.knownCards} / {stats.nextGoal}</span>
-          </div>
-          <div className="student-progress-track">
-            <div className="student-progress-fill" style={{ width: `${progressPercent}%` }} />
-          </div>
-          <div className="mt-2 flex justify-between text-xs font-semibold text-slate-400">
-            <span>{previousMilestone}</span>
-            <span>{wordsToGoal} to go</span>
-            <span>{stats.nextGoal}</span>
-          </div>
-        </div>
       </section>
 
       <section className="student-study-card">
-        <h2 className="text-lg font-bold text-slate-950 mb-3">Study heatmap</h2>
-        {stats.studyHeatmap.some(d => d.activityCount > 0) ? (
-          <ProgressHeatmap days={stats.studyHeatmap} />
-        ) : (
-          <div className="text-center py-6 text-gray-400 text-sm">
-            <p>Complete your first flashcard review to light up your heatmap!</p>
+        <div className="student-section-head">
+          <div>
+            <h2 className="student-title">Reviewing pace</h2>
+            <p className="student-subtitle">
+              Recalls per 10 minutes, against your own normal range.
+            </p>
           </div>
-        )}
-        <div className="mt-3 flex items-center justify-between text-sm">
-          <span className="font-semibold text-slate-700">
-            {stats.currentStreak > 0 ? `${stats.currentStreak}-day streak` : 'No streak yet'}
+        </div>
+        <ReviewPaceChart series={stats.pace} />
+      </section>
+
+      <section className="student-study-card">
+        <div className="student-section-head">
+          <h2 className="student-title">Study streak</h2>
+          <span className="text-sm font-bold text-slate-700">
+            {stats.currentStreak > 0 ? `${stats.currentStreak} days` : 'Not started'}
           </span>
-          <span className="text-slate-500">Longest: {stats.longestStreak} days</span>
+        </div>
+        {stats.studyHeatmap.some(d => d.activityCount > 0) ? (
+          <ProgressHeatmap days={stats.studyHeatmap} longestStreak={stats.longestStreak} />
+        ) : (
+          <p className="py-4 text-center text-sm text-slate-400">
+            Review your first card to light up the calendar.
+          </p>
+        )}
+      </section>
+
+      <section className="student-study-card">
+        <div className="student-section-head">
+          <div>
+            <h2 className="student-title">Words you know</h2>
+            <p className="student-subtitle">Words held for two weeks or longer.</p>
+          </div>
+        </div>
+        <KnownGrowthChart points={stats.knownGrowth} />
+
+        <div className="student-progress-divider">
+          <h3 className="student-subheading">What's in your decks</h3>
+          <DeckMakeup decks={stats.deckMakeup} />
         </div>
       </section>
 
       <section className="student-section">
-        <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="student-section-head">
           <div>
-            <h2 className="text-lg font-bold text-slate-950">Do now</h2>
-            <p className="text-sm text-slate-500">Start with the next thing your class needs.</p>
+            <h2 className="student-title">Do now</h2>
+            <p className="student-subtitle">Start with the next thing your class needs.</p>
           </div>
         </div>
         {doNow && (doNow.sessions.length > 0 || doNow.decks.length > 0) ? (
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="student-grid student-grid-2">
             {doNow.sessions.slice(0, 2).map(session => (
               <ActionCard
                 key={session.$id}
@@ -485,9 +529,47 @@ function StudentDashboard() {
       </section>
 
       <div className="student-section">
+        <div className="student-section-head">
+          <h2 className="student-title">My decks</h2>
+          {allAssignedDeckIds && allAssignedDeckIds.length > 0 && (
+            <button
+              onClick={() => setEditingDecks(!editingDecks)}
+              className="text-xs font-semibold text-slate-500 hover:text-slate-800"
+            >
+              {editingDecks ? 'Done' : 'Choose decks'}
+            </button>
+          )}
+        </div>
+        {allAssignedDeckIds && allAssignedDeckIds.length > 0 ? (
+          <div className="space-y-2">
+            {allAssignedDeckIds.map(deckId => {
+              const entry = doNow?.decks.find(d => d.deck?.$id === deckId);
+              const deck = entry?.deck;
+              const assignment = entry?.assignment;
+              const isSelected = selectedDeckIds === null || selectedDeckIds.includes(deckId);
+              return (
+                <DeckRow
+                  key={deckId}
+                  deckId={deckId}
+                  title={deck?.title || 'Unknown deck'}
+                  description={deck?.description}
+                  dailyTarget={assignment?.dailyTarget}
+                  selected={isSelected}
+                  editing={editingDecks}
+                  onToggle={() => toggleDeckSelection(deckId)}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-400">No flashcard decks assigned yet.</p>
+        )}
+      </div>
+
+      <div className="student-section">
         <button
           onClick={() => setStatsExpanded(!statsExpanded)}
-          className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900"
+          className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-slate-800"
         >
           <svg className={`h-4 w-4 transition-transform ${statsExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -495,84 +577,73 @@ function StudentDashboard() {
           All stats
         </button>
         {statsExpanded && (
-          <div className="mt-3 grid gap-3 text-sm">
-            <StatList>
-              <StatRow label="Cards today" value={stats.flashcardsToday} />
-              <StatRow label="Study time today" value={`${formatMinutes(stats.studySecondsToday)}`} />
-              <StatRow label="Cards this week" value={stats.cardsWeek} />
-              <StatRow label="Study time this week" value={formatMinutes(stats.studySecondsWeek)} />
-              <StatRow label="Cards all time" value={stats.cardsAll} />
-              <StatRow label="Study time all time" value={formatMinutes(stats.studySecondsAll)} />
-              <StatRow label="Words known" value={stats.knownCards} />
-              <StatRow label="Words familiar" value={stats.familiarCards} />
-              <StatRow label="Words new" value={stats.newCards} />
-              <StatRow label="Current streak" value={`${stats.currentStreak} days`} />
-              <StatRow label="Longest streak" value={`${stats.longestStreak} days`} />
-            </StatList>
-          </div>
-        )}
-      </div>
-
-      <div className="student-section">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-bold text-slate-950">My decks</h2>
-          {selectedDeckIds !== null && (
-            <span className="text-xs text-slate-400">
-              {selectedDeckIds.length === 0 ? 'None selected' : `${selectedDeckIds.length} selected`}
-            </span>
-          )}
-        </div>
-        {allAssignedDeckIds && allAssignedDeckIds.length > 0 ? (
-          <div className="space-y-2">
-            {allAssignedDeckIds.map(deckId => {
-              const deck = doNow?.decks.find(d => d.deck?.$id === deckId)?.deck;
-              const assignment = doNow?.decks.find(d => d.deck?.$id === deckId)?.assignment;
-              const isSelected = selectedDeckIds === null || (selectedDeckIds || []).includes(deckId);
-              return (
-                <div key={deckId} className="flex items-center gap-3 rounded-xl bg-white/60 border border-white/70 px-4 py-3">
-                  <button
-                    onClick={() => toggleDeckSelection(deckId)}
-                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors ${
-                      isSelected
-                        ? 'bg-blue-600 border-blue-600 text-white'
-                        : 'border-gray-300 hover:border-blue-400'
-                    }`}
-                    aria-label={isSelected ? 'Deselect deck' : 'Select deck'}
-                  >
-                    {isSelected && (
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </button>
-                  <Link to={`/decks/${deckId}/review`} className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <div>
-                        <h3 className="font-medium text-sm">{deck?.title || 'Unknown deck'}</h3>
-                        {deck?.description && <p className="text-xs text-gray-500 truncate">{deck.description}</p>}
-                      </div>
-                      {assignment?.dailyTarget && (
-                        <span className="text-xs text-blue-600 font-medium shrink-0">{assignment.dailyTarget}/day</span>
-                      )}
-                    </div>
-                  </Link>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="text-gray-400 text-sm">No flashcard decks assigned yet.</p>
+          <StatList>
+            <StatRow label="Cards today" value={stats.flashcardsToday} />
+            <StatRow label="Time today" value={formatMinutes(stats.studySecondsToday)} />
+            <StatRow label="Cards this week" value={stats.cardsWeek} />
+            <StatRow label="Time this week" value={formatMinutes(stats.studySecondsWeek)} />
+            <StatRow label="Cards all time" value={stats.cardsAll} />
+            <StatRow label="Time all time" value={formatMinutes(stats.studySecondsAll)} />
+            <StatRow label="Words known" value={stats.knownCards} />
+            <StatRow label="Words familiar" value={stats.familiarCards} />
+            <StatRow label="Words new" value={stats.newCards} />
+            <StatRow label="Current streak" value={`${stats.currentStreak} days`} />
+            <StatRow label="Longest streak" value={`${stats.longestStreak} days`} />
+          </StatList>
         )}
       </div>
     </div>
   );
 }
 
-function StudentMiniStat({ label, value }: { label: string; value: number }) {
+/**
+ * A deck in the student's list. The selection checkbox only appears while
+ * editing; the rest of the time the row is a plain tap target so the home
+ * screen stays uncluttered.
+ */
+function DeckRow({ deckId, title, description, dailyTarget, selected, editing, onToggle }: {
+  deckId: string;
+  title: string;
+  description?: string;
+  dailyTarget?: number | null;
+  selected: boolean;
+  editing: boolean;
+  onToggle: () => void;
+}) {
+  const body = (
+    <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
+      <div className="min-w-0">
+        <h3 className="truncate text-sm font-semibold text-slate-800">{title}</h3>
+        {description && <p className="truncate text-xs text-slate-400">{description}</p>}
+      </div>
+      {dailyTarget && (
+        <span className="shrink-0 text-xs font-semibold text-slate-400">{dailyTarget}/day</span>
+      )}
+    </div>
+  );
+
   return (
-    <div>
-      <div className="text-lg font-bold text-slate-950">{value}</div>
-      <div className="text-xs font-medium text-slate-500">{label}</div>
+    <div
+      className={`student-card flex items-center gap-3 px-4 py-3 transition-opacity ${
+        editing && !selected ? 'opacity-50' : ''
+      }`}
+    >
+      {editing && (
+        <button
+          onClick={onToggle}
+          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
+            selected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 hover:border-blue-400'
+          }`}
+          aria-label={selected ? `Stop counting ${title}` : `Count ${title}`}
+        >
+          {selected && (
+            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          )}
+        </button>
+      )}
+      {editing ? body : <Link to={`/decks/${deckId}/review`} className="flex min-w-0 flex-1">{body}</Link>}
     </div>
   );
 }
@@ -587,16 +658,16 @@ function formatMinutes(seconds: number): string {
 
 function StatList({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-xl bg-white/60 border border-white/70 p-4">
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-2">{children}</dl>
+    <div className="student-card mt-3 p-4">
+      <dl className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">{children}</dl>
     </div>
   );
 }
 
 function StatRow({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="flex justify-between py-1 border-b border-gray-100 last:border-b-0">
-      <dt className="text-gray-500">{label}</dt>
+    <div className="flex justify-between gap-3 border-b border-slate-900/5 py-1.5 text-sm last:border-b-0">
+      <dt className="text-slate-500">{label}</dt>
       <dd className="font-semibold text-slate-800">{value}</dd>
     </div>
   );

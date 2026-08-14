@@ -15,6 +15,7 @@ import {
   parseImprovements,
   parseRubric,
   parseScores,
+  getPromptStudentIds,
   saveTeacherFeedback,
   summariseScores,
 } from '@/services/writing.service';
@@ -45,16 +46,17 @@ export function WritingResponsesPage() {
   const rows = useLiveQuery(async () => {
     if (!prompt) return [];
 
-    const members = await db.class_members.where('classId').equals(prompt.classId).toArray();
-    const students = members.filter(m => m.role === 'student');
+    // The prompt may be set for several sections, so the roster is everyone in
+    // any class it was assigned to.
+    const students = await getPromptStudentIds(prompt.$id);
     const submissions = await db.writing_submissions.where('promptId').equals(prompt.$id).toArray();
     const allReviews = await db.peer_reviews.where('promptId').equals(prompt.$id).toArray();
     const submittedReviews = allReviews.filter(r => r.status === 'submitted');
 
     const result: StudentRow[] = [];
-    for (const member of students) {
-      const user = await db.users.get(member.userId);
-      const submission = submissions.find(s => s.authorId === member.userId) || null;
+    for (const studentId of students) {
+      const user = await db.users.get(studentId);
+      const submission = submissions.find(s => s.authorId === studentId) || null;
       const reviewsReceived = submission
         ? submittedReviews
             .filter(r => r.submissionId === submission.$id)
@@ -65,11 +67,11 @@ export function WritingResponsesPage() {
         : undefined;
 
       result.push({
-        studentId: member.userId,
+        studentId,
         studentName: user?.name || user?.email || 'Unknown student',
         submission,
         reviewsReceived,
-        reviewsGiven: submittedReviews.filter(r => r.reviewerId === member.userId).length,
+        reviewsGiven: submittedReviews.filter(r => r.reviewerId === studentId).length,
         averageTotal: summariseScores(reviewsReceived, rubric).averageTotal,
         hasTeacherFeedback: Boolean(teacherFeedback),
         hasFinal: Boolean(submission?.finalMarkdown),

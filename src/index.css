@@ -1,11 +1,33 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+   Student design tokens
+
+   One spacing scale, one radius scale, one ink ramp. Every student surface
+   pulls from these so gaps and corners stay even across pages. Defined on
+   :root (not .student-shell) so cards rendered outside the shell — login,
+   register — still resolve them.
+--------------------------------------------------------------------------- */
 :root {
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
-}
 
-.safe-area-bottom {
-  padding-bottom: var(--safe-area-bottom);
+  /* Spacing: gap between sections, padding inside a surface. */
+  --s-gap: clamp(0.875rem, 2.4vw, 1.25rem);
+  --s-pad: clamp(1.125rem, 3.4vw, 1.5rem);
+
+  /* Radius: one for surfaces, one for anything nested inside them. */
+  --s-radius: 1.375rem;
+  --s-radius-sm: 0.875rem;
+
+  /* Ink ramp: heading, body, and quiet metadata. */
+  --s-ink: #102347;
+  --s-ink-soft: #566b8c;
+  --s-ink-faint: #8a97ac;
+
+  --s-line: rgba(16, 35, 71, 0.09);
+  --s-surface: rgba(255, 255, 255, 0.82);
+  --s-shadow: 0 8px 24px rgba(129, 86, 43, 0.09);
+  --s-accent: #e94c9d;
 }
 
 html {
@@ -19,199 +41,15 @@ body {
   overscroll-behavior: none;
 }
 
-.student-shell {
-  color: #102347;
-  background:
-    radial-gradient(circle at 18% 2%, rgba(255, 185, 125, 0.55), transparent 32rem),
-    radial-gradient(circle at 88% 8%, rgba(255, 140, 135, 0.34), transparent 28rem),
-    linear-gradient(180deg, #ffe3bd 0%, #fff7e8 44%, #fffdf8 100%);
-}
-
-.student-home {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(1rem, 3vw, 1.5rem);
-}
-
-.student-home-hero {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: clamp(1rem, 4vw, 2.5rem);
-  padding: clamp(1.5rem, 4vw, 2.25rem) clamp(1.5rem, 5vw, 2.75rem);
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  border-radius: clamp(1.5rem, 4vw, 2.5rem);
-  box-shadow: 0 24px 56px rgba(135, 72, 39, 0.16);
-  background:
-    radial-gradient(circle at 88% 18%, rgba(255, 255, 255, 0.5), transparent 60%),
-    linear-gradient(135deg, #ffe9ce 0%, #ffd9a8 100%);
-}
-
-.student-home-hero-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.student-home-hero-heading {
-  margin: 0;
-  font-size: clamp(1.6rem, 4.4vw, 2.6rem);
-  font-weight: 900;
-  line-height: 1.05;
-  color: #102347;
-}
-
-.student-home-hero-heading span {
-  display: block;
-  color: #e94c9d;
-}
-
-.student-home-hero-tagline {
-  margin: 0;
-  font-size: clamp(0.85rem, 1.8vw, 1.05rem);
-  font-weight: 700;
-  color: #4a5b7c;
-}
-
-.student-home-hero-illustration {
-  flex: 0 0 auto;
-  width: clamp(96px, 22vw, 220px);
-  height: auto;
-  display: block;
-  filter: drop-shadow(0 10px 18px rgba(135, 72, 39, 0.22));
-}
-
-@media (max-width: 560px) {
-  .student-home-hero {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .student-home-hero-text {
-    align-items: center;
-  }
-
-  .student-home-hero-illustration {
-    width: clamp(120px, 40vw, 180px);
-  }
-}
-
-.student-study-card {
-  padding: clamp(1.25rem, 4vw, 2rem);
-  border: 1px solid rgba(255, 255, 255, 0.78);
-  border-radius: clamp(1.25rem, 4vw, 2rem);
-  background:
-    radial-gradient(circle at 14% 16%, rgba(255, 255, 255, 0.95), transparent 18rem),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.86), rgba(255, 248, 234, 0.72));
-  box-shadow: 0 24px 60px rgba(129, 86, 43, 0.13);
-  backdrop-filter: blur(14px);
-}
-
-.student-known-number {
-  line-height: 0.9;
-  font-size: clamp(3rem, 10vw, 5rem);
-  font-weight: 800;
-  letter-spacing: 0;
-  color: #102347;
-}
-
-.student-progress-track {
-  height: 18px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: #d9e3eb;
-  box-shadow: inset 0 1px 4px rgba(16, 35, 71, 0.12);
-}
-
-.student-progress-fill {
-  height: 100%;
-  min-width: 8px;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #e94c9d 0%, #ae6ee9 45%, #20aeea 100%);
-  box-shadow: 0 4px 14px rgba(32, 174, 234, 0.28);
-}
-
-.student-goal-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(1rem, 4vw, 2rem);
-  margin-top: clamp(1.25rem, 4vw, 2rem);
-}
-
-.student-mini-stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin-top: 1.25rem;
-  text-align: center;
-}
-
-.student-mini-stats > div {
-  border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.72);
-  padding: 0.75rem;
-}
-
-.student-section {
-  border-radius: clamp(1.25rem, 4vw, 2rem);
-}
-
-.student-floating-nav {
-  position: fixed;
-  z-index: 40;
-  left: 50%;
-  bottom: clamp(0.75rem, 3vw, 1.25rem);
-  display: grid;
-  width: min(calc(100% - 2rem), 620px);
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  transform: translateX(-50%);
-  border: 1px solid rgba(255, 255, 255, 0.78);
-  border-radius: 1.5rem;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 18px 48px rgba(41, 48, 75, 0.18);
-  backdrop-filter: blur(18px);
-}
-
-.student-floating-nav-item {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.75rem 0.35rem;
-  color: #536581;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-align: center;
-  transition: color 0.18s ease, transform 0.18s ease;
-}
-
-.student-floating-nav-item svg {
-  width: 1.65rem;
-  height: 1.65rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.student-floating-nav-item-active {
-  color: #e94c9d;
-  transform: translateY(-2px);
-}
-
-.student-floating-nav-item-active svg {
-  filter: drop-shadow(0 8px 12px rgba(233, 76, 157, 0.24));
-}
-
 * {
   -webkit-tap-highlight-color: transparent;
 }
 
+.safe-area-bottom {
+  padding-bottom: var(--safe-area-bottom);
+}
+
+/* Keep iOS from zooming on focus, then drop to the design size on desktop. */
 input, textarea, select, button {
   font-size: 16px;
 }
@@ -239,6 +77,730 @@ input, textarea, select, button {
 ::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
 }
+
+/* ---------------------------------------------------------------------------
+   Shell + page frame
+--------------------------------------------------------------------------- */
+
+.student-shell {
+  color: var(--s-ink);
+  background:
+    radial-gradient(circle at 15% -2%, rgba(255, 193, 138, 0.42), transparent 28rem),
+    linear-gradient(180deg, #ffe9cd 0%, #fff8ed 40%, #fffdfa 100%);
+  background-attachment: fixed;
+}
+
+/* The shell owns page width and padding for every student route, so pages
+   don't each pick their own max-width. Bottom padding clears the floating nav. */
+.student-main {
+  width: 100%;
+  max-width: 46rem;
+  margin: 0 auto;
+  padding:
+    clamp(0.875rem, 2.6vw, 1.25rem)
+    clamp(1rem, 4vw, 1.5rem)
+    calc(7rem + var(--safe-area-bottom));
+}
+
+/* Pages ship their own `p-4 max-w-* mx-auto` wrapper sized for the teacher
+   layout. Inside the student shell the frame above owns the padding, so drop
+   theirs — but keep each page's max-width, since a flashcard and a list want
+   different reading measures. */
+.student-main > div {
+  padding: 0;
+  margin-inline: auto;
+}
+
+/* Even vertical rhythm between sections. */
+.student-home {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-gap);
+}
+
+.student-section {
+  border-radius: var(--s-radius);
+}
+
+/* Card grids inside a section, on the same spacing scale as the sections. */
+.student-grid {
+  display: grid;
+  gap: var(--s-gap);
+}
+
+@media (min-width: 768px) {
+  .student-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Page titles on student routes, which pages set with Tailwind text sizes. */
+.student-shell h1 {
+  color: var(--s-ink);
+  letter-spacing: -0.02em;
+}
+
+/* Section headings: one size, one weight, one spacing everywhere. */
+.student-title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--s-ink);
+}
+
+.student-subtitle {
+  margin: 0.15rem 0 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--s-ink-faint);
+}
+
+/* A second block inside one card, separated by a rule rather than a new card. */
+.student-progress-divider {
+  margin-top: var(--s-gap);
+  padding-top: var(--s-gap);
+  border-top: 1px solid var(--s-line);
+}
+
+.student-subheading {
+  margin: 0 0 0.625rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--s-ink-soft);
+}
+
+.student-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Surfaces
+
+   Inside the student shell every shared <Card> is restyled to the same soft
+   glass surface as the home screen, so list rows and empty states match. These
+   rules are unlayered, so they win over the Tailwind utilities on the element.
+--------------------------------------------------------------------------- */
+
+.student-shell .app-card,
+.student-card {
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: var(--s-radius-sm, 0.875rem);
+  background: var(--s-surface, rgba(255, 255, 255, 0.82));
+  box-shadow: var(--s-shadow, 0 8px 24px rgba(129, 86, 43, 0.09));
+  backdrop-filter: blur(10px);
+}
+
+.student-shell .app-card-tappable:hover {
+  box-shadow: 0 12px 30px rgba(129, 86, 43, 0.14);
+}
+
+.student-study-card {
+  padding: var(--s-pad);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: var(--s-radius);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: var(--s-shadow);
+  backdrop-filter: blur(12px);
+}
+
+/* ---------------------------------------------------------------------------
+   Hero
+--------------------------------------------------------------------------- */
+
+.student-home-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(1rem, 4vw, 2rem);
+  padding: var(--s-pad);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: var(--s-radius);
+  box-shadow: 0 14px 34px rgba(135, 72, 39, 0.13);
+  background: linear-gradient(135deg, #ffeed8 0%, #ffdcaf 100%);
+}
+
+.student-home-hero-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.student-home-hero-heading {
+  margin: 0;
+  font-size: clamp(1.5rem, 4vw, 2.15rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--s-ink);
+}
+
+.student-home-hero-heading span {
+  display: block;
+  color: var(--s-accent);
+}
+
+.student-home-hero-tagline {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--s-ink-soft);
+}
+
+.student-home-hero-illustration {
+  flex: 0 0 auto;
+  width: clamp(88px, 20vw, 170px);
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 8px 16px rgba(135, 72, 39, 0.2));
+}
+
+@media (max-width: 560px) {
+  .student-home-hero {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .student-home-hero-text {
+    align-items: center;
+  }
+
+  .student-home-hero-illustration {
+    order: -1;
+    width: clamp(104px, 30vw, 140px);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Milestone journey (the one vocabulary progress bar)
+--------------------------------------------------------------------------- */
+
+.milestone-journey {
+  display: grid;
+  gap: 0.625rem;
+  width: 100%;
+}
+
+.milestone-journey-headline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.milestone-journey-count {
+  font-size: clamp(2.25rem, 7vw, 3rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--s-ink);
+}
+
+.milestone-journey-label {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--s-ink-soft);
+}
+
+.milestone-journey-delta {
+  width: 100%;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #15803d;
+}
+
+.milestone-journey-bar {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(16, 35, 63, 0.11);
+}
+
+.milestone-journey-fill {
+  height: 100%;
+  min-width: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--s-accent), #ae6ee9);
+  transition: width 0.6s ease;
+}
+
+.milestone-journey-legend {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--s-ink-faint);
+}
+
+.milestone-journey-next {
+  color: var(--s-ink-soft);
+}
+
+/* ---------------------------------------------------------------------------
+   Goals
+--------------------------------------------------------------------------- */
+
+.student-goal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-gap);
+}
+
+.student-goal-grid:has(.goal-ring:only-child) {
+  grid-template-columns: 1fr;
+  max-width: 15rem;
+  margin-inline: auto;
+}
+
+.goal-ring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.25rem;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.goal-ring-title {
+  order: 3;
+  /* Reserve two lines so a wrapped title in one ring doesn't push its
+     subtitle out of line with the ring beside it. */
+  min-height: 2.4em;
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--s-ink);
+  text-align: center;
+}
+
+.goal-ring-svg {
+  width: clamp(104px, 26vw, 132px);
+  height: clamp(104px, 26vw, 132px);
+}
+
+.goal-ring-track {
+  fill: none;
+  stroke: rgba(16, 35, 71, 0.09);
+  stroke-width: 7;
+}
+
+.goal-ring-fill {
+  fill: none;
+  stroke-width: 7;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  transition: stroke-dashoffset 0.5s ease-out, filter 0.3s;
+}
+
+.goal-ring-bonus {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  transition: stroke-dashoffset 0.5s ease-out, opacity 0.3s;
+}
+
+.goal-ring-count {
+  font-size: 1.5rem;
+  font-weight: 800;
+  fill: var(--s-ink);
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.goal-ring-label {
+  font-size: 0.55rem;
+  font-weight: 600;
+  fill: var(--s-ink-faint);
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.goal-ring-total {
+  order: 4;
+  margin: 0.15rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--s-ink-faint);
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------------------
+   Heatmap
+--------------------------------------------------------------------------- */
+
+.progress-heatmap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.heatmap-with-labels {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: start;
+}
+
+.heatmap-weekdays {
+  display: grid;
+  grid-template-rows: repeat(7, 12px);
+  gap: 4px;
+  padding: 2px 0;
+  color: var(--s-ink-faint);
+  font-size: 0.5625rem;
+  font-weight: 800;
+  line-height: 12px;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.heatmap-grid {
+  display: grid;
+  grid-template-rows: repeat(7, 12px);
+  grid-auto-flow: column;
+  grid-auto-columns: 12px;
+  gap: 4px;
+  align-items: center;
+  overflow-x: auto;
+  padding: 2px 0;
+}
+
+.heat-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: rgba(16, 35, 63, 0.06);
+}
+
+.heat-1 { background: #cfe6fb; }
+.heat-2 { background: #8ec9f4; }
+.heat-3 { background: #43a7e6; }
+.heat-4 { background: #0d7fc4; }
+
+.heatmap-caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--s-ink-faint);
+}
+
+/* ---------------------------------------------------------------------------
+   Insight charts (pace, growth, deck makeup)
+--------------------------------------------------------------------------- */
+
+/* Shared three-up figure row above a chart. */
+.pace-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0 0 0.625rem;
+}
+
+.pace-summary > div {
+  padding: 0.5rem 0.375rem;
+  border-radius: var(--s-radius-sm);
+  background: rgba(255, 255, 255, 0.62);
+  text-align: center;
+}
+
+.pace-summary dt {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--s-ink-faint);
+}
+
+.pace-summary dd {
+  margin: 0.125rem 0 0;
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: var(--s-ink);
+}
+
+.pace-verdict {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.pace-verdict-normal {
+  background: rgba(220, 252, 231, 0.9);
+  color: #166534;
+}
+
+.pace-verdict-high {
+  background: rgba(255, 237, 213, 0.9);
+  color: #9a3412;
+}
+
+.pace-verdict-low {
+  background: rgba(224, 242, 254, 0.9);
+  color: #075985;
+}
+
+.pace-verdict-none,
+.pace-verdict-building {
+  background: rgba(241, 245, 249, 0.9);
+  color: #475569;
+}
+
+.pace-chart,
+.growth-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* The band is the student's own usual range, not a target. */
+.pace-band {
+  fill: rgba(56, 189, 248, 0.14);
+}
+
+.pace-center {
+  stroke: rgba(16, 35, 71, 0.32);
+  stroke-width: 1;
+  stroke-dasharray: 5 4;
+}
+
+.pace-axis {
+  stroke: rgba(16, 35, 71, 0.16);
+  stroke-width: 1;
+}
+
+.pace-tick {
+  fill: var(--s-ink-faint);
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.pace-line {
+  fill: none;
+  stroke: var(--s-accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pace-dot {
+  fill: #fff;
+  stroke: var(--s-accent);
+  stroke-width: 1.5;
+}
+
+.pace-dot-high {
+  fill: #f97316;
+  stroke: #f97316;
+}
+
+.pace-dot-low {
+  fill: #0ea5e9;
+  stroke: #0ea5e9;
+}
+
+.pace-axis-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--s-ink-faint);
+}
+
+.growth-area {
+  fill: rgba(174, 110, 233, 0.16);
+}
+
+.growth-line {
+  fill: none;
+  stroke: #ae6ee9;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.growth-head {
+  fill: #ae6ee9;
+}
+
+/* Deck makeup */
+.makeup-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.makeup-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--s-ink-soft);
+}
+
+.makeup-key::before {
+  content: '';
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 3px;
+}
+
+.makeup-key-known::before { background: #0d7fc4; }
+.makeup-key-familiar::before { background: #8ec9f4; }
+.makeup-key-new::before { background: rgba(16, 35, 63, 0.14); }
+
+.makeup-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.makeup-row-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.3125rem;
+}
+
+.makeup-title {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--s-ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.makeup-count {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--s-ink-faint);
+}
+
+.makeup-bar {
+  display: flex;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(16, 35, 63, 0.08);
+}
+
+.makeup-seg {
+  height: 100%;
+}
+
+.makeup-seg-known { background: #0d7fc4; }
+.makeup-seg-familiar { background: #8ec9f4; }
+.makeup-seg-new { background: rgba(16, 35, 63, 0.14); }
+
+/* ---------------------------------------------------------------------------
+   Encouragement toast
+--------------------------------------------------------------------------- */
+
+.student-encouragement {
+  padding: 0.625rem 1.125rem;
+  border: 1px solid rgba(22, 163, 74, 0.22);
+  border-radius: 999px;
+  background: rgba(220, 252, 231, 0.92);
+  color: #166534;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------------------
+   Floating nav
+
+   Columns are derived from the item count rather than hard-coded, so adding a
+   tab doesn't wrap the row.
+--------------------------------------------------------------------------- */
+
+.student-floating-nav {
+  position: fixed;
+  z-index: 40;
+  left: 50%;
+  bottom: clamp(0.625rem, 2.5vw, 1rem);
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  width: min(calc(100% - 1.5rem), 30rem);
+  transform: translateX(-50%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 12px 32px rgba(41, 48, 75, 0.16);
+  backdrop-filter: blur(18px);
+}
+
+.student-floating-nav-item {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  /* Horizontal padding is deliberately tiny: with five tabs on a 360px phone
+     each column is ~66px, and a longer label like "Discussions" only stays on
+     one line if the padding gives the text nearly the whole column. */
+  padding: 0.5rem 0.125rem;
+  color: var(--s-ink-faint);
+  font-size: clamp(0.5625rem, 2.3vw, 0.6875rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-align: center;
+  transition: color 0.18s ease;
+}
+
+/* Labels shrink or clip rather than wrapping — a wrapped label makes that one
+   tab taller than the rest and breaks the row. */
+.student-floating-nav-item span {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.student-floating-nav-item svg {
+  flex-shrink: 0;
+  width: clamp(1.125rem, 4.6vw, 1.375rem);
+  height: clamp(1.125rem, 4.6vw, 1.375rem);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.student-floating-nav-item-active {
+  color: var(--s-accent);
+}
+
+/* ---------------------------------------------------------------------------
+   Flashcard swipe dismissal
+--------------------------------------------------------------------------- */
 
 .card-dismiss-left {
   animation: dismissLeft 0.3s ease-out forwards;
@@ -278,320 +840,10 @@ input, textarea, select, button {
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  .dark-mode {
-    background-color: #111827;
-    color: #f9fafb;
-  }
-}
+/* ---------------------------------------------------------------------------
+   Confetti
+--------------------------------------------------------------------------- */
 
-.goal-rings-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.goal-ring {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: white;
-  border-radius: 1rem;
-  border: 1px solid #e5e7eb;
-  padding: 1rem 0.5rem;
-  cursor: pointer;
-  transition: border-color 0.2s;
-}
-
-.student-study-card .goal-ring {
-  min-height: 188px;
-  border: 0;
-  border-radius: 1.5rem;
-  background: transparent;
-  box-shadow: none;
-}
-
-.student-study-card .goal-ring-title {
-  order: 3;
-  min-height: 2.4em;
-  margin-top: 0.5rem;
-  color: #102347;
-  text-align: center;
-}
-
-.student-study-card .goal-ring-svg {
-  width: clamp(112px, 22vw, 156px);
-  height: clamp(112px, 22vw, 156px);
-}
-
-.student-study-card .goal-ring-track {
-  stroke: rgba(211, 218, 232, 0.72);
-  stroke-width: 7;
-}
-
-.student-study-card .goal-ring-fill {
-  stroke-width: 7;
-}
-
-.student-study-card .goal-ring-count {
-  fill: #102347;
-  font-size: 1.45rem;
-}
-
-.student-study-card .goal-ring-label {
-  fill: #536581;
-  font-size: 0.55rem;
-}
-
-.student-study-card .goal-ring-total {
-  margin-top: 0;
-  color: #536581;
-  font-weight: 600;
-}
-
-@media (min-width: 768px) {
-  .student-home {
-    padding-top: 1.5rem;
-  }
-
-  .student-home-hero {
-    height: clamp(280px, 34vh, 380px);
-  }
-}
-
-@media (max-width: 440px) {
-  .student-floating-nav {
-    width: calc(100% - 1.5rem);
-    border-radius: 1.25rem;
-  }
-
-  .student-floating-nav-item {
-    font-size: 0.68rem;
-  }
-
-  .student-floating-nav-item svg {
-    width: 1.45rem;
-    height: 1.45rem;
-  }
-}
-.goal-ring:active {
-  border-color: #a5b4fc;
-}
-.goal-ring-complete {
-  border-color: #a855f7;
-}
-
-.goal-ring-title {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #374151;
-  margin: 0 0 0.5rem 0;
-}
-
-.goal-ring-svg {
-  width: 88px;
-  height: 88px;
-}
-
-.goal-ring-track {
-  fill: none;
-  stroke: #e5e7eb;
-  stroke-width: 6;
-}
-
-.goal-ring-fill {
-  fill: none;
-  stroke-width: 6;
-  stroke-linecap: round;
-  transform: rotate(-90deg);
-  transform-origin: 50% 50%;
-  transition: stroke-dashoffset 0.5s ease-out, filter 0.3s;
-}
-
-.goal-ring-bonus {
-  fill: none;
-  stroke-width: 3;
-  stroke-linecap: round;
-  transform: rotate(-90deg);
-  transform-origin: 50% 50%;
-  transition: stroke-dashoffset 0.5s ease-out, opacity 0.3s;
-}
-
-.goal-ring-count {
-  font-size: 1.25rem;
-  font-weight: 700;
-  fill: #111827;
-  text-anchor: middle;
-  dominant-baseline: middle;
-}
-
-.goal-ring-label {
-  font-size: 0.55rem;
-  fill: #9ca3af;
-  text-anchor: middle;
-  dominant-baseline: middle;
-}
-
-.goal-ring-total {
-  font-size: 0.65rem;
-  color: #9ca3af;
-  margin: 0.5rem 0 0 0;
-}
-
-/* Milestone journey (hero card progress bar) */
-.milestone-journey {
-  display: grid;
-  gap: 14px;
-  width: 100%;
-}
-
-.milestone-journey-headline {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 10px;
-}
-
-.milestone-journey-count {
-  font-size: clamp(2.65rem, 8vw, 4.1rem);
-  font-weight: 950;
-  line-height: 1;
-  color: #102347;
-}
-
-.milestone-journey-label {
-  font-size: 1.15rem;
-  font-weight: 800;
-  color: #4a5b7c;
-}
-
-.milestone-journey-delta {
-  width: 100%;
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: #15803d;
-}
-
-.milestone-journey-bar {
-  height: 16px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: rgba(16, 35, 63, 0.1);
-  box-shadow: inset 0 1px 3px rgba(16, 35, 63, 0.12);
-}
-
-.milestone-journey-fill {
-  height: 100%;
-  min-width: 6px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #e94c9d, #ae6ee9);
-  transition: width 0.6s ease;
-}
-
-.milestone-journey-legend {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  font-size: 0.9rem;
-  font-weight: 800;
-  color: #4a5b7c;
-}
-
-.milestone-journey-next {
-  color: #102347;
-}
-
-/* Heatmap */
-.progress-heatmap {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.heatmap-with-labels {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 8px;
-  align-items: start;
-}
-
-.heatmap-weekdays {
-  display: grid;
-  grid-template-rows: repeat(7, 13px);
-  gap: 5px;
-  padding: 4px 0 8px;
-  color: #94a3b8;
-  font-size: 0.64rem;
-  font-weight: 900;
-  line-height: 13px;
-  text-align: right;
-  text-transform: uppercase;
-}
-
-.heatmap-grid {
-  display: grid;
-  grid-template-rows: repeat(7, 13px);
-  grid-auto-flow: column;
-  grid-auto-columns: 13px;
-  gap: 5px;
-  align-items: center;
-  overflow-x: auto;
-  padding: 4px 2px 8px;
-}
-
-.heat-cell {
-  width: 13px;
-  height: 13px;
-  border-radius: 4px;
-  border: 1px solid rgba(16, 35, 63, 0.08);
-  background: rgba(255, 255, 255, 0.58);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
-}
-
-.heat-1 { background: #dbeafe; }
-.heat-2 { background: #93c5fd; }
-.heat-3 { background: #38bdf8; }
-.heat-4 { background: #0284c7; }
-
-.heatmap-caption {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #64748b;
-  padding: 0 4px;
-}
-
-/* Encouragement toast */
-.student-encouragement {
-  padding: 11px 18px;
-  border: 1px solid rgba(22, 163, 74, 0.25);
-  border-radius: 999px;
-  background: rgba(220, 252, 231, 0.9);
-  color: #166534;
-  font-size: 0.9rem;
-  font-weight: 800;
-  text-align: center;
-  box-shadow: 0 12px 28px rgba(16, 35, 63, 0.1);
-}
-
-/* Student progress section */
-.student-progress-section {
-  border-top: 1px solid rgba(16, 35, 71, 0.08);
-  padding-top: 1.25rem;
-}
-
-/* Student mini stats single column */
-.student-goal-grid:has(.goal-ring:only-child) {
-  grid-template-columns: 1fr;
-  max-width: 240px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* Confetti animation */
 .confetti-container {
   position: fixed;
   inset: 0;
@@ -619,5 +871,17 @@ input, textarea, select, button {
   100% {
     transform: translateY(100vh) rotate(720deg);
     opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confetti-container {
+    display: none;
+  }
+
+  .milestone-journey-fill,
+  .goal-ring-fill,
+  .goal-ring-bonus {
+    transition: none;
   }
 }

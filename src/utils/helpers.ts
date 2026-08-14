@@ -30,6 +30,20 @@ export function isOnline(): boolean {
 }
 
 /**
+ * How a class is named everywhere it has to be picked out of a list.
+ *
+ * A section on its own ("Section 1") is ambiguous once a teacher runs the same
+ * section number in two courses, so the course always comes first.
+ */
+export function classLabel(cls: { courseName?: string; name?: string } | null | undefined): string {
+  if (!cls) return 'Class';
+  const course = (cls.courseName || '').trim();
+  const section = (cls.name || '').trim();
+  if (course && section) return `${course} · ${section}`;
+  return course || section || 'Class';
+}
+
+/**
  * Split a comma/semicolon separated tag string into clean tags.
  * Collapses inner whitespace and drops case-insensitive duplicates so
  * "vocab, Vocab" does not become two separate tags.

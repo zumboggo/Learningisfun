@@ -3,6 +3,7 @@ import type { User, UserRole } from '@/types';
 import * as authService from '@/services/auth.service';
 import * as syncService from '@/services/sync.service';
 import * as classService from '@/services/class.service';
+import * as classSessionService from '@/services/class-session.service';
 
 import * as flashcardService from '@/services/flashcard.service';
 
@@ -32,7 +33,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = effectiveRole === 'admin';
 
   const syncUserData = useCallback(async (userId: string) => {
+    // Order matters: classes and memberships first, since the discussion pull
+    // is driven by which classes this user is in.
     await classService.syncClassesFromServer(userId);
+    await classSessionService.syncMyClassSessionsFromServer(userId);
 
     await flashcardService.syncDecksFromServer();
   }, []);
@@ -84,8 +88,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const u = await authService.register(email, password, name, role || 'student');
     setUser(u);
     syncService.setupSyncListeners();
+    void syncUserData(u.$id);
     return u;
-  }, []);
+  }, [syncUserData]);
 
   const logoutHandler = useCallback(async () => {
     await authService.logout();

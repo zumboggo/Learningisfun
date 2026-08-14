@@ -1,9 +1,18 @@
 import { ID } from 'appwrite';
 import { db } from '@/db/schema';
 import { getApiKey, generateQuizFromSources, type QuizQuestion as AIQuizQuestion } from '@/services/ai.service';
+import {
+  generateQuizFromFlashcards,
+  splitCardsByRecency,
+  type GenerationResult,
+} from '@/services/quiz-generator';
+import { getClassCards } from '@/services/daily-quiz.service';
 import type { Quiz, QuizQuestion, QuizAttempt } from '@/types';
 import { getTimestamp } from '@/utils/helpers';
 import { addToQueue } from '@/services/sync.service';
+
+/** How many days back counts as "recent" for the quiz source slider. */
+export const RECENT_WINDOW_DAYS = 7;
 
 export async function createQuiz(params: {
   classId: string;
@@ -73,6 +82,91 @@ export async function generateQuizQuestions(
   }
 
   return questions;
+}
+
+export interface FlashcardQuizPreview {
+  result: GenerationResult;
+  pools: { recent: number; older: number };
+}
+
+/**
+ * Build a quiz straight from the class's flashcards — no AI, no network.
+ *
+ * `recentWeight` is the share of questions drawn from cards added in the last
+ * week; the rest come from the whole course, weighted towards more recent
+ * material. Nothing is written, so the teacher can review before committing.
+ */
+export async function previewFlashcardQuiz(params: {
+  classId: string;
+  questionCount: number;
+  recentWeight: number;
+  multipleChoiceWeight?: number;
+  seed?: string;
+}): Promise<FlashcardQuizPreview> {
+  const cards = await getClassCards(params.classId);
+  if (cards.length === 0) {
+    throw new Error('This class has no flashcards yet — add cards or assign a deck to it first.');
+  }
+
+  const now = new Date();
+  const pools = splitCardsByRecency(cards, RECENT_WINDOW_DAYS, now);
+  const result = generateQuizFromFlashcards(
+    pools,
+    {
+      questionCount: params.questionCount,
+      todayWeight: params.recentWeight,
+      multipleChoiceWeight: params.multipleChoiceWeight ?? 60,
+      seed: params.seed || `${params.classId}:${now.toISOString()}`,
+    },
+    now,
+  );
+
+  if (result.questions.length === 0) {
+    throw new Error('No usable questions could be built from this class\'s cards.');
+  }
+
+  return { result, pools: { recent: pools.today.length, older: pools.review.length } };
+}
+
+/** Save a previewed flashcard quiz and its questions as a draft. */
+export async function saveFlashcardQuiz(params: {
+  classId: string;
+  createdBy: string;
+  title: string;
+  timeLimitMinutes: number | null;
+  recentWeight: number;
+  preview: FlashcardQuizPreview;
+}): Promise<Quiz> {
+  const quiz = await createQuiz({
+    classId: params.classId,
+    createdBy: params.createdBy,
+    title: params.title,
+    sourceType: 'flashcards',
+    notesWeight: 0,
+    flashcardWeight: 100,
+    questionCount: params.preview.result.questions.length,
+    timeLimitMinutes: params.timeLimitMinutes,
+  });
+
+  const questions: QuizQuestion[] = params.preview.result.questions.map((q, i) => ({
+    $id: ID.unique(),
+    quizId: quiz.$id,
+    type: q.type,
+    questionText: q.questionText,
+    options: JSON.stringify(q.options),
+    correctIndex: q.correctIndex,
+    clozeAnswer: q.cloze?.primary || '',
+    clozeVariants: JSON.stringify(q.cloze?.variants || []),
+    explanation: q.explanation,
+    sortOrder: i,
+  }));
+
+  for (const question of questions) {
+    await db.quiz_questions.put(question);
+    await addToQueue(params.createdBy, 'quiz_question', question.$id, 'create', question);
+  }
+
+  return quiz;
 }
 
 function parseClozeVariants(raw: string | undefined): string[] {

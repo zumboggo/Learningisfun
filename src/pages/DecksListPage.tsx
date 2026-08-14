@@ -7,6 +7,7 @@ import { getStudentDecks } from '@/services/flashcard.service';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { AssignDeckModal } from '@/components/common/AssignDeckModal';
+import { classLabel } from '@/utils/helpers';
 import type { FlashcardDeck } from '@/types';
 
 export function DecksListPage() {
@@ -29,7 +30,7 @@ export function DecksListPage() {
       db.deck_assignments.toArray(),
       db.classes.where('teacherId').equals(user.$id).toArray(),
     ]);
-    const nameById = new Map(classes.map(c => [c.$id, c.courseName]));
+    const nameById = new Map(classes.map(c => [c.$id, classLabel(c)]));
     const map: Record<string, string[]> = {};
     for (const assignment of assignments) {
       const name = nameById.get(assignment.classId);

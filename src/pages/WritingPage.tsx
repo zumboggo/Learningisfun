@@ -8,14 +8,17 @@ import { Button } from '@/components/common/Button';
 import { EmptyState } from '@/components/common/EmptyState';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Modal } from '@/components/common/Modal';
+import { AssignPromptModal } from '@/components/writing/AssignPromptModal';
 import {
   DEFAULT_PEER_REVIEWS_REQUIRED,
   createWritingPrompt,
   defaultRubric,
+  getPromptsForClasses,
   parseRubric,
   rubricTotalPoints,
   updateWritingPromptStatus,
 } from '@/services/writing.service';
+import { classLabel } from '@/utils/helpers';
 import type { RubricCriterion, WritingPrompt } from '@/types';
 
 export function WritingPage() {
@@ -31,6 +34,7 @@ export function WritingPage() {
 function TeacherWriting() {
   const { user } = useAuth();
   const [showCreate, setShowCreate] = useState(false);
+  const [assigning, setAssigning] = useState<WritingPrompt | null>(null);
 
   const classes = useLiveQuery(
     () => db.classes.where('teacherId').equals(user!.$id).toArray(),
@@ -39,36 +43,52 @@ function TeacherWriting() {
 
   const rows = useLiveQuery(async () => {
     if (!classes?.length) return [];
+    const classById = new Map(classes.map(c => [c.$id, c]));
+
+    // One row per prompt, not per class: a prompt set for three sections is
+    // still one piece of work to publish, close and mark.
+    const prompts = await getPromptsForClasses(classes.map(c => c.$id));
+
     const result: Array<{
       prompt: WritingPrompt;
-      className: string;
+      classNames: string[];
       submitted: number;
       enrolled: number;
       reviewsDone: number;
       reviewsExpected: number;
     }> = [];
 
-    for (const cls of classes) {
-      const members = await db.class_members.where('classId').equals(cls.$id).toArray();
-      const enrolled = members.filter(m => m.role === 'student').length;
-      const prompts = await db.writing_prompts.where('classId').equals(cls.$id).toArray();
+    for (const prompt of prompts) {
+      const assignments = await db.writing_prompt_assignments
+        .where('promptId')
+        .equals(prompt.$id)
+        .toArray();
+      const assignedClassIds = assignments
+        .map(a => a.classId)
+        .filter(id => classById.has(id));
 
-      for (const prompt of prompts) {
-        const submissions = await db.writing_submissions.where('promptId').equals(prompt.$id).toArray();
-        const submitted = submissions.filter(s => s.status !== 'draft').length;
-        const reviews = await db.peer_reviews.where('promptId').equals(prompt.$id).toArray();
-        result.push({
-          prompt,
-          className: cls.courseName,
-          submitted,
-          enrolled,
-          reviewsDone: reviews.filter(r => r.status === 'submitted').length,
-          reviewsExpected: submitted * prompt.peerReviewsRequired,
-        });
-      }
+      const memberRows = assignedClassIds.length
+        ? await db.class_members.where('classId').anyOf(assignedClassIds).toArray()
+        : [];
+      const enrolled = new Set(
+        memberRows.filter(m => m.role === 'student').map(m => m.userId),
+      ).size;
+
+      const submissions = await db.writing_submissions.where('promptId').equals(prompt.$id).toArray();
+      const submitted = submissions.filter(s => s.status !== 'draft').length;
+      const reviews = await db.peer_reviews.where('promptId').equals(prompt.$id).toArray();
+
+      result.push({
+        prompt,
+        classNames: assignedClassIds.map(id => classLabel(classById.get(id))),
+        submitted,
+        enrolled,
+        reviewsDone: reviews.filter(r => r.status === 'submitted').length,
+        reviewsExpected: submitted * prompt.peerReviewsRequired,
+      });
     }
 
-    return result.sort((a, b) => b.prompt.createdAt.localeCompare(a.prompt.createdAt));
+    return result;
   }, [classes]);
 
   return (
@@ -98,7 +118,8 @@ function TeacherWriting() {
                     {row.prompt.title}
                   </Link>
                   <p className="text-sm text-gray-500">
-                    {row.className} · {row.prompt.peerReviewsRequired} peer reviews each ·{' '}
+                    {row.classNames.length > 0 ? row.classNames.join(', ') : 'Not set for a class yet'} ·{' '}
+                    {row.prompt.peerReviewsRequired} peer reviews each ·{' '}
                     {rubricTotalPoints(parseRubric(row.prompt.rubricJson))} points
                   </p>
                 </div>
@@ -119,6 +140,9 @@ function TeacherWriting() {
                 <Link to={`/writing/${row.prompt.$id}/responses`}>
                   <Button size="sm" variant="secondary">View responses</Button>
                 </Link>
+                <Button size="sm" variant="secondary" onClick={() => setAssigning(row.prompt)}>
+                  Add to class/es
+                </Button>
                 {row.prompt.status === 'draft' && (
                   <Button
                     size="sm"
@@ -167,10 +191,16 @@ function TeacherWriting() {
 
       {showCreate && classes && (
         <CreatePromptModal
-          classes={classes.map(c => ({ id: c.$id, name: c.name }))}
+          classes={classes.map(c => ({ id: c.$id, label: classLabel(c) }))}
           onClose={() => setShowCreate(false)}
         />
       )}
+
+      <AssignPromptModal
+        prompt={assigning}
+        teacherId={user!.$id}
+        onClose={() => setAssigning(null)}
+      />
     </div>
   );
 }
@@ -179,11 +209,13 @@ function CreatePromptModal({
   classes,
   onClose,
 }: {
-  classes: Array<{ id: string; name: string }>;
+  classes: Array<{ id: string; label: string }>;
   onClose: () => void;
 }) {
   const { user } = useAuth();
-  const [classId, setClassId] = useState(classes[0]?.id || '');
+  const [classIds, setClassIds] = useState<Set<string>>(
+    () => new Set(classes.length === 1 ? [classes[0].id] : []),
+  );
   const [title, setTitle] = useState('');
   const [promptMarkdown, setPromptMarkdown] = useState('');
   const [instructions, setInstructions] = useState('');
@@ -237,7 +269,7 @@ function CreatePromptModal({
     setError('');
     try {
       await createWritingPrompt({
-        classId,
+        classIds: [...classIds],
         teacherId: user.$id,
         title: title.trim(),
         promptMarkdown: promptMarkdown.trim(),
@@ -262,14 +294,28 @@ function CreatePromptModal({
         {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Class</label>
-          <select
-            value={classId}
-            onChange={e => setClassId(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-          >
-            {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+          <label className="mb-1 block text-sm font-medium text-gray-700">Classes</label>
+          <div className="space-y-1.5 rounded-lg border border-gray-200 p-3">
+            {classes.map(c => (
+              <label key={c.id} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={classIds.has(c.id)}
+                  onChange={() => setClassIds(prev => {
+                    const next = new Set(prev);
+                    if (next.has(c.id)) next.delete(c.id);
+                    else next.add(c.id);
+                    return next;
+                  })}
+                  className="rounded"
+                />
+                <span>{c.label}</span>
+              </label>
+            ))}
+          </div>
+          <p className="mt-1 text-xs text-gray-400">
+            Pick as many as you like, or none — you can add classes later with "Add to class/es".
+          </p>
         </div>
 
         <div>
@@ -443,15 +489,18 @@ function StudentWriting() {
       hasFinal: boolean;
     }> = [];
 
+    // A prompt set for several of the student's classes should still show once.
+    const seen = new Set<string>();
+
     for (const membership of memberships) {
       const cls = await db.classes.get(membership.classId);
-      const prompts = await db.writing_prompts
-        .where('classId')
-        .equals(membership.classId)
-        .and(p => p.status !== 'draft')
-        .toArray();
+      const prompts = (await getPromptsForClasses([membership.classId]))
+        .filter(p => p.status !== 'draft');
 
       for (const prompt of prompts) {
+        if (seen.has(prompt.$id)) continue;
+        seen.add(prompt.$id);
+
         const submission = await db.writing_submissions
           .where('promptId')
           .equals(prompt.$id)
@@ -465,7 +514,7 @@ function StudentWriting() {
 
         result.push({
           prompt,
-          className: cls?.name || 'Class',
+          className: classLabel(cls),
           wordCount: submission?.wordCount || 0,
           submitted: submission?.status !== undefined && submission.status !== 'draft',
           reviewsDone: reviews.length,

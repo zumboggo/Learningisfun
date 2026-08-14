@@ -1,7 +1,15 @@
+import { Query } from 'appwrite';
 import { db } from '@/db/schema';
+import { databases, DATABASE_ID, COLLECTIONS } from '@/lib/appwrite';
 import { generateId, getTimestamp } from '@/utils/helpers';
 import { addToQueue } from './sync.service';
-import type { ClassSession, ClassSessionItem, DiscussionQuestion } from '@/types';
+import type {
+  ClassSession,
+  ClassSessionItem,
+  DiscussionAnswer,
+  DiscussionQuestion,
+  QuestionVote,
+} from '@/types';
 
 export async function createClassSession(
   classId: string,
@@ -117,6 +125,165 @@ export async function addSessionItem(
   await db.class_session_items.put(item);
   await addToQueue(userId, 'class_session_item', item.$id, 'create', item);
   return item;
+}
+
+// ---------------------------------------------------------------------------
+// Pulling from the server
+//
+// A discussion is created on the teacher's device and pushed up through the
+// sync queue. Nothing brought it back down again, so students — who only ever
+// read their own IndexedDB — saw an empty Discussions list no matter what the
+// teacher started. These pulls are the missing half.
+// ---------------------------------------------------------------------------
+
+/** Fetch every discussion belonging to these classes into the local database. */
+export async function syncClassSessionsFromServer(classIds: string[]): Promise<void> {
+  if (classIds.length === 0) return;
+  try {
+    const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.class_sessions, [
+      Query.equal('classId', classIds),
+      Query.limit(200),
+    ]);
+
+    for (const doc of result.documents as unknown as Array<Record<string, unknown>>) {
+      const id = doc.$id as string;
+      // Never clobber a local edit that has not reached the server yet.
+      const local = await db.class_sessions.get(id);
+      if (local && local.syncStatus === 'local') continue;
+
+      await db.class_sessions.put({
+        $id: id,
+        classId: doc.classId as string,
+        assignmentId: (doc.assignmentId as string) || undefined,
+        title: (doc.title as string) || 'Class discussion',
+        sessionDate: doc.sessionDate as string,
+        status: doc.status as ClassSession['status'],
+        votesPerStudent: (doc.votesPerStudent as number) ?? 4,
+        allowStackedVotes: Boolean(doc.allowStackedVotes),
+        notesMarkdown: (doc.notesMarkdown as string) || '',
+        publishedNotesMarkdown: (doc.publishedNotesMarkdown as string) || '',
+        publishedAt: (doc.publishedAt as string) || null,
+        createdAt: doc.createdAt as string,
+        updatedAt: (doc.updatedAt as string) || (doc.createdAt as string),
+        syncStatus: 'synced',
+      });
+    }
+  } catch {
+    // Offline — whatever is cached stays on screen.
+  }
+}
+
+/** Every discussion in every class this user belongs to. */
+export async function syncMyClassSessionsFromServer(userId: string): Promise<void> {
+  const memberships = await db.class_members.where('userId').equals(userId).toArray();
+  await syncClassSessionsFromServer([...new Set(memberships.map(m => m.classId))]);
+}
+
+/**
+ * Fetch one discussion's questions, votes and replies. Called when a discussion
+ * is opened so students see each other's questions and the teacher sees theirs.
+ */
+export async function syncDiscussionFromServer(classSessionId: string): Promise<void> {
+  await Promise.all([
+    pullQuestions(classSessionId),
+    pullVotes(classSessionId),
+  ]);
+  // Replies hang off questions, so they can only be fetched once the question
+  // ids are known locally.
+  await pullAnswers(classSessionId);
+}
+
+async function pullQuestions(classSessionId: string): Promise<void> {
+  try {
+    const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.discussion_questions, [
+      Query.equal('classSessionId', classSessionId),
+      Query.limit(500),
+    ]);
+    for (const doc of result.documents as unknown as Array<Record<string, unknown>>) {
+      const id = doc.$id as string;
+      const local = await db.discussion_questions.get(id);
+      if (local && local.syncStatus === 'local') continue;
+
+      await db.discussion_questions.put({
+        $id: id,
+        classSessionId,
+        authorId: doc.authorId as string,
+        questionText: (doc.questionText as string) || '',
+        selectedPassage: (doc.selectedPassage as string) || '',
+        voteCount: (doc.voteCount as number) ?? 0,
+        moderationStatus: (doc.moderationStatus as DiscussionQuestion['moderationStatus']) || 'visible',
+        discussionStatus: (doc.discussionStatus as DiscussionQuestion['discussionStatus']) || 'none',
+        discussionNotesMarkdown: (doc.discussionNotesMarkdown as string) || '',
+        notesUpdatedAt: (doc.notesUpdatedAt as string) || null,
+        isTeacherQuestion: Boolean(doc.isTeacherQuestion),
+        teacherVisibleBeforeSubmission: Boolean(doc.teacherVisibleBeforeSubmission),
+        createdAt: doc.createdAt as string,
+        syncStatus: 'synced',
+      });
+    }
+  } catch {
+    // Offline
+  }
+}
+
+async function pullVotes(classSessionId: string): Promise<void> {
+  try {
+    const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.question_votes, [
+      Query.equal('classSessionId', classSessionId),
+      Query.limit(2000),
+    ]);
+    for (const doc of result.documents as unknown as Array<Record<string, unknown>>) {
+      const id = doc.$id as string;
+      const local = await db.question_votes.get(id);
+      if (local && local.syncStatus === 'local') continue;
+
+      await db.question_votes.put({
+        $id: id,
+        questionId: doc.questionId as string,
+        classSessionId,
+        userId: doc.userId as string,
+        weight: (doc.weight as number) ?? 1,
+        createdAt: doc.createdAt as string,
+        updatedAt: (doc.updatedAt as string) || (doc.createdAt as string),
+        syncStatus: 'synced',
+      } as QuestionVote);
+    }
+  } catch {
+    // Offline
+  }
+}
+
+async function pullAnswers(classSessionId: string): Promise<void> {
+  const questions = await db.discussion_questions
+    .where('classSessionId')
+    .equals(classSessionId)
+    .toArray();
+  if (questions.length === 0) return;
+
+  try {
+    const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.discussion_answers, [
+      Query.equal('questionId', questions.map(q => q.$id)),
+      Query.limit(1000),
+    ]);
+    for (const doc of result.documents as unknown as Array<Record<string, unknown>>) {
+      const id = doc.$id as string;
+      const local = await db.discussion_answers.get(id);
+      if (local && local.syncStatus === 'local') continue;
+
+      await db.discussion_answers.put({
+        $id: id,
+        questionId: doc.questionId as string,
+        authorId: doc.authorId as string,
+        authorName: (doc.authorName as string) || '',
+        answerText: (doc.answerText as string) || '',
+        createdAt: doc.createdAt as string,
+        updatedAt: (doc.updatedAt as string) || (doc.createdAt as string),
+        syncStatus: 'synced',
+      } as DiscussionAnswer);
+    }
+  } catch {
+    // Offline, or the collection has not been created yet.
+  }
 }
 
 export function todayKey(date = new Date()): string {

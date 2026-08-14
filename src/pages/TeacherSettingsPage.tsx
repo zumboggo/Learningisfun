@@ -8,6 +8,7 @@ import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { EmptyState } from '@/components/common/EmptyState';
 import { getApiKey, setApiKey, testApiKey } from '@/services/ai.service';
+import { classLabel } from '@/utils/helpers';
 import type { TeacherSettings, Class } from '@/types';
 
 export function TeacherSettingsPage() {
@@ -115,7 +116,7 @@ function ClassSettingsCard({
 
   return (
     <Card>
-      <h2 className="text-lg font-semibold mb-4">{cls.courseName}</h2>
+      <h2 className="text-lg font-semibold mb-4">{classLabel(cls)}</h2>
 
       <div className="space-y-4">
         <div>

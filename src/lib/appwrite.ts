@@ -20,6 +20,7 @@ export const COLLECTIONS = {
   class_sessions: 'class_sessions',
   class_session_items: 'class_session_items',
   discussion_questions: 'discussion_questions',
+  discussion_answers: 'discussion_answers',
   question_votes: 'question_votes',
 
   flashcard_decks: 'flashcard_decks',
@@ -32,6 +33,7 @@ export const COLLECTIONS = {
   student_deck_notes: 'student_deck_notes',
 
   writing_prompts: 'writing_prompts',
+  writing_prompt_assignments: 'writing_prompt_assignments',
   writing_submissions: 'writing_submissions',
   peer_reviews: 'peer_reviews',
   teacher_writing_feedback: 'teacher_writing_feedback',

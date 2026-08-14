@@ -13,8 +13,16 @@ import {
 } from '@/services/flashcard.service';
 import { Button } from '@/components/common/Button';
 import { Markdown } from '@/components/common/Markdown';
+import { shuffle } from '@/services/class-picker';
 import { useSwipeCard, type SwipeDir } from '@/hooks/useSwipeCard';
 import type { FlashcardCard, ReviewRating } from '@/types';
+
+/**
+ * 'unlimited' is a page-level mode, not a queue mode: it keeps dealing the whole
+ * deck round after round and deliberately records no review, so a student can
+ * practise for as long as they like without pushing tomorrow's cards away.
+ */
+type StudyMode = FlashcardQueueMode | 'unlimited';
 
 const RATING_BY_SWIPE: Record<SwipeDir, ReviewRating> = {
   left: 'again',
@@ -63,8 +71,9 @@ export function FlashcardReviewPage() {
   const [sessionStarted, setSessionStarted] = useState(false);
   const [sessionComplete, setSessionComplete] = useState(false);
   const [reviewedCount, setReviewedCount] = useState(0);
-  const [queueMode, setQueueMode] = useState<FlashcardQueueMode>('mixed');
-  const [selectedQueueMode, setSelectedQueueMode] = useState<FlashcardQueueMode>('mixed');
+  const [queueMode, setQueueMode] = useState<StudyMode>('mixed');
+  const [selectedQueueMode, setSelectedQueueMode] = useState<StudyMode>('mixed');
+  const [lapCount, setLapCount] = useState(0);
   const [studySessionId, setStudySessionId] = useState('');
   const [activeSeconds, setActiveSeconds] = useState(0);
   const [emptyMessage, setEmptyMessage] = useState('');
@@ -86,13 +95,21 @@ export function FlashcardReviewPage() {
 
   const currentCard = cards[currentIndex];
 
-  const startSession = async (mode: FlashcardQueueMode) => {
+  const startSession = async (mode: StudyMode) => {
     if (!deckId || !user) return;
-    const sessionCards = await buildFlashcardQueue(user.$id, deckId, mode, 30);
+    // Unlimited practice runs over the whole deck, shuffled, with no cap.
+    const sessionCards = mode === 'unlimited'
+      ? shuffle(await buildFlashcardQueue(user.$id, deckId, 'all', Number.MAX_SAFE_INTEGER))
+      : await buildFlashcardQueue(user.$id, deckId, mode, 30);
     if (sessionCards.length === 0) {
-      setEmptyMessage(mode === 'due' ? 'No due cards right now.' : mode === 'new' ? 'No new cards left in this deck.' : 'No cards available.');
+      setEmptyMessage(
+        mode === 'due' ? 'No due cards right now.'
+          : mode === 'new' ? 'No new cards left in this deck.'
+            : 'No cards available.',
+      );
       return;
     }
+    setLapCount(0);
 
     const studySession = await startFlashcardStudySession(user.$id, deckId, classId || null);
     activeSecondsRef.current = 0;
@@ -118,6 +135,12 @@ export function FlashcardReviewPage() {
 
   const handleExit = async () => {
     await finishSession();
+    // Unlimited study never ends on its own, so finishing it deliberately still
+    // earns the summary screen.
+    if (queueMode === 'unlimited' && reviewedCount > 0) {
+      setSessionComplete(true);
+      return;
+    }
     setSessionStarted(false);
     setSessionComplete(false);
   };
@@ -135,14 +158,28 @@ export function FlashcardReviewPage() {
 
     setCardTimes(prev => [...prev, { cardId: currentCard.$id, rating, elapsedSeconds }]);
 
-    await reviewCard(user.$id, currentCard.$id, deckId, rating, {
-      classId: classId || null,
-      sessionId: studySessionId,
-      elapsedSeconds,
-    });
+    // The whole point of unlimited practice is that it leaves the schedule
+    // alone, so no review is written and no due date moves. The study session
+    // itself is still timed, so the minutes still count towards their streak.
+    if (queueMode !== 'unlimited') {
+      await reviewCard(user.$id, currentCard.$id, deckId, rating, {
+        classId: classId || null,
+        sessionId: studySessionId,
+        elapsedSeconds,
+      });
+    }
     setReviewedCount(prev => prev + 1);
 
     if (currentIndex + 1 >= cards.length) {
+      if (queueMode === 'unlimited') {
+        // Reshuffle and keep going rather than ending the session.
+        setCards(prev => shuffle(prev));
+        setCurrentIndex(0);
+        setLapCount(prev => prev + 1);
+        setShowAnswer(false);
+        cardStartedAt.current = Date.now();
+        return;
+      }
       await finishSession();
       setSessionComplete(true);
     } else {
@@ -241,14 +278,29 @@ export function FlashcardReviewPage() {
 
         {emptyMessage && <div className="mb-4 rounded-lg bg-gray-100 p-3 text-sm text-gray-600">{emptyMessage}</div>}
 
-        <div className="mb-4 grid grid-cols-3 rounded-lg bg-gray-100 p-1">
+        <div className="mb-2 grid grid-cols-3 rounded-lg bg-gray-100 p-1">
           <QueueModeButton label="Mixed" active={selectedQueueMode === 'mixed'} onClick={() => setSelectedQueueMode('mixed')} />
           <QueueModeButton label={`Due ${progress?.due || 0}`} active={selectedQueueMode === 'due'} onClick={() => setSelectedQueueMode('due')} />
           <QueueModeButton label={`New ${progress?.newCount || 0}`} active={selectedQueueMode === 'new'} onClick={() => setSelectedQueueMode('new')} />
         </div>
 
+        <button
+          onClick={() => setSelectedQueueMode('unlimited')}
+          className={`mb-4 w-full rounded-lg border p-3 text-left transition-colors ${
+            selectedQueueMode === 'unlimited'
+              ? 'border-blue-300 bg-blue-50'
+              : 'border-gray-200 hover:bg-gray-50'
+          }`}
+        >
+          <span className="block text-sm font-semibold text-gray-900">Unlimited study</span>
+          <span className="block text-xs text-gray-500">
+            Go through the whole deck as many times as you like. Nothing is scheduled, so none of
+            your cards get pushed further away — they still come back when they were going to.
+          </span>
+        </button>
+
         <Button onClick={() => void startSession(selectedQueueMode)} className="w-full" size="lg">
-          Start {selectedQueueMode} session
+          {selectedQueueMode === 'unlimited' ? 'Start unlimited study' : `Start ${selectedQueueMode} session`}
         </Button>
 
         {isTeacher && (
@@ -325,11 +377,21 @@ export function FlashcardReviewPage() {
   return (
     <div className="p-4 max-w-lg mx-auto">
       <div className="flex items-center justify-between mb-4">
-        <button onClick={() => void handleExit()} className="text-gray-500">Exit</button>
+        <button onClick={() => void handleExit()} className="text-gray-500">
+          {queueMode === 'unlimited' ? 'Finish' : 'Exit'}
+        </button>
         <span className="text-sm text-gray-400">
+          {queueMode === 'unlimited' && lapCount > 0 && `round ${lapCount + 1} | `}
           {queueMode} | {currentIndex + 1} / {cards.length}
         </span>
       </div>
+
+      {queueMode === 'unlimited' && (
+        <p className="mb-3 rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-800">
+          Practice mode — your review schedule stays exactly where it was.
+          {reviewedCount > 0 && ` ${reviewedCount} cards so far.`}
+        </p>
+      )}
 
       <div className="mb-4 h-1 bg-gray-100 rounded-full overflow-hidden">
         <div

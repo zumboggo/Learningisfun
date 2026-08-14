@@ -294,6 +294,7 @@ export async function syncClassesFromServer(userId: string): Promise<void> {
   try {
     const memberResult = await databases.listDocuments(DATABASE_ID, COLLECTIONS.class_members, [
       Query.equal('userId', userId),
+      Query.limit(200),
     ]);
 
     for (const doc of memberResult.documents) {
@@ -324,5 +325,74 @@ export async function syncClassesFromServer(userId: string): Promise<void> {
     }
   } catch {
     // Offline - will retry later
+  }
+
+  // The loop above only ever pulls this user's own membership rows. A teacher
+  // also needs everyone else's, or students who joined from their own phones
+  // stay invisible on the roster.
+  await syncTaughtClassRosters(userId);
+}
+
+/**
+ * Pull the full roster (memberships plus the student profiles they point at)
+ * for one class. Local rows are replaced by the server's, and anyone the
+ * teacher removed remotely is dropped locally too.
+ */
+export async function syncClassRosterFromServer(classId: string): Promise<void> {
+  let documents: Array<Record<string, string>>;
+  try {
+    const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.class_members, [
+      Query.equal('classId', classId),
+      Query.limit(500),
+    ]);
+    documents = result.documents as unknown as Array<Record<string, string>>;
+  } catch {
+    return; // Offline — the cached roster stays on screen.
+  }
+
+  const serverIds = new Set<string>();
+  for (const doc of documents) {
+    serverIds.add(doc.$id);
+    await db.class_members.put({
+      $id: doc.$id,
+      classId: doc.classId,
+      userId: doc.userId,
+      role: doc.role as ClassMember['role'],
+      joinedAt: doc.joinedAt,
+    });
+    await cacheUserProfile(doc.userId);
+  }
+
+  const stale = await db.class_members.where('classId').equals(classId).toArray();
+  for (const member of stale) {
+    if (!serverIds.has(member.$id)) await db.class_members.delete(member.$id);
+  }
+}
+
+/** Refresh the roster of every class this user teaches. */
+export async function syncTaughtClassRosters(teacherId: string): Promise<void> {
+  const taught = await db.classes.where('teacherId').equals(teacherId).toArray();
+  for (const cls of taught) {
+    await syncClassRosterFromServer(cls.$id);
+  }
+}
+
+/** Fetch a user profile once so the roster can show a name rather than an id. */
+async function cacheUserProfile(userId: string): Promise<void> {
+  if (await db.users.get(userId)) return;
+  try {
+    const doc = await databases.getDocument(DATABASE_ID, COLLECTIONS.users, userId);
+    await db.users.put({
+      $id: doc.$id,
+      email: doc.email,
+      name: doc.name,
+      role: doc.role,
+      deviceId: doc.deviceId,
+      lastSyncAt: doc.lastSyncAt,
+      createdAt: doc.createdAt,
+    });
+  } catch {
+    // Profile not readable (permissions or offline) — the roster falls back to
+    // showing the membership without a name.
   }
 }

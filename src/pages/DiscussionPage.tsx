@@ -1,11 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ID } from 'appwrite';
 import { db } from '@/db/schema';
 import { useAuth } from '@/contexts/AuthContext';
-import { getTimestamp } from '@/utils/helpers';
+import { classLabel, getTimestamp } from '@/utils/helpers';
 import { addToQueue } from '@/services/sync.service';
+import { syncDiscussionFromServer, updateClassSession } from '@/services/class-session.service';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
@@ -16,8 +17,6 @@ import type {
   DiscussionAnswer,
   QuestionVote,
   ClassSession,
-  Class,
-  TeacherSettings,
 } from '@/types';
 
 export function DiscussionPage() {
@@ -35,12 +34,21 @@ export function DiscussionPage() {
   const [votesPerStudent, setVotesPerStudent] = useState<number | null>(null);
   const [allowStackedVotes, setAllowStackedVotes] = useState<boolean | null>(null);
   const [sessionStatus, setSessionStatus] = useState<string | null>(null);
+  const [sessionTitle, setSessionTitle] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set());
 
   const session = useLiveQuery(
     () => (sessionId ? db.class_sessions.get(sessionId) : undefined),
     [sessionId, refreshKey],
   );
+
+  // Questions, votes and replies all live on other people's devices until they
+  // are pulled down; without this a student only ever sees their own.
+  useEffect(() => {
+    if (!sessionId) return;
+    void syncDiscussionFromServer(sessionId).then(() => setRefreshKey(k => k + 1));
+  }, [sessionId]);
 
   const cls = useLiveQuery(
     () => (session ? db.classes.get(session.classId) : undefined),
@@ -348,16 +356,36 @@ export function DiscussionPage() {
     });
   };
 
+  const toggleQuestionExpanded = (questionId: string) => {
+    setExpandedQuestions(prev => {
+      const next = new Set(prev);
+      if (next.has(questionId)) next.delete(questionId);
+      else next.add(questionId);
+      return next;
+    });
+  };
+
   const handleSaveSessionSettings = async () => {
     if (!user || !sessionId) return;
-    const updates: Partial<ClassSession> = { syncStatus: 'local' };
+    const updates: Parameters<typeof updateClassSession>[2] = {};
+    if (sessionTitle !== null && sessionTitle.trim()) updates.title = sessionTitle.trim();
     if (votesPerStudent !== null) updates.votesPerStudent = votesPerStudent;
     if (allowStackedVotes !== null) updates.allowStackedVotes = allowStackedVotes;
     if (sessionStatus !== null) updates.status = sessionStatus as ClassSession['status'];
-    await db.class_sessions.update(sessionId, updates);
-    await addToQueue(user.$id, 'class_session', sessionId, 'update', updates);
+    // Goes through the service so the queued payload is the whole session —
+    // a bare patch has no $id for the sync layer to write against.
+    await updateClassSession(sessionId, user.$id, updates);
     setRefreshKey(k => k + 1);
     setSettingsOpen(false);
+  };
+
+  const openSettings = () => {
+    if (!session) return;
+    setSessionTitle(session.title);
+    setVotesPerStudent(session.votesPerStudent);
+    setAllowStackedVotes(session.allowStackedVotes);
+    setSessionStatus(session.status);
+    setSettingsOpen(true);
   };
 
   if (!session) {
@@ -370,9 +398,20 @@ export function DiscussionPage() {
         <Link to={`/sessions/${sessionId}`} className="text-sm text-gray-500 mb-2 inline-block">
           &larr; Back to session
         </Link>
-        <h1 className="text-2xl font-bold">{session.title}</h1>
+        <div className="flex items-start gap-2">
+          <h1 className="text-2xl font-bold">{session.title}</h1>
+          {isTeacher && (
+            <button
+              onClick={openSettings}
+              className="mt-1.5 shrink-0 rounded px-1.5 py-0.5 text-xs font-medium text-blue-600 hover:bg-blue-50"
+              aria-label="Rename this discussion"
+            >
+              Rename
+            </button>
+          )}
+        </div>
         <p className="text-sm text-gray-500">
-          {cls?.name || 'Class'} &middot; {session.sessionDate}
+          {classLabel(cls)} &middot; {session.sessionDate}
         </p>
       </div>
 
@@ -388,20 +427,25 @@ export function DiscussionPage() {
                 <StatusBadge status={session.status} />
               </p>
             </div>
-            <Button size="sm" variant="secondary" onClick={() => {
-              setVotesPerStudent(session.votesPerStudent);
-              setAllowStackedVotes(session.allowStackedVotes);
-              setSessionStatus(session.status);
-              setSettingsOpen(true);
-            }}>
+            <Button size="sm" variant="secondary" onClick={openSettings}>
               Settings
             </Button>
           </div>
         </Card>
       )}
 
-      <Modal open={settingsOpen} onClose={() => setSettingsOpen(false)} title="Session settings">
+      <Modal open={settingsOpen} onClose={() => setSettingsOpen(false)} title="Discussion settings">
         <div className="space-y-4">
+          <label className="block">
+            <span className="text-sm font-medium text-gray-700">Discussion name</span>
+            <input
+              type="text"
+              value={sessionTitle ?? session?.title ?? ''}
+              onChange={e => setSessionTitle(e.target.value)}
+              placeholder="e.g. Chapter 4 — what puzzled you?"
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            />
+          </label>
           <label className="block">
             <span className="text-sm font-medium text-gray-700">Votes per student</span>
             <input
@@ -475,7 +519,7 @@ export function DiscussionPage() {
         </Button>
       </Card>
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         <h2 className="text-lg font-semibold">
           Questions{' '}
           <span className="text-sm font-normal text-gray-500">
@@ -484,45 +528,57 @@ export function DiscussionPage() {
         </h2>
 
         {sortedQuestions.length > 0 ? (
-          sortedQuestions.map(question => (
-            <QuestionCard
-              key={question.$id}
-              question={question}
-              currentUserId={user?.$id || ''}
-              isTeacher={isTeacher}
-              authorDisplayName={getAuthorDisplayName(
-                question.authorId,
-                question.isTeacherQuestion,
-              )}
-              voteWeight={voteByQuestion.get(question.$id)?.weight || 0}
-              usedVotes={usedVotes}
-              voteBudget={voteBudget}
-              allowStackedVotes={session.allowStackedVotes}
-              answers={answersByQuestion?.get(question.$id) || []}
-              answerAuthorNames={answerAuthorNames || new Map()}
-              getAnswerAuthorName={getAnswerAuthorName}
-              isAnswersExpanded={expandedAnswers.has(question.$id)}
-              answerText={answerTexts[question.$id] || ''}
-              isSubmittingAnswer={answerSubmitting.has(question.$id)}
-              onVote={() => void handleVote(question.$id)}
-              onRemoveVote={() => void handleRemoveVote(question.$id)}
-              onToggleAnswers={() => toggleAnswersExpanded(question.$id)}
-              onAnswerTextChange={text =>
-                setAnswerTexts(prev => ({ ...prev, [question.$id]: text }))
-              }
-              onSubmitAnswer={() => void handleSubmitAnswer(question.$id)}
-              onModerate={status => void handleModerate(question.$id, status)}
-              onDiscussionStatus={status =>
-                void handleDiscussionStatus(question.$id, status)
-              }
-            />
-          ))
+          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="flex items-center gap-3 border-b border-gray-200 bg-gray-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+              <span className="w-8 shrink-0 text-center">Votes</span>
+              <span className="min-w-0 flex-1">Question</span>
+            </div>
+            <ul className="divide-y divide-gray-100">
+              {sortedQuestions.map(question => (
+                <QuestionRow
+                  key={question.$id}
+                  question={question}
+                  currentUserId={user?.$id || ''}
+                  isTeacher={isTeacher}
+                  authorDisplayName={getAuthorDisplayName(
+                    question.authorId,
+                    question.isTeacherQuestion,
+                  )}
+                  voteWeight={voteByQuestion.get(question.$id)?.weight || 0}
+                  usedVotes={usedVotes}
+                  voteBudget={voteBudget}
+                  allowStackedVotes={session.allowStackedVotes}
+                  answers={answersByQuestion?.get(question.$id) || []}
+                  getAnswerAuthorName={getAnswerAuthorName}
+                  isExpanded={expandedQuestions.has(question.$id)}
+                  isAnswersExpanded={expandedAnswers.has(question.$id)}
+                  answerText={answerTexts[question.$id] || ''}
+                  isSubmittingAnswer={answerSubmitting.has(question.$id)}
+                  onToggleExpanded={() => toggleQuestionExpanded(question.$id)}
+                  onVote={() => void handleVote(question.$id)}
+                  onRemoveVote={() => void handleRemoveVote(question.$id)}
+                  onToggleAnswers={() => {
+                    toggleAnswersExpanded(question.$id);
+                    setExpandedQuestions(prev => new Set(prev).add(question.$id));
+                  }}
+                  onAnswerTextChange={text =>
+                    setAnswerTexts(prev => ({ ...prev, [question.$id]: text }))
+                  }
+                  onSubmitAnswer={() => void handleSubmitAnswer(question.$id)}
+                  onModerate={status => void handleModerate(question.$id, status)}
+                  onDiscussionStatus={status =>
+                    void handleDiscussionStatus(question.$id, status)
+                  }
+                />
+              ))}
+            </ul>
+          </div>
         ) : (
           <EmptyState
             title="No questions yet"
             message={
               isTeacher
-                ? 'No questions have been submitted for this session yet.'
+                ? 'No questions have been submitted for this discussion yet.'
                 : 'Be the first to ask a question!'
             }
           />
@@ -576,7 +632,13 @@ function VoteBudgetMeter({
   );
 }
 
-function QuestionCard({
+/**
+ * One question as a single spreadsheet-style row: vote tally, the question
+ * itself, and small actions. Everything else — the quoted passage, replies and
+ * the teacher's moderation controls — stays folded away until the row is
+ * opened, so thirty questions fit on a screen instead of three.
+ */
+function QuestionRow({
   question,
   currentUserId,
   isTeacher,
@@ -586,11 +648,12 @@ function QuestionCard({
   voteBudget,
   allowStackedVotes,
   answers,
-  answerAuthorNames,
   getAnswerAuthorName,
+  isExpanded,
   isAnswersExpanded,
   answerText,
   isSubmittingAnswer,
+  onToggleExpanded,
   onVote,
   onRemoveVote,
   onToggleAnswers,
@@ -608,11 +671,12 @@ function QuestionCard({
   voteBudget: number;
   allowStackedVotes: boolean;
   answers: DiscussionAnswer[];
-  answerAuthorNames: Map<string, string>;
   getAnswerAuthorName: (authorId: string) => string;
+  isExpanded: boolean;
   isAnswersExpanded: boolean;
   answerText: string;
   isSubmittingAnswer: boolean;
+  onToggleExpanded: () => void;
   onVote: () => void;
   onRemoveVote: () => void;
   onToggleAnswers: () => void;
@@ -623,216 +687,210 @@ function QuestionCard({
 }) {
   const isAuthor = question.authorId === currentUserId;
   const canAddVote = !isAuthor && usedVotes < voteBudget;
-  const canRemoveVote = voteWeight > 0;
+  const hasVoted = voteWeight > 0;
   const noVotesLeft = usedVotes >= voteBudget;
 
   const modBadge = question.moderationStatus !== 'visible' ? question.moderationStatus : null;
-  const discBadge =
-    question.discussionStatus !== 'none' ? question.discussionStatus : null;
+  const discBadge = question.discussionStatus !== 'none' ? question.discussionStatus : null;
+
+  const rowTint =
+    question.discussionStatus === 'selected'
+      ? 'bg-blue-50/60'
+      : question.moderationStatus !== 'visible'
+        ? 'opacity-60'
+        : '';
+
+  // Opening a row with no passage and no teacher controls would otherwise draw
+  // an empty grey box under a student's question.
+  const hasPanelContent =
+    isAnswersExpanded || (isExpanded && (isTeacher || Boolean(question.selectedPassage)));
 
   return (
-    <Card
-      className={
-        question.discussionStatus === 'selected'
-          ? 'ring-2 ring-blue-500'
-          : question.moderationStatus === 'hidden'
-            ? 'opacity-60'
-            : ''
-      }
-    >
-      <div className="flex gap-3">
-        <div className="flex w-14 shrink-0 flex-col items-center gap-1">
-          {!isTeacher && (
-            <>
-              {isAuthor ? (
-                <span
-                  className="h-10 w-10 rounded-lg bg-gray-100 text-[10px] font-medium text-gray-500 flex items-center justify-center"
-                  title="You can't vote on your own question"
-                >
-                  Yours
-                </span>
-              ) : allowStackedVotes ? (
-                <div className="flex flex-col items-center gap-1">
-                  <button
-                    onClick={onVote}
-                    disabled={!canAddVote}
-                    className={`h-8 w-8 rounded-lg text-xs font-bold transition-colors ${
-                      canAddVote
-                        ? 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-700'
-                        : 'bg-gray-50 text-gray-300 cursor-not-allowed'
-                    }`}
-                    title={noVotesLeft ? 'No votes left' : 'Add one vote'}
-                  >
-                    +1
-                  </button>
-                  {canRemoveVote && (
-                    <button
-                      onClick={onRemoveVote}
-                      className="h-8 w-8 rounded-lg bg-red-50 text-xs font-bold text-red-600 hover:bg-red-100 transition-colors"
-                      title="Remove one vote"
-                    >
-                      -1
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <button
+    <li className={rowTint}>
+      <div className="flex items-center gap-2 px-2 py-1.5 sm:gap-3 sm:px-3">
+        <span
+          className="w-8 shrink-0 text-center text-sm font-bold tabular-nums text-gray-700"
+          title={`${question.voteCount} votes`}
+        >
+          {question.voteCount}
+        </span>
+
+        <button
+          onClick={onToggleExpanded}
+          className="min-w-0 flex-1 py-0.5 text-left"
+          aria-expanded={isExpanded}
+        >
+          <span className={`block text-sm text-gray-900 ${isExpanded ? '' : 'truncate'}`}>
+            {question.questionText}
+          </span>
+          <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-gray-400">
+            <span className="truncate">{authorDisplayName}</span>
+            {answers.length > 0 && <span>{answers.length} replies</span>}
+            {isAuthor && !isTeacher && <span className="text-blue-500">yours</span>}
+            {modBadge && <span className="text-amber-600">{modBadge}</span>}
+            {discBadge && <span className="text-blue-600">{discBadge}</span>}
+          </span>
+        </button>
+
+        <div className="flex shrink-0 items-center gap-1">
+          {!isTeacher && !isAuthor && (
+            allowStackedVotes ? (
+              <>
+                <RowButton
                   onClick={onVote}
-                  disabled={!canAddVote && !canRemoveVote}
-                  className={`h-10 w-10 rounded-lg text-sm font-semibold transition-colors ${
-                    voteWeight > 0
-                      ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                      : canAddVote
-                        ? 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-700'
-                        : 'bg-gray-50 text-gray-300 cursor-not-allowed'
-                  }`}
-                  title={
-                    voteWeight > 0
-                      ? 'Remove vote'
-                      : noVotesLeft
-                        ? 'No votes left'
-                        : 'Vote'
-                  }
+                  disabled={!canAddVote}
+                  title={noVotesLeft ? 'No votes left' : 'Add a vote'}
                 >
-                  {voteWeight > 0 ? '✓' : 'Vote'}
-                </button>
-              )}
-            </>
+                  +1
+                </RowButton>
+                {hasVoted && (
+                  <RowButton onClick={onRemoveVote} tone="danger" title="Remove a vote">
+                    −1
+                  </RowButton>
+                )}
+                {hasVoted && <span className="text-[11px] font-medium text-blue-600">×{voteWeight}</span>}
+              </>
+            ) : (
+              <RowButton
+                onClick={onVote}
+                disabled={!canAddVote && !hasVoted}
+                tone={hasVoted ? 'active' : 'default'}
+                title={hasVoted ? 'Remove your vote' : noVotesLeft ? 'No votes left' : 'Vote'}
+              >
+                {hasVoted ? 'Voted' : 'Vote'}
+              </RowButton>
+            )
           )}
-          <span className="text-lg font-bold text-gray-800">{question.voteCount}</span>
-          {voteWeight > 0 && (
-            <span className="text-xs text-blue-700">x{voteWeight}</span>
+
+          <RowButton onClick={onToggleAnswers} title="Reply to this question">
+            Respond{answers.length > 0 ? ` ${answers.length}` : ''}
+          </RowButton>
+
+          {isTeacher && (
+            <RowButton
+              onClick={onToggleExpanded}
+              tone={isExpanded ? 'active' : 'default'}
+              title="Teacher actions"
+            >
+              ⋯
+            </RowButton>
           )}
         </div>
+      </div>
 
-        <div className="min-w-0 flex-1">
-          <p className="whitespace-pre-wrap text-gray-900">{question.questionText}</p>
-
-          {question.selectedPassage && (
-            <blockquote className="mt-3 border-l-4 border-gray-200 pl-3 text-sm text-gray-500">
+      {hasPanelContent && (
+        <div className="space-y-3 border-t border-gray-100 bg-gray-50/60 px-3 py-3">
+          {isExpanded && question.selectedPassage && (
+            <blockquote className="border-l-4 border-gray-200 pl-3 text-sm text-gray-500">
               &ldquo;{question.selectedPassage}&rdquo;
             </blockquote>
           )}
 
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-            <span className="rounded bg-gray-100 px-2 py-1 text-gray-600">
-              {authorDisplayName}
-            </span>
-            {isAuthor && !isTeacher && (
-              <StatusBadge status="selected" label="Your question" />
-            )}
-            {modBadge && <StatusBadge status={modBadge} />}
-            {discBadge && <StatusBadge status={discBadge} />}
-          </div>
-
-          {isTeacher && (
-            <div className="mt-4 space-y-2 border-t border-gray-100 pt-4">
-              <div className="flex flex-wrap gap-2">
-                {question.moderationStatus === 'visible' ? (
-                  <Button size="sm" variant="ghost" onClick={() => onModerate('hidden')}>
-                    Hide
-                  </Button>
-                ) : (
-                  <Button size="sm" variant="ghost" onClick={() => onModerate('visible')}>
-                    Show
-                  </Button>
-                )}
-                {question.moderationStatus !== 'removed' && (
-                  <Button size="sm" variant="ghost" onClick={() => onModerate('removed')}>
-                    Remove
-                  </Button>
-                )}
-                {question.discussionStatus !== 'selected' && (
-                  <Button size="sm" variant="secondary" onClick={() => onDiscussionStatus('selected')}>
-                    Select for discussion
-                  </Button>
-                )}
-                {question.discussionStatus === 'selected' && (
-                  <Button size="sm" variant="secondary" onClick={() => onDiscussionStatus('discussed')}>
-                    Mark discussed
-                  </Button>
-                )}
-                {question.discussionStatus !== 'none' && (
-                  <Button size="sm" variant="ghost" onClick={() => onDiscussionStatus('none')}>
-                    Clear status
-                  </Button>
-                )}
-              </div>
+          {isExpanded && isTeacher && (
+            <div className="flex flex-wrap gap-1.5">
+              {question.moderationStatus === 'visible' ? (
+                <RowButton onClick={() => onModerate('hidden')}>Hide</RowButton>
+              ) : (
+                <RowButton onClick={() => onModerate('visible')}>Show</RowButton>
+              )}
+              {question.moderationStatus !== 'removed' && (
+                <RowButton onClick={() => onModerate('removed')} tone="danger">Remove</RowButton>
+              )}
+              {question.discussionStatus !== 'selected' && (
+                <RowButton onClick={() => onDiscussionStatus('selected')} tone="active">
+                  Select for discussion
+                </RowButton>
+              )}
+              {question.discussionStatus === 'selected' && (
+                <RowButton onClick={() => onDiscussionStatus('discussed')} tone="active">
+                  Mark discussed
+                </RowButton>
+              )}
+              {question.discussionStatus !== 'none' && (
+                <RowButton onClick={() => onDiscussionStatus('none')}>Clear status</RowButton>
+              )}
             </div>
           )}
 
-          <div className="mt-3 border-t border-gray-100 pt-3">
-            <button
-              onClick={onToggleAnswers}
-              className="flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <svg
-                className={`h-4 w-4 transition-transform ${isAnswersExpanded ? 'rotate-90' : ''}`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-              Answers ({answers.length})
-            </button>
-
-            {isAnswersExpanded && (
-              <div className="mt-3 space-y-3">
-                {answers.length > 0 ? (
-                  answers.map(answer => (
-                    <div
-                      key={answer.$id}
-                      className="rounded-lg bg-gray-50 px-3 py-2"
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-medium text-gray-500">
-                          {answer.authorName || getAnswerAuthorName(answer.authorId)}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          {new Date(answer.createdAt).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-800 whitespace-pre-wrap">
-                        {answer.answerText}
-                      </p>
+          {isAnswersExpanded && (
+            <div className="space-y-2">
+              {answers.length > 0 ? (
+                answers.map(answer => (
+                  <div key={answer.$id} className="rounded-lg bg-white px-3 py-2">
+                    <div className="mb-0.5 flex items-center gap-2 text-[11px] text-gray-400">
+                      <span className="font-medium text-gray-500">
+                        {answer.authorName || getAnswerAuthorName(answer.authorId)}
+                      </span>
+                      <span>
+                        {new Date(answer.createdAt).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
                     </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-gray-400">No answers yet.</p>
-                )}
+                    <p className="whitespace-pre-wrap text-sm text-gray-800">{answer.answerText}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-gray-400">No replies yet.</p>
+              )}
 
-                <div className="flex gap-2">
-                  <textarea
-                    value={answerText}
-                    onChange={e => onAnswerTextChange(e.target.value)}
-                    rows={2}
-                    className="flex-1 resize-y rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                    placeholder="Write an answer..."
-                  />
-                  <Button
-                    size="sm"
-                    onClick={onSubmitAnswer}
-                    loading={isSubmittingAnswer}
-                    disabled={!answerText.trim()}
-                  >
-                    Reply
-                  </Button>
-                </div>
+              <div className="flex gap-2">
+                <textarea
+                  value={answerText}
+                  onChange={e => onAnswerTextChange(e.target.value)}
+                  rows={2}
+                  className="flex-1 resize-y rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  placeholder="Write a reply…"
+                />
+                <Button
+                  size="sm"
+                  onClick={onSubmitAnswer}
+                  loading={isSubmittingAnswer}
+                  disabled={!answerText.trim()}
+                >
+                  Send
+                </Button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
-      </div>
-    </Card>
+      )}
+    </li>
+  );
+}
+
+/** Compact action button sized to sit inside a one-line row. */
+function RowButton({
+  children,
+  onClick,
+  disabled,
+  title,
+  tone = 'default',
+}: {
+  children: ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  title?: string;
+  tone?: 'default' | 'active' | 'danger';
+}) {
+  const tones = {
+    default: 'bg-gray-100 text-gray-600 hover:bg-gray-200',
+    active: 'bg-blue-100 text-blue-700 hover:bg-blue-200',
+    danger: 'bg-red-50 text-red-600 hover:bg-red-100',
+  };
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className={`rounded-md px-2 py-1 text-[11px] font-semibold transition-colors ${
+        disabled ? 'cursor-not-allowed bg-gray-50 text-gray-300' : tones[tone]
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 

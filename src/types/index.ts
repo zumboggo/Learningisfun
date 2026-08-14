@@ -339,6 +339,17 @@ export interface WritingPrompt {
   syncStatus: SyncStatus;
 }
 
+/**
+ * Which classes a writing prompt has been handed to. Mirrors DeckAssignment so
+ * a prompt can be reused across sections instead of being retyped per class.
+ */
+export interface WritingPromptAssignment {
+  $id: string;
+  promptId: string;
+  classId: string;
+  assignedAt: string;
+}
+
 export interface WritingSubmission {
   $id: string;
   promptId: string;

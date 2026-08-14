@@ -1,11 +1,14 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
 import { useAuth } from '@/contexts/AuthContext';
+import { syncMyClassSessionsFromServer } from '@/services/class-session.service';
 import { Card } from '@/components/common/Card';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Button } from '@/components/common/Button';
 import { StatusBadge } from '@/components/common/StatusBadge';
+import { classLabel } from '@/utils/helpers';
 import type { ClassSession } from '@/types';
 
 interface DiscussionSessionRow {
@@ -17,6 +20,14 @@ interface DiscussionSessionRow {
 export function DiscussionsListPage() {
   const { user, isTeacher } = useAuth();
 
+  // Discussions are created on the teacher's device; this is what brings them
+  // down to everyone else's.
+  const userId = user?.$id;
+  useEffect(() => {
+    if (!userId) return;
+    void syncMyClassSessionsFromServer(userId);
+  }, [userId]);
+
   const rows = useLiveQuery(async (): Promise<DiscussionSessionRow[]> => {
     if (!user) return [];
 
@@ -25,14 +36,14 @@ export function DiscussionsListPage() {
 
     if (isTeacher) {
       const classes = await db.classes.where('teacherId').equals(user.$id).toArray();
-      for (const cls of classes) classMap.set(cls.$id, cls.courseName);
+      for (const cls of classes) classMap.set(cls.$id, classLabel(cls));
       sessionClassIds = classes.map(c => c.$id);
     } else {
       const memberships = await db.class_members.where('userId').equals(user.$id).toArray();
       const classIds = memberships.map(m => m.classId);
       if (classIds.length === 0) return [];
       const classes = await db.classes.where('$id').anyOf(classIds).toArray();
-      for (const cls of classes) classMap.set(cls.$id, cls.courseName);
+      for (const cls of classes) classMap.set(cls.$id, classLabel(cls));
       sessionClassIds = classIds;
     }
 
@@ -74,7 +85,7 @@ export function DiscussionsListPage() {
   return (
     <div className="p-4 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Questions</h1>
+        <h1 className="text-2xl font-bold">Discussions</h1>
         {isTeacher && (
           <Link to="/classes">
             <Button size="sm">Start discussion</Button>
@@ -105,8 +116,8 @@ export function DiscussionsListPage() {
         </div>
       ) : (
         <EmptyState
-          title="No questions yet"
-          message={isTeacher ? 'Start a class period from one of your classes to begin collecting questions.' : "Your teacher hasn't started any question sessions yet."}
+          title="No discussions yet"
+          message={isTeacher ? 'Start a discussion from one of your classes to begin collecting questions.' : "Your teacher hasn't started any discussions yet."}
           action={isTeacher ? (
             <Link to="/classes">
               <Button size="sm">Go to classes</Button>

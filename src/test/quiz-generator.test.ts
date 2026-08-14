@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   generateQuizFromFlashcards,
   splitCardsByDay,
+  splitCardsByRecency,
   buildAnswerVariants,
   maskTerm,
   selectCards,
@@ -307,5 +308,39 @@ describe('generateQuizFromFlashcards', () => {
     for (const q of result.questions.filter(q => q.type === 'mc')) {
       expect(q.options.every(o => bioBacks.has(o))).toBe(true);
     }
+  });
+});
+
+describe('splitCardsByRecency', () => {
+  const now = new Date('2026-08-14T12:00:00');
+
+  it('puts cards from inside the window in the recent pool', () => {
+    const pools = splitCardsByRecency(
+      [
+        card({ $id: 'a', createdAt: new Date('2026-08-13T09:00:00').toISOString() }),
+        card({ $id: 'b', createdAt: new Date('2026-08-09T09:00:00').toISOString() }),
+        card({ $id: 'c', createdAt: new Date('2026-06-01T09:00:00').toISOString() }),
+      ],
+      7,
+      now,
+    );
+    expect(pools.today.map(c => c.$id)).toEqual(['a', 'b']);
+    expect(pools.review.map(c => c.$id)).toEqual(['c']);
+  });
+
+  it('treats an unusable date as older material rather than new', () => {
+    const pools = splitCardsByRecency([card({ $id: 'x', createdAt: 'not a date' })], 7, now);
+    expect(pools.today).toHaveLength(0);
+    expect(pools.review.map(c => c.$id)).toEqual(['x']);
+  });
+
+  it('a zero-day window leaves everything for review', () => {
+    const pools = splitCardsByRecency(
+      [card({ $id: 'a', createdAt: new Date('2026-08-13T09:00:00').toISOString() })],
+      0,
+      now,
+    );
+    expect(pools.today).toHaveLength(0);
+    expect(pools.review).toHaveLength(1);
   });
 });

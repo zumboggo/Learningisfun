@@ -177,6 +177,32 @@ export function splitCardsByDay(cards: FlashcardCard[], sessionDate: Date): Card
   return { today, review };
 }
 
+/**
+ * Split a class's cards into "recent" and "everything earlier", where recent
+ * means created within the last `windowDays` days.
+ *
+ * This is the pool split behind the in-app quiz slider: a teacher thinks in
+ * "this week's vocabulary vs. the whole course", not in single calendar days.
+ * Cards land in the `today` pool so the generator's existing weighting applies
+ * unchanged.
+ */
+export function splitCardsByRecency(
+  cards: FlashcardCard[],
+  windowDays: number,
+  now: Date = new Date(),
+): CardPools {
+  const cutoff = now.getTime() - Math.max(0, windowDays) * 86400000;
+  const today: FlashcardCard[] = [];
+  const review: FlashcardCard[] = [];
+  for (const card of cards) {
+    const created = new Date(card.createdAt).getTime();
+    // A card with no usable date is old material, not new — safer for review.
+    if (!Number.isNaN(created) && created >= cutoff) today.push(card);
+    else review.push(card);
+  }
+  return { today, review };
+}
+
 function localDayKey(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,6 +8,7 @@ import {
   removeStudent,
   getClassMembers,
   importClassRoster,
+  syncClassRosterFromServer,
   type RosterImportResult,
 } from '@/services/class.service';
 import { createClassSession, todayKey } from '@/services/class-session.service';
@@ -19,6 +20,8 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { Modal } from '@/components/common/Modal';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { AddDecksToClassModal } from '@/components/common/AddDecksToClassModal';
+import { RandomStudentModal } from '@/components/teacher/RandomStudentModal';
+import { CreateGroupsModal } from '@/components/teacher/CreateGroupsModal';
 
 export function ClassDetailPage() {
   const { classId } = useParams<{ classId: string }>();
@@ -34,6 +37,8 @@ export function ClassDetailPage() {
   const [rosterImporting, setRosterImporting] = useState(false);
   const [rosterResult, setRosterResult] = useState<RosterImportResult | null>(null);
   const [showAddDecks, setShowAddDecks] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
+  const [showGroups, setShowGroups] = useState(false);
 
   const cls = useLiveQuery(() => (classId ? db.classes.get(classId) : undefined), [classId]);
   const members = useLiveQuery(
@@ -42,16 +47,48 @@ export function ClassDetailPage() {
   );
 
   const isOwner = cls?.teacherId === user?.$id && isTeacher;
-  const memberIds = useMemo(() => members?.map(m => m.userId) || [], [members]);
 
   const activeCode = newCode || cls?.joinCode || '';
   const joinLink = `${window.location.origin}${import.meta.env.BASE_URL}join/${activeCode}`;
 
+  // Students who join from their own phone write their membership straight to
+  // the server, so the teacher's device has to pull the roster to see them.
+  const [refreshingRoster, setRefreshingRoster] = useState(false);
+  const refreshRoster = async () => {
+    if (!classId) return;
+    setRefreshingRoster(true);
+    try {
+      await syncClassRosterFromServer(classId);
+    } finally {
+      setRefreshingRoster(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!classId) return;
+    void syncClassRosterFromServer(classId);
+  }, [classId]);
+
+  const studentIds = useMemo(
+    () => (members || []).filter(m => m.role === 'student').map(m => m.userId),
+    [members],
+  );
+
   const students = useLiveQuery(async () => {
-    if (memberIds.length === 0) return [];
-    const users = await Promise.all(memberIds.map(id => db.users.get(id)));
-    return users.filter((u): u is NonNullable<typeof u> => Boolean(u));
-  }, [memberIds]);
+    if (studentIds.length === 0) return [];
+    const rows = await Promise.all(studentIds.map(async id => {
+      const profile = await db.users.get(id);
+      // A profile the teacher cannot read still counts as an enrolled student —
+      // dropping the row would under-report the class.
+      return profile || { $id: id, name: 'Student', email: 'Profile not synced yet' };
+    }));
+    return rows.sort((a, b) => a.name.localeCompare(b.name));
+  }, [studentIds]);
+
+  const pickableStudents = useMemo(
+    () => (students || []).map(s => ({ id: s.$id, name: s.name })),
+    [students],
+  );
 
   const deckRows = useLiveQuery(async () => {
     if (!classId) return [];
@@ -145,6 +182,8 @@ export function ClassDetailPage() {
         {isOwner && (
           <div className="flex flex-wrap gap-2">
             <Button onClick={() => setShowDiscussionModal(true)} size="sm">Start discussion</Button>
+            <Button onClick={() => setShowPicker(true)} size="sm" variant="secondary">Pick a student</Button>
+            <Button onClick={() => setShowGroups(true)} size="sm" variant="secondary">Create groups</Button>
             <Link to={`/classes/${cls.$id}/reports`}>
               <Button size="sm" variant="secondary">Reports</Button>
             </Link>
@@ -207,7 +246,7 @@ export function ClassDetailPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold">Questions ({discussions?.length || 0})</h2>
+            <h2 className="text-lg font-semibold">Discussions ({discussions?.length || 0})</h2>
             {isOwner && (
               <Button
                 onClick={() => setShowDiscussionModal(true)}
@@ -237,13 +276,13 @@ export function ClassDetailPage() {
               ))}
               {discussions.length > 5 && (
                 <Link to="/discussions" className="text-sm text-blue-600 hover:underline block">
-                  +{discussions.length - 5} more question sessions
+                  +{discussions.length - 5} more discussions
                 </Link>
               )}
             </div>
           ) : (
             <EmptyState
-              title="No question sessions yet"
+              title="No discussions yet"
               message="Start a discussion to collect questions and votes."
               action={isOwner && <Button onClick={() => setShowDiscussionModal(true)} size="sm" variant="secondary">Start discussion</Button>}
             />
@@ -330,7 +369,19 @@ export function ClassDetailPage() {
       </div>
 
       <section>
-        <h2 className="text-lg font-semibold mb-3">Students ({students?.length || 0})</h2>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Students ({students?.length || 0})</h2>
+          {isOwner && (
+            <Button
+              size="sm"
+              variant="secondary"
+              loading={refreshingRoster}
+              onClick={() => void refreshRoster()}
+            >
+              Refresh roster
+            </Button>
+          )}
+        </div>
         {students && students.length > 0 ? (
           <div className="grid gap-2 sm:grid-cols-2">
             {students.map(student => (
@@ -363,7 +414,7 @@ export function ClassDetailPage() {
         ) : (
           <EmptyState
             title="No students yet"
-            message="Import a roster CSV or share the join code so students can enter the class."
+            message="Import a roster CSV or share the join code so students can enter the class. If students say they have joined, hit Refresh roster."
           />
         )}
       </section>
@@ -443,6 +494,21 @@ export function ClassDetailPage() {
           teacherId={user.$id}
           onClose={() => setShowAddDecks(false)}
         />
+      )}
+
+      {isOwner && (
+        <>
+          <RandomStudentModal
+            open={showPicker}
+            students={pickableStudents}
+            onClose={() => setShowPicker(false)}
+          />
+          <CreateGroupsModal
+            open={showGroups}
+            students={pickableStudents}
+            onClose={() => setShowGroups(false)}
+          />
+        </>
       )}
     </div>
   );

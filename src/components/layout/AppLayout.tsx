@@ -20,7 +20,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const navItems = isTeacher
     ? [
         { to: '/dashboard', label: 'Dashboard', icon: 'D' },
-        { to: '/discussions', label: 'Questions', icon: 'Q' },
+        { to: '/discussions', label: 'Discussions', icon: 'Q' },
         { to: '/decks', label: 'Cards', icon: 'V' },
         { to: '/writing', label: 'Writing', icon: 'W' },
         { to: '/classes', label: 'Classes', icon: 'C' },
@@ -31,21 +31,23 @@ export function AppLayout({ children }: AppLayoutProps) {
         { to: '/dashboard', label: 'Home', icon: 'home' },
         { to: '/decks', label: 'Cards', icon: 'cards' },
         { to: '/writing', label: 'Writing', icon: 'write' },
-        { to: '/discussions', label: 'Questions', icon: 'chat' },
+        { to: '/discussions', label: 'Discussions', icon: 'chat' },
         { to: '/quizzes', label: 'Quizzes', icon: 'quiz' },
       ];
 
   if (!isTeacher) {
     return (
       <div className="student-shell min-h-screen">
-        <div className="fixed right-4 top-4 z-30 flex items-center gap-2 rounded-full border border-white/70 bg-white/80 px-3 py-2 shadow-sm backdrop-blur">
+        {/* Account controls sit in the page flow rather than floating over the
+            hero, so nothing overlaps on narrow screens. */}
+        <div className="mx-auto flex w-full max-w-[46rem] items-center justify-end gap-3 px-[clamp(1rem,4vw,1.5rem)] pt-3">
           {isActualTeacher && (
             <button
               onClick={() => setViewAsStudent(!viewAsStudent)}
-              className={`text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${
+              className={`rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors ${
                 viewAsStudent
-                  ? 'bg-blue-100 border-blue-200 text-blue-700'
-                  : 'bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200'
+                  ? 'border-blue-200 bg-blue-100 text-blue-700'
+                  : 'border-gray-200 bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
               title={viewAsStudent ? 'Viewing as student' : 'Viewing as teacher'}
             >
@@ -55,13 +57,13 @@ export function AppLayout({ children }: AppLayoutProps) {
           <SyncIndicator {...syncState} online={online} />
           <button
             onClick={() => void logout()}
-            className="text-xs font-medium text-slate-500 hover:text-slate-800"
+            className="text-xs font-semibold text-slate-500 hover:text-slate-800"
           >
             Sign out
           </button>
         </div>
 
-        <main className="pb-32">
+        <main className="student-main">
           {children}
         </main>
 
@@ -120,21 +122,23 @@ export function AppLayout({ children }: AppLayoutProps) {
       </main>
 
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30 safe-area-bottom">
-        <div className="flex justify-around">
+        {/* Seven tabs have to share a phone's width, so each is an equal-width
+            column with a clipped label rather than a fixed minimum that wraps. */}
+        <div className="grid grid-flow-col auto-cols-fr">
           {navItems.map(item => (
             <Link
               key={item.to}
               to={item.to}
-              className={`flex min-w-[58px] flex-col items-center px-2 py-2 ${
+              className={`flex min-w-0 flex-col items-center px-0.5 py-2 ${
                 location.pathname.startsWith(item.to)
                   ? 'text-blue-600'
                   : 'text-gray-500'
               }`}
             >
-              <span className="flex h-6 w-6 items-center justify-center rounded bg-gray-100 text-xs font-bold">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-gray-100 text-xs font-bold">
                 {item.icon}
               </span>
-              <span className="mt-1 text-[11px]">{item.label}</span>
+              <span className="mt-1 max-w-full truncate text-[10px] leading-tight">{item.label}</span>
             </Link>
           ))}
         </div>
