@@ -4,7 +4,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/common/Button';
 import type { UserRole } from '@/types';
 
-const TEACHER_CODE = import.meta.env.VITE_TEACHER_CODE || 'teach2025';
+/**
+ * Set from the VITE_TEACHER_CODE repository secret at build time. There is
+ * deliberately no fallback value: a literal here would sit in a public repo and
+ * a default would silently keep working if the secret went missing.
+ */
+const TEACHER_CODE = (import.meta.env.VITE_TEACHER_CODE || '').trim();
+const TEACHER_SIGNUP_ENABLED = TEACHER_CODE.length > 0;
 
 export function RegisterPage() {
   const { register } = useAuth();
@@ -30,9 +36,15 @@ export function RegisterPage() {
       setError('Password must be at least 8 characters');
       return;
     }
-    if (role === 'teacher' && teacherCode !== TEACHER_CODE) {
-      setError('Invalid teacher code');
-      return;
+    if (role === 'teacher') {
+      if (!TEACHER_SIGNUP_ENABLED) {
+        setError('Teacher signup is not configured on this build. Ask your administrator.');
+        return;
+      }
+      if (teacherCode !== TEACHER_CODE) {
+        setError('Invalid teacher code');
+        return;
+      }
     }
 
     setLoading(true);
