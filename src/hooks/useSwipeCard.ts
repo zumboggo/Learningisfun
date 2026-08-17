@@ -26,6 +26,10 @@ export interface SwipeCardHandle {
     onTouchStart: (e: React.TouchEvent) => void
     onTouchMove: (e: React.TouchEvent) => void
     onTouchEnd: (e: React.TouchEvent) => void
+    onPointerDown: (e: React.PointerEvent) => void
+    onPointerMove: (e: React.PointerEvent) => void
+    onPointerUp: (e: React.PointerEvent) => void
+    onPointerCancel: (e: React.PointerEvent) => void
   }
   swipeDir: SwipeDir | null
   dismissDir: SwipeDir | null
@@ -49,6 +53,7 @@ export function useSwipeCard({
 }: UseSwipeCardOptions): SwipeCardHandle {
   const cardRef = useRef<HTMLDivElement | null>(null)
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
+  const pointerIdRef = useRef<number | null>(null)
   const dismissTimer = useRef<number | null>(null)
   const [swipeDir, setSwipeDir] = useState<SwipeDir | null>(null)
   const [dismissDir, setDismissDir] = useState<SwipeDir | null>(null)
@@ -92,7 +97,7 @@ export function useSwipeCard({
   }, [clearCardStyles, dismissDir, dismissMs, haptics, onDismissed])
 
   const onTouchStart = useCallback((e: React.TouchEvent) => {
-    if (dismissDir) return
+    if (dismissDir || pointerIdRef.current !== null) return
     const t = e.touches[0]
     touchStartRef.current = { x: t.clientX, y: t.clientY }
     if (cardRef.current) {
@@ -103,7 +108,7 @@ export function useSwipeCard({
   }, [dismissDir])
 
   const onTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!touchStartRef.current || !enabled || dismissDir) return
+    if (!touchStartRef.current || pointerIdRef.current !== null || !enabled || dismissDir) return
     if (e.cancelable) e.preventDefault()
     const t = e.touches[0]
     const dx = t.clientX - touchStartRef.current.x
@@ -146,9 +151,35 @@ export function useSwipeCard({
     onSwipe(dir)
   }, [clearCardStyles, dismissDir, enabled, onSwipe, swipeDir])
 
+  const updateGesture = useCallback((x: number, y: number) => {
+    if (!touchStartRef.current || !enabled || dismissDir) return
+    const dx = x - touchStartRef.current.x, dy = y - touchStartRef.current.y
+    const absDx = Math.abs(dx), absDy = Math.abs(dy), dist = Math.hypot(dx, dy)
+    let dir: SwipeDir | null = null
+    if (absDx > threshold || absDy > threshold) dir = absDx > absDy ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up')
+    if (dir && !directions.includes(dir)) dir = null
+    if (cardRef.current) {
+      cardRef.current.style.transform = `translateX(${dx * .18}px) translateY(${dy * .08}px) rotate(${Math.min(14, dx / 200 * 14)}deg)`
+      const color = dir ? glowColors[dir] : undefined
+      cardRef.current.style.boxShadow = color ? `0 0 ${8 + 20 * Math.min(1, (dist-threshold)/120)}px ${color}` : ''
+    }
+    setSwipeDir(dir)
+  }, [directions, dismissDir, enabled, glowColors, threshold])
+
+  const onPointerDown = useCallback((e: React.PointerEvent) => {
+    if (dismissDir || (e.pointerType === 'mouse' && e.button !== 0)) return
+    pointerIdRef.current = e.pointerId; touchStartRef.current = { x:e.clientX, y:e.clientY }
+    e.currentTarget.setPointerCapture?.(e.pointerId); setSwipeDir(null)
+  }, [dismissDir])
+  const onPointerMove = useCallback((e: React.PointerEvent) => { if(pointerIdRef.current===e.pointerId) updateGesture(e.clientX,e.clientY) }, [updateGesture])
+  const finishPointer = useCallback((e: React.PointerEvent) => {
+    if(pointerIdRef.current!==e.pointerId)return; const dir=swipeDir; pointerIdRef.current=null;touchStartRef.current=null;clearCardStyles();setSwipeDir(null)
+    if(dir&&enabled&&!dismissDir)onSwipe(dir)
+  },[clearCardStyles,dismissDir,enabled,onSwipe,swipeDir])
+
   return {
     cardRef,
-    handlers: { onTouchStart, onTouchMove, onTouchEnd },
+    handlers: { onTouchStart, onTouchMove, onTouchEnd, onPointerDown, onPointerMove, onPointerUp: finishPointer, onPointerCancel: finishPointer },
     swipeDir,
     dismissDir,
     dismissClass: dismissDir ? `card-dismiss-${dismissDir}` : '',

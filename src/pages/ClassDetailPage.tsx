@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/db/schema';
 import {
   regenerateJoinCode,
+  ensureParentCode,
+  regenerateParentCode,
   removeStudent,
   getClassMembers,
   importClassRoster,
@@ -28,6 +30,7 @@ export function ClassDetailPage() {
   const { user, isTeacher } = useAuth();
   const navigate = useNavigate();
   const [newCode, setNewCode] = useState('');
+  const [parentCode, setParentCode] = useState('');
   const [pendingRemoval, setPendingRemoval] = useState<{ id: string; name: string } | null>(null);
   const [showDiscussionModal, setShowDiscussionModal] = useState(false);
   const [discussionTitle, setDiscussionTitle] = useState('Class discussion');
@@ -67,7 +70,8 @@ export function ClassDetailPage() {
   useEffect(() => {
     if (!classId) return;
     void syncClassRosterFromServer(classId);
-  }, [classId]);
+    if (user) void ensureParentCode(classId, user.$id).then(setParentCode);
+  }, [classId, user]);
 
   const studentIds = useMemo(
     () => (members || []).filter(m => m.role === 'student').map(m => m.userId),
@@ -84,6 +88,8 @@ export function ClassDetailPage() {
     }));
     return rows.sort((a, b) => a.name.localeCompare(b.name));
   }, [studentIds]);
+  const parentIds = useMemo(() => (members || []).filter(m => m.role === 'parent').map(m => m.userId), [members]);
+  const parents = useLiveQuery(async () => Promise.all(parentIds.map(async id => (await db.users.get(id)) || { $id:id,name:'Parent observer',email:'Profile not synced yet' })), [parentIds]);
 
   const pickableStudents = useMemo(
     () => (students || []).map(s => ({ id: s.$id, name: s.name })),
@@ -227,6 +233,13 @@ export function ClassDetailPage() {
                 />
               </label>
             </div>
+          </div>
+          <div className="mt-5 border-t pt-4">
+            <h3 className="font-semibold">Parent observer code</h3>
+            <p className="text-sm text-gray-500">Parents use this code on the same Join Class page. Their account is read-only.</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2"><code className="rounded bg-violet-50 px-4 py-2 text-xl font-mono">{parentCode || cls.parentCode || 'Creating…'}</code><CopyButton text={parentCode || cls.parentCode || ''} label="Copy code" copiedLabel="Code copied"/><Button size="sm" variant="secondary" onClick={()=>void regenerateParentCode(cls.$id,user!.$id).then(setParentCode)}>Regenerate</Button></div>
+            <p className="mt-3 text-sm text-gray-600">{parents?.length||0} parent observer{parents?.length===1?'':'s'} joined</p>
+            {parents?.map(parent=><p key={parent.$id} className="text-xs text-gray-500">{parent.name} · {parent.email}</p>)}
           </div>
           {rosterResult && (
             <div className="mt-4 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">

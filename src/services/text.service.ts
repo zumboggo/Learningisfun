@@ -1,0 +1,70 @@
+import { ID } from 'appwrite';
+import mammoth from 'mammoth';
+import { db } from '@/db/schema';
+import { addToQueue } from '@/services/sync.service';
+import { FUNCTION_IDS } from '@/lib/appwrite';
+import { executeLearningContent } from '@/services/learning-content.service';
+import { getTimestamp } from '@/utils/helpers';
+import type { LearningText, TextAnnotation, TextAssignment, TextParagraph } from '@/types';
+
+export const ANNOTATIONS_TO_UNLOCK = 3;
+
+export function splitParagraphs(content: string): string[] {
+  return content.replace(/\r\n?/g, '\n').split(/\n\s*\n+/).map(p => p.replace(/\s*\n\s*/g, ' ').trim()).filter(Boolean);
+}
+
+export async function paragraphsFromFile(file: File): Promise<string[]> {
+  if (file.name.toLowerCase().endsWith('.docx')) {
+    const result = await mammoth.convertToHtml({ arrayBuffer: await file.arrayBuffer() });
+    const doc = new DOMParser().parseFromString(result.value, 'text/html');
+    return [...doc.querySelectorAll('p')].map(p => p.textContent?.trim() || '').filter(Boolean);
+  }
+  return splitParagraphs(await file.text());
+}
+
+export async function createText(params: { teacherId: string; title: string; author: string; source: string; paragraphs: string[]; classIds: string[] }): Promise<LearningText> {
+  const now = getTimestamp();
+  const text: LearningText = { $id: ID.unique(), teacherId: params.teacherId, title: params.title, author: params.author,
+    source: params.source, status: 'published', createdAt: now, updatedAt: now, syncStatus: 'local' };
+  await db.texts.put(text); await addToQueue(params.teacherId, 'text', text.$id, 'create', text);
+  for (let i = 0; i < params.paragraphs.length; i++) {
+    const paragraph: TextParagraph = { $id: ID.unique(), textId: text.$id, sortOrder: i, content: params.paragraphs[i] };
+    await db.text_paragraphs.put(paragraph); await addToQueue(params.teacherId, 'text_paragraph', paragraph.$id, 'create', paragraph);
+  }
+  await setTextClasses(text.$id, params.classIds, params.teacherId);
+  return text;
+}
+
+export async function setTextClasses(textId: string, classIds: string[], userId: string): Promise<void> {
+  const current = await db.text_assignments.where('textId').equals(textId).toArray(); const wanted = new Set(classIds);
+  for (const classId of wanted) if (!current.some(a => a.classId === classId)) {
+    const a: TextAssignment = { $id: ID.unique(), textId, classId, assignedAt: getTimestamp() };
+    await db.text_assignments.put(a); await addToQueue(userId, 'text_assignment', a.$id, 'create', a);
+  }
+  for (const a of current) if (!wanted.has(a.classId)) { await db.text_assignments.delete(a.$id); await addToQueue(userId, 'text_assignment', a.$id, 'delete', a); }
+}
+
+export async function addAnnotation(params: { textId: string; paragraphId: string; classId: string; authorId: string; type: TextAnnotation['type']; content: string }): Promise<TextAnnotation> {
+  const now = getTimestamp(); const id = ID.unique();
+  const annotation: TextAnnotation = { $id: id, textId: params.textId, paragraphId: params.paragraphId, classId: params.classId,
+    authorId: params.authorId, anonymousLabel: `Reader ${id.slice(-4).toUpperCase()}`, type: params.type, content: params.content.trim(),
+    moderationStatus: 'visible', createdAt: now, updatedAt: now, syncStatus: 'local' };
+  await db.text_annotations.put(annotation); await addToQueue(params.authorId, 'text_annotation', id, 'create', annotation); return annotation;
+}
+
+export async function canSeePeerAnnotations(textId: string, classId: string, userId: string): Promise<boolean> {
+  return (await db.text_annotations.where('[textId+classId]').equals([textId, classId]).and(a => a.authorId === userId).count()) >= ANNOTATIONS_TO_UNLOCK;
+}
+
+export async function syncTextsFromServer(classIds: string[], _userId: string, isTeacher: boolean): Promise<void> {
+  if (!FUNCTION_IDS.learningContent || !classIds.length) return;
+  try {
+    const result = await executeLearningContent<{ assignments: TextAssignment[]; texts: LearningText[]; paragraphs: TextParagraph[]; annotations: TextAnnotation[] }>({ action: 'readTexts', classIds });
+    const assignments = result.assignments;
+    await db.text_assignments.bulkPut(assignments); const ids = [...new Set(assignments.map(a => a.textId))];
+    if (!ids.length && !isTeacher) return;
+    for (const text of result.texts) await db.texts.put({ ...text, syncStatus: 'synced' });
+    for (const paragraph of result.paragraphs) await db.text_paragraphs.put(paragraph);
+    for (const annotation of result.annotations) await db.text_annotations.put({ ...annotation, syncStatus: 'synced' });
+  } catch { /* offline / not provisioned */ }
+}

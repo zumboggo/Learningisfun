@@ -2,9 +2,10 @@
 // Reads credentials from .env.setup.local (gitignored, never commit it).
 // Run with: node --env-file=.env.setup.local scripts/setup-appwrite.mjs
 //
-// Permissions are deliberately simple (any logged-in user can read/write) since
-// this app has a single teacher account for now. Revisit before onboarding real
-// students at scale.
+// New collections have no collection-wide browser permissions. Reads and writes
+// for collaborative content must pass through authenticated Appwrite Functions,
+// which enforce role, ownership, assignment, and class-membership checks.
+// Existing collections are not changed by this provisioning pass.
 
 import { Client, Databases, Permission, Role, ID } from 'node-appwrite';
 
@@ -21,12 +22,7 @@ if (!ENDPOINT || !PROJECT_ID || !API_KEY) {
 const client = new Client().setEndpoint(ENDPOINT).setProject(PROJECT_ID).setKey(API_KEY);
 const databases = new Databases(client);
 
-const PERMISSIONS = [
-  Permission.read(Role.users()),
-  Permission.create(Role.users()),
-  Permission.update(Role.users()),
-  Permission.delete(Role.users()),
-];
+const PERMISSIONS = [];
 
 // type: 'string' | 'text' | 'integer' | 'float' | 'boolean' | 'enum'
 // text is just a string attribute with a large size, for markdown/JSON blobs.
@@ -49,7 +45,7 @@ const COLLECTIONS = [
     attributes: [
       S('email', { size: 320, required: true }),
       S('name', { required: true }),
-      ENUM('role', ['teacher', 'student'], { required: true }),
+      ENUM('role', ['teacher', 'student', 'parent'], { required: true }),
       S('deviceId', { required: true }),
       DATE('lastSyncAt', { required: true }),
       DATE('createdAt', { required: true }),
@@ -69,12 +65,15 @@ const COLLECTIONS = [
       S('teacherId', { required: true }),
       S('joinCode', { size: 16, required: true }),
       BOOL('joinCodeActive', { required: true }),
+      S('parentCode', { size: 16, required: false }),
+      BOOL('parentCodeActive', { required: false }),
       ENUM('status', ['active', 'archived'], { required: true }),
       DATE('createdAt', { required: true }),
     ],
     indexes: [
       { key: 'idx_teacherId', type: 'key', attributes: ['teacherId'] },
       { key: 'idx_joinCode', type: 'key', attributes: ['joinCode'] },
+      { key: 'idx_parentCode', type: 'key', attributes: ['parentCode'] },
       { key: 'idx_status', type: 'key', attributes: ['status'] },
     ],
   },
@@ -84,7 +83,7 @@ const COLLECTIONS = [
     attributes: [
       S('classId', { required: true }),
       S('userId', { required: true }),
-      ENUM('role', ['teacher', 'student'], { required: true }),
+      ENUM('role', ['teacher', 'student', 'parent'], { required: true }),
       DATE('joinedAt', { required: true }),
     ],
     indexes: [
@@ -99,6 +98,9 @@ const COLLECTIONS = [
     attributes: [
       S('classId', { required: true }),
       S('assignmentId', { required: false }),
+      ENUM('discussionType', ['qft', 'question', 'text'], { required: false }),
+      S('textId', { required: false }),
+      TXT('promptMarkdown', { required: false }),
       S('title', { required: true }),
       DATE('sessionDate', { required: true }),
       ENUM('status', ['draft', 'active', 'published', 'archived'], { required: true }),
@@ -434,6 +436,11 @@ const COLLECTIONS = [
     ],
   },
   {
+    id: 'writing_ai_feedback', name: 'Writing AI Feedback',
+    attributes: [S('submissionId', { required: true }), TXT('wwwSummary', { required: false }), TXT('improvementsJson', { required: false }), S('model', { required: true }), DATE('generatedAt', { required: true })],
+    indexes: [{ key: 'idx_submissionId', type: 'unique', attributes: ['submissionId'] }],
+  },
+  {
     id: 'teacher_writing_feedback',
     name: 'Teacher Writing Feedback',
     attributes: [
@@ -454,6 +461,7 @@ const COLLECTIONS = [
     name: 'Quizzes',
     attributes: [
       S('classId', { required: true }),
+      S('sourceClassId', { required: false }),
       S('createdBy', { required: true }),
       S('title', { required: true }),
       ENUM('sourceType', ['discussion', 'flashcards', 'mixed'], { required: true }),
@@ -471,6 +479,11 @@ const COLLECTIONS = [
       { key: 'idx_status', type: 'key', attributes: ['status'] },
       { key: 'idx_createdAt', type: 'key', attributes: ['createdAt'] },
     ],
+  },
+  {
+    id: 'quiz_assignments', name: 'Quiz Assignments',
+    attributes: [S('quizId', { required: true }), S('classId', { required: true }), DATE('assignedAt', { required: true })],
+    indexes: [{ key: 'idx_quizId', type: 'key', attributes: ['quizId'] }, { key: 'idx_classId', type: 'key', attributes: ['classId'] }, { key: 'idx_quiz_class', type: 'unique', attributes: ['quizId', 'classId'] }],
   },
   {
     id: 'quiz_questions',
@@ -504,6 +517,36 @@ const COLLECTIONS = [
       { key: 'idx_quizId', type: 'key', attributes: ['quizId'] },
       { key: 'idx_userId', type: 'key', attributes: ['userId'] },
     ],
+  },
+  {
+    id: 'texts', name: 'Texts',
+    attributes: [S('teacherId', { required: true }), S('title', { required: true }), S('author', { required: false }), TXT('source', { required: false }), ENUM('status', ['draft','published','archived'], { required: true }), DATE('createdAt', { required: true }), DATE('updatedAt', { required: true })],
+    indexes: [{ key: 'idx_teacherId', type: 'key', attributes: ['teacherId'] }, { key: 'idx_status', type: 'key', attributes: ['status'] }],
+  },
+  {
+    id: 'text_assignments', name: 'Text Assignments',
+    attributes: [S('textId', { required: true }), S('classId', { required: true }), DATE('assignedAt', { required: true })],
+    indexes: [{ key: 'idx_textId', type: 'key', attributes: ['textId'] }, { key: 'idx_classId', type: 'key', attributes: ['classId'] }, { key: 'idx_text_class', type: 'unique', attributes: ['textId','classId'] }],
+  },
+  {
+    id: 'text_paragraphs', name: 'Text Paragraphs',
+    attributes: [S('textId', { required: true }), INT('sortOrder', { required: true }), TXT('content', { required: true })],
+    indexes: [{ key: 'idx_textId', type: 'key', attributes: ['textId'] }, { key: 'idx_text_order', type: 'key', attributes: ['textId','sortOrder'] }],
+  },
+  {
+    id: 'text_annotations', name: 'Text Annotations',
+    attributes: [S('textId', { required: true }), S('paragraphId', { required: true }), S('classId', { required: true }), S('authorId', { required: true }), S('anonymousLabel', { required: true }), ENUM('type', ['observation','question'], { required: true }), TXT('content', { required: true }), ENUM('moderationStatus', ['visible','hidden'], { required: true }), DATE('createdAt', { required: true }), DATE('updatedAt', { required: true })],
+    indexes: [{ key: 'idx_text_class', type: 'key', attributes: ['textId','classId'] }, { key: 'idx_paragraphId', type: 'key', attributes: ['paragraphId'] }, { key: 'idx_authorId', type: 'key', attributes: ['authorId'] }],
+  },
+  {
+    id: 'text_discussion_posts', name: 'Discussion Posts',
+    attributes: [S('classSessionId', { required: true }), S('textId', { required: false }), S('classId', { required: true }), S('parentId', { required: false }), INT('depth', { required: true }), S('authorId', { required: true }), S('anonymousLabel', { required: true }), TXT('content', { required: true }), INT('score', { required: true }), ENUM('moderationStatus', ['visible','hidden'], { required: true }), BOOL('locked', { required: true }), BOOL('isTeacherPost', { required: true }), DATE('createdAt', { required: true }), DATE('updatedAt', { required: true })],
+    indexes: [{ key: 'idx_sessionId', type: 'key', attributes: ['classSessionId'] }, { key: 'idx_parentId', type: 'key', attributes: ['parentId'] }, { key: 'idx_classId', type: 'key', attributes: ['classId'] }],
+  },
+  {
+    id: 'text_discussion_votes', name: 'Discussion Votes',
+    attributes: [S('postId', { required: true }), S('classSessionId', { required: true }), S('textId', { required: false }), S('classId', { required: true }), S('userId', { required: true }), INT('value', { required: true }), DATE('createdAt', { required: true }), DATE('updatedAt', { required: true })],
+    indexes: [{ key: 'idx_sessionId', type: 'key', attributes: ['classSessionId'] }, { key: 'idx_post_user', type: 'unique', attributes: ['postId','userId'] }, { key: 'idx_userId', type: 'key', attributes: ['userId'] }],
   },
 ];
 
@@ -539,6 +582,11 @@ async function createAttribute(collectionId, def) {
     }
   } catch (err) {
     if (err.code === 409) {
+      if (type === 'enum' && key === 'role') {
+        await databases.updateEnumAttribute(DATABASE_ID, collectionId, key, def.elements, required, null);
+        console.log(`  ~ ${collectionId}.${key} enum updated`);
+        return;
+      }
       console.log(`  = ${collectionId}.${key} already exists, skipping`);
       return;
     }

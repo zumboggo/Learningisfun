@@ -20,6 +20,9 @@ export async function createClassSession(
     assignmentId?: string | null;
     votesPerStudent?: number;
     allowStackedVotes?: boolean;
+    discussionType?: ClassSession['discussionType'];
+    textId?: string | null;
+    promptMarkdown?: string;
   },
 ): Promise<ClassSession> {
   const now = getTimestamp();
@@ -27,6 +30,9 @@ export async function createClassSession(
     $id: generateId(),
     classId,
     assignmentId: input.assignmentId || undefined,
+    discussionType: input.discussionType || 'qft',
+    textId: input.textId || null,
+    promptMarkdown: input.promptMarkdown || '',
     title: input.title.trim() || 'Class discussion',
     sessionDate: input.sessionDate || todayKey(),
     status: 'active',
@@ -64,7 +70,7 @@ export async function getActiveClassSessions(classId: string): Promise<ClassSess
 export async function updateClassSession(
   sessionId: string,
   userId: string,
-  updates: Partial<Pick<ClassSession, 'title' | 'status' | 'votesPerStudent' | 'allowStackedVotes' | 'notesMarkdown' | 'assignmentId'>>,
+  updates: Partial<Pick<ClassSession, 'title' | 'status' | 'votesPerStudent' | 'allowStackedVotes' | 'notesMarkdown' | 'assignmentId' | 'promptMarkdown'>>,
 ): Promise<void> {
   const now = getTimestamp();
   const patch = {
@@ -155,6 +161,9 @@ export async function syncClassSessionsFromServer(classIds: string[]): Promise<v
         $id: id,
         classId: doc.classId as string,
         assignmentId: (doc.assignmentId as string) || undefined,
+        discussionType: (doc.discussionType as ClassSession['discussionType']) || 'qft',
+        textId: (doc.textId as string) || null,
+        promptMarkdown: (doc.promptMarkdown as string) || '',
         title: (doc.title as string) || 'Class discussion',
         sessionDate: doc.sessionDate as string,
         status: doc.status as ClassSession['status'],

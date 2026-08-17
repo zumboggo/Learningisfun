@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/common/Button';
-import { findClassByJoinCode, joinClass } from '@/services/class.service';
+import { findClassByJoinCode, findClassByParentCode, joinClass } from '@/services/class.service';
 import type { Class } from '@/types';
 
 type Mode = 'signup' | 'signin';
@@ -44,14 +44,17 @@ export function JoinClassPage() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [lookup, setLookup] = useState<{ code: string; cls: Class | null } | null>(null);
+  const [joinRole, setJoinRole] = useState<'student' | 'parent'>('student');
 
   // Preview the class behind the code so students can confirm they are in the
   // right place before typing an email address.
   useEffect(() => {
     if (code.length !== 6) return;
     let cancelled = false;
-    void findClassByJoinCode(code).then(cls => {
-      if (!cancelled) setLookup({ code, cls });
+    void findClassByJoinCode(code).then(async cls => {
+      if (cls) { if (!cancelled) { setJoinRole('student'); setLookup({ code, cls }); } return; }
+      const parentClass = await findClassByParentCode(code);
+      if (!cancelled) { setJoinRole(parentClass ? 'parent' : 'student'); setLookup({ code, cls: parentClass }); }
     });
     return () => { cancelled = true; };
   }, [code]);
@@ -64,10 +67,10 @@ export function JoinClassPage() {
   const enrol = useCallback(async (userId: string) => {
     // The very first lookup can land before the new session is fully attached,
     // so a single miss is retried before it is reported as a bad code.
-    let joined = await joinClass(userId, code);
+    let joined = await joinClass(userId, code, joinRole);
     if (!joined) {
       await new Promise(resolve => setTimeout(resolve, 600));
-      joined = await joinClass(userId, code);
+      joined = await joinClass(userId, code, joinRole);
     }
     if (!joined) {
       setError(
@@ -77,7 +80,7 @@ export function JoinClassPage() {
     }
     navigate('/dashboard', { replace: true });
     return true;
-  }, [code, navigate]);
+  }, [code, joinRole, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,7 +98,7 @@ export function JoinClassPage() {
     setSubmitting(true);
     try {
       const account = mode === 'signup'
-        ? await register(email, password, name, 'student')
+        ? await register(email, password, name, joinRole)
         : await login(email, password);
       await enrol(account.$id);
     } catch (err) {
@@ -139,7 +142,7 @@ export function JoinClassPage() {
       />
       {foundClass && (
         <p className="mt-2 text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2">
-          Joining <span className="font-semibold">{foundClass.courseName}</span> — {foundClass.name}
+          Joining <span className="font-semibold">{foundClass.courseName}</span> — {foundClass.name} as {joinRole === 'parent' ? 'a parent observer' : 'a student'}
         </p>
       )}
       {!foundClass && lookupDone && (

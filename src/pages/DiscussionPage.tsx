@@ -18,10 +18,11 @@ import type {
   QuestionVote,
   ClassSession,
 } from '@/types';
+import { RedditDiscussionPage } from '@/pages/RedditDiscussionPage';
 
 export function DiscussionPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
-  const { user, isTeacher } = useAuth();
+  const { user, isTeacher, isParent } = useAuth();
 
   const [questionText, setQuestionText] = useState('');
   const [selectedPassage, setSelectedPassage] = useState('');
@@ -390,6 +391,14 @@ export function DiscussionPage() {
 
   if (!session) {
     return <div className="p-4 text-gray-400">Loading...</div>;
+  }
+
+  if (session.discussionType && session.discussionType !== 'qft') {
+    return <RedditDiscussionPage session={session} />;
+  }
+
+  if (isParent) {
+    return <div className="p-4 max-w-2xl mx-auto space-y-4"><h1 className="text-2xl font-bold">{session.title}</h1><p className="text-sm text-gray-500">Parent read-only view</p>{sortedQuestions.map(question => <Card key={question.$id}><div className="flex justify-between gap-3"><p>{question.questionText}</p><b>{question.voteCount} votes</b></div>{(answersByQuestion?.get(question.$id)||[]).map(answer=><p key={answer.$id} className="mt-2 border-l-2 pl-3 text-sm">{answer.answerText}</p>)}</Card>)}</div>;
   }
 
   return (

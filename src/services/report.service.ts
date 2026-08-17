@@ -7,6 +7,9 @@ export interface ParticipationRow {
   email: string;
   questionsSubmitted: number;
   votesUsed: number;
+  totalPosts: number;
+  totalWords: number;
+  totalUpvotes: number;
   responseStatus: string;
   responseWords: number;
   belowMinimum: boolean;
@@ -48,12 +51,25 @@ export async function buildClassParticipationRows(
     const flashcard = options.deckId
       ? await buildFlashcardSummary(member.userId, classId, options.deckId)
       : { minutes: 0, reviewed: 0, newCards: 0, familiarCards: 0, knownCards: 0 };
+    const sessionIds = (await db.class_sessions.where('classId').equals(classId).toArray()).map(s => s.$id);
+    const oldQuestions = sessionIds.length ? await db.discussion_questions.where('classSessionId').anyOf(sessionIds).and(q=>q.authorId===member.userId&&q.moderationStatus!=='removed').toArray() : [];
+    const oldQuestionIds = sessionIds.length ? (await db.discussion_questions.where('classSessionId').anyOf(sessionIds).toArray()).map(q=>q.$id) : [];
+    const oldAnswers = oldQuestionIds.length ? await db.discussion_answers.where('questionId').anyOf(oldQuestionIds).and(a=>a.authorId===member.userId).toArray() : [];
+    const redditPosts = await db.text_discussion_posts.where('classId').equals(classId).and(p=>p.authorId===member.userId&&p.moderationStatus==='visible').toArray();
+    const annotations = await db.text_annotations.where('classId').equals(classId).and(a=>a.authorId===member.userId&&a.moderationStatus==='visible').toArray();
+    const redditIds = redditPosts.map(p=>p.$id);
+    const positiveVotes = redditIds.length ? await db.text_discussion_votes.where('postId').anyOf(redditIds).and(v=>v.value===1).count() : 0;
+    const totalPosts = oldQuestions.length + oldAnswers.length + redditPosts.length + annotations.length;
+    const totalWords = [...oldQuestions.map(q=>q.questionText),...oldAnswers.map(a=>a.answerText),...redditPosts.map(p=>p.content),...annotations.map(a=>a.content)].reduce((sum,text)=>sum+wordCount(text),0);
 
     rows.push({
       studentName: user?.name || 'Unknown',
       email: user?.email || '',
       questionsSubmitted,
       votesUsed: votes.reduce((sum, vote) => sum + Math.max(1, vote.weight || 1), 0),
+      totalPosts,
+      totalWords,
+      totalUpvotes: oldQuestions.reduce((sum,q)=>sum+q.voteCount,0)+positiveVotes,
       responseStatus: 'n/a',
       responseWords: 0,
       belowMinimum: false,
@@ -74,6 +90,9 @@ export function rowsToCsv(rows: ParticipationRow[]): string {
     'email',
     'questionsSubmitted',
     'votesUsed',
+    'totalPosts',
+    'totalWords',
+    'totalUpvotes',
     'responseStatus',
     'responseWords',
     'belowMinimum',
@@ -150,3 +169,4 @@ function escapeCsv(value: unknown): string {
 function round1(value: number): number {
   return Math.round(value * 10) / 10;
 }
+function wordCount(value:string):number{return value.trim()?value.trim().split(/\s+/).length:0;}

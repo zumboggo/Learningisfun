@@ -1,0 +1,2 @@
+import { describe,expect,it } from 'vitest';import { splitParagraphs } from '@/services/text.service';
+describe('text paragraph import',()=>{it('splits blank-line paragraphs and joins wrapped lines',()=>{expect(splitParagraphs('First line\nwraps here.\n\nSecond paragraph.')).toEqual(['First line wraps here.','Second paragraph.']);});it('ignores empty paragraphs and normalizes Windows line endings',()=>{expect(splitParagraphs('  One\r\n\r\n\r\n Two  ')).toEqual(['One','Two']);});});

@@ -38,6 +38,8 @@ export async function createClass(
     teacherId,
     joinCode: generateJoinCode(),
     joinCodeActive: true,
+    parentCode: generateJoinCode(),
+    parentCodeActive: true,
     status: 'active',
     createdAt: getTimestamp(),
   };
@@ -59,6 +61,8 @@ export async function createClass(
       teacherId,
       joinCode: cls.joinCode,
       joinCodeActive: true,
+      parentCode: cls.parentCode,
+      parentCodeActive: true,
       status: 'active',
       createdAt: cls.createdAt,
     });
@@ -101,6 +105,8 @@ export async function findClassByJoinCode(joinCode: string): Promise<Class | nul
       teacherId: doc.teacherId,
       joinCode: doc.joinCode,
       joinCodeActive: doc.joinCodeActive,
+      parentCode: doc.parentCode || '',
+      parentCodeActive: Boolean(doc.parentCodeActive),
       status: doc.status,
       createdAt: doc.createdAt,
     };
@@ -111,8 +117,20 @@ export async function findClassByJoinCode(joinCode: string): Promise<Class | nul
   }
 }
 
-export async function joinClass(userId: string, joinCode: string): Promise<Class | null> {
-  const cls = await findClassByJoinCode(joinCode);
+export async function findClassByParentCode(parentCode: string): Promise<Class | null> {
+  const local = (await db.classes.toArray()).find(c => c.parentCode === parentCode && c.parentCodeActive && c.status === 'active');
+  if (local) return local;
+  try {
+    const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.classes, [Query.equal('parentCode', parentCode), Query.equal('parentCodeActive', true), Query.equal('status', 'active')]);
+    if (!result.documents.length) return null;
+    const doc = result.documents[0];
+    const cls: Class = { $id:doc.$id,name:doc.name,courseName:doc.courseName,schoolYear:doc.schoolYear,teacherId:doc.teacherId,joinCode:doc.joinCode,joinCodeActive:doc.joinCodeActive,parentCode:doc.parentCode,parentCodeActive:doc.parentCodeActive,status:doc.status,createdAt:doc.createdAt };
+    await db.classes.put(cls); return cls;
+  } catch { return null; }
+}
+
+export async function joinClass(userId: string, joinCode: string, role: 'student' | 'parent' = 'student'): Promise<Class | null> {
+  const cls = role === 'parent' ? await findClassByParentCode(joinCode) : await findClassByJoinCode(joinCode);
   if (!cls) return null;
 
   const existing = await db.class_members
@@ -127,7 +145,7 @@ export async function joinClass(userId: string, joinCode: string): Promise<Class
     $id: memberId,
     classId: cls.$id,
     userId,
-    role: 'student',
+    role,
     joinedAt: getTimestamp(),
   };
 
@@ -137,7 +155,7 @@ export async function joinClass(userId: string, joinCode: string): Promise<Class
     await databases.createDocument(DATABASE_ID, COLLECTIONS.class_members, memberId, {
       classId: cls.$id,
       userId,
-      role: 'student',
+      role,
       joinedAt: member.joinedAt,
     });
   } catch {
@@ -245,6 +263,19 @@ export async function regenerateJoinCode(classId: string, teacherId: string): Pr
   return newCode;
 }
 
+export async function ensureParentCode(classId: string, teacherId: string): Promise<string> {
+  const cls = await db.classes.get(classId); if (cls?.parentCode) return cls.parentCode;
+  return regenerateParentCode(classId, teacherId);
+}
+
+export async function regenerateParentCode(classId: string, teacherId: string): Promise<string> {
+  const parentCode = generateJoinCode();
+  await db.classes.update(classId, { parentCode, parentCodeActive: true });
+  try { await databases.updateDocument(DATABASE_ID, COLLECTIONS.classes, classId, { parentCode, parentCodeActive: true }); }
+  catch { const cls=await db.classes.get(classId); if(cls)await addToQueue(teacherId,'class',classId,'update',cls); }
+  return parentCode;
+}
+
 export async function removeStudent(classId: string, userId: string): Promise<void> {
   const member = await db.class_members
     .where('[classId+userId]')
@@ -316,6 +347,8 @@ export async function syncClassesFromServer(userId: string): Promise<void> {
           teacherId: classDoc.teacherId,
           joinCode: classDoc.joinCode,
           joinCodeActive: classDoc.joinCodeActive,
+          parentCode: (classDoc.parentCode as string) || '',
+          parentCodeActive: Boolean(classDoc.parentCodeActive),
           status: classDoc.status,
           createdAt: classDoc.createdAt,
         });

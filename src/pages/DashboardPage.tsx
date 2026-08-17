@@ -31,10 +31,16 @@ interface DeckAction {
 }
 
 export function DashboardPage() {
-  const { user, isTeacher } = useAuth();
+  const { user, isTeacher, isParent } = useAuth();
   if (!user) return null;
 
-  return isTeacher ? <TeacherDashboard /> : <StudentDashboard />;
+  return isTeacher ? <TeacherDashboard /> : isParent ? <ParentDashboard /> : <StudentDashboard />;
+}
+
+function ParentDashboard() {
+  const { user } = useAuth();
+  const classes = useLiveQuery(async () => { const memberships = await db.class_members.where('userId').equals(user!.$id).toArray(); return Promise.all(memberships.map(m => db.classes.get(m.classId))); }, [user?.$id]);
+  return <div className="student-page space-y-5 p-4"><header><h1 className="text-2xl font-bold">Parent view</h1><p className="text-gray-500">Read-only access to class learning materials and conversations.</p></header>{classes?.filter(Boolean).map(cls => <Card key={cls!.$id}><h2 className="font-semibold">{cls!.courseName}</h2><p className="text-sm text-gray-500">{cls!.name}</p><div className="mt-3 flex gap-3 text-sm"><Link to="/texts" className="text-blue-600">Texts</Link><Link to="/decks" className="text-blue-600">Flashcards</Link><Link to="/discussions" className="text-blue-600">Discussions</Link></div></Card>)}</div>;
 }
 
 const WORD_MILESTONES = [25, 50, 100, 250, 500, 750, 1000, 1500, 2000, 3000, 5000, 7500, 10000];
