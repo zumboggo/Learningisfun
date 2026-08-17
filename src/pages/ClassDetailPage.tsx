@@ -24,6 +24,12 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { AddDecksToClassModal } from '@/components/common/AddDecksToClassModal';
 import { RandomStudentModal } from '@/components/teacher/RandomStudentModal';
 import { CreateGroupsModal } from '@/components/teacher/CreateGroupsModal';
+import type { ClassSession, LearningText } from '@/types';
+
+type WeeklyMaterial =
+  | { kind: 'notes'; date: string; session: ClassSession }
+  | { kind: 'discussion'; date: string; session: ClassSession }
+  | { kind: 'text'; date: string; text: LearningText };
 
 export function ClassDetailPage() {
   const { classId } = useParams<{ classId: string }>();
@@ -114,12 +120,27 @@ export function ClassDetailPage() {
 
   const discussions = useLiveQuery(async () => {
     if (!classId) return [];
-    const sessions = await db.class_sessions.where('classId').equals(classId).reverse().sortBy('sessionDate');
+    const sessions = (await db.class_sessions.where('classId').equals(classId).reverse().sortBy('sessionDate')).filter(session => session.discussionType !== 'notes');
     const rows = await Promise.all(sessions.map(async session => ({
       session,
       questionCount: await db.discussion_questions.where('classSessionId').equals(session.$id).count(),
     })));
     return rows;
+  }, [classId]);
+
+  const weeklyMaterials = useLiveQuery(async (): Promise<WeeklyMaterial[]> => {
+    if (!classId) return [];
+    const sessions = await db.class_sessions.where('classId').equals(classId).toArray();
+    const sessionMaterials: WeeklyMaterial[] = sessions
+      .filter(session => session.status === 'published' || (session.discussionType !== 'notes' && session.status === 'active'))
+      .map(session => ({ kind: session.discussionType === 'notes' ? 'notes' : 'discussion', date: session.sessionDate, session }));
+    const assignments = await db.text_assignments.where('classId').equals(classId).toArray();
+    const texts = await Promise.all(assignments.map(assignment => db.texts.get(assignment.textId)));
+    const textMaterials: WeeklyMaterial[] = assignments.flatMap((assignment, index) => {
+      const text = texts[index];
+      return text?.status === 'published' ? [{ kind: 'text' as const, date: assignment.assignedAt, text }] : [];
+    });
+    return [...sessionMaterials, ...textMaterials].sort((a, b) => b.date.localeCompare(a.date));
   }, [classId]);
 
   const handleRegenerateCode = async () => {
@@ -187,6 +208,7 @@ export function ClassDetailPage() {
         </div>
         {isOwner && (
           <div className="flex flex-wrap gap-2">
+            <Link to={`/classes/${cls.$id}/notes/today`}><Button size="sm">Today&apos;s Notes</Button></Link>
             <Button onClick={() => setShowDiscussionModal(true)} size="sm">Start discussion</Button>
             <Button onClick={() => setShowPicker(true)} size="sm" variant="secondary">Pick a student</Button>
             <Button onClick={() => setShowGroups(true)} size="sm" variant="secondary">Create groups</Button>
@@ -255,6 +277,8 @@ export function ClassDetailPage() {
           )}
         </Card>
       )}
+
+      <WeeklyClassReview materials={weeklyMaterials || []} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section>
@@ -530,4 +554,82 @@ export function ClassDetailPage() {
 function escapeCsv(value: string): string {
   if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
   return value;
+}
+
+function WeeklyClassReview({ materials }: { materials: WeeklyMaterial[] }) {
+  const groups = new Map<string, WeeklyMaterial[]>();
+  for (const material of materials) {
+    const key = weekStart(material.date);
+    groups.set(key, [...(groups.get(key) || []), material]);
+  }
+  const weeks = [...groups.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+  const [openWeek, setOpenWeek] = useState(weeks[0]?.[0] || '');
+  useEffect(() => {
+    if (!openWeek && weeks[0]?.[0]) setOpenWeek(weeks[0][0]);
+  }, [openWeek, weeks]);
+
+  return (
+    <section>
+      <h2 className="mb-3 text-lg font-semibold">Weekly class materials</h2>
+      {weeks.length === 0 ? (
+        <Card><p className="text-sm text-gray-500">Notes, discussions, and texts will appear here by week.</p></Card>
+      ) : (
+        <div className="space-y-3">
+          {weeks.map(([week, items]) => {
+            const isOpen = openWeek === week;
+            const counts = {
+              notes: items.filter(item => item.kind === 'notes').length,
+              discussions: items.filter(item => item.kind === 'discussion').length,
+              texts: items.filter(item => item.kind === 'text').length,
+            };
+            return (
+              <div key={week} className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                <button className="flex w-full items-center justify-between gap-3 p-4 text-left hover:bg-gray-50" onClick={() => setOpenWeek(isOpen ? '' : week)}>
+                  <span className="font-semibold">{isOpen ? '▾' : '▸'} Week of {formatWeek(week)}</span>
+                  <span className="text-xs text-gray-500">{counts.notes} notes · {counts.discussions} discussions · {counts.texts} texts</span>
+                </button>
+                {isOpen && (
+                  <div className="space-y-3 border-t bg-gray-50 p-4">
+                    {items.map(item => item.kind === 'notes' ? (
+                      <article key={`notes-${item.session.$id}`} className="rounded-xl border bg-white p-5">
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-blue-600">Class notes · {formatDate(item.date)}</p>
+                        <div className="whitespace-pre-wrap text-base leading-7 text-gray-800">{item.session.publishedNotesMarkdown}</div>
+                      </article>
+                    ) : item.kind === 'discussion' ? (
+                      <Link key={`discussion-${item.session.$id}`} to={`/discussions/${item.session.$id}`} className="block rounded-xl border bg-white p-4 hover:border-blue-300">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-violet-600">Discussion · {formatDate(item.date)}</p>
+                        <h3 className="mt-1 font-semibold">{item.session.title}</h3>
+                        {item.session.promptMarkdown && <p className="mt-1 line-clamp-2 text-sm text-gray-500">{item.session.promptMarkdown}</p>}
+                      </Link>
+                    ) : (
+                      <Link key={`text-${item.text.$id}`} to={`/texts/${item.text.$id}`} className="block rounded-xl border bg-white p-4 hover:border-blue-300">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Text · {formatDate(item.date)}</p>
+                        <h3 className="mt-1 font-semibold">{item.text.title}</h3>
+                        <p className="text-sm text-gray-500">{item.text.author || 'Unknown author'}</p>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function weekStart(value: string): string {
+  const date = new Date(value.length === 10 ? `${value}T12:00:00` : value);
+  const daysSinceMonday = (date.getDay() + 6) % 7;
+  date.setDate(date.getDate() - daysSinceMonday);
+  return date.toISOString().slice(0, 10);
+}
+
+function formatWeek(value: string): string {
+  return new Date(`${value}T12:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function formatDate(value: string): string {
+  return new Date(value.length === 10 ? `${value}T12:00:00` : value).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 }

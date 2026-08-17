@@ -36,7 +36,7 @@ export interface ClassSession {
   $id: string;
   classId: string;
   assignmentId?: string;
-  discussionType?: 'qft' | 'question' | 'text';
+  discussionType?: 'qft' | 'question' | 'text' | 'notes';
   textId?: string | null;
   promptMarkdown?: string;
   title: string;

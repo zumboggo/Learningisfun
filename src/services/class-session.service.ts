@@ -51,6 +51,39 @@ export async function createClassSession(
   return session;
 }
 
+export async function getOrCreateTodayNotes(classId: string, teacherId: string): Promise<ClassSession> {
+  const date = todayKey();
+  const existing = await db.class_sessions
+    .where('classId')
+    .equals(classId)
+    .and(session => session.discussionType === 'notes' && session.sessionDate === date)
+    .first();
+  if (existing) return existing;
+
+  const session = await createClassSession(classId, teacherId, {
+    title: "Today's Notes",
+    sessionDate: date,
+    discussionType: 'notes',
+    votesPerStudent: 0,
+  });
+  await db.class_sessions.update(session.$id, { status: 'draft' });
+  return { ...session, status: 'draft' };
+}
+
+export async function saveTodayNotes(sessionId: string, userId: string, content: string): Promise<void> {
+  const now = getTimestamp();
+  await db.class_sessions.update(sessionId, {
+    notesMarkdown: content,
+    publishedNotesMarkdown: content,
+    publishedAt: now,
+    status: 'published',
+    updatedAt: now,
+    syncStatus: 'local',
+  });
+  const updated = await db.class_sessions.get(sessionId);
+  if (updated) await addToQueue(userId, 'class_session', sessionId, 'update', updated);
+}
+
 export async function getClassSessions(classId: string): Promise<ClassSession[]> {
   return db.class_sessions
     .where('classId')

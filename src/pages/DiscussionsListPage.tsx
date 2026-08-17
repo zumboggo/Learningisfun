@@ -64,7 +64,7 @@ export function DiscussionsListPage() {
         .toArray();
     }
 
-    sessions = sessions.filter(s => filter === 'all' || (s.discussionType || 'qft') === filter);
+    sessions = sessions.filter(s => s.discussionType !== 'notes' && (filter === 'all' || (s.discussionType || 'qft') === filter));
     sessions.sort((a, b) => b.sessionDate.localeCompare(a.sessionDate));
 
     const sessionIds = sessions.map(s => s.$id);

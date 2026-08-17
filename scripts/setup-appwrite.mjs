@@ -98,7 +98,7 @@ const COLLECTIONS = [
     attributes: [
       S('classId', { required: true }),
       S('assignmentId', { required: false }),
-      ENUM('discussionType', ['qft', 'question', 'text'], { required: false }),
+      ENUM('discussionType', ['qft', 'question', 'text', 'notes'], { required: false }),
       S('textId', { required: false }),
       TXT('promptMarkdown', { required: false }),
       S('title', { required: true }),
@@ -582,7 +582,7 @@ async function createAttribute(collectionId, def) {
     }
   } catch (err) {
     if (err.code === 409) {
-      if (type === 'enum' && key === 'role') {
+      if (type === 'enum' && (key === 'role' || key === 'discussionType')) {
         await databases.updateEnumAttribute(DATABASE_ID, collectionId, key, def.elements, required, null);
         console.log(`  ~ ${collectionId}.${key} enum updated`);
         return;
