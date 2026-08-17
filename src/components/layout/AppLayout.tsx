@@ -10,7 +10,7 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const { user, logout, isTeacher, viewAsStudent, setViewAsStudent } = useAuth();
+  const { user, logout, isTeacher, isParent, viewAsStudent, setViewAsStudent } = useAuth();
   const location = useLocation();
   const syncState = useSyncStatus();
   const online = useOnlineStatus();
@@ -22,14 +22,21 @@ export function AppLayout({ children }: AppLayoutProps) {
         { to: '/dashboard', label: 'Dashboard', icon: 'D' },
         { to: '/discussions', label: 'Discussions', icon: 'Q' },
         { to: '/decks', label: 'Cards', icon: 'V' },
+        { to: '/texts', label: 'Texts', icon: 'T' },
         { to: '/writing', label: 'Writing', icon: 'W' },
         { to: '/classes', label: 'Classes', icon: 'C' },
         { to: '/quizzes', label: 'Quizzes', icon: 'Z' },
         { to: '/settings', label: 'Settings', icon: '?' },
       ]
-    : [
+    : isParent ? [
         { to: '/dashboard', label: 'Home', icon: 'home' },
         { to: '/decks', label: 'Cards', icon: 'cards' },
+        { to: '/texts', label: 'Texts', icon: 'read' },
+        { to: '/discussions', label: 'Discussions', icon: 'chat' },
+      ] : [
+        { to: '/dashboard', label: 'Home', icon: 'home' },
+        { to: '/decks', label: 'Cards', icon: 'cards' },
+        { to: '/texts', label: 'Texts', icon: 'read' },
         { to: '/writing', label: 'Writing', icon: 'write' },
         { to: '/discussions', label: 'Discussions', icon: 'chat' },
         { to: '/quizzes', label: 'Quizzes', icon: 'quiz' },

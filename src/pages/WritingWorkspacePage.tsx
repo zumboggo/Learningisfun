@@ -40,6 +40,8 @@ export function WritingWorkspacePage() {
   const { user } = useAuth();
   const [tab, setTab] = useState<Tab>('write');
   const [ready, setReady] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiError, setAiError] = useState('');
 
   const prompt = useLiveQuery(
     () => (promptId ? db.writing_prompts.get(promptId) : undefined),
@@ -141,6 +143,15 @@ export function WritingWorkspacePage() {
         required={required}
         hasFinal={Boolean(submission.finalMarkdown)}
       />
+
+      {prompt.aiFeedbackEnabled && (
+        <Card className="flex flex-wrap items-center justify-between gap-3 bg-violet-50/60">
+          <div><p className="font-semibold">AI writing coach</p><p className="text-xs text-gray-600">Get fresh feedback on the latest version saved in this workspace at any time.</p>{aiError && <p className="text-xs text-red-600">{aiError}</p>}</div>
+          <Button size="sm" variant="secondary" loading={aiGenerating} onClick={() => { setAiError(''); setAiGenerating(true); void saveDraft(submission.$id, submission.draftMarkdown).then(() => generateAiFeedbackForSubmission(submission.$id)).catch(e => setAiError(e instanceof Error ? e.message : 'Could not generate feedback')).finally(() => setAiGenerating(false)); }}>
+            {aiFeedback ? 'Generate fresh AI feedback' : 'Generate AI feedback'}
+          </Button>
+        </Card>
+      )}
 
       <div className="flex flex-wrap gap-2" role="tablist">
         {tabs.map(item => (

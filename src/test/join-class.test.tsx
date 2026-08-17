@@ -8,6 +8,7 @@ const login = vi.fn();
 const register = vi.fn();
 const joinClass = vi.fn();
 const findClassByJoinCode = vi.fn();
+const findClassByParentCode = vi.fn();
 
 let currentUser: { $id: string; name: string } | null = null;
 
@@ -23,6 +24,7 @@ vi.mock('@/contexts/AuthContext', () => ({
 vi.mock('@/services/class.service', () => ({
   joinClass: (...args: unknown[]) => joinClass(...args),
   findClassByJoinCode: (...args: unknown[]) => findClassByJoinCode(...args),
+  findClassByParentCode: (...args: unknown[]) => findClassByParentCode(...args),
 }));
 
 async function renderPage(path = '/join/ABC123') {
@@ -46,6 +48,7 @@ describe('JoinClassPage', () => {
       name: 'Period 3',
       courseName: 'English 10',
     });
+    findClassByParentCode.mockResolvedValue(null);
     register.mockResolvedValue({ $id: 'student-1', name: 'Sam' });
     login.mockResolvedValue({ $id: 'student-2', name: 'Alex' });
     joinClass.mockResolvedValue({ $id: 'class-1' });
@@ -72,7 +75,7 @@ describe('JoinClassPage', () => {
     await user.click(screen.getByRole('button', { name: 'Create account & join' }));
 
     await waitFor(() => expect(register).toHaveBeenCalledWith('sam@example.com', 'password123', 'Sam', 'student'));
-    expect(joinClass).toHaveBeenCalledWith('student-1', 'ABC123');
+    expect(joinClass).toHaveBeenCalledWith('student-1', 'ABC123', 'student');
     expect(navigate).toHaveBeenCalledWith('/dashboard', { replace: true });
   });
 
@@ -87,7 +90,7 @@ describe('JoinClassPage', () => {
 
     await waitFor(() => expect(login).toHaveBeenCalledWith('alex@example.com', 'hunter2'));
     expect(register).not.toHaveBeenCalled();
-    expect(joinClass).toHaveBeenCalledWith('student-2', 'ABC123');
+    expect(joinClass).toHaveBeenCalledWith('student-2', 'ABC123', 'student');
   });
 
   it('keeps the student on the page when the code is rejected', async () => {
@@ -166,7 +169,17 @@ describe('JoinClassPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'Join class' }));
 
-    await waitFor(() => expect(joinClass).toHaveBeenCalledWith('student-3', 'ABC123'));
+    await waitFor(() => expect(joinClass).toHaveBeenCalledWith('student-3', 'ABC123', 'student'));
     expect(navigate).toHaveBeenCalledWith('/dashboard', { replace: true });
+  });
+
+  it('creates a read-only parent account when a parent code is used', async () => {
+    findClassByJoinCode.mockResolvedValue(null);
+    findClassByParentCode.mockResolvedValue({ $id:'class-1',name:'Period 3',courseName:'English 10' });
+    const user=userEvent.setup(); await renderPage();
+    expect(await screen.findByText(/parent observer/)).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Nickname'),'Pat'); await user.type(screen.getByLabelText('Email'),'pat@example.com'); await user.type(screen.getByLabelText('Password'),'password123'); await user.click(screen.getByRole('button',{name:'Create account & join'}));
+    await waitFor(()=>expect(register).toHaveBeenCalledWith('pat@example.com','password123','Pat','parent'));
+    expect(joinClass).toHaveBeenCalledWith('student-1','ABC123','parent');
   });
 });

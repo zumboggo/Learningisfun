@@ -36,11 +36,20 @@ export const COLLECTIONS = {
   writing_prompt_assignments: 'writing_prompt_assignments',
   writing_submissions: 'writing_submissions',
   peer_reviews: 'peer_reviews',
+  writing_ai_feedback: 'writing_ai_feedback',
   teacher_writing_feedback: 'teacher_writing_feedback',
 
   quizzes: 'quizzes',
+  quiz_assignments: 'quiz_assignments',
   quiz_questions: 'quiz_questions',
   quiz_attempts: 'quiz_attempts',
+
+  texts: 'texts',
+  text_assignments: 'text_assignments',
+  text_paragraphs: 'text_paragraphs',
+  text_annotations: 'text_annotations',
+  text_discussion_posts: 'text_discussion_posts',
+  text_discussion_votes: 'text_discussion_votes',
 } as const;
 
 export const FUNCTION_IDS = {
@@ -48,4 +57,6 @@ export const FUNCTION_IDS = {
   submitQuestion: import.meta.env.VITE_APPWRITE_FN_SUBMIT_QUESTION || '',
   toggleVote: import.meta.env.VITE_APPWRITE_FN_TOGGLE_VOTE || '',
   teacherProgress: import.meta.env.VITE_APPWRITE_FN_TEACHER_PROGRESS || '',
+  learningContent: import.meta.env.VITE_APPWRITE_FN_LEARNING_CONTENT || 'learning-content',
+  writingAiFeedback: import.meta.env.VITE_APPWRITE_FN_WRITING_AI_FEEDBACK || 'writing-ai-feedback',
 } as const;

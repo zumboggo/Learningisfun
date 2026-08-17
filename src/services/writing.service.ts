@@ -1,7 +1,8 @@
-import { ID } from 'appwrite';
+import { ID, Query } from 'appwrite';
 import { db } from '@/db/schema';
 import { getApiKey, generateWritingFeedback } from '@/services/ai.service';
 import { addToQueue } from '@/services/sync.service';
+import { databases, functions, DATABASE_ID, COLLECTIONS, FUNCTION_IDS } from '@/lib/appwrite';
 import { countMarkdownWords } from '@/components/common/Markdown';
 import { getTimestamp } from '@/utils/helpers';
 import type {
@@ -505,12 +506,16 @@ export async function getOrCreateSubmission(
   const prompt = await db.writing_prompts.get(promptId);
   if (!prompt) throw new Error('Writing prompt not found');
 
+  const promptClassIds = await getPromptClassIds(promptId);
+  const membership = await db.class_members.where('userId').equals(authorId)
+    .and(member => promptClassIds.includes(member.classId)).first();
+  if (!membership) throw new Error('This writing prompt is not assigned to one of your classes');
   const now = getTimestamp();
   const id = ID.unique();
   const submission: WritingSubmission = {
     $id: id,
     promptId,
-    classId: prompt.classId,
+    classId: membership.classId,
     authorId,
     anonymousLabel: anonymousLabelFor(id),
     draftMarkdown: '',
@@ -593,7 +598,9 @@ export async function ensureReviewAssignments(
   const needed = prompt.peerReviewsRequired - mine.length;
 
   if (needed > 0) {
-    const submissions = await getPromptSubmissions(promptId);
+    const reviewerMemberships = await db.class_members.where('userId').equals(reviewerId).toArray();
+    const reviewerClassIds = new Set(reviewerMemberships.map(m => m.classId));
+    const submissions = (await getPromptSubmissions(promptId)).filter(s => reviewerClassIds.has(s.classId));
     const picks = pickSubmissionsToReview({
       reviewerId,
       submissions,
@@ -687,13 +694,18 @@ export async function generateAiFeedbackForSubmission(
   if (!prompt) throw new Error('Writing prompt not found');
   if (!prompt.aiFeedbackEnabled) throw new Error('AI feedback is turned off for this prompt');
 
-  const apiKey = await getApiKey();
-  if (!apiKey) throw new Error('No API key configured. Ask your teacher to add one in Settings.');
-
   const text = submission.submittedMarkdown || submission.draftMarkdown;
   if (!text.trim()) throw new Error('There is nothing written yet');
 
-  const result = await generateWritingFeedback(
+  let result: { www: string; improvements: string[] };
+  if (FUNCTION_IDS.writingAiFeedback) {
+    const execution = await functions.createExecution(FUNCTION_IDS.writingAiFeedback, JSON.stringify({ submissionId }));
+    if (execution.status === 'failed') throw new Error(execution.errors || 'AI feedback failed');
+    result = JSON.parse(execution.responseBody || '{}') as typeof result;
+  } else {
+    const apiKey = await getApiKey();
+    if (!apiKey) throw new Error('AI feedback is not configured on the server yet.');
+    result = await generateWritingFeedback(
     {
       promptTitle: prompt.title,
       promptText: prompt.promptMarkdown,
@@ -701,7 +713,8 @@ export async function generateAiFeedbackForSubmission(
       studentText: text,
     },
     apiKey,
-  );
+    );
+  }
 
   const existing = await getAiFeedback(submissionId);
   const record: WritingAiFeedback = {
@@ -714,6 +727,67 @@ export async function generateAiFeedbackForSubmission(
   };
   await db.writing_ai_feedback.put(record);
   return record;
+}
+
+/** Pull writing resources needed by this user. Server permissions remain authoritative. */
+export async function syncWritingFromServer(classIds: string[], userId: string, isTeacher: boolean): Promise<void> {
+  if (!DATABASE_ID || classIds.length === 0) return;
+  try {
+    const assignmentResult = await databases.listDocuments(DATABASE_ID, COLLECTIONS.writing_prompt_assignments, [Query.equal('classId', classIds), Query.limit(500)]);
+    const assignments = assignmentResult.documents.map(d => ({ $id: d.$id, promptId: d.promptId as string, classId: d.classId as string, assignedAt: d.assignedAt as string }));
+    await db.writing_prompt_assignments.bulkPut(assignments);
+    const promptIds = [...new Set(assignments.map(a => a.promptId))];
+    if (!promptIds.length) return;
+    const prompts = await databases.listDocuments(DATABASE_ID, COLLECTIONS.writing_prompts, [Query.equal('$id', promptIds), Query.limit(500)]);
+    for (const d of prompts.documents) await db.writing_prompts.put({
+      $id: d.$id, classId: d.classId as string, teacherId: d.teacherId as string, title: d.title as string,
+      promptMarkdown: (d.promptMarkdown as string) || '', instructions: (d.instructions as string) || '', rubricJson: (d.rubricJson as string) || '[]',
+      peerReviewsRequired: d.peerReviewsRequired as number, minWords: d.minWords as number, dueAt: (d.dueAt as string) || null,
+      status: d.status as WritingPrompt['status'], aiFeedbackEnabled: Boolean(d.aiFeedbackEnabled), createdAt: d.createdAt as string,
+      updatedAt: d.updatedAt as string, syncStatus: 'synced',
+    });
+    const submissions = await databases.listDocuments(DATABASE_ID, COLLECTIONS.writing_submissions, [
+      isTeacher ? Query.equal('promptId', promptIds) : Query.equal('authorId', userId), Query.limit(1000),
+    ]);
+    for (const d of submissions.documents) await db.writing_submissions.put(remoteSubmission(d));
+    if (!isTeacher) {
+      // Needed to build the review queue. Production deployments should expose
+      // these through the secure function as peer-safe projections.
+      const peers = await databases.listDocuments(DATABASE_ID, COLLECTIONS.writing_submissions, [
+        Query.equal('promptId', promptIds), Query.equal('classId', classIds), Query.equal('status', ['submitted', 'revised']), Query.limit(1000),
+      ]);
+      for (const d of peers.documents) await db.writing_submissions.put(remoteSubmission(d));
+    }
+    const reviews = await databases.listDocuments(DATABASE_ID, COLLECTIONS.peer_reviews, [
+      Query.equal(isTeacher ? 'promptId' : 'reviewerId', isTeacher ? promptIds : userId), Query.limit(1000),
+    ]);
+    for (const d of reviews.documents) await db.peer_reviews.put({
+      $id: d.$id, promptId: d.promptId as string, submissionId: d.submissionId as string, reviewerId: d.reviewerId as string,
+      scoresJson: (d.scoresJson as string) || '{}', feedbackPointsJson: (d.feedbackPointsJson as string) || '[]',
+      additionalComment: (d.additionalComment as string) || '', status: d.status as PeerReview['status'],
+      assignedAt: d.assignedAt as string, submittedAt: (d.submittedAt as string) || null, syncStatus: 'synced',
+    });
+    if (!isTeacher) {
+      const ownSubmissionIds = submissions.documents.map(d => d.$id);
+      if (ownSubmissionIds.length) {
+        const received = await databases.listDocuments(DATABASE_ID, COLLECTIONS.peer_reviews, [Query.equal('submissionId', ownSubmissionIds), Query.limit(1000)]);
+        for (const d of received.documents) await db.peer_reviews.put({ $id:d.$id,promptId:d.promptId as string,submissionId:d.submissionId as string,reviewerId:d.reviewerId as string,scoresJson:(d.scoresJson as string)||'{}',feedbackPointsJson:(d.feedbackPointsJson as string)||'[]',additionalComment:(d.additionalComment as string)||'',status:d.status as PeerReview['status'],assignedAt:d.assignedAt as string,submittedAt:(d.submittedAt as string)||null,syncStatus:'synced' });
+      }
+      const targetIds = [...new Set(reviews.documents.map(d => d.submissionId as string))];
+      if (targetIds.length) {
+        const targets = await databases.listDocuments(DATABASE_ID, COLLECTIONS.writing_submissions, [Query.equal('$id', targetIds), Query.limit(1000)]);
+        for (const d of targets.documents) await db.writing_submissions.put(remoteSubmission(d));
+      }
+    }
+  } catch { /* offline or secure function backend not deployed yet */ }
+}
+
+function remoteSubmission(d: Record<string, unknown> & { $id: string }): WritingSubmission {
+  return { $id: d.$id, promptId: d.promptId as string, classId: d.classId as string, authorId: d.authorId as string,
+    anonymousLabel: d.anonymousLabel as string, draftMarkdown: (d.draftMarkdown as string) || '', submittedMarkdown: (d.submittedMarkdown as string) || '',
+    wordCount: (d.wordCount as number) || 0, status: d.status as WritingSubmission['status'], submittedAt: (d.submittedAt as string) || null,
+    finalMarkdown: (d.finalMarkdown as string) || '', finalUpdatedAt: (d.finalUpdatedAt as string) || null, createdAt: d.createdAt as string,
+    updatedAt: d.updatedAt as string, syncStatus: 'synced' };
 }
 
 export function parseImprovements(improvementsJson: string): string[] {

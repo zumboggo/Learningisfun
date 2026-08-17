@@ -5,9 +5,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/db/schema';
 import {
   regenerateJoinCode,
+  ensureParentCode,
+  regenerateParentCode,
   removeStudent,
   getClassMembers,
   importClassRoster,
+  parseClassLinks,
+  saveClassLinks,
+  MAX_CLASS_LINKS,
   syncClassRosterFromServer,
   type RosterImportResult,
 } from '@/services/class.service';
@@ -22,12 +27,19 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { AddDecksToClassModal } from '@/components/common/AddDecksToClassModal';
 import { RandomStudentModal } from '@/components/teacher/RandomStudentModal';
 import { CreateGroupsModal } from '@/components/teacher/CreateGroupsModal';
+import type { Class, ClassLink, ClassSession, LearningText } from '@/types';
+
+type WeeklyMaterial =
+  | { kind: 'notes'; date: string; session: ClassSession }
+  | { kind: 'discussion'; date: string; session: ClassSession }
+  | { kind: 'text'; date: string; text: LearningText };
 
 export function ClassDetailPage() {
   const { classId } = useParams<{ classId: string }>();
   const { user, isTeacher } = useAuth();
   const navigate = useNavigate();
   const [newCode, setNewCode] = useState('');
+  const [parentCode, setParentCode] = useState('');
   const [pendingRemoval, setPendingRemoval] = useState<{ id: string; name: string } | null>(null);
   const [showDiscussionModal, setShowDiscussionModal] = useState(false);
   const [discussionTitle, setDiscussionTitle] = useState('Class discussion');
@@ -67,7 +79,8 @@ export function ClassDetailPage() {
   useEffect(() => {
     if (!classId) return;
     void syncClassRosterFromServer(classId);
-  }, [classId]);
+    if (user) void ensureParentCode(classId, user.$id).then(setParentCode);
+  }, [classId, user]);
 
   const studentIds = useMemo(
     () => (members || []).filter(m => m.role === 'student').map(m => m.userId),
@@ -84,6 +97,8 @@ export function ClassDetailPage() {
     }));
     return rows.sort((a, b) => a.name.localeCompare(b.name));
   }, [studentIds]);
+  const parentIds = useMemo(() => (members || []).filter(m => m.role === 'parent').map(m => m.userId), [members]);
+  const parents = useLiveQuery(async () => Promise.all(parentIds.map(async id => (await db.users.get(id)) || { $id:id,name:'Parent observer',email:'Profile not synced yet' })), [parentIds]);
 
   const pickableStudents = useMemo(
     () => (students || []).map(s => ({ id: s.$id, name: s.name })),
@@ -108,12 +123,27 @@ export function ClassDetailPage() {
 
   const discussions = useLiveQuery(async () => {
     if (!classId) return [];
-    const sessions = await db.class_sessions.where('classId').equals(classId).reverse().sortBy('sessionDate');
+    const sessions = (await db.class_sessions.where('classId').equals(classId).reverse().sortBy('sessionDate')).filter(session => session.discussionType !== 'notes');
     const rows = await Promise.all(sessions.map(async session => ({
       session,
       questionCount: await db.discussion_questions.where('classSessionId').equals(session.$id).count(),
     })));
     return rows;
+  }, [classId]);
+
+  const weeklyMaterials = useLiveQuery(async (): Promise<WeeklyMaterial[]> => {
+    if (!classId) return [];
+    const sessions = await db.class_sessions.where('classId').equals(classId).toArray();
+    const sessionMaterials: WeeklyMaterial[] = sessions
+      .filter(session => session.status === 'published' || (session.discussionType !== 'notes' && session.status === 'active'))
+      .map(session => ({ kind: session.discussionType === 'notes' ? 'notes' : 'discussion', date: session.sessionDate, session }));
+    const assignments = await db.text_assignments.where('classId').equals(classId).toArray();
+    const texts = await Promise.all(assignments.map(assignment => db.texts.get(assignment.textId)));
+    const textMaterials: WeeklyMaterial[] = assignments.flatMap((assignment, index) => {
+      const text = texts[index];
+      return text?.status === 'published' ? [{ kind: 'text' as const, date: assignment.assignedAt, text }] : [];
+    });
+    return [...sessionMaterials, ...textMaterials].sort((a, b) => b.date.localeCompare(a.date));
   }, [classId]);
 
   const handleRegenerateCode = async () => {
@@ -152,6 +182,14 @@ export function ClassDetailPage() {
     }
   };
 
+  const messageClass = () => {
+    if (!cls) return;
+    const emails = [...new Set((students || []).map(student => student.email).filter(email => email && email !== 'Profile not synced yet'))];
+    if (!emails.length) return;
+    const subject = encodeURIComponent(`${cls.courseName} — ${cls.name}`);
+    window.location.href = `mailto:?bcc=${encodeURIComponent(emails.join(','))}&subject=${subject}`;
+  };
+
   const downloadRosterCredentials = () => {
     if (!rosterResult || !cls) return;
     const headers = ['name', 'email', 'password', 'status', 'message'];
@@ -181,6 +219,8 @@ export function ClassDetailPage() {
         </div>
         {isOwner && (
           <div className="flex flex-wrap gap-2">
+            <Link to={`/classes/${cls.$id}/notes/today`}><Button size="sm">Today&apos;s Notes</Button></Link>
+            <Button onClick={messageClass} disabled={!students?.some(student => student.email && student.email !== 'Profile not synced yet')} size="sm" variant="secondary">Message class</Button>
             <Button onClick={() => setShowDiscussionModal(true)} size="sm">Start discussion</Button>
             <Button onClick={() => setShowPicker(true)} size="sm" variant="secondary">Pick a student</Button>
             <Button onClick={() => setShowGroups(true)} size="sm" variant="secondary">Create groups</Button>
@@ -228,6 +268,13 @@ export function ClassDetailPage() {
               </label>
             </div>
           </div>
+          <div className="mt-5 border-t pt-4">
+            <h3 className="font-semibold">Parent observer code</h3>
+            <p className="text-sm text-gray-500">Parents use this code on the same Join Class page. Their account is read-only.</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2"><code className="rounded bg-violet-50 px-4 py-2 text-xl font-mono">{parentCode || cls.parentCode || 'Creating…'}</code><CopyButton text={parentCode || cls.parentCode || ''} label="Copy code" copiedLabel="Code copied"/><Button size="sm" variant="secondary" onClick={()=>void regenerateParentCode(cls.$id,user!.$id).then(setParentCode)}>Regenerate</Button></div>
+            <p className="mt-3 text-sm text-gray-600">{parents?.length||0} parent observer{parents?.length===1?'':'s'} joined</p>
+            {parents?.map(parent=><p key={parent.$id} className="text-xs text-gray-500">{parent.name} · {parent.email}</p>)}
+          </div>
           {rosterResult && (
             <div className="mt-4 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -242,6 +289,10 @@ export function ClassDetailPage() {
           )}
         </Card>
       )}
+
+      <ClassLinksPanel cls={cls} isOwner={Boolean(isOwner)} teacherId={user?.$id || ''} />
+
+      <WeeklyClassReview materials={weeklyMaterials || []} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section>
@@ -517,4 +568,143 @@ export function ClassDetailPage() {
 function escapeCsv(value: string): string {
   if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
   return value;
+}
+
+function WeeklyClassReview({ materials }: { materials: WeeklyMaterial[] }) {
+  const groups = new Map<string, WeeklyMaterial[]>();
+  for (const material of materials) {
+    const key = weekStart(material.date);
+    groups.set(key, [...(groups.get(key) || []), material]);
+  }
+  const weeks = [...groups.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+  const [openWeek, setOpenWeek] = useState(weeks[0]?.[0] || '');
+  useEffect(() => {
+    if (!openWeek && weeks[0]?.[0]) setOpenWeek(weeks[0][0]);
+  }, [openWeek, weeks]);
+
+  return (
+    <section>
+      <h2 className="mb-3 text-lg font-semibold">Weekly class materials</h2>
+      {weeks.length === 0 ? (
+        <Card><p className="text-sm text-gray-500">Notes, discussions, and texts will appear here by week.</p></Card>
+      ) : (
+        <div className="space-y-3">
+          {weeks.map(([week, items]) => {
+            const isOpen = openWeek === week;
+            const counts = {
+              notes: items.filter(item => item.kind === 'notes').length,
+              discussions: items.filter(item => item.kind === 'discussion').length,
+              texts: items.filter(item => item.kind === 'text').length,
+            };
+            return (
+              <div key={week} className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                <button className="flex w-full items-center justify-between gap-3 p-4 text-left hover:bg-gray-50" onClick={() => setOpenWeek(isOpen ? '' : week)}>
+                  <span className="font-semibold">{isOpen ? '▾' : '▸'} Week of {formatWeek(week)}</span>
+                  <span className="text-xs text-gray-500">{counts.notes} notes · {counts.discussions} discussions · {counts.texts} texts</span>
+                </button>
+                {isOpen && (
+                  <div className="space-y-3 border-t bg-gray-50 p-4">
+                    {items.map(item => item.kind === 'notes' ? (
+                      <article key={`notes-${item.session.$id}`} className="rounded-xl border bg-white p-5">
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-blue-600">Class notes · {formatDate(item.date)}</p>
+                        <div className="whitespace-pre-wrap text-base leading-7 text-gray-800">{item.session.publishedNotesMarkdown}</div>
+                      </article>
+                    ) : item.kind === 'discussion' ? (
+                      <Link key={`discussion-${item.session.$id}`} to={`/discussions/${item.session.$id}`} className="block rounded-xl border bg-white p-4 hover:border-blue-300">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-violet-600">Discussion · {formatDate(item.date)}</p>
+                        <h3 className="mt-1 font-semibold">{item.session.title}</h3>
+                        {item.session.promptMarkdown && <p className="mt-1 line-clamp-2 text-sm text-gray-500">{item.session.promptMarkdown}</p>}
+                      </Link>
+                    ) : (
+                      <Link key={`text-${item.text.$id}`} to={`/texts/${item.text.$id}`} className="block rounded-xl border bg-white p-4 hover:border-blue-300">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Text · {formatDate(item.date)}</p>
+                        <h3 className="mt-1 font-semibold">{item.text.title}</h3>
+                        <p className="text-sm text-gray-500">{item.text.author || 'Unknown author'}</p>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function weekStart(value: string): string {
+  const date = new Date(value.length === 10 ? `${value}T12:00:00` : value);
+  const daysSinceMonday = (date.getDay() + 6) % 7;
+  date.setDate(date.getDate() - daysSinceMonday);
+  return date.toISOString().slice(0, 10);
+}
+
+function formatWeek(value: string): string {
+  return new Date(`${value}T12:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function formatDate(value: string): string {
+  return new Date(value.length === 10 ? `${value}T12:00:00` : value).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+function ClassLinksPanel({ cls, isOwner, teacherId }: { cls: Class; isOwner: boolean; teacherId: string }) {
+  const [open, setOpen] = useState(false);
+  const [label, setLabel] = useState('');
+  const [url, setUrl] = useState('');
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const links = parseClassLinks(cls.linksJson);
+
+  const addLink = async () => {
+    if (!teacherId || !label.trim() || !url.trim() || links.length >= MAX_CLASS_LINKS) return;
+    setSaving(true); setError('');
+    try {
+      await saveClassLinks(cls.$id, teacherId, [...links, { label, url }]);
+      setLabel(''); setUrl('');
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not save link');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const removeLink = async (target: ClassLink) => {
+    if (!teacherId) return;
+    setSaving(true); setError('');
+    try {
+      await saveClassLinks(cls.$id, teacherId, links.filter(link => link.label !== target.label || link.url !== target.url));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not delete link');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+      <button className="flex w-full items-center justify-between p-4 text-left hover:bg-gray-50" onClick={() => setOpen(value => !value)}>
+        <span className="text-lg font-semibold">{open ? '▾' : '▸'} Links</span>
+        <span className="text-sm text-gray-500">{links.length}/{MAX_CLASS_LINKS}</span>
+      </button>
+      {open && (
+        <div className="space-y-3 border-t p-4">
+          {links.length ? links.map(link => (
+            <div key={`${link.label}-${link.url}`} className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
+              <a href={link.url} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate font-medium text-blue-700 hover:underline">{link.label}</a>
+              {isOwner && <button className="text-sm text-red-600 hover:text-red-800" disabled={saving} onClick={() => void removeLink(link)}>Delete</button>}
+            </div>
+          )) : <p className="text-sm text-gray-500">No class links have been added yet.</p>}
+          {isOwner && links.length < MAX_CLASS_LINKS && (
+            <div className="grid gap-2 border-t pt-3 sm:grid-cols-[1fr_1.5fr_auto]">
+              <input className="rounded-lg border px-3 py-2 text-sm" value={label} onChange={event => setLabel(event.target.value)} placeholder="Link name" maxLength={120} />
+              <input className="rounded-lg border px-3 py-2 text-sm" value={url} onChange={event => setUrl(event.target.value)} placeholder="https://…" inputMode="url" />
+              <Button size="sm" loading={saving} disabled={!label.trim() || !url.trim()} onClick={() => void addLink()}>Add</Button>
+            </div>
+          )}
+          {error && <p className="text-sm text-red-600">{error}</p>}
+        </div>
+      )}
+    </section>
+  );
 }

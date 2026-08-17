@@ -1,4 +1,4 @@
-import { ID } from 'appwrite';
+import { ID, Query } from 'appwrite';
 import { db } from '@/db/schema';
 import { getApiKey, generateQuizFromSources, type QuizQuestion as AIQuizQuestion } from '@/services/ai.service';
 import {
@@ -7,9 +7,10 @@ import {
   type GenerationResult,
 } from '@/services/quiz-generator';
 import { getClassCards } from '@/services/daily-quiz.service';
-import type { Quiz, QuizQuestion, QuizAttempt } from '@/types';
+import type { Quiz, QuizAssignment, QuizQuestion, QuizAttempt } from '@/types';
 import { getTimestamp } from '@/utils/helpers';
 import { addToQueue } from '@/services/sync.service';
+import { databases, DATABASE_ID, COLLECTIONS } from '@/lib/appwrite';
 
 /** How many days back counts as "recent" for the quiz source slider. */
 export const RECENT_WINDOW_DAYS = 7;
@@ -27,6 +28,7 @@ export async function createQuiz(params: {
   const quiz: Quiz = {
     $id: ID.unique(),
     classId: params.classId,
+    sourceClassId: params.classId,
     createdBy: params.createdBy,
     title: params.title,
     sourceType: params.sourceType,
@@ -42,6 +44,26 @@ export async function createQuiz(params: {
   await db.quizzes.put(quiz);
   await addToQueue(params.createdBy, 'quiz', quiz.$id, 'create', quiz);
   return quiz;
+}
+
+export async function getQuizClassIds(quizId: string): Promise<string[]> {
+  return (await db.quiz_assignments.where('quizId').equals(quizId).toArray()).map(a => a.classId);
+}
+
+export async function setQuizClasses(quizId: string, classIds: string[], userId: string): Promise<void> {
+  const current = await db.quiz_assignments.where('quizId').equals(quizId).toArray();
+  const wanted = new Set(classIds.filter(Boolean));
+  for (const classId of wanted) {
+    if (current.some(a => a.classId === classId)) continue;
+    const assignment: QuizAssignment = { $id: ID.unique(), quizId, classId, assignedAt: getTimestamp() };
+    await db.quiz_assignments.put(assignment);
+    await addToQueue(userId, 'quiz_assignment', assignment.$id, 'create', assignment);
+  }
+  for (const assignment of current) {
+    if (wanted.has(assignment.classId)) continue;
+    await db.quiz_assignments.delete(assignment.$id);
+    await addToQueue(userId, 'quiz_assignment', assignment.$id, 'delete', assignment);
+  }
 }
 
 export async function generateQuizQuestions(
@@ -131,6 +153,7 @@ export async function previewFlashcardQuiz(params: {
 /** Save a previewed flashcard quiz and its questions as a draft. */
 export async function saveFlashcardQuiz(params: {
   classId: string;
+  classIds?: string[];
   createdBy: string;
   title: string;
   timeLimitMinutes: number | null;
@@ -166,6 +189,8 @@ export async function saveFlashcardQuiz(params: {
     await addToQueue(params.createdBy, 'quiz_question', question.$id, 'create', question);
   }
 
+  await setQuizClasses(quiz.$id, params.classIds?.length ? params.classIds : [params.classId], params.createdBy);
+
   return quiz;
 }
 
@@ -187,6 +212,11 @@ export async function publishQuiz(quizId: string, userId: string): Promise<void>
   });
   const quiz = await db.quizzes.get(quizId);
   if (quiz) await addToQueue(userId, 'quiz', quizId, 'update', quiz);
+}
+
+export async function unpublishQuiz(quizId: string, userId: string): Promise<void> {
+  await db.quizzes.update(quizId, { status: 'draft', publishedAt: null, syncStatus: 'local' });
+  const quiz = await db.quizzes.get(quizId); if (quiz) await addToQueue(userId, 'quiz', quizId, 'update', quiz);
 }
 
 export async function startQuizAttempt(quizId: string, userId: string): Promise<QuizAttempt> {
@@ -265,7 +295,58 @@ export async function getQuizWithQuestions(quizId: string): Promise<{
 }
 
 export async function getClassQuizzes(classId: string): Promise<Quiz[]> {
-  return db.quizzes.where('classId').equals(classId).toArray();
+  const assignments = await db.quiz_assignments.where('classId').equals(classId).toArray();
+  const ids = [...new Set(assignments.map(a => a.quizId))];
+  if (ids.length === 0) return db.quizzes.where('classId').equals(classId).toArray();
+  return db.quizzes.where('$id').anyOf(ids).toArray();
+}
+
+/** Pull quizzes assigned to the user's classes, including their questions. */
+export async function syncQuizzesFromServer(classIds: string[], userId: string, isTeacher: boolean): Promise<void> {
+  if (!DATABASE_ID || classIds.length === 0) return;
+  try {
+    const assignmentResult = await databases.listDocuments(DATABASE_ID, COLLECTIONS.quiz_assignments, [
+      Query.equal('classId', classIds), Query.limit(500),
+    ]);
+    const assignments = assignmentResult.documents.map(doc => ({
+      $id: doc.$id, quizId: doc.quizId as string, classId: doc.classId as string,
+      assignedAt: doc.assignedAt as string,
+    } satisfies QuizAssignment));
+    await db.quiz_assignments.bulkPut(assignments);
+    const quizIds = [...new Set(assignments.map(a => a.quizId))];
+    if (isTeacher) {
+      const own = await databases.listDocuments(DATABASE_ID, COLLECTIONS.quizzes, [
+        Query.equal('createdBy', userId), Query.limit(500),
+      ]);
+      quizIds.push(...own.documents.map(d => d.$id));
+    }
+    if (quizIds.length === 0) return;
+    const quizResult = await databases.listDocuments(DATABASE_ID, COLLECTIONS.quizzes, [
+      Query.equal('$id', [...new Set(quizIds)]), Query.limit(500),
+    ]);
+    for (const doc of quizResult.documents) {
+      await db.quizzes.put({
+        $id: doc.$id, classId: doc.classId as string, sourceClassId: (doc.sourceClassId as string) || doc.classId as string,
+        createdBy: doc.createdBy as string, title: doc.title as string, sourceType: doc.sourceType as Quiz['sourceType'],
+        notesWeight: doc.notesWeight as number, flashcardWeight: doc.flashcardWeight as number,
+        questionCount: doc.questionCount as number, timeLimitMinutes: (doc.timeLimitMinutes as number) || null,
+        status: doc.status as Quiz['status'], publishedAt: (doc.publishedAt as string) || null,
+        createdAt: doc.createdAt as string, syncStatus: 'synced',
+      });
+    }
+    const questionResult = await databases.listDocuments(DATABASE_ID, COLLECTIONS.quiz_questions, [
+      Query.equal('quizId', [...new Set(quizIds)]), Query.limit(2000),
+    ]);
+    for (const doc of questionResult.documents) {
+      await db.quiz_questions.put({
+        $id: doc.$id, quizId: doc.quizId as string, type: doc.type as QuizQuestion['type'],
+        questionText: doc.questionText as string, options: (doc.options as string) || '[]',
+        correctIndex: (doc.correctIndex as number) || 0, clozeAnswer: (doc.clozeAnswer as string) || '',
+        clozeVariants: (doc.clozeVariants as string) || '[]', explanation: (doc.explanation as string) || '',
+        sortOrder: doc.sortOrder as number,
+      });
+    }
+  } catch { /* offline or backend not provisioned yet */ }
 }
 
 export async function getStudentQuizAttempts(userId: string, quizId: string): Promise<QuizAttempt[]> {

@@ -20,6 +20,7 @@ import type {
   DiscussionAnswer,
   AppMetadata,
   Quiz,
+  QuizAssignment,
   QuizQuestion,
   QuizAttempt,
   ReadingProgress,
@@ -29,6 +30,12 @@ import type {
   PeerReview,
   WritingAiFeedback,
   TeacherWritingFeedback,
+  LearningText,
+  TextAssignment,
+  TextParagraph,
+  TextAnnotation,
+  TextDiscussionPost,
+  TextDiscussionVote,
 } from '@/types';
 
 const db = new Dexie('LearningIsFunDB') as Dexie & {
@@ -51,6 +58,7 @@ const db = new Dexie('LearningIsFunDB') as Dexie & {
   teacher_settings: EntityTable<TeacherSettings, '$id'>;
   reading_progress: EntityTable<ReadingProgress, '$id'>;
   quizzes: EntityTable<Quiz, '$id'>;
+  quiz_assignments: EntityTable<QuizAssignment, '$id'>;
   quiz_questions: EntityTable<QuizQuestion, '$id'>;
   quiz_attempts: EntityTable<QuizAttempt, '$id'>;
   writing_prompts: EntityTable<WritingPrompt, '$id'>;
@@ -59,6 +67,12 @@ const db = new Dexie('LearningIsFunDB') as Dexie & {
   peer_reviews: EntityTable<PeerReview, '$id'>;
   writing_ai_feedback: EntityTable<WritingAiFeedback, '$id'>;
   teacher_writing_feedback: EntityTable<TeacherWritingFeedback, '$id'>;
+  texts: EntityTable<LearningText, '$id'>;
+  text_assignments: EntityTable<TextAssignment, '$id'>;
+  text_paragraphs: EntityTable<TextParagraph, '$id'>;
+  text_annotations: EntityTable<TextAnnotation, '$id'>;
+  text_discussion_posts: EntityTable<TextDiscussionPost, '$id'>;
+  text_discussion_votes: EntityTable<TextDiscussionVote, '$id'>;
   sync_queue: EntityTable<SyncOperation, 'id'>;
   app_metadata: EntityTable<AppMetadata, 'key'>;
 };
@@ -266,6 +280,42 @@ db.version(8).stores({
   if (assignments.length > 0) {
     await tx.table('writing_prompt_assignments').bulkPut(assignments);
   }
+});
+
+db.version(10).stores({
+  users: '$id, email, role', classes: '$id, teacherId, joinCode, status',
+  class_members: '$id, classId, userId, [classId+userId]',
+  class_sessions: '$id, classId, sessionDate, status, syncStatus',
+  class_session_items: '$id, classSessionId, type, sourceId, sortOrder, syncStatus',
+  discussion_questions: '$id, classSessionId, authorId, moderationStatus, discussionStatus',
+  discussion_answers: '$id, questionId, authorId, syncStatus',
+  question_votes: '$id, questionId, classSessionId, userId, [questionId+userId], syncStatus',
+  flashcard_decks: '$id, creatorId, type, status', flashcard_cards: '$id, deckId, sortOrder',
+  deck_assignments: '$id, deckId, classId', card_reviews: '$id, userId, cardId, deckId, operationId',
+  flashcard_review_events: '$id, userId, classId, deckId, cardId, sessionId, reviewedAt, syncStatus',
+  flashcard_study_sessions: '$id, userId, classId, deckId, startedAt, syncStatus',
+  student_card_state: '$id, userId, cardId, deckId, dueDate, status', student_deck_notes: '$id, userId, cardId',
+  teacher_settings: '$id, classId', reading_progress: '$id, userId, readingId',
+  quizzes: '$id, classId, sourceClassId, createdBy, status, createdAt, syncStatus',
+  quiz_assignments: '$id, quizId, classId, [quizId+classId]', quiz_questions: '$id, quizId, sortOrder',
+  quiz_attempts: '$id, quizId, userId, completedAt, syncStatus',
+  writing_prompts: '$id, classId, teacherId, status, createdAt, syncStatus',
+  writing_prompt_assignments: '$id, promptId, classId, [promptId+classId]',
+  writing_submissions: '$id, promptId, classId, authorId, status, [promptId+authorId], syncStatus',
+  peer_reviews: '$id, promptId, submissionId, reviewerId, status, syncStatus',
+  writing_ai_feedback: '$id, submissionId', teacher_writing_feedback: '$id, submissionId, teacherId, syncStatus',
+  texts: '$id, teacherId, status, createdAt, syncStatus', text_assignments: '$id, textId, classId, [textId+classId]',
+  text_paragraphs: '$id, textId, sortOrder',
+  text_annotations: '$id, textId, paragraphId, classId, authorId, [textId+classId], syncStatus',
+  text_discussion_posts: '$id, textId, classId, parentId, score, createdAt, syncStatus',
+  text_discussion_votes: '$id, postId, textId, classId, userId, [postId+userId], syncStatus',
+  sync_queue: '++id, operationId, userId, entityType, entityId, syncStatus, createdAt', app_metadata: 'key',
+}).upgrade(async tx => {
+  const quizzes = await tx.table('quizzes').toArray();
+  const assignments = quizzes.filter((quiz: Quiz) => Boolean(quiz.classId)).map((quiz: Quiz) => ({
+    $id: crypto.randomUUID(), quizId: quiz.$id, classId: quiz.classId, assignedAt: quiz.createdAt,
+  }));
+  if (assignments.length) await tx.table('quiz_assignments').bulkPut(assignments);
 });
 
 export { db };

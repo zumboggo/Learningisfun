@@ -1,4 +1,4 @@
-export type UserRole = 'student' | 'teacher' | 'admin';
+export type UserRole = 'student' | 'teacher' | 'parent' | 'admin';
 
 export interface User {
   $id: string;
@@ -18,8 +18,16 @@ export interface Class {
   teacherId: string;
   joinCode: string;
   joinCodeActive: boolean;
+  parentCode: string;
+  parentCodeActive: boolean;
+  linksJson: string;
   status: 'active' | 'archived';
   createdAt: string;
+}
+
+export interface ClassLink {
+  label: string;
+  url: string;
 }
 
 export interface ClassMember {
@@ -34,6 +42,9 @@ export interface ClassSession {
   $id: string;
   classId: string;
   assignmentId?: string;
+  discussionType?: 'qft' | 'question' | 'text' | 'notes';
+  textId?: string | null;
+  promptMarkdown?: string;
   title: string;
   sessionDate: string;
   status: 'draft' | 'active' | 'published' | 'archived';
@@ -267,6 +278,8 @@ export interface ReadingProgress {
 export interface Quiz {
   $id: string;
   classId: string;
+  /** Class whose cards were used to generate this quiz. */
+  sourceClassId?: string;
   createdBy: string;
   title: string;
   sourceType: 'discussion' | 'flashcards' | 'mixed';
@@ -278,6 +291,13 @@ export interface Quiz {
   publishedAt: string | null;
   createdAt: string;
   syncStatus: SyncStatus;
+}
+
+export interface QuizAssignment {
+  $id: string;
+  quizId: string;
+  classId: string;
+  assignedAt: string;
 }
 
 export interface QuizQuestion {
@@ -402,6 +422,79 @@ export interface TeacherWritingFeedback {
   /** JSON-encoded Record<criterionId, number> */
   scoresJson: string;
   commentMarkdown: string;
+  createdAt: string;
+  updatedAt: string;
+  syncStatus: SyncStatus;
+}
+
+export interface LearningText {
+  $id: string;
+  teacherId: string;
+  title: string;
+  author: string;
+  source: string;
+  status: 'draft' | 'published' | 'archived';
+  createdAt: string;
+  updatedAt: string;
+  syncStatus: SyncStatus;
+}
+
+export interface TextAssignment {
+  $id: string;
+  textId: string;
+  classId: string;
+  assignedAt: string;
+}
+
+export interface TextParagraph {
+  $id: string;
+  textId: string;
+  sortOrder: number;
+  content: string;
+}
+
+export interface TextAnnotation {
+  $id: string;
+  textId: string;
+  paragraphId: string;
+  classId: string;
+  authorId: string;
+  anonymousLabel: string;
+  type: 'observation' | 'question';
+  content: string;
+  moderationStatus: 'visible' | 'hidden';
+  createdAt: string;
+  updatedAt: string;
+  syncStatus: SyncStatus;
+}
+
+export interface TextDiscussionPost {
+  $id: string;
+  classSessionId: string;
+  textId: string | null;
+  classId: string;
+  parentId: string | null;
+  depth: number;
+  authorId: string;
+  anonymousLabel: string;
+  content: string;
+  score: number;
+  moderationStatus: 'visible' | 'hidden';
+  locked: boolean;
+  isTeacherPost: boolean;
+  createdAt: string;
+  updatedAt: string;
+  syncStatus: SyncStatus;
+}
+
+export interface TextDiscussionVote {
+  $id: string;
+  postId: string;
+  classSessionId: string;
+  textId: string | null;
+  classId: string;
+  userId: string;
+  value: -1 | 1;
   createdAt: string;
   updatedAt: string;
   syncStatus: SyncStatus;

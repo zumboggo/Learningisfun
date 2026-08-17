@@ -20,6 +20,9 @@ export async function createClassSession(
     assignmentId?: string | null;
     votesPerStudent?: number;
     allowStackedVotes?: boolean;
+    discussionType?: ClassSession['discussionType'];
+    textId?: string | null;
+    promptMarkdown?: string;
   },
 ): Promise<ClassSession> {
   const now = getTimestamp();
@@ -27,6 +30,9 @@ export async function createClassSession(
     $id: generateId(),
     classId,
     assignmentId: input.assignmentId || undefined,
+    discussionType: input.discussionType || 'qft',
+    textId: input.textId || null,
+    promptMarkdown: input.promptMarkdown || '',
     title: input.title.trim() || 'Class discussion',
     sessionDate: input.sessionDate || todayKey(),
     status: 'active',
@@ -43,6 +49,39 @@ export async function createClassSession(
   await db.class_sessions.put(session);
   await addToQueue(teacherId, 'class_session', session.$id, 'create', session);
   return session;
+}
+
+export async function getOrCreateTodayNotes(classId: string, teacherId: string): Promise<ClassSession> {
+  const date = todayKey();
+  const existing = await db.class_sessions
+    .where('classId')
+    .equals(classId)
+    .and(session => session.discussionType === 'notes' && session.sessionDate === date)
+    .first();
+  if (existing) return existing;
+
+  const session = await createClassSession(classId, teacherId, {
+    title: "Today's Notes",
+    sessionDate: date,
+    discussionType: 'notes',
+    votesPerStudent: 0,
+  });
+  await db.class_sessions.update(session.$id, { status: 'draft' });
+  return { ...session, status: 'draft' };
+}
+
+export async function saveTodayNotes(sessionId: string, userId: string, content: string): Promise<void> {
+  const now = getTimestamp();
+  await db.class_sessions.update(sessionId, {
+    notesMarkdown: content,
+    publishedNotesMarkdown: content,
+    publishedAt: now,
+    status: 'published',
+    updatedAt: now,
+    syncStatus: 'local',
+  });
+  const updated = await db.class_sessions.get(sessionId);
+  if (updated) await addToQueue(userId, 'class_session', sessionId, 'update', updated);
 }
 
 export async function getClassSessions(classId: string): Promise<ClassSession[]> {
@@ -64,7 +103,7 @@ export async function getActiveClassSessions(classId: string): Promise<ClassSess
 export async function updateClassSession(
   sessionId: string,
   userId: string,
-  updates: Partial<Pick<ClassSession, 'title' | 'status' | 'votesPerStudent' | 'allowStackedVotes' | 'notesMarkdown' | 'assignmentId'>>,
+  updates: Partial<Pick<ClassSession, 'title' | 'status' | 'votesPerStudent' | 'allowStackedVotes' | 'notesMarkdown' | 'assignmentId' | 'promptMarkdown'>>,
 ): Promise<void> {
   const now = getTimestamp();
   const patch = {
@@ -155,6 +194,9 @@ export async function syncClassSessionsFromServer(classIds: string[]): Promise<v
         $id: id,
         classId: doc.classId as string,
         assignmentId: (doc.assignmentId as string) || undefined,
+        discussionType: (doc.discussionType as ClassSession['discussionType']) || 'qft',
+        textId: (doc.textId as string) || null,
+        promptMarkdown: (doc.promptMarkdown as string) || '',
         title: (doc.title as string) || 'Class discussion',
         sessionDate: doc.sessionDate as string,
         status: doc.status as ClassSession['status'],

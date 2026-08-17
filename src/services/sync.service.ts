@@ -85,6 +85,22 @@ async function executeSyncOperation(op: SyncOperation): Promise<void> {
   const { entityType, entityId, operationType, payload } = op;
   const data = payload as Record<string, unknown>;
 
+  const secureCollection = collectionForEntity(entityType);
+  if (FUNCTION_IDS.learningContent && secureCollection && [
+    'quiz', 'quiz_assignment', 'quiz_question', 'quiz_attempt', 'writing_prompt',
+    'writing_prompt_assignment', 'writing_submission', 'peer_review', 'text',
+    'text_assignment', 'text_paragraph', 'text_annotation', 'text_discussion_post',
+    'text_discussion_vote', 'question', 'vote', 'discussion_answer', 'class_links',
+  ].includes(entityType)) {
+    const execution = await functions.createExecution(FUNCTION_IDS.learningContent, JSON.stringify({
+      action: 'mutate', collection: secureCollection, operation: operationType,
+      id: (data.$id as string | undefined) || entityId, data,
+    }));
+    if (execution.status === 'failed') throw new Error(execution.errors || 'Secure sync failed');
+    await markEntitySynced(entityType, (data.$id as string | undefined) || entityId);
+    return;
+  }
+
   if (entityType === 'question' && operationType === 'create') {
     if (data.classSessionId) {
       await upsertDocument(COLLECTIONS.discussion_questions, data);
@@ -171,6 +187,8 @@ function toRemoteDocument(data: Record<string, unknown>): Record<string, unknown
 
 function collectionForEntity(entityType: string): string | null {
   switch (entityType) {
+    case 'question': return COLLECTIONS.discussion_questions;
+    case 'vote': return COLLECTIONS.question_votes;
     case 'class_session': return COLLECTIONS.class_sessions;
     case 'class_session_item': return COLLECTIONS.class_session_items;
     case 'discussion_answer': return COLLECTIONS.discussion_answers;
@@ -180,10 +198,18 @@ function collectionForEntity(entityType: string): string | null {
     case 'card': return COLLECTIONS.flashcard_cards;
     case 'deck_assignment': return COLLECTIONS.deck_assignments;
     case 'class': return COLLECTIONS.classes;
+    case 'class_links': return COLLECTIONS.classes;
     case 'class_member': return COLLECTIONS.class_members;
     case 'quiz': return COLLECTIONS.quizzes;
+    case 'quiz_assignment': return COLLECTIONS.quiz_assignments;
     case 'quiz_question': return COLLECTIONS.quiz_questions;
     case 'quiz_attempt': return COLLECTIONS.quiz_attempts;
+    case 'text': return COLLECTIONS.texts;
+    case 'text_assignment': return COLLECTIONS.text_assignments;
+    case 'text_paragraph': return COLLECTIONS.text_paragraphs;
+    case 'text_annotation': return COLLECTIONS.text_annotations;
+    case 'text_discussion_post': return COLLECTIONS.text_discussion_posts;
+    case 'text_discussion_vote': return COLLECTIONS.text_discussion_votes;
     case 'writing_prompt': return COLLECTIONS.writing_prompts;
     case 'writing_prompt_assignment': return COLLECTIONS.writing_prompt_assignments;
     case 'writing_submission': return COLLECTIONS.writing_submissions;

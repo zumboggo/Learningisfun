@@ -43,7 +43,7 @@ interface CardTimeRecord {
 
 export function FlashcardReviewPage() {
   const { deckId } = useParams<{ deckId: string }>();
-  const { user, isTeacher } = useAuth();
+  const { user, isTeacher, isParent } = useAuth();
   const navigate = useNavigate();
 
   const deck = useLiveQuery(() => (deckId ? db.flashcard_decks.get(deckId) : undefined), [deckId]);
@@ -111,10 +111,10 @@ export function FlashcardReviewPage() {
     }
     setLapCount(0);
 
-    const studySession = await startFlashcardStudySession(user.$id, deckId, classId || null);
+    const studySession = isParent ? null : await startFlashcardStudySession(user.$id, deckId, classId || null);
     activeSecondsRef.current = 0;
     setActiveSeconds(0);
-    setStudySessionId(studySession.$id);
+    setStudySessionId(studySession?.$id || '');
     setQueueMode(mode);
     setCards(sessionCards);
     setCurrentIndex(0);
@@ -188,6 +188,7 @@ export function FlashcardReviewPage() {
       cardStartedAt.current = Date.now();
     }
   };
+  const browseNext = () => { if (currentIndex >= cards.length - 1) setCurrentIndex(0); else setCurrentIndex(i=>i+1); setShowAnswer(false); };
 
   const handleRateRef = useRef<(rating: ReviewRating) => Promise<void>>(async () => {});
   handleRateRef.current = handleRate;
@@ -203,7 +204,7 @@ export function FlashcardReviewPage() {
   }, []);
 
   const swipeHandle = useSwipeCard({
-    enabled: sessionStarted && !sessionComplete && showAnswer,
+    enabled: sessionStarted && !sessionComplete && showAnswer && !isParent,
     onSwipe: handleSwipe,
     onDismissed: handleDismissed,
     haptics: true,
@@ -404,7 +405,7 @@ export function FlashcardReviewPage() {
         <div
           key={swipeHandle.animKey}
           ref={swipeHandle.cardRef}
-          className={`bg-white rounded-2xl border border-gray-200 shadow-sm min-h-[340px] flex flex-col select-none ${swipeHandle.dismissClass}`}
+          className={`bg-white rounded-2xl border border-gray-200 shadow-sm min-h-[340px] flex flex-col select-none touch-none ${swipeHandle.dismissClass}`}
           {...swipeHandle.handlers}
         >
           <div className="flex-1 p-6 flex items-center justify-center">
@@ -434,7 +435,7 @@ export function FlashcardReviewPage() {
                 Show answer <span className="ml-2 text-xs opacity-80">Space</span>
               </Button>
             ) : (
-              <div className="grid grid-cols-4 gap-2">
+              isParent ? <Button onClick={browseNext} className="w-full">Next card</Button> : <div className="grid grid-cols-4 gap-2">
                 <RatingButton label="Again" shortcut="1" tone="red" onClick={() => void handleRate('again')} />
                 <RatingButton label="Hard" shortcut="2" tone="orange" onClick={() => void handleRate('hard')} />
                 <RatingButton label="Good" shortcut="3" tone="green" onClick={() => void handleRate('good')} />

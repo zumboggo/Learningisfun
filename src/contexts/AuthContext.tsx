@@ -6,6 +6,10 @@ import * as classService from '@/services/class.service';
 import * as classSessionService from '@/services/class-session.service';
 
 import * as flashcardService from '@/services/flashcard.service';
+import * as quizService from '@/services/quiz.service';
+import * as writingService from '@/services/writing.service';
+import * as textService from '@/services/text.service';
+import { client, DATABASE_ID, COLLECTIONS } from '@/lib/appwrite';
 
 interface AuthContextType {
   user: User | null;
@@ -16,9 +20,10 @@ interface AuthContextType {
   refreshUser: () => Promise<void>;
   viewAsStudent: boolean;
   setViewAsStudent: (value: boolean) => void;
-  effectiveRole: 'student' | 'teacher' | 'admin' | null;
+  effectiveRole: 'student' | 'teacher' | 'parent' | 'admin' | null;
   isTeacher: boolean;
   isAdmin: boolean;
+  isParent: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -31,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const effectiveRole = user ? (viewAsStudent ? 'student' : user.role) : null;
   const isTeacher = effectiveRole === 'teacher' || effectiveRole === 'admin';
   const isAdmin = effectiveRole === 'admin';
+  const isParent = effectiveRole === 'parent';
 
   const syncUserData = useCallback(async (userId: string) => {
     // Order matters: classes and memberships first, since the discussion pull
@@ -39,6 +45,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await classSessionService.syncMyClassSessionsFromServer(userId);
 
     await flashcardService.syncDecksFromServer();
+    const memberships = await (await import('@/db/schema')).db.class_members.where('userId').equals(userId).toArray();
+    const taught = await (await import('@/db/schema')).db.classes.where('teacherId').equals(userId).toArray();
+    const classIds = [...new Set([...memberships.map(m => m.classId), ...taught.map(c => c.$id)])];
+    const cachedUser = await authService.getCachedUser();
+    const isTeacher = cachedUser?.role === 'teacher' || cachedUser?.role === 'admin';
+    await Promise.all([
+      quizService.syncQuizzesFromServer(classIds, userId, isTeacher),
+      writingService.syncWritingFromServer(classIds, userId, isTeacher),
+      textService.syncTextsFromServer(classIds, userId, isTeacher),
+    ]);
   }, []);
 
   const refreshUser = useCallback(async () => {
@@ -76,6 +92,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void init();
   }, [syncUserData]);
 
+  useEffect(() => {
+    if (!user || !DATABASE_ID) return;
+    const refresh = () => { if (document.visibilityState === 'visible') void syncUserData(user.$id); };
+    document.addEventListener('visibilitychange', refresh);
+    const collections = [COLLECTIONS.quiz_assignments, COLLECTIONS.quizzes, COLLECTIONS.quiz_questions,
+      COLLECTIONS.writing_prompt_assignments, COLLECTIONS.writing_prompts, COLLECTIONS.peer_reviews,
+      COLLECTIONS.text_assignments, COLLECTIONS.texts, COLLECTIONS.text_annotations,
+      COLLECTIONS.text_discussion_posts, COLLECTIONS.text_discussion_votes];
+    const unsubscribe = client.subscribe(collections.map(id => `databases.${DATABASE_ID}.collections.${id}.documents`), () => void syncUserData(user.$id));
+    return () => { document.removeEventListener('visibilitychange', refresh); unsubscribe(); };
+  }, [user, syncUserData]);
+
   const loginHandler = useCallback(async (email: string, password: string) => {
     const u = await authService.login(email, password);
     setUser(u);
@@ -110,6 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       effectiveRole,
       isTeacher,
       isAdmin,
+      isParent,
     }}>
       {children}
     </AuthContext.Provider>

@@ -13,12 +13,15 @@ import { DiscussionPage } from '@/pages/DiscussionPage';
 import { QuizzesPage } from '@/pages/QuizzesPage';
 import { QuizTakingPage } from '@/pages/QuizTakingPage';
 import { WritingPage } from '@/pages/WritingPage';
+import { TextsPage } from '@/pages/TextsPage';
+import { TextReaderPage } from '@/pages/TextReaderPage';
 import { WritingWorkspacePage } from '@/pages/WritingWorkspacePage';
 import { WritingResponsesPage } from '@/pages/teacher/WritingResponsesPage';
 import { StudentProgressPage } from '@/pages/StudentProgressPage';
 import { ClassesListPage } from '@/pages/ClassesListPage';
 import { ClassDetailPage } from '@/pages/ClassDetailPage';
 import { ClassSessionPage } from '@/pages/ClassSessionPage';
+import { TodayNotesPage } from '@/pages/TodayNotesPage';
 
 import { ParticipationReportPage } from '@/pages/ParticipationReportPage';
 import { FlashcardAnalyticsPage } from '@/pages/FlashcardAnalyticsPage';
@@ -95,6 +98,8 @@ export default function App() {
           <Route path="/quizzes/:quizId/take" element={<ProtectedRoute><QuizTakingPage /></ProtectedRoute>} />
 
           <Route path="/writing" element={<ProtectedRoute><WritingPage /></ProtectedRoute>} />
+          <Route path="/texts" element={<ProtectedRoute><TextsPage /></ProtectedRoute>} />
+          <Route path="/texts/:textId" element={<ProtectedRoute><TextReaderPage /></ProtectedRoute>} />
           <Route path="/writing/:promptId" element={<ProtectedRoute><WritingWorkspacePage /></ProtectedRoute>} />
           <Route path="/writing/:promptId/responses" element={<ProtectedRoute><TeacherRoute><WritingResponsesPage /></TeacherRoute></ProtectedRoute>} />
 
@@ -110,6 +115,7 @@ export default function App() {
           <Route path="/classes/:classId/reports" element={<ProtectedRoute><TeacherRoute><ParticipationReportPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/classes/:classId/decks/:deckId/progress" element={<ProtectedRoute><TeacherRoute><FlashcardAnalyticsPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/classes/:classId/students/:studentId/progress" element={<ProtectedRoute><TeacherRoute><StudentProgressPage /></TeacherRoute></ProtectedRoute>} />
+          <Route path="/classes/:classId/notes/today" element={<FullscreenTeacherRoute><TodayNotesPage /></FullscreenTeacherRoute>} />
 
           <Route path="/settings" element={<ProtectedRoute><TeacherRoute><TeacherSettingsPage /></TeacherRoute></ProtectedRoute>} />
 
