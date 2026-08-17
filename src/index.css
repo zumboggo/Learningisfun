@@ -111,6 +111,259 @@ input, textarea, select, button {
   margin-inline: auto;
 }
 
+.student-main-study {
+  max-width: 52rem;
+  padding-top: clamp(0.75rem, 2vw, 1.15rem);
+}
+
+/* ---------------------------------------------------------------------------
+   Focused flashcard study
+--------------------------------------------------------------------------- */
+
+.flashcard-study-page {
+  --rate-again: #df315d;
+  --rate-hard: #df6b12;
+  --rate-good: #16a765;
+  --rate-easy: #2787df;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.flashcard-study-header,
+.flashcard-progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.flashcard-exit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.75rem;
+  color: var(--s-ink);
+  font-weight: 800;
+}
+
+.flashcard-exit > span:first-child {
+  display: grid;
+  width: 2.65rem;
+  height: 2.65rem;
+  place-items: center;
+  border: 1px solid rgba(16, 35, 71, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 5px 14px rgba(86, 62, 35, 0.1);
+  font-size: 2rem;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.flashcard-deck-pill {
+  display: flex;
+  min-width: 0;
+  max-width: 60%;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid rgba(16, 35, 71, 0.09);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.56);
+  color: var(--s-ink);
+  font-weight: 800;
+}
+
+.flashcard-deck-pill svg {
+  width: 1.2rem;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.flashcard-deck-pill span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flashcard-progress-row {
+  justify-content: flex-end;
+  color: var(--s-ink-soft);
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.flashcard-progress-track {
+  height: 0.38rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow: inset 0 0 0 1px rgba(16, 35, 71, 0.06);
+}
+
+.flashcard-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--s-accent);
+  transition: width 250ms ease;
+}
+
+.flashcard-focus-card {
+  min-height: clamp(23rem, 48vh, 32rem);
+  overflow: hidden;
+  border: 1px solid rgba(16, 35, 71, 0.1);
+  border-radius: clamp(1.5rem, 5vw, 2.25rem);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 18px 44px rgba(82, 57, 28, 0.14), 0 2px 6px rgba(16, 35, 71, 0.05);
+  transform-origin: 50% 82%;
+}
+
+.flashcard-question {
+  gap: 1.15rem;
+  padding: clamp(1.5rem, 5.5vw, 2.5rem);
+}
+
+.flashcard-state-icon {
+  display: grid;
+  width: 3.25rem;
+  height: 3.25rem;
+  flex: none;
+  place-items: center;
+  border-radius: 999px;
+  font-size: 1.75rem;
+  font-weight: 850;
+}
+
+.flashcard-state-icon-question {
+  background: #fff0f4;
+  color: var(--rate-again);
+}
+
+.flashcard-state-icon-answer {
+  width: 2.65rem;
+  height: 2.65rem;
+  margin-inline: auto;
+  background: #e7f8ef;
+  color: var(--rate-good);
+  font-size: 1.35rem;
+}
+
+.flashcard-question-copy {
+  color: var(--s-ink);
+  font-size: clamp(1.35rem, 5.2vw, 1.95rem);
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -0.025em;
+}
+
+.flashcard-answer {
+  padding: clamp(1.35rem, 4.5vw, 2rem);
+  border-top: 1px solid var(--s-line);
+}
+
+.flashcard-answer-copy {
+  color: var(--s-ink);
+  font-size: clamp(1.05rem, 4.2vw, 1.35rem);
+  line-height: 1.55;
+}
+
+.flashcard-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid rgba(16, 35, 71, 0.07);
+  border-radius: 0.9rem;
+  background: #f8f9fb;
+  color: var(--s-ink-soft);
+  font-size: 0.84rem;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.flashcard-hint > span:first-child {
+  color: var(--s-accent);
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.flashcard-card-actions {
+  padding: 0.9rem;
+  border-top: 1px solid var(--s-line);
+}
+
+.flashcard-card-actions:empty { display: none; }
+
+.flashcard-rating-zone > p {
+  margin: 0 0 0.35rem;
+  color: var(--s-ink);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.flashcard-swipe-compass {
+  display: grid;
+  grid-template-columns: 1fr 2.75rem 1fr;
+  grid-template-rows: 1.4rem 1.6rem 1.4rem;
+  align-items: center;
+  max-width: 20rem;
+  margin: 0 auto 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.flashcard-swipe-compass span { white-space: nowrap; }
+.swipe-up { grid-area: 1 / 2; color: var(--rate-hard); text-align: center; }
+.swipe-left { grid-area: 2 / 1; color: var(--rate-again); text-align: right; }
+.swipe-center { grid-area: 2 / 2; justify-self: center; width: 0.55rem; height: 0.55rem; border-radius: 50%; background: #d9dce2; }
+.swipe-right { grid-area: 2 / 3; color: var(--rate-good); }
+.swipe-down { grid-area: 3 / 2; color: var(--rate-easy); text-align: center; }
+
+.flashcard-rating-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.flashcard-rating-button {
+  min-height: 3.5rem;
+  padding: 0.4rem 0.2rem;
+  border: 1px solid currentColor;
+  border-radius: 1rem;
+  box-shadow: 0 5px 12px rgba(82, 57, 28, 0.08);
+  font-size: 0.78rem;
+  font-weight: 850;
+  line-height: 1.1;
+  transition: transform 130ms ease, box-shadow 130ms ease;
+}
+
+.flashcard-rating-button:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: none;
+}
+
+.flashcard-rating-direction {
+  display: block;
+  margin-bottom: 0.2rem;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+@media (max-height: 740px) {
+  .flashcard-focus-card { min-height: 19rem; }
+  .flashcard-question { padding-block: 1rem; }
+  .flashcard-state-icon { width: 2.7rem; height: 2.7rem; font-size: 1.4rem; }
+  .flashcard-swipe-compass { display: none; }
+}
+
 /* Even vertical rhythm between sections. */
 .student-home {
   display: flex;

@@ -376,14 +376,22 @@ export function FlashcardReviewPage() {
   }
 
   return (
-    <div className="p-4 max-w-lg mx-auto">
-      <div className="flex items-center justify-between mb-4">
-        <button onClick={() => void handleExit()} className="text-gray-500">
-          {queueMode === 'unlimited' ? 'Finish' : 'Exit'}
+    <div className="flashcard-study-page p-4 max-w-lg mx-auto">
+      <div className="flashcard-study-header">
+        <button onClick={() => void handleExit()} className="flashcard-exit" aria-label={queueMode === 'unlimited' ? 'Finish session' : 'Exit session'}>
+          <span aria-hidden="true">‹</span>
+          <span>{queueMode === 'unlimited' ? 'Finish' : 'Exit'}</span>
         </button>
-        <span className="text-sm text-gray-400">
-          {queueMode === 'unlimited' && lapCount > 0 && `round ${lapCount + 1} | `}
-          {queueMode} | {currentIndex + 1} / {cards.length}
+        <div className="flashcard-deck-pill" title={deck.title}>
+          <BookIcon />
+          <span>{deck.title}</span>
+        </div>
+      </div>
+
+      <div className="flashcard-progress-row">
+        <span>
+          {queueMode === 'unlimited' && lapCount > 0 && `Round ${lapCount + 1} · `}
+          {currentIndex + 1} of {cards.length}
         </span>
       </div>
 
@@ -394,9 +402,9 @@ export function FlashcardReviewPage() {
         </p>
       )}
 
-      <div className="mb-4 h-1 bg-gray-100 rounded-full overflow-hidden">
+      <div className="flashcard-progress-track">
         <div
-          className="h-full bg-blue-600 transition-all"
+          className="flashcard-progress-fill"
           style={{ width: `${((currentIndex + 1) / cards.length) * 100}%` }}
         />
       </div>
@@ -405,43 +413,59 @@ export function FlashcardReviewPage() {
         <div
           key={swipeHandle.animKey}
           ref={swipeHandle.cardRef}
-          className={`bg-white rounded-2xl border border-gray-200 shadow-sm min-h-[340px] flex flex-col select-none touch-none ${swipeHandle.dismissClass}`}
+          className={`flashcard-focus-card flex flex-col select-none touch-none ${swipeHandle.dismissClass}`}
           {...swipeHandle.handlers}
         >
-          <div className="flex-1 p-6 flex items-center justify-center">
+          <div className="flashcard-question flex flex-1 flex-col items-center justify-center">
+            <div className="flashcard-state-icon flashcard-state-icon-question" aria-hidden="true">?</div>
             <Markdown
               content={currentCard.frontMarkdown || currentCard.front}
-              className="text-center text-xl leading-relaxed"
+              className="flashcard-question-copy text-center"
             />
           </div>
 
           {showAnswer && (
-            <div className="border-t border-gray-100 p-6 space-y-4">
+            <div className="flashcard-answer space-y-4">
+              <div className="flashcard-state-icon flashcard-state-icon-answer" aria-hidden="true">✓</div>
               <Markdown
                 content={currentCard.backMarkdown || currentCard.back}
-                className="text-center text-lg leading-relaxed text-gray-700"
+                className="flashcard-answer-copy text-center"
               />
               {currentCard.hint && (
-                <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-500">
-                  Hint: {currentCard.hint}
+                <div className="flashcard-hint">
+                  <span aria-hidden="true">♧</span><span><strong>Hint:</strong> {currentCard.hint}</span>
                 </div>
               )}
             </div>
           )}
 
-          <div className="p-4 border-t border-gray-100">
+          <div className="flashcard-card-actions">
             {!showAnswer ? (
               <Button onClick={() => setShowAnswer(true)} className="w-full" size="lg">
                 Show answer <span className="ml-2 text-xs opacity-80">Space</span>
               </Button>
             ) : (
-              isParent ? <Button onClick={browseNext} className="w-full">Next card</Button> : <div className="grid grid-cols-4 gap-2">
-                <RatingButton label="Again" shortcut="1" tone="red" onClick={() => void handleRate('again')} />
-                <RatingButton label="Hard" shortcut="2" tone="orange" onClick={() => void handleRate('hard')} />
-                <RatingButton label="Good" shortcut="3" tone="green" onClick={() => void handleRate('good')} />
-                <RatingButton label="Easy" shortcut="4" tone="blue" onClick={() => void handleRate('easy')} />
-              </div>
+              isParent ? <Button onClick={browseNext} className="w-full">Next card</Button> : null
             )}
+          </div>
+        </div>
+      )}
+
+      {showAnswer && !isParent && (
+        <div className="flashcard-rating-zone" aria-label="Swipe or choose a rating">
+          <p>Swipe to rate</p>
+          <div className="flashcard-swipe-compass" aria-hidden="true">
+            <span className="swipe-up">↑ <b>Hard</b></span>
+            <span className="swipe-left"><b>Again</b> ←</span>
+            <span className="swipe-center"></span>
+            <span className="swipe-right">→ <b>Good</b></span>
+            <span className="swipe-down">↓ <b>Easy</b></span>
+          </div>
+          <div className="flashcard-rating-grid">
+            <RatingButton label="Again" shortcut="1" direction="↶" tone="red" onClick={() => void handleRate('again')} />
+            <RatingButton label="Hard" shortcut="2" direction="↑" tone="orange" onClick={() => void handleRate('hard')} />
+            <RatingButton label="Good" shortcut="3" direction="→" tone="green" onClick={() => void handleRate('good')} />
+            <RatingButton label="Easy" shortcut="4" direction="↓" tone="blue" onClick={() => void handleRate('easy')} />
           </div>
         </div>
       )}
@@ -478,7 +502,7 @@ function ProgressStat({ label, value, tone }: { label: string; value: number; to
   );
 }
 
-function RatingButton({ label, shortcut, tone, onClick }: { label: string; shortcut: string; tone: 'red' | 'orange' | 'green' | 'blue'; onClick: () => void }) {
+function RatingButton({ label, shortcut, direction, tone, onClick }: { label: string; shortcut: string; direction: string; tone: 'red' | 'orange' | 'green' | 'blue'; onClick: () => void }) {
   const classes = {
     red: 'bg-red-50 text-red-700 hover:bg-red-100',
     orange: 'bg-orange-50 text-orange-700 hover:bg-orange-100',
@@ -486,11 +510,16 @@ function RatingButton({ label, shortcut, tone, onClick }: { label: string; short
     blue: 'bg-blue-50 text-blue-700 hover:bg-blue-100',
   };
   return (
-    <button onClick={onClick} className={`py-3 px-2 rounded-xl text-sm font-medium ${classes[tone]}`}>
+    <button onClick={onClick} className={`flashcard-rating-button ${classes[tone]}`} aria-label={`${label}, keyboard ${shortcut}`}>
+      <span className="flashcard-rating-direction" aria-hidden="true">{direction}</span>
       <span className="block">{label}</span>
-      <span className="text-xs opacity-75">{shortcut}</span>
+      <span className="sr-only">Keyboard shortcut {shortcut}</span>
     </button>
   );
+}
+
+function BookIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H11a3 3 0 0 1 3 3v15a3 3 0 0 0-3-3H7.5A3.5 3.5 0 0 0 4 20.5Z"/><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H14v18a3 3 0 0 1 3-3h3Z"/></svg>;
 }
 
 function RatingBreakdown({ label, count, total, color }: { label: string; count: number; total: number; color: 'red' | 'orange' | 'green' | 'blue' }) {

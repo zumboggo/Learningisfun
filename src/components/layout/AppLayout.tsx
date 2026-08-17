@@ -14,6 +14,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const location = useLocation();
   const syncState = useSyncStatus();
   const online = useOnlineStatus();
+  const isStudyRoute = /\/decks\/[^/]+\/review$/.test(location.pathname);
 
   const isActualTeacher = user?.role === 'teacher' || user?.role === 'admin';
 
@@ -47,7 +48,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div className="student-shell min-h-screen">
         {/* Account controls sit in the page flow rather than floating over the
             hero, so nothing overlaps on narrow screens. */}
-        <div className="mx-auto flex w-full max-w-[46rem] items-center justify-end gap-3 px-[clamp(1rem,4vw,1.5rem)] pt-3">
+        <div className={`${isStudyRoute ? 'hidden' : 'flex'} mx-auto w-full max-w-[46rem] items-center justify-end gap-3 px-[clamp(1rem,4vw,1.5rem)] pt-3`}>
           {isActualTeacher && (
             <button
               onClick={() => setViewAsStudent(!viewAsStudent)}
@@ -70,7 +71,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           </button>
         </div>
 
-        <main className="student-main">
+        <main className={`student-main ${isStudyRoute ? 'student-main-study' : ''}`}>
           {children}
         </main>
 
