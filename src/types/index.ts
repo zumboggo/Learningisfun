@@ -20,8 +20,14 @@ export interface Class {
   joinCodeActive: boolean;
   parentCode: string;
   parentCodeActive: boolean;
+  linksJson: string;
   status: 'active' | 'archived';
   createdAt: string;
+}
+
+export interface ClassLink {
+  label: string;
+  url: string;
 }
 
 export interface ClassMember {

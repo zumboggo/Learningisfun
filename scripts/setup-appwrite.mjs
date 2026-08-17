@@ -67,6 +67,7 @@ const COLLECTIONS = [
       BOOL('joinCodeActive', { required: true }),
       S('parentCode', { size: 16, required: false }),
       BOOL('parentCodeActive', { required: false }),
+      TXT('linksJson', { required: false }),
       ENUM('status', ['active', 'archived'], { required: true }),
       DATE('createdAt', { required: true }),
     ],

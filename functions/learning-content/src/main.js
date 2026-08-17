@@ -1,7 +1,7 @@
 import { Client, Databases, ID, Query } from 'node-appwrite';
 
 const studentCollections = new Set(['quiz_attempts', 'writing_submissions', 'peer_reviews', 'discussion_questions', 'discussion_answers', 'question_votes', 'text_annotations', 'text_discussion_posts', 'text_discussion_votes']);
-const teacherCollections = new Set(['quizzes', 'quiz_assignments', 'quiz_questions', 'writing_prompts', 'writing_prompt_assignments', 'texts', 'text_assignments', 'text_paragraphs']);
+const teacherCollections = new Set(['classes', 'quizzes', 'quiz_assignments', 'quiz_questions', 'writing_prompts', 'writing_prompt_assignments', 'texts', 'text_assignments', 'text_paragraphs']);
 const clean = document => { const output = { ...document }; for (const key of Object.keys(output)) if (key.startsWith('$')) delete output[key]; output.$id = document.$id; return output; };
 
 export default async ({ req, res, error }) => {
@@ -52,6 +52,16 @@ export default async ({ req, res, error }) => {
     if (studentCollections.has(collection) && profile.role === 'parent') return res.json({ error: 'Parent accounts are read-only' }, 403);
     const data = { ...body.data }; delete data.$id; delete data.syncStatus;
     let existing = null; if (operation !== 'create') { try { existing = await db.getDocument(databaseId, collection, id); } catch { /* upsert */ } }
+    if (collection === 'classes') {
+      if (!existing || existing.teacherId !== userId || operation === 'delete') return res.json({ error: 'Only the class owner can update class links' }, 403);
+      let links;
+      try { links = JSON.parse(data.linksJson || '[]'); } catch { return res.json({ error: 'Invalid class links' }, 400); }
+      if (!Array.isArray(links) || links.length > 14 || links.some(link =>
+        typeof link?.label !== 'string' || typeof link?.url !== 'string' || !/^https?:\/\//i.test(link.url)
+      )) return res.json({ error: 'Invalid class links' }, 400);
+      await db.updateDocument(databaseId, collection, id, { linksJson: JSON.stringify(links) });
+      return res.json({ ok: true });
+    }
     let classId = data.classId || existing?.classId;
     if (!classId && data.classSessionId) { const session = await db.getDocument(databaseId, 'class_sessions', data.classSessionId); classId = session.classId; data.classId ||= classId; }
     const isMember = classId ? memberClassIds.has(classId) : false;

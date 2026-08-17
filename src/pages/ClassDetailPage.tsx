@@ -10,6 +10,9 @@ import {
   removeStudent,
   getClassMembers,
   importClassRoster,
+  parseClassLinks,
+  saveClassLinks,
+  MAX_CLASS_LINKS,
   syncClassRosterFromServer,
   type RosterImportResult,
 } from '@/services/class.service';
@@ -24,7 +27,7 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { AddDecksToClassModal } from '@/components/common/AddDecksToClassModal';
 import { RandomStudentModal } from '@/components/teacher/RandomStudentModal';
 import { CreateGroupsModal } from '@/components/teacher/CreateGroupsModal';
-import type { ClassSession, LearningText } from '@/types';
+import type { Class, ClassLink, ClassSession, LearningText } from '@/types';
 
 type WeeklyMaterial =
   | { kind: 'notes'; date: string; session: ClassSession }
@@ -179,6 +182,14 @@ export function ClassDetailPage() {
     }
   };
 
+  const messageClass = () => {
+    if (!cls) return;
+    const emails = [...new Set((students || []).map(student => student.email).filter(email => email && email !== 'Profile not synced yet'))];
+    if (!emails.length) return;
+    const subject = encodeURIComponent(`${cls.courseName} — ${cls.name}`);
+    window.location.href = `mailto:?bcc=${encodeURIComponent(emails.join(','))}&subject=${subject}`;
+  };
+
   const downloadRosterCredentials = () => {
     if (!rosterResult || !cls) return;
     const headers = ['name', 'email', 'password', 'status', 'message'];
@@ -209,6 +220,7 @@ export function ClassDetailPage() {
         {isOwner && (
           <div className="flex flex-wrap gap-2">
             <Link to={`/classes/${cls.$id}/notes/today`}><Button size="sm">Today&apos;s Notes</Button></Link>
+            <Button onClick={messageClass} disabled={!students?.some(student => student.email && student.email !== 'Profile not synced yet')} size="sm" variant="secondary">Message class</Button>
             <Button onClick={() => setShowDiscussionModal(true)} size="sm">Start discussion</Button>
             <Button onClick={() => setShowPicker(true)} size="sm" variant="secondary">Pick a student</Button>
             <Button onClick={() => setShowGroups(true)} size="sm" variant="secondary">Create groups</Button>
@@ -277,6 +289,8 @@ export function ClassDetailPage() {
           )}
         </Card>
       )}
+
+      <ClassLinksPanel cls={cls} isOwner={Boolean(isOwner)} teacherId={user?.$id || ''} />
 
       <WeeklyClassReview materials={weeklyMaterials || []} />
 
@@ -632,4 +646,65 @@ function formatWeek(value: string): string {
 
 function formatDate(value: string): string {
   return new Date(value.length === 10 ? `${value}T12:00:00` : value).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+function ClassLinksPanel({ cls, isOwner, teacherId }: { cls: Class; isOwner: boolean; teacherId: string }) {
+  const [open, setOpen] = useState(false);
+  const [label, setLabel] = useState('');
+  const [url, setUrl] = useState('');
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const links = parseClassLinks(cls.linksJson);
+
+  const addLink = async () => {
+    if (!teacherId || !label.trim() || !url.trim() || links.length >= MAX_CLASS_LINKS) return;
+    setSaving(true); setError('');
+    try {
+      await saveClassLinks(cls.$id, teacherId, [...links, { label, url }]);
+      setLabel(''); setUrl('');
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not save link');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const removeLink = async (target: ClassLink) => {
+    if (!teacherId) return;
+    setSaving(true); setError('');
+    try {
+      await saveClassLinks(cls.$id, teacherId, links.filter(link => link.label !== target.label || link.url !== target.url));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not delete link');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+      <button className="flex w-full items-center justify-between p-4 text-left hover:bg-gray-50" onClick={() => setOpen(value => !value)}>
+        <span className="text-lg font-semibold">{open ? '▾' : '▸'} Links</span>
+        <span className="text-sm text-gray-500">{links.length}/{MAX_CLASS_LINKS}</span>
+      </button>
+      {open && (
+        <div className="space-y-3 border-t p-4">
+          {links.length ? links.map(link => (
+            <div key={`${link.label}-${link.url}`} className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
+              <a href={link.url} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate font-medium text-blue-700 hover:underline">{link.label}</a>
+              {isOwner && <button className="text-sm text-red-600 hover:text-red-800" disabled={saving} onClick={() => void removeLink(link)}>Delete</button>}
+            </div>
+          )) : <p className="text-sm text-gray-500">No class links have been added yet.</p>}
+          {isOwner && links.length < MAX_CLASS_LINKS && (
+            <div className="grid gap-2 border-t pt-3 sm:grid-cols-[1fr_1.5fr_auto]">
+              <input className="rounded-lg border px-3 py-2 text-sm" value={label} onChange={event => setLabel(event.target.value)} placeholder="Link name" maxLength={120} />
+              <input className="rounded-lg border px-3 py-2 text-sm" value={url} onChange={event => setUrl(event.target.value)} placeholder="https://…" inputMode="url" />
+              <Button size="sm" loading={saving} disabled={!label.trim() || !url.trim()} onClick={() => void addLink()}>Add</Button>
+            </div>
+          )}
+          {error && <p className="text-sm text-red-600">{error}</p>}
+        </div>
+      )}
+    </section>
+  );
 }

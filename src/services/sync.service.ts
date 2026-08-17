@@ -90,7 +90,7 @@ async function executeSyncOperation(op: SyncOperation): Promise<void> {
     'quiz', 'quiz_assignment', 'quiz_question', 'quiz_attempt', 'writing_prompt',
     'writing_prompt_assignment', 'writing_submission', 'peer_review', 'text',
     'text_assignment', 'text_paragraph', 'text_annotation', 'text_discussion_post',
-    'text_discussion_vote', 'question', 'vote', 'discussion_answer',
+    'text_discussion_vote', 'question', 'vote', 'discussion_answer', 'class_links',
   ].includes(entityType)) {
     const execution = await functions.createExecution(FUNCTION_IDS.learningContent, JSON.stringify({
       action: 'mutate', collection: secureCollection, operation: operationType,
@@ -198,6 +198,7 @@ function collectionForEntity(entityType: string): string | null {
     case 'card': return COLLECTIONS.flashcard_cards;
     case 'deck_assignment': return COLLECTIONS.deck_assignments;
     case 'class': return COLLECTIONS.classes;
+    case 'class_links': return COLLECTIONS.classes;
     case 'class_member': return COLLECTIONS.class_members;
     case 'quiz': return COLLECTIONS.quizzes;
     case 'quiz_assignment': return COLLECTIONS.quiz_assignments;
