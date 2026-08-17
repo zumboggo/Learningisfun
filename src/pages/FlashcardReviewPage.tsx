@@ -78,10 +78,15 @@ export function FlashcardReviewPage() {
   const [activeSeconds, setActiveSeconds] = useState(0);
   const [emptyMessage, setEmptyMessage] = useState('');
   const [cardTimes, setCardTimes] = useState<CardTimeRecord[]>([]);
+  const [sessionNewRemaining, setSessionNewRemaining] = useState(0);
+  const [sessionReviewRemaining, setSessionReviewRemaining] = useState(0);
+  const [sessionFinished, setSessionFinished] = useState(0);
   const cardStartedAt = useRef(Date.now());
   const activeSecondsRef = useRef(0);
   const studySessionIdRef = useRef('');
   const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sessionCategoryRef = useRef(new Map<string, 'new' | 'review'>());
+  const finishedCardIdsRef = useRef(new Set<string>());
 
   useEffect(() => {
     studySessionIdRef.current = studySessionId;
@@ -110,6 +115,19 @@ export function FlashcardReviewPage() {
       return;
     }
     setLapCount(0);
+
+    const existingStates = await db.student_card_state
+      .where('userId').equals(user.$id)
+      .and(state => state.deckId === deckId)
+      .toArray();
+    const stateByCard = new Map(existingStates.map(state => [state.cardId, state]));
+    const categoryByCard = new Map<string, 'new' | 'review'>();
+    for (const card of sessionCards) categoryByCard.set(card.$id, stateByCard.has(card.$id) ? 'review' : 'new');
+    sessionCategoryRef.current = categoryByCard;
+    finishedCardIdsRef.current = new Set();
+    setSessionNewRemaining([...categoryByCard.values()].filter(category => category === 'new').length);
+    setSessionReviewRemaining([...categoryByCard.values()].filter(category => category === 'review').length);
+    setSessionFinished(0);
 
     const studySession = isParent ? null : await startFlashcardStudySession(user.$id, deckId, classId || null);
     activeSecondsRef.current = 0;
@@ -161,16 +179,26 @@ export function FlashcardReviewPage() {
     // The whole point of unlimited practice is that it leaves the schedule
     // alone, so no review is written and no due date moves. The study session
     // itself is still timed, so the minutes still count towards their streak.
+    let needsMorePractice = false;
     if (queueMode !== 'unlimited') {
-      await reviewCard(user.$id, currentCard.$id, deckId, rating, {
+      const nextState = await reviewCard(user.$id, currentCard.$id, deckId, rating, {
         classId: classId || null,
         sessionId: studySessionId,
         elapsedSeconds,
       });
+      needsMorePractice = nextState.intervalDays < 1;
+      if (!needsMorePractice && !finishedCardIdsRef.current.has(currentCard.$id)) {
+        finishedCardIdsRef.current.add(currentCard.$id);
+        setSessionFinished(value => value + 1);
+        if (sessionCategoryRef.current.get(currentCard.$id) === 'new') setSessionNewRemaining(value => Math.max(0, value - 1));
+        else setSessionReviewRemaining(value => Math.max(0, value - 1));
+      }
     }
     setReviewedCount(prev => prev + 1);
 
-    if (currentIndex + 1 >= cards.length) {
+    const nextCards = needsMorePractice ? [...cards, currentCard] : cards;
+    if (needsMorePractice) setCards(nextCards);
+    if (currentIndex + 1 >= nextCards.length) {
       if (queueMode === 'unlimited') {
         // Reshuffle and keep going rather than ending the session.
         setCards(prev => shuffle(prev));
@@ -389,10 +417,11 @@ export function FlashcardReviewPage() {
       </div>
 
       <div className="flashcard-progress-row">
-        <span>
-          {queueMode === 'unlimited' && lapCount > 0 && `Round ${lapCount + 1} · `}
-          {currentIndex + 1} of {cards.length}
-        </span>
+        {queueMode === 'unlimited' ? <span>{lapCount > 0 && `Round ${lapCount + 1} · `}{currentIndex + 1} of {cards.length}</span> : <div className="flashcard-session-counts" aria-label="Cards remaining and finished today">
+          <span className="count-new"><b>{sessionNewRemaining}</b> New</span>
+          <span className="count-review"><b>{sessionReviewRemaining}</b> Review</span>
+          <span className="count-finished"><b>{sessionFinished}</b> Finished</span>
+        </div>}
       </div>
 
       {queueMode === 'unlimited' && (
@@ -405,7 +434,7 @@ export function FlashcardReviewPage() {
       <div className="flashcard-progress-track">
         <div
           className="flashcard-progress-fill"
-          style={{ width: `${((currentIndex + 1) / cards.length) * 100}%` }}
+          style={{ width: `${queueMode === 'unlimited' ? ((currentIndex + 1) / cards.length) * 100 : (sessionFinished / Math.max(1, sessionCategoryRef.current.size)) * 100}%` }}
         />
       </div>
 
@@ -415,6 +444,7 @@ export function FlashcardReviewPage() {
           ref={swipeHandle.cardRef}
           className={`flashcard-focus-card flex flex-col select-none touch-none ${swipeHandle.dismissClass}`}
           {...swipeHandle.handlers}
+          onClick={() => { if (!showAnswer) setShowAnswer(true); }}
         >
           <div className="flashcard-question flex flex-1 flex-col items-center justify-center">
             <div className="flashcard-state-icon flashcard-state-icon-question" aria-hidden="true">?</div>
@@ -422,6 +452,7 @@ export function FlashcardReviewPage() {
               content={currentCard.frontMarkdown || currentCard.front}
               className="flashcard-question-copy text-center"
             />
+            {!showAnswer && <span className="flashcard-tap-cue">Tap to flip · Space</span>}
           </div>
 
           {showAnswer && (
@@ -453,14 +484,7 @@ export function FlashcardReviewPage() {
 
       {showAnswer && !isParent && (
         <div className="flashcard-rating-zone" aria-label="Swipe or choose a rating">
-          <p>Swipe to rate</p>
-          <div className="flashcard-swipe-compass" aria-hidden="true">
-            <span className="swipe-up">↑ <b>Hard</b></span>
-            <span className="swipe-left"><b>Again</b> ←</span>
-            <span className="swipe-center"></span>
-            <span className="swipe-right">→ <b>Good</b></span>
-            <span className="swipe-down">↓ <b>Easy</b></span>
-          </div>
+          <div className="flashcard-swipe-line" aria-hidden="true"><span>← Again</span><i>·</i><span>↑ Hard</span><i>·</i><span>→ Good</span><i>·</i><span>↓ Easy</span></div>
           <div className="flashcard-rating-grid">
             <RatingButton label="Again" shortcut="1" direction="↶" tone="red" onClick={() => void handleRate('again')} />
             <RatingButton label="Hard" shortcut="2" direction="↑" tone="orange" onClick={() => void handleRate('hard')} />
@@ -513,7 +537,7 @@ function RatingButton({ label, shortcut, direction, tone, onClick }: { label: st
     <button onClick={onClick} className={`flashcard-rating-button ${classes[tone]}`} aria-label={`${label}, keyboard ${shortcut}`}>
       <span className="flashcard-rating-direction" aria-hidden="true">{direction}</span>
       <span className="block">{label}</span>
-      <span className="sr-only">Keyboard shortcut {shortcut}</span>
+      <kbd>{shortcut}</kbd>
     </button>
   );
 }
