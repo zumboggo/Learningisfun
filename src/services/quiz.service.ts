@@ -1,4 +1,4 @@
-import { ID, Query } from 'appwrite';
+import { ID } from 'appwrite';
 import { db } from '@/db/schema';
 import { getApiKey, generateQuizFromSources, type QuizQuestion as AIQuizQuestion } from '@/services/ai.service';
 import {
@@ -10,7 +10,8 @@ import { getClassCards } from '@/services/daily-quiz.service';
 import type { Quiz, QuizAssignment, QuizQuestion, QuizAttempt } from '@/types';
 import { getTimestamp } from '@/utils/helpers';
 import { addToQueue } from '@/services/sync.service';
-import { databases, DATABASE_ID, COLLECTIONS } from '@/lib/appwrite';
+import { DATABASE_ID } from '@/lib/appwrite';
+import { executeLearningContent } from '@/services/learning-content.service';
 
 /** How many days back counts as "recent" for the quiz source slider. */
 export const RECENT_WINDOW_DAYS = 7;
@@ -302,29 +303,28 @@ export async function getClassQuizzes(classId: string): Promise<Quiz[]> {
 }
 
 /** Pull quizzes assigned to the user's classes, including their questions. */
-export async function syncQuizzesFromServer(classIds: string[], userId: string, isTeacher: boolean): Promise<void> {
+export async function syncQuizzesFromServer(classIds: string[]): Promise<void> {
   if (!DATABASE_ID || classIds.length === 0) return;
   try {
-    const assignmentResult = await databases.listDocuments(DATABASE_ID, COLLECTIONS.quiz_assignments, [
-      Query.equal('classId', classIds), Query.limit(500),
-    ]);
-    const assignments = assignmentResult.documents.map(doc => ({
+    const result = await executeLearningContent<{
+      assignments: Array<{ $id: string } & Record<string, unknown>>;
+      quizzes: Array<{ $id: string } & Record<string, unknown>>;
+      questions: Array<{ $id: string } & Record<string, unknown>>;
+      attempts: Array<{ $id: string } & Record<string, unknown>>;
+    }>({ action: 'readQuizzes', classIds });
+    const assignments = result.assignments.map(doc => ({
       $id: doc.$id, quizId: doc.quizId as string, classId: doc.classId as string,
       assignedAt: doc.assignedAt as string,
     } satisfies QuizAssignment));
-    await db.quiz_assignments.bulkPut(assignments);
-    const quizIds = [...new Set(assignments.map(a => a.quizId))];
-    if (isTeacher) {
-      const own = await databases.listDocuments(DATABASE_ID, COLLECTIONS.quizzes, [
-        Query.equal('createdBy', userId), Query.limit(500),
-      ]);
-      quizIds.push(...own.documents.map(d => d.$id));
-    }
-    if (quizIds.length === 0) return;
-    const quizResult = await databases.listDocuments(DATABASE_ID, COLLECTIONS.quizzes, [
-      Query.equal('$id', [...new Set(quizIds)]), Query.limit(500),
-    ]);
-    for (const doc of quizResult.documents) {
+    await db.transaction('rw', db.quiz_assignments, async () => {
+      for (const classId of classIds) {
+        const cached = await db.quiz_assignments.where('classId').equals(classId).toArray();
+        const visibleIds = new Set(assignments.filter(row => row.classId === classId).map(row => row.$id));
+        await db.quiz_assignments.bulkDelete(cached.filter(row => !visibleIds.has(row.$id)).map(row => row.$id));
+      }
+      if (assignments.length) await db.quiz_assignments.bulkPut(assignments);
+    });
+    for (const doc of result.quizzes) {
       await db.quizzes.put({
         $id: doc.$id, classId: doc.classId as string, sourceClassId: (doc.sourceClassId as string) || doc.classId as string,
         createdBy: doc.createdBy as string, title: doc.title as string, sourceType: doc.sourceType as Quiz['sourceType'],
@@ -334,16 +334,21 @@ export async function syncQuizzesFromServer(classIds: string[], userId: string, 
         createdAt: doc.createdAt as string, syncStatus: 'synced',
       });
     }
-    const questionResult = await databases.listDocuments(DATABASE_ID, COLLECTIONS.quiz_questions, [
-      Query.equal('quizId', [...new Set(quizIds)]), Query.limit(2000),
-    ]);
-    for (const doc of questionResult.documents) {
+    for (const doc of result.questions) {
       await db.quiz_questions.put({
         $id: doc.$id, quizId: doc.quizId as string, type: doc.type as QuizQuestion['type'],
         questionText: doc.questionText as string, options: (doc.options as string) || '[]',
         correctIndex: (doc.correctIndex as number) || 0, clozeAnswer: (doc.clozeAnswer as string) || '',
         clozeVariants: (doc.clozeVariants as string) || '[]', explanation: (doc.explanation as string) || '',
         sortOrder: doc.sortOrder as number,
+      });
+    }
+    for (const doc of result.attempts) {
+      await db.quiz_attempts.put({
+        $id: doc.$id, quizId: doc.quizId as string, userId: doc.userId as string,
+        startedAt: doc.startedAt as string, completedAt: (doc.completedAt as string) || null,
+        score: (doc.score as number) || 0, totalQuestions: (doc.totalQuestions as number) || 0,
+        answers: (doc.answers as string) || '[]', syncStatus: 'synced',
       });
     }
   } catch { /* offline or backend not provisioned yet */ }

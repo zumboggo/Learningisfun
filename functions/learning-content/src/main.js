@@ -15,6 +15,48 @@ export default async ({ req, res, error }) => {
     const memberships = await db.listDocuments(databaseId, 'class_members', [Query.equal('userId', userId), Query.limit(500)]);
     const memberClassIds = new Set(memberships.documents.map(row => row.classId));
 
+    if (body.action === 'readQuizzes') {
+      const requested = [...new Set(Array.isArray(body.classIds) ? body.classIds.filter(Boolean) : [])];
+      let allowedClassIds = requested.filter(classId => memberClassIds.has(classId));
+      let ownedQuizzes = [];
+      if (profile.role === 'teacher') {
+        const ownedClasses = await db.listDocuments(databaseId, 'classes', [Query.equal('teacherId', userId), Query.limit(500)]);
+        const ownedClassIds = new Set(ownedClasses.documents.map(row => row.$id));
+        allowedClassIds = requested.filter(classId => ownedClassIds.has(classId));
+        const ownResult = await db.listDocuments(databaseId, 'quizzes', [Query.equal('createdBy', userId), Query.limit(5000)]);
+        ownedQuizzes = ownResult.documents;
+      }
+      if (!allowedClassIds.length && !ownedQuizzes.length) return res.json({ assignments: [], quizzes: [], questions: [], attempts: [] });
+      const assignmentResult = allowedClassIds.length
+        ? await db.listDocuments(databaseId, 'quiz_assignments', [Query.equal('classId', allowedClassIds), Query.limit(5000)])
+        : { documents: [] };
+      const assignedQuizIds = [...new Set(assignmentResult.documents.map(row => row.quizId))];
+      let assignedQuizzes = [];
+      if (assignedQuizIds.length) {
+        const quizResult = await db.listDocuments(databaseId, 'quizzes', [Query.equal('$id', assignedQuizIds), Query.limit(5000)]);
+        assignedQuizzes = quizResult.documents;
+      }
+      const quizzesById = new Map([...ownedQuizzes, ...assignedQuizzes].map(row => [row.$id, row]));
+      const quizzes = [...quizzesById.values()].filter(row => profile.role === 'teacher' || row.status === 'published');
+      const quizIds = quizzes.map(row => row.$id);
+      if (!quizIds.length) return res.json({ assignments: assignmentResult.documents.map(clean), quizzes: [], questions: [], attempts: [] });
+      const questionResult = await db.listDocuments(databaseId, 'quiz_questions', [Query.equal('quizId', quizIds), Query.limit(5000)]);
+      let attempts = [];
+      if (profile.role !== 'parent') {
+        const attemptQueries = [Query.equal('quizId', quizIds), Query.limit(5000)];
+        if (profile.role !== 'teacher') attemptQueries.unshift(Query.equal('userId', userId));
+        const attemptResult = await db.listDocuments(databaseId, 'quiz_attempts', attemptQueries);
+        attempts = attemptResult.documents;
+      }
+      const visibleIds = new Set(quizIds);
+      return res.json({
+        assignments: assignmentResult.documents.filter(row => visibleIds.has(row.quizId)).map(clean),
+        quizzes: quizzes.map(clean),
+        questions: questionResult.documents.map(clean),
+        attempts: attempts.map(clean),
+      });
+    }
+
     if (body.action === 'readTexts') {
       const requested = Array.isArray(body.classIds) ? body.classIds : [];
       const allowedClassIds = requested.filter(classId => memberClassIds.has(classId));

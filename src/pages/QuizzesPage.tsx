@@ -404,7 +404,11 @@ function StudentQuizzes() {
     const result: Array<{ quiz: Quiz; className: string; myAttempt: QuizAttempt | null }> = [];
     for (const classId of classIds) {
       const cls = await db.classes.get(classId);
-      const classQuizzes = await db.quizzes.where('classId').equals(classId).and(q => q.status === 'published').toArray();
+      const assignments = await db.quiz_assignments.where('classId').equals(classId).toArray();
+      const assignedIds = [...new Set(assignments.map(assignment => assignment.quizId))];
+      const classQuizzes = assignedIds.length
+        ? (await db.quizzes.where('$id').anyOf(assignedIds).toArray()).filter(q => q.status === 'published')
+        : [];
       for (const quiz of classQuizzes) {
         const attempts = await db.quiz_attempts.where('quizId').equals(quiz.$id).and(a => a.userId === user!.$id).toArray();
         const completed = attempts.find(a => a.completedAt);

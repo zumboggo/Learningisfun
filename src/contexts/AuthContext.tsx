@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const cachedUser = await authService.getCachedUser();
     const isTeacher = cachedUser?.role === 'teacher' || cachedUser?.role === 'admin';
     await Promise.all([
-      quizService.syncQuizzesFromServer(classIds, userId, isTeacher),
+      quizService.syncQuizzesFromServer(classIds),
       writingService.syncWritingFromServer(classIds, userId, isTeacher),
       textService.syncTextsFromServer(classIds, userId, isTeacher),
     ]);
