@@ -90,7 +90,7 @@ async function executeSyncOperation(op: SyncOperation): Promise<void> {
     'quiz', 'quiz_assignment', 'quiz_question', 'quiz_attempt', 'writing_prompt',
     'writing_prompt_assignment', 'writing_submission', 'peer_review', 'text',
     'text_assignment', 'text_paragraph', 'text_annotation', 'text_discussion_post',
-    'text_discussion_vote', 'question', 'vote', 'discussion_answer', 'class_links',
+    'text_discussion_vote', 'question', 'vote', 'discussion_answer', 'class_links', 'deck_assignment',
   ].includes(entityType)) {
     const execution = await functions.createExecution(FUNCTION_IDS.learningContent, JSON.stringify({
       action: 'mutate', collection: secureCollection, operation: operationType,

@@ -273,6 +273,8 @@ export async function getDeckCards(deckId: string): Promise<FlashcardCard[]> {
   return db.flashcard_cards.where('deckId').equals(deckId).sortBy('sortOrder');
 }
 
+export async function updateDeckMetadata(deckId:string,creatorId:string,updates:{title:string;description:string}):Promise<void>{const deck=await db.flashcard_decks.get(deckId);if(!deck||deck.creatorId!==creatorId)throw new Error('Only the deck creator can edit it');const patch={title:updates.title.trim(),description:updates.description.trim(),updatedAt:getTimestamp()};await db.flashcard_decks.update(deckId,patch);try{await databases.updateDocument(DATABASE_ID,COLLECTIONS.flashcard_decks,deckId,patch);}catch{const updated=await db.flashcard_decks.get(deckId);if(updated)await addToQueue(creatorId,'deck',deckId,'update',updated);}}
+
 export async function reviewCard(
   userId: string,
   cardId: string,

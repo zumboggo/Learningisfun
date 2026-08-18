@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
-import { getStudentDecks } from '@/services/flashcard.service';
+import { getStudentDecks, updateDeckMetadata } from '@/services/flashcard.service';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
+import { Modal } from '@/components/common/Modal';
 import { AssignDeckModal } from '@/components/common/AssignDeckModal';
 import { classLabel } from '@/utils/helpers';
 import type { FlashcardDeck } from '@/types';
@@ -13,6 +14,7 @@ import type { FlashcardDeck } from '@/types';
 export function DecksListPage() {
   const { user, isTeacher } = useAuth();
   const [assigningDeck, setAssigningDeck] = useState<FlashcardDeck | null>(null);
+  const [editingDeck,setEditingDeck]=useState<FlashcardDeck|null>(null);
 
   const decks = useLiveQuery(async () => {
     if (!user) return [];
@@ -65,6 +67,7 @@ export function DecksListPage() {
               <Button size="sm" variant="secondary" onClick={() => setAssigningDeck(deck)}>
                 Add to Class/es
               </Button>
+              <Button size="sm" variant="secondary" onClick={() => setEditingDeck(deck)}>Edit</Button>
             </div>
           )}
         </div>
@@ -120,6 +123,9 @@ export function DecksListPage() {
           onClose={() => setAssigningDeck(null)}
         />
       )}
+      {user&&editingDeck&&<EditDeckModal deck={editingDeck} creatorId={user.$id} onClose={()=>setEditingDeck(null)}/>}
     </div>
   );
 }
+
+function EditDeckModal({deck,creatorId,onClose}:{deck:FlashcardDeck;creatorId:string;onClose:()=>void}){const[title,setTitle]=useState(deck.title),[description,setDescription]=useState(deck.description);return <Modal open onClose={onClose} title="Edit deck"><div className="space-y-3"><input className="w-full rounded-lg border px-3 py-2" value={title} onChange={e=>setTitle(e.target.value)} placeholder="Deck title"/><textarea className="w-full rounded-lg border px-3 py-2" rows={3} value={description} onChange={e=>setDescription(e.target.value)} placeholder="Description"/><Button className="w-full" disabled={!title.trim()} onClick={()=>void updateDeckMetadata(deck.$id,creatorId,{title,description}).then(onClose)}>Save changes</Button></div></Modal>}

@@ -1,6 +1,7 @@
 import { Query } from 'appwrite';
 import { db } from '@/db/schema';
-import { databases, DATABASE_ID, COLLECTIONS } from '@/lib/appwrite';
+import { databases, DATABASE_ID, COLLECTIONS, FUNCTION_IDS } from '@/lib/appwrite';
+import { executeLearningContent } from './learning-content.service';
 import { generateId, getTimestamp } from '@/utils/helpers';
 import { addToQueue } from './sync.service';
 import type {
@@ -226,6 +227,15 @@ export async function syncMyClassSessionsFromServer(userId: string): Promise<voi
  * is opened so students see each other's questions and the teacher sees theirs.
  */
 export async function syncDiscussionFromServer(classSessionId: string): Promise<void> {
+  if (FUNCTION_IDS.learningContent) {
+    try {
+      const result = await executeLearningContent<{ questions: DiscussionQuestion[]; votes: QuestionVote[]; answers: DiscussionAnswer[] }>({ action: 'readClassDiscussion', sessionId: classSessionId });
+      for (const question of result.questions) await db.discussion_questions.put({ ...question, syncStatus: 'synced' });
+      for (const vote of result.votes) await db.question_votes.put({ ...vote, syncStatus: 'synced' });
+      for (const answer of result.answers) await db.discussion_answers.put({ ...answer, syncStatus: 'synced' });
+      return;
+    } catch { /* Fall back for older deployments and offline use. */ }
+  }
   await Promise.all([
     pullQuestions(classSessionId),
     pullVotes(classSessionId),

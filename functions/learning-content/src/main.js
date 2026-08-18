@@ -1,7 +1,7 @@
 import { Client, Databases, ID, Query } from 'node-appwrite';
 
 const studentCollections = new Set(['quiz_attempts', 'writing_submissions', 'peer_reviews', 'discussion_questions', 'discussion_answers', 'question_votes', 'text_annotations', 'text_discussion_posts', 'text_discussion_votes']);
-const teacherCollections = new Set(['classes', 'quizzes', 'quiz_assignments', 'quiz_questions', 'writing_prompts', 'writing_prompt_assignments', 'texts', 'text_assignments', 'text_paragraphs']);
+const teacherCollections = new Set(['classes', 'deck_assignments', 'quizzes', 'quiz_assignments', 'quiz_questions', 'writing_prompts', 'writing_prompt_assignments', 'texts', 'text_assignments', 'text_paragraphs']);
 const clean = document => { const output = { ...document }; for (const key of Object.keys(output)) if (key.startsWith('$')) delete output[key]; output.$id = document.$id; return output; };
 
 export default async ({ req, res, error }) => {
@@ -45,6 +45,22 @@ export default async ({ req, res, error }) => {
       return res.json({ posts, votes });
     }
 
+    if (body.action === 'readClassDiscussion') {
+      const session = await db.getDocument(databaseId, 'class_sessions', body.sessionId);
+      const ownsClass = profile.role === 'teacher' && (await db.listDocuments(databaseId, 'classes', [Query.equal('$id', session.classId), Query.equal('teacherId', userId), Query.limit(1)])).total > 0;
+      if (!memberClassIds.has(session.classId) && !ownsClass) return res.json({ error: 'Not enrolled' }, 403);
+      const questionResult = await db.listDocuments(databaseId, 'discussion_questions', [Query.equal('classSessionId', body.sessionId), Query.limit(5000)]);
+      const questions = questionResult.documents.filter(row => ownsClass || row.moderationStatus === 'visible');
+      const questionIds = questions.map(row => row.$id);
+      if (!questionIds.length) return res.json({ questions: [], votes: [], answers: [] });
+      const [voteResult, answerResult] = await Promise.all([
+        db.listDocuments(databaseId, 'question_votes', [Query.equal('classSessionId', body.sessionId), Query.limit(5000)]),
+        db.listDocuments(databaseId, 'discussion_answers', [Query.equal('questionId', questionIds), Query.limit(5000)]),
+      ]);
+      const visibleVotes = voteResult.documents.filter(row => ownsClass || row.userId === userId).map(clean);
+      return res.json({ questions: questions.map(clean), votes: visibleVotes, answers: answerResult.documents.map(clean) });
+    }
+
     if (body.action !== 'mutate') return res.json({ error: 'Unsupported action' }, 400);
     const { collection, operation, id } = body;
     if (!studentCollections.has(collection) && !teacherCollections.has(collection)) return res.json({ error: 'Unsupported collection' }, 400);
@@ -63,12 +79,15 @@ export default async ({ req, res, error }) => {
       return res.json({ ok: true });
     }
     let classId = data.classId || existing?.classId;
-    if (!classId && data.classSessionId) { const session = await db.getDocument(databaseId, 'class_sessions', data.classSessionId); classId = session.classId; data.classId ||= classId; }
+    if (!classId && data.classSessionId) { const session = await db.getDocument(databaseId, 'class_sessions', data.classSessionId); classId = session.classId; }
+    if (!classId && collection === 'discussion_answers' && (data.questionId || existing?.questionId)) { const question = await db.getDocument(databaseId, 'discussion_questions', data.questionId || existing.questionId); const session = await db.getDocument(databaseId, 'class_sessions', question.classSessionId); classId = session.classId; }
     const isMember = classId ? memberClassIds.has(classId) : false;
     const ownedClass = classId ? await db.listDocuments(databaseId, 'classes', [Query.equal('$id', classId), Query.equal('teacherId', userId), Query.limit(1)]) : { total: 0 };
     const isTeacher = profile.role === 'teacher' && ownedClass.total > 0;
     if (studentCollections.has(collection) && classId && !isMember && !isTeacher) return res.json({ error: 'Not enrolled' }, 403);
+    if (teacherCollections.has(collection) && classId && !isTeacher) return res.json({ error: 'Not the class owner' }, 403);
     if (existing && !isTeacher) { const owner = existing.authorId || existing.userId || existing.reviewerId; if (owner && owner !== userId) return res.json({ error: 'Cannot change another student’s work' }, 403); }
+    if (existing && isTeacher) { const owner = existing.authorId || existing.userId || existing.reviewerId; if (owner && owner !== userId) { if (collection === 'discussion_questions') { data.questionText = existing.questionText; data.selectedPassage = existing.selectedPassage; } if (collection === 'discussion_answers') data.answerText = existing.answerText; if (collection === 'text_discussion_posts') data.content = existing.content; } }
     if ('authorId' in data && !isTeacher) data.authorId = userId; if ('userId' in data) data.userId = userId; if ('reviewerId' in data) data.reviewerId = userId;
     if (collection === 'text_discussion_posts' && data.parentId) { const parent = await db.getDocument(databaseId, collection, data.parentId); if (parent.locked || parent.depth >= 3 || parent.classId !== data.classId) return res.json({ error: 'Invalid or locked reply target' }, 400); data.depth = parent.depth + 1; }
     if (collection === 'text_discussion_votes') {

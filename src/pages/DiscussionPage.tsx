@@ -36,6 +36,7 @@ export function DiscussionPage() {
   const [allowStackedVotes, setAllowStackedVotes] = useState<boolean | null>(null);
   const [sessionStatus, setSessionStatus] = useState<string | null>(null);
   const [sessionTitle, setSessionTitle] = useState<string | null>(null);
+  const [sessionPrompt, setSessionPrompt] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set());
 
@@ -345,6 +346,16 @@ export function DiscussionPage() {
     }
   };
 
+  const handleEditQuestion = async (questionId: string, text: string, passage: string) => {
+    if (!user || !isTeacher) return;
+    const question = await db.discussion_questions.get(questionId);
+    if (!question || question.authorId !== user.$id || !question.isTeacherQuestion || !text.trim()) return;
+    await db.discussion_questions.update(questionId, { questionText: text.trim(), selectedPassage: passage.trim(), syncStatus: 'local' });
+    const updated = await db.discussion_questions.get(questionId);
+    if (updated) await addToQueue(user.$id, 'question', questionId, 'update', updated);
+    setRefreshKey(key => key + 1);
+  };
+
   const toggleAnswersExpanded = (questionId: string) => {
     setExpandedAnswers(prev => {
       const next = new Set(prev);
@@ -373,6 +384,7 @@ export function DiscussionPage() {
     if (votesPerStudent !== null) updates.votesPerStudent = votesPerStudent;
     if (allowStackedVotes !== null) updates.allowStackedVotes = allowStackedVotes;
     if (sessionStatus !== null) updates.status = sessionStatus as ClassSession['status'];
+    if (sessionPrompt !== null) updates.promptMarkdown = sessionPrompt.trim();
     // Goes through the service so the queued payload is the whole session —
     // a bare patch has no $id for the sync layer to write against.
     await updateClassSession(sessionId, user.$id, updates);
@@ -386,6 +398,7 @@ export function DiscussionPage() {
     setVotesPerStudent(session.votesPerStudent);
     setAllowStackedVotes(session.allowStackedVotes);
     setSessionStatus(session.status);
+    setSessionPrompt(session.promptMarkdown || '');
     setSettingsOpen(true);
   };
 
@@ -424,6 +437,8 @@ export function DiscussionPage() {
         </p>
       </div>
 
+      {session.promptMarkdown && <Card className="border-blue-100 bg-blue-50"><div className="flex items-start justify-between gap-3"><div><h2 className="text-xs font-semibold uppercase tracking-wide text-blue-600">Discussion focus</h2><p className="mt-1 whitespace-pre-wrap text-sm text-blue-950">{session.promptMarkdown}</p></div>{isTeacher && <Button size="sm" variant="secondary" onClick={openSettings}>Edit</Button>}</div></Card>}
+
       {isTeacher && (
         <Card>
           <div className="flex items-center justify-between">
@@ -455,6 +470,7 @@ export function DiscussionPage() {
               className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
             />
           </label>
+          <label className="block"><span className="text-sm font-medium text-gray-700">Overall topic or focus</span><textarea rows={3} value={sessionPrompt ?? session?.promptMarkdown ?? ''} onChange={e => setSessionPrompt(e.target.value)} placeholder="Broad context for the many questions teachers and students will add" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" /></label>
           <label className="block">
             <span className="text-sm font-medium text-gray-700">Votes per student</span>
             <input
@@ -578,6 +594,7 @@ export function DiscussionPage() {
                   onDiscussionStatus={status =>
                     void handleDiscussionStatus(question.$id, status)
                   }
+                  onEdit={(text, passage) => void handleEditQuestion(question.$id, text, passage)}
                 />
               ))}
             </ul>
@@ -670,6 +687,7 @@ function QuestionRow({
   onSubmitAnswer,
   onModerate,
   onDiscussionStatus,
+  onEdit,
 }: {
   question: DiscussionQuestion;
   currentUserId: string;
@@ -693,8 +711,12 @@ function QuestionRow({
   onSubmitAnswer: () => void;
   onModerate: (status: 'visible' | 'hidden' | 'removed') => void;
   onDiscussionStatus: (status: 'none' | 'selected' | 'discussed' | 'archived') => void;
+  onEdit: (text: string, passage: string) => void;
 }) {
   const isAuthor = question.authorId === currentUserId;
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState(question.questionText);
+  const [editPassage, setEditPassage] = useState(question.selectedPassage);
   const canAddVote = !isAuthor && usedVotes < voteBudget;
   const hasVoted = voteWeight > 0;
   const noVotesLeft = usedVotes >= voteBudget;
@@ -712,7 +734,7 @@ function QuestionRow({
   // Opening a row with no passage and no teacher controls would otherwise draw
   // an empty grey box under a student's question.
   const hasPanelContent =
-    isAnswersExpanded || (isExpanded && (isTeacher || Boolean(question.selectedPassage)));
+    editing || isAnswersExpanded || (isExpanded && (isTeacher || Boolean(question.selectedPassage)));
 
   return (
     <li className={rowTint}>
@@ -784,6 +806,7 @@ function QuestionRow({
               ⋯
             </RowButton>
           )}
+          {isTeacher && isAuthor && question.isTeacherQuestion && <RowButton onClick={() => setEditing(value => !value)} tone={editing ? 'active' : 'default'} title="Edit your question">Edit</RowButton>}
         </div>
       </div>
 
@@ -820,6 +843,8 @@ function QuestionRow({
               )}
             </div>
           )}
+
+          {editing && isTeacher && isAuthor && question.isTeacherQuestion && <div className="space-y-2 rounded-lg border border-blue-100 bg-white p-3"><input className="w-full rounded-lg border px-3 py-2 text-sm" value={editText} onChange={e => setEditText(e.target.value)} /><textarea className="w-full rounded-lg border px-3 py-2 text-sm" rows={2} value={editPassage} onChange={e => setEditPassage(e.target.value)} placeholder="Quoted passage (optional)" /><div className="flex justify-end gap-2"><Button size="sm" variant="secondary" onClick={() => setEditing(false)}>Cancel</Button><Button size="sm" disabled={!editText.trim()} onClick={() => { onEdit(editText, editPassage); setEditing(false); }}>Save question</Button></div></div>}
 
           {isAnswersExpanded && (
             <div className="space-y-2">

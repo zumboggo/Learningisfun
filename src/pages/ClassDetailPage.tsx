@@ -25,6 +25,8 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { Modal } from '@/components/common/Modal';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { AddDecksToClassModal } from '@/components/common/AddDecksToClassModal';
+import { unassignDeck } from '@/services/flashcard.service';
+import { setTextClasses } from '@/services/text.service';
 import { RandomStudentModal } from '@/components/teacher/RandomStudentModal';
 import { CreateGroupsModal } from '@/components/teacher/CreateGroupsModal';
 import type { Class, ClassLink, ClassSession, LearningText } from '@/types';
@@ -43,12 +45,15 @@ export function ClassDetailPage() {
   const [pendingRemoval, setPendingRemoval] = useState<{ id: string; name: string } | null>(null);
   const [showDiscussionModal, setShowDiscussionModal] = useState(false);
   const [discussionTitle, setDiscussionTitle] = useState('Class discussion');
+  const [discussionFocus, setDiscussionFocus] = useState('');
   const [discussionDate, setDiscussionDate] = useState(todayKey());
   const [votesPerStudent, setVotesPerStudent] = useState(4);
   const [allowStackedVotes, setAllowStackedVotes] = useState(false);
   const [rosterImporting, setRosterImporting] = useState(false);
   const [rosterResult, setRosterResult] = useState<RosterImportResult | null>(null);
   const [showAddDecks, setShowAddDecks] = useState(false);
+  const [showAssignTexts, setShowAssignTexts] = useState(false);
+  const [pendingDeckRemoval, setPendingDeckRemoval] = useState<{ deckId: string; title: string } | null>(null);
   const [showPicker, setShowPicker] = useState(false);
   const [showGroups, setShowGroups] = useState(false);
 
@@ -166,6 +171,8 @@ export function ClassDetailPage() {
       assignmentId: null,
       votesPerStudent,
       allowStackedVotes,
+      discussionType: 'qft',
+      promptMarkdown: discussionFocus,
     });
     setShowDiscussionModal(false);
     navigate(`/discussions/${session.$id}`);
@@ -222,6 +229,7 @@ export function ClassDetailPage() {
             <Link to={`/classes/${cls.$id}/notes/today`}><Button size="sm">Today&apos;s Notes</Button></Link>
             <Button onClick={messageClass} disabled={!students?.some(student => student.email && student.email !== 'Profile not synced yet')} size="sm" variant="secondary">Message class</Button>
             <Button onClick={() => setShowDiscussionModal(true)} size="sm">Start discussion</Button>
+            <Button onClick={() => setShowAssignTexts(true)} size="sm" variant="secondary">Assign texts</Button>
             <Button onClick={() => setShowPicker(true)} size="sm" variant="secondary">Pick a student</Button>
             <Button onClick={() => setShowGroups(true)} size="sm" variant="secondary">Create groups</Button>
             <Link to={`/classes/${cls.$id}/reports`}>
@@ -388,6 +396,7 @@ export function ClassDetailPage() {
                         <Link to={`/classes/${cls.$id}/decks/${assignment.deckId}/progress`}>
                           <Button size="sm" variant="secondary">Progress</Button>
                         </Link>
+                        {isOwner && <Button size="sm" variant="danger" onClick={() => setPendingDeckRemoval({ deckId: assignment.deckId, title: deck?.title || 'this deck' })}>Remove</Button>}
                       </div>
                     ) : (
                       <Link to={`/decks/${assignment.deckId}/review`}>
@@ -491,16 +500,21 @@ export function ClassDetailPage() {
         </div>
       </Modal>
 
+      <Modal open={Boolean(pendingDeckRemoval)} onClose={() => setPendingDeckRemoval(null)} title="Remove deck from class">
+        <div className="space-y-4"><p className="text-sm text-gray-600">Remove <strong>{pendingDeckRemoval?.title}</strong> from this class? The deck itself and student review history will not be deleted.</p><div className="flex gap-2"><Button variant="secondary" className="flex-1" onClick={() => setPendingDeckRemoval(null)}>Cancel</Button><Button variant="danger" className="flex-1" onClick={() => { if (!pendingDeckRemoval) return; void unassignDeck(pendingDeckRemoval.deckId, cls.$id).then(() => setPendingDeckRemoval(null)); }}>Remove deck</Button></div></div>
+      </Modal>
+
       <Modal open={showDiscussionModal} onClose={() => setShowDiscussionModal(false)} title="Start discussion">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Discussion topic</label>
             <input
               value={discussionTitle}
               onChange={e => setDiscussionTitle(e.target.value)}
               className="w-full px-3 py-2.5 border border-gray-300 rounded-lg"
             />
           </div>
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Overall focus or context</label><textarea value={discussionFocus} onChange={e => setDiscussionFocus(e.target.value)} rows={3} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg" placeholder="Give the class a broad topic or focus. Teachers and students can add multiple questions underneath it." /></div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
@@ -539,12 +553,12 @@ export function ClassDetailPage() {
       </Modal>
 
       {isOwner && user && (
-        <AddDecksToClassModal
+        <><AddDecksToClassModal
           open={showAddDecks}
           classId={cls.$id}
           teacherId={user.$id}
           onClose={() => setShowAddDecks(false)}
-        />
+        /><AssignTextsToClassModal open={showAssignTexts} classId={cls.$id} teacherId={user.$id} onClose={() => setShowAssignTexts(false)} /></>
       )}
 
       {isOwner && (
@@ -568,6 +582,24 @@ export function ClassDetailPage() {
 function escapeCsv(value: string): string {
   if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
   return value;
+}
+
+function AssignTextsToClassModal({ open, classId, teacherId, onClose }: { open: boolean; classId: string; teacherId: string; onClose: () => void }) {
+  const texts = useLiveQuery(() => db.texts.where('teacherId').equals(teacherId).and(text => text.status !== 'archived').toArray(), [teacherId]);
+  const assignments = useLiveQuery(() => db.text_assignments.where('classId').equals(classId).toArray(), [classId]);
+  const [chosen, setChosen] = useState<Set<string> | null>(null);
+  const selected = chosen || new Set(assignments?.map(assignment => assignment.textId) || []);
+  const toggle = (textId: string) => { const next = new Set(selected); if (next.has(textId)) next.delete(textId); else next.add(textId); setChosen(next); };
+  const save = async () => {
+    for (const text of texts || []) {
+      const current = await db.text_assignments.where('textId').equals(text.$id).toArray();
+      const classIds = new Set(current.map(assignment => assignment.classId));
+      if (selected.has(text.$id)) classIds.add(classId); else classIds.delete(classId);
+      await setTextClasses(text.$id, [...classIds], teacherId);
+    }
+    setChosen(null); onClose();
+  };
+  return <Modal open={open} onClose={() => { setChosen(null); onClose(); }} title="Assign texts to class"><div className="space-y-4"><p className="text-sm text-gray-500">Choose any texts students in this class should be able to read.</p><div className="max-h-80 space-y-2 overflow-auto">{texts?.length ? texts.map(text => <label key={text.$id} className="flex items-start gap-3 rounded-lg border p-3"><input type="checkbox" className="mt-1" checked={selected.has(text.$id)} onChange={() => toggle(text.$id)} /><span><strong className="block text-sm">{text.title}</strong><span className="text-xs text-gray-500">{text.author || 'Unknown author'}</span></span></label>) : <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">Create or upload a text in the Texts section first.</p>}</div><Button className="w-full" onClick={() => void save()}>Save text assignments</Button></div></Modal>;
 }
 
 function WeeklyClassReview({ materials }: { materials: WeeklyMaterial[] }) {

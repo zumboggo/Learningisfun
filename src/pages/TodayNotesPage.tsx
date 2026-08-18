@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/db/schema';
 import { getOrCreateTodayNotes, saveTodayNotes } from '@/services/class-session.service';
@@ -45,6 +45,7 @@ export function TodayNotesPage() {
       <div className="mx-auto flex min-h-[calc(100vh-2.5rem)] max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm sm:min-h-[calc(100vh-4rem)]">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4 sm:px-8">
           <div>
+            <Link to={`/classes/${classId}`} className="mb-1 inline-flex items-center gap-1 text-sm font-medium text-blue-700 hover:underline">← Back to class</Link>
             <h1 className="text-xl font-semibold text-slate-900">Today&apos;s Notes</h1>
             <p className="text-sm text-slate-500">{className} · {new Date().toLocaleDateString()}</p>
           </div>
