@@ -5,6 +5,7 @@ import { addToQueue } from '@/services/sync.service';
 import { databases, functions, DATABASE_ID, COLLECTIONS, FUNCTION_IDS } from '@/lib/appwrite';
 import { countMarkdownWords } from '@/components/common/Markdown';
 import { getTimestamp } from '@/utils/helpers';
+import { executeLearningContent } from '@/services/learning-content.service';
 import type {
   PeerReview,
   RubricCriterion,
@@ -733,19 +734,29 @@ export async function generateAiFeedbackForSubmission(
 export async function syncWritingFromServer(classIds: string[], userId: string, isTeacher: boolean): Promise<void> {
   if (!DATABASE_ID || classIds.length === 0) return;
   try {
-    const assignmentResult = await databases.listDocuments(DATABASE_ID, COLLECTIONS.writing_prompt_assignments, [Query.equal('classId', classIds), Query.limit(500)]);
-    const assignments = assignmentResult.documents.map(d => ({ $id: d.$id, promptId: d.promptId as string, classId: d.classId as string, assignedAt: d.assignedAt as string }));
-    await db.writing_prompt_assignments.bulkPut(assignments);
+    const result = await executeLearningContent<{
+      assignments: Array<{ $id: string } & Record<string, unknown>>;
+      prompts: Array<{ $id: string } & Record<string, unknown>>;
+    }>({ action: 'readWriting', classIds });
+    const assignments = result.assignments.map(d => ({ $id: d.$id, promptId: d.promptId as string, classId: d.classId as string, assignedAt: d.assignedAt as string }));
+    await db.transaction('rw', db.writing_prompt_assignments, async () => {
+      for (const classId of classIds) {
+        const cached = await db.writing_prompt_assignments.where('classId').equals(classId).toArray();
+        const visibleIds = new Set(assignments.filter(row => row.classId === classId).map(row => row.$id));
+        await db.writing_prompt_assignments.bulkDelete(cached.filter(row => !visibleIds.has(row.$id)).map(row => row.$id));
+      }
+      if (assignments.length) await db.writing_prompt_assignments.bulkPut(assignments);
+    });
     const promptIds = [...new Set(assignments.map(a => a.promptId))];
     if (!promptIds.length) return;
-    const prompts = await databases.listDocuments(DATABASE_ID, COLLECTIONS.writing_prompts, [Query.equal('$id', promptIds), Query.limit(500)]);
-    for (const d of prompts.documents) await db.writing_prompts.put({
+    for (const d of result.prompts) await db.writing_prompts.put({
       $id: d.$id, classId: d.classId as string, teacherId: d.teacherId as string, title: d.title as string,
       promptMarkdown: (d.promptMarkdown as string) || '', instructions: (d.instructions as string) || '', rubricJson: (d.rubricJson as string) || '[]',
       peerReviewsRequired: d.peerReviewsRequired as number, minWords: d.minWords as number, dueAt: (d.dueAt as string) || null,
       status: d.status as WritingPrompt['status'], aiFeedbackEnabled: Boolean(d.aiFeedbackEnabled), createdAt: d.createdAt as string,
       updatedAt: d.updatedAt as string, syncStatus: 'synced',
     });
+    try {
     const submissions = await databases.listDocuments(DATABASE_ID, COLLECTIONS.writing_submissions, [
       isTeacher ? Query.equal('promptId', promptIds) : Query.equal('authorId', userId), Query.limit(1000),
     ]);
@@ -779,6 +790,7 @@ export async function syncWritingFromServer(classIds: string[], userId: string, 
         for (const d of targets.documents) await db.writing_submissions.put(remoteSubmission(d));
       }
     }
+    } catch { /* prompt visibility still works if private writing records require the secure backend */ }
   } catch { /* offline or secure function backend not deployed yet */ }
 }
 

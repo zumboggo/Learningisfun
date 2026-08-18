@@ -57,6 +57,36 @@ export default async ({ req, res, error }) => {
       });
     }
 
+    if (body.action === 'readWriting') {
+      const requested = [...new Set(Array.isArray(body.classIds) ? body.classIds.filter(Boolean) : [])];
+      let allowedClassIds = requested.filter(classId => memberClassIds.has(classId));
+      let ownedPrompts = [];
+      if (profile.role === 'teacher') {
+        const ownedClasses = await db.listDocuments(databaseId, 'classes', [Query.equal('teacherId', userId), Query.limit(500)]);
+        const ownedClassIds = new Set(ownedClasses.documents.map(row => row.$id));
+        allowedClassIds = requested.filter(classId => ownedClassIds.has(classId));
+        const ownResult = await db.listDocuments(databaseId, 'writing_prompts', [Query.equal('teacherId', userId), Query.limit(5000)]);
+        ownedPrompts = ownResult.documents;
+      }
+      if (!allowedClassIds.length && !ownedPrompts.length) return res.json({ assignments: [], prompts: [] });
+      const assignmentResult = allowedClassIds.length
+        ? await db.listDocuments(databaseId, 'writing_prompt_assignments', [Query.equal('classId', allowedClassIds), Query.limit(5000)])
+        : { documents: [] };
+      const promptIds = [...new Set(assignmentResult.documents.map(row => row.promptId))];
+      let assignedPrompts = [];
+      if (promptIds.length) {
+        const promptResult = await db.listDocuments(databaseId, 'writing_prompts', [Query.equal('$id', promptIds), Query.limit(5000)]);
+        assignedPrompts = promptResult.documents;
+      }
+      const promptsById = new Map([...ownedPrompts, ...assignedPrompts].map(row => [row.$id, row]));
+      const prompts = [...promptsById.values()].filter(row => profile.role === 'teacher' || row.status !== 'draft');
+      const visibleIds = new Set(prompts.map(row => row.$id));
+      return res.json({
+        assignments: assignmentResult.documents.filter(row => visibleIds.has(row.promptId)).map(clean),
+        prompts: prompts.map(clean),
+      });
+    }
+
     if (body.action === 'readTexts') {
       const requested = Array.isArray(body.classIds) ? body.classIds : [];
       const allowedClassIds = requested.filter(classId => memberClassIds.has(classId));
