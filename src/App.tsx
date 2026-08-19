@@ -22,6 +22,7 @@ import { ClassesListPage } from '@/pages/ClassesListPage';
 import { ClassDetailPage } from '@/pages/ClassDetailPage';
 import { ClassSessionPage } from '@/pages/ClassSessionPage';
 import { TodayNotesPage } from '@/pages/TodayNotesPage';
+import { TextPresentPage } from '@/pages/teacher/TextPresentPage';
 
 import { ParticipationReportPage } from '@/pages/ParticipationReportPage';
 import { FlashcardAnalyticsPage } from '@/pages/FlashcardAnalyticsPage';
@@ -100,6 +101,7 @@ export default function App() {
           <Route path="/writing" element={<ProtectedRoute><WritingPage /></ProtectedRoute>} />
           <Route path="/texts" element={<ProtectedRoute><TextsPage /></ProtectedRoute>} />
           <Route path="/texts/:textId" element={<ProtectedRoute><TextReaderPage /></ProtectedRoute>} />
+          <Route path="/texts/:textId/present" element={<FullscreenTeacherRoute><TextPresentPage /></FullscreenTeacherRoute>} />
           <Route path="/writing/:promptId" element={<ProtectedRoute><WritingWorkspacePage /></ProtectedRoute>} />
           <Route path="/writing/:promptId/responses" element={<ProtectedRoute><TeacherRoute><WritingResponsesPage /></TeacherRoute></ProtectedRoute>} />
 
