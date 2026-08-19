@@ -1,181 +1,42 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/db/schema';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { EmptyState } from '@/components/common/EmptyState';
-import { StatusBadge } from '@/components/common/StatusBadge';
 import {
   RECENT_WINDOW_DAYS,
   previewFlashcardQuiz,
-  publishQuiz,
-  unpublishQuiz,
   saveFlashcardQuiz,
-  getAllQuizAttemptsForQuiz,
-  getQuizClassIds,
-  setQuizClasses,
-  getQuizWithQuestions,
   type FlashcardQuizPreview,
 } from '@/services/quiz.service';
 import { classLabel } from '@/utils/helpers';
 import type { Quiz, QuizAttempt } from '@/types';
 import { Modal } from '@/components/common/Modal';
-import { DailyCanvasQuizModal } from '@/components/quizzes/DailyCanvasQuizModal';
-import { buildQtiAssessmentXml, buildQtiZip, downloadBlob } from '@/services/qti-export';
 
 export function QuizzesPage() {
   const { user, isTeacher } = useAuth();
   if (!user) return null;
 
-  return isTeacher ? <TeacherQuizzes /> : <StudentQuizzes />;
+  return isTeacher ? <Navigate to="/classes" replace /> : <StudentQuizzes />;
 }
 
-function TeacherQuizzes() {
-  const { user } = useAuth();
-  const [showCreate, setShowCreate] = useState(false);
-  const [showCanvas, setShowCanvas] = useState(false);
-  const [assigning, setAssigning] = useState<Quiz | null>(null);
-  const [copiedQuizId, setCopiedQuizId] = useState('');
-
-  const classes = useLiveQuery(
-    () => db.classes.where('teacherId').equals(user!.$id).toArray(),
-    [user?.$id],
-  );
-
-  const quizzes = useLiveQuery(async () => {
-    if (!classes || classes.length === 0) return [];
-    const allQuizzes: Array<{ quiz: Quiz; className: string; attemptCount: number; avgScore: number | null }> = [];
-    const owned = await db.quizzes.where('createdBy').equals(user!.$id).toArray();
-    for (const quiz of owned) {
-        const classIds = await getQuizClassIds(quiz.$id);
-        const labels = await Promise.all(classIds.map(async id => classLabel(await db.classes.get(id))));
-        const attempts = await getAllQuizAttemptsForQuiz(quiz.$id);
-        const completed = attempts.filter(a => a.completedAt);
-        const avgScore = completed.length > 0
-          ? Math.round(completed.reduce((sum, a) => sum + (a.totalQuestions > 0 ? (a.score / a.totalQuestions) * 100 : 0), 0) / completed.length)
-          : null;
-        allQuizzes.push({ quiz, className: labels.join(', ') || 'Not assigned', attemptCount: completed.length, avgScore });
-    }
-    return allQuizzes.sort((a, b) => b.quiz.createdAt.localeCompare(a.quiz.createdAt));
-  }, [classes]);
-
-  return (
-    <div className="p-4 max-w-5xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Quizzes</h1>
-          <p className="text-gray-500 text-sm">Built from your class's flashcards — no AI, no surprises.</p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={() => setShowCanvas(true)} variant="secondary">Daily Canvas quiz</Button>
-          <Button onClick={() => setShowCreate(true)}>Create quiz</Button>
-        </div>
-      </div>
-
-      {quizzes && quizzes.length > 0 ? (
-        <div className="space-y-3">
-          {quizzes.map(({ quiz, className, attemptCount, avgScore }) => (
-            <Card key={quiz.$id}>
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h3 className="font-semibold">{quiz.title}</h3>
-                  <p className="text-sm text-gray-500">{className} · {quiz.questionCount} questions</p>
-                </div>
-                <StatusBadge status={quiz.status} />
-              </div>
-              <div className="mt-3 flex items-center gap-4 text-sm text-gray-600">
-                <span>{attemptCount} attempts</span>
-                {avgScore !== null && <span>Avg: {avgScore}%</span>}
-                <span className="text-xs text-gray-400">
-                  {quiz.sourceType === 'flashcards'
-                    ? 'From flashcards'
-                    : `${quiz.notesWeight}% notes / ${quiz.flashcardWeight}% flashcards`}
-                </span>
-              </div>
-              <div className="mt-3 flex gap-2">
-                {quiz.status === 'draft' && (
-                  <Button size="sm" onClick={() => void publishQuiz(quiz.$id, user!.$id)}>Publish</Button>
-                )}
-                {quiz.status === 'published' && <Button size="sm" variant="secondary" onClick={() => void unpublishQuiz(quiz.$id, user!.$id)}>Unpublish</Button>}
-                <Link to={`/quizzes/${quiz.$id}/take`}><Button size="sm" variant="secondary">Preview</Button></Link>
-                <Button size="sm" variant="secondary" onClick={() => setAssigning(quiz)}>Assign classes</Button>
-                <Button size="sm" variant="secondary" onClick={() => void exportQuiz(quiz)}>Export QTI</Button>
-                <Button size="sm" variant="secondary" onClick={() => void copyQuizText(quiz)}>{copiedQuizId === quiz.$id ? 'Copied!' : 'Copy Text'}</Button>
-              </div>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <EmptyState
-          title="No quizzes yet"
-          message="Create a quiz to test your students' understanding."
-          action={<Button onClick={() => setShowCreate(true)}>Create your first quiz</Button>}
-        />
-      )}
-
-      {showCreate && classes && (
-        <CreateQuizModal
-          classes={classes.map(c => ({ id: c.$id, name: classLabel(c), courseName: c.courseName }))}
-          onClose={() => setShowCreate(false)}
-          onCreated={() => setShowCreate(false)}
-        />
-      )}
-
-      {showCanvas && classes && (
-        <DailyCanvasQuizModal
-          classes={classes.map(c => ({ id: c.$id, name: classLabel(c) }))}
-          userId={user!.$id}
-          onClose={() => setShowCanvas(false)}
-        />
-      )}
-      {assigning && classes && (
-        <AssignQuizModal quiz={assigning} classes={classes.map(c => ({ id: c.$id, name: classLabel(c) }))}
-          userId={user!.$id} onClose={() => setAssigning(null)} />
-      )}
-    </div>
-  );
-
-  async function exportQuiz(quiz: Quiz) {
-    const record = await getQuizWithQuestions(quiz.$id);
-    if (!record) return;
-    const blob = await buildQtiZip(record.quiz, record.questions);
-    downloadBlob(blob, `${quiz.title.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'quiz'}.qti.zip`);
-  }
-
-  async function copyQuizText(quiz: Quiz) {
-    const record = await getQuizWithQuestions(quiz.$id);
-    if (!record) return;
-    await navigator.clipboard.writeText(buildQtiAssessmentXml(record.quiz, record.questions));
-    setCopiedQuizId(quiz.$id);
-    window.setTimeout(() => setCopiedQuizId(''), 1800);
-  }
-}
-
-function AssignQuizModal({ quiz, classes, userId, onClose }: { quiz: Quiz; classes: Array<{id: string; name: string}>; userId: string; onClose: () => void }) {
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [busy, setBusy] = useState(true);
-  useEffect(() => { void getQuizClassIds(quiz.$id).then(ids => { setSelected(new Set(ids)); setBusy(false); }); }, [quiz.$id]);
-  return <Modal open onClose={onClose} title="Assign quiz to classes"><div className="space-y-4">
-    {classes.map(cls => <label key={cls.id} className="flex gap-2 rounded border p-3 text-sm"><input type="checkbox" checked={selected.has(cls.id)} onChange={() => setSelected(old => { const next = new Set(old); if (next.has(cls.id)) next.delete(cls.id); else next.add(cls.id); return next; })}/>{cls.name}</label>)}
-    <Button loading={busy} onClick={() => void setQuizClasses(quiz.$id, [...selected], userId).then(onClose)}>Save assignments</Button>
-  </div></Modal>;
-}
-
-function CreateQuizModal({
+export function CreateQuizModal({
   classes,
+  sourceClassId,
   onClose,
   onCreated,
 }: {
-  classes: Array<{ id: string; name: string; courseName: string }>;
+  classes: Array<{ id: string; name: string }>;
+  sourceClassId: string;
   onClose: () => void;
   onCreated: () => void;
 }) {
   const { user } = useAuth();
-  const [classId, setClassId] = useState(classes[0]?.id || '');
-  const [classIds, setClassIds] = useState<Set<string>>(new Set(classes[0] ? [classes[0].id] : []));
-  const [title, setTitle] = useState(() => defaultQuizTitle(classes[0]?.courseName || 'Quiz'));
+  const classId = sourceClassId;
+  const [classIds, setClassIds] = useState<Set<string>>(new Set([sourceClassId]));
   const [recentWeight, setRecentWeight] = useState(60);
   const [mcWeight, setMcWeight] = useState(60);
   const [questionCount, setQuestionCount] = useState(10);
@@ -204,21 +65,20 @@ function CreateQuizModal({
     }
   };
 
-  const handleSave = async (publish: boolean) => {
+  const handleSave = async () => {
     if (!user || !preview) return;
     setBusy(true);
     setError('');
     try {
-      const quiz = await saveFlashcardQuiz({
+      await saveFlashcardQuiz({
         classId,
         classIds: [...classIds],
         createdBy: user.$id,
-        title: title.trim() || defaultQuizTitle(classes.find(item => item.id === classId)?.courseName || 'Quiz'),
+        title: defaultQuizTitle(),
         timeLimitMinutes: timeLimit || null,
         recentWeight,
         preview,
       });
-      if (publish) await publishQuiz(quiz.$id, user.$id);
       onCreated();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save the quiz.');
@@ -290,8 +150,7 @@ function CreateQuizModal({
           ))}
 
           <div className="sticky bottom-0 flex flex-wrap gap-2 bg-white pt-2">
-            <Button onClick={() => void handleSave(true)} loading={busy}>Save &amp; publish</Button>
-            <Button onClick={() => void handleSave(false)} variant="secondary">Save as draft</Button>
+            <Button onClick={() => void handleSave()} loading={busy}>Save quiz</Button>
             <Button onClick={() => setStep('config')} variant="ghost">Back</Button>
           </div>
         </div>
@@ -305,33 +164,13 @@ function CreateQuizModal({
         {error && <div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg">{error}</div>}
 
         <p className="rounded-lg bg-gray-50 p-3 text-xs text-gray-500">
-          Questions are built from this class's flashcards. Wrong answers are always real backs from
+          Questions are built from <strong>{classes.find(item => item.id === classId)?.name}</strong> flashcards. Wrong answers are always real backs from
           other cards, so nothing is invented.
         </p>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Source class</label>
-          <select
-            value={classId}
-            onChange={e => { const nextId=e.target.value; const currentDefault=defaultQuizTitle(classes.find(item=>item.id===classId)?.courseName||'Quiz'); setClassId(nextId); if(!title.trim()||title===currentDefault)setTitle(defaultQuizTitle(classes.find(item=>item.id===nextId)?.courseName||'Quiz')); }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-          >
-            {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-        </div>
-        <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Assign to classes</label>
-          <div className="space-y-2">{classes.map(c => <label key={c.id} className="flex gap-2 text-sm"><input type="checkbox" checked={classIds.has(c.id)} onChange={() => setClassIds(old => { const next = new Set(old); if (next.has(c.id)) next.delete(c.id); else next.add(c.id); return next; })}/>{c.name}</label>)}</div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Quiz title</label>
-          <input
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            placeholder={defaultQuizTitle(classes.find(item => item.id === classId)?.courseName || 'Quiz')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-          />
+          <div className="space-y-2">{classes.map(c => <label key={c.id} className="flex gap-2 text-sm"><input type="checkbox" disabled={c.id === classId} checked={classIds.has(c.id)} onChange={() => setClassIds(old => { const next = new Set(old); if (next.has(c.id)) next.delete(c.id); else next.add(c.id); return next; })}/>{c.name}{c.id === classId ? ' (source)' : ''}</label>)}</div>
         </div>
 
         <div>
@@ -399,12 +238,12 @@ function CreateQuizModal({
   );
 }
 
-function defaultQuizTitle(courseName: string, date = new Date()): string {
+function defaultQuizTitle(date = new Date()): string {
   const day = date.getDate();
   const remainder = day % 100;
   const suffix = remainder >= 11 && remainder <= 13 ? 'th' : day % 10 === 1 ? 'st' : day % 10 === 2 ? 'nd' : day % 10 === 3 ? 'rd' : 'th';
   const month = date.toLocaleDateString('en-US', { month: 'short' });
-  return `${month}. ${day}${suffix} - ${courseName}`;
+  return `${month}. ${day}${suffix}`;
 }
 
 function StudentQuizzes() {

@@ -220,6 +220,19 @@ export async function unpublishQuiz(quizId: string, userId: string): Promise<voi
   const quiz = await db.quizzes.get(quizId); if (quiz) await addToQueue(userId, 'quiz', quizId, 'update', quiz);
 }
 
+export async function deleteQuiz(quizId: string): Promise<void> {
+  await executeLearningContent({ action: 'deleteQuiz', quizId });
+  const assignments = await db.quiz_assignments.where('quizId').equals(quizId).primaryKeys();
+  const questions = await db.quiz_questions.where('quizId').equals(quizId).primaryKeys();
+  const attempts = await db.quiz_attempts.where('quizId').equals(quizId).primaryKeys();
+  await db.transaction('rw', db.quizzes, db.quiz_assignments, db.quiz_questions, db.quiz_attempts, async () => {
+    await db.quiz_assignments.bulkDelete(assignments);
+    await db.quiz_questions.bulkDelete(questions);
+    await db.quiz_attempts.bulkDelete(attempts);
+    await db.quizzes.delete(quizId);
+  });
+}
+
 export async function startQuizAttempt(quizId: string, userId: string): Promise<QuizAttempt> {
   const attempt: QuizAttempt = {
     $id: ID.unique(),
@@ -311,7 +324,17 @@ export async function syncQuizzesFromServer(classIds: string[]): Promise<void> {
       quizzes: Array<{ $id: string } & Record<string, unknown>>;
       questions: Array<{ $id: string } & Record<string, unknown>>;
       attempts: Array<{ $id: string } & Record<string, unknown>>;
+      expiredQuizIds: string[];
     }>({ action: 'readQuizzes', classIds });
+    for (const quizId of result.expiredQuizIds || []) {
+      const assignmentIds = await db.quiz_assignments.where('quizId').equals(quizId).primaryKeys();
+      const questionIds = await db.quiz_questions.where('quizId').equals(quizId).primaryKeys();
+      const attemptIds = await db.quiz_attempts.where('quizId').equals(quizId).primaryKeys();
+      await db.quiz_assignments.bulkDelete(assignmentIds);
+      await db.quiz_questions.bulkDelete(questionIds);
+      await db.quiz_attempts.bulkDelete(attemptIds);
+      await db.quizzes.delete(quizId);
+    }
     const assignments = result.assignments.map(doc => ({
       $id: doc.$id, quizId: doc.quizId as string, classId: doc.classId as string,
       assignedAt: doc.assignedAt as string,

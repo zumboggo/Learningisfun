@@ -17,6 +17,13 @@ const ensureSingleMembership = async (db, databaseId, classId, memberUserId, rol
   try { return await db.createDocument(databaseId, 'class_members', id, data); }
   catch { return db.getDocument(databaseId, 'class_members', id); }
 };
+const deleteQuizCascade = async (db, databaseId, quizId) => {
+  for (const collectionId of ['quiz_assignments', 'quiz_questions', 'quiz_attempts']) {
+    const result = await db.listDocuments(databaseId, collectionId, [Query.equal('quizId', quizId), Query.limit(5000)]);
+    for (const document of result.documents) await db.deleteDocument(databaseId, collectionId, document.$id);
+  }
+  await db.deleteDocument(databaseId, 'quizzes', quizId);
+};
 
 export default async ({ req, res, error }) => {
   try {
@@ -104,18 +111,31 @@ export default async ({ req, res, error }) => {
       return res.json({ class: clean(updatedClass) });
     }
 
+    if (body.action === 'deleteQuiz') {
+      if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
+      const quiz = await db.getDocument(databaseId, 'quizzes', body.quizId);
+      if (quiz.createdBy !== userId) return res.json({ error: 'Not the quiz owner' }, 403);
+      await deleteQuizCascade(db, databaseId, quiz.$id);
+      return res.json({ deletedQuizId: quiz.$id });
+    }
+
     if (body.action === 'readQuizzes') {
       const requested = [...new Set(Array.isArray(body.classIds) ? body.classIds.filter(Boolean) : [])];
       let allowedClassIds = requested.filter(classId => memberClassIds.has(classId));
-      let ownedQuizzes = [];
+      let ownedQuizzes = [], expiredQuizIds = [];
       if (profile.role === 'teacher') {
         const ownedClasses = await db.listDocuments(databaseId, 'classes', [Query.equal('teacherId', userId), Query.limit(500)]);
         const ownedClassIds = new Set(ownedClasses.documents.map(row => row.$id));
         allowedClassIds = requested.filter(classId => ownedClassIds.has(classId));
         const ownResult = await db.listDocuments(databaseId, 'quizzes', [Query.equal('createdBy', userId), Query.limit(5000)]);
-        ownedQuizzes = ownResult.documents;
+        const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+        const expired = ownResult.documents.filter(row => row.status === 'draft' && Number.isFinite(Date.parse(row.createdAt)) && Date.parse(row.createdAt) <= cutoff);
+        for (const quiz of expired) await deleteQuizCascade(db, databaseId, quiz.$id);
+        expiredQuizIds = expired.map(row => row.$id);
+        const expiredIds = new Set(expiredQuizIds);
+        ownedQuizzes = ownResult.documents.filter(row => !expiredIds.has(row.$id));
       }
-      if (!allowedClassIds.length && !ownedQuizzes.length) return res.json({ assignments: [], quizzes: [], questions: [], attempts: [] });
+      if (!allowedClassIds.length && !ownedQuizzes.length) return res.json({ assignments: [], quizzes: [], questions: [], attempts: [], expiredQuizIds });
       const assignmentResult = allowedClassIds.length
         ? await db.listDocuments(databaseId, 'quiz_assignments', [Query.equal('classId', allowedClassIds), Query.limit(5000)])
         : { documents: [] };
@@ -128,7 +148,7 @@ export default async ({ req, res, error }) => {
       const quizzesById = new Map([...ownedQuizzes, ...assignedQuizzes].map(row => [row.$id, row]));
       const quizzes = [...quizzesById.values()].filter(row => profile.role === 'teacher' || row.status === 'published');
       const quizIds = quizzes.map(row => row.$id);
-      if (!quizIds.length) return res.json({ assignments: assignmentResult.documents.map(clean), quizzes: [], questions: [], attempts: [] });
+      if (!quizIds.length) return res.json({ assignments: assignmentResult.documents.map(clean), quizzes: [], questions: [], attempts: [], expiredQuizIds });
       const questionResult = await db.listDocuments(databaseId, 'quiz_questions', [Query.equal('quizId', quizIds), Query.limit(5000)]);
       let attempts = [];
       if (profile.role !== 'parent') {
@@ -143,6 +163,7 @@ export default async ({ req, res, error }) => {
         quizzes: quizzes.map(clean),
         questions: questionResult.documents.map(clean),
         attempts: attempts.map(clean),
+        expiredQuizIds,
       });
     }
 

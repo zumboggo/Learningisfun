@@ -25,7 +25,6 @@ export function AppLayout({ children }: AppLayoutProps) {
         { to: '/decks', label: 'Cards', icon: 'V' },
         { to: '/texts', label: 'Texts', icon: 'T' },
         { to: '/writing', label: 'Writing', icon: 'W' },
-        { to: '/quizzes', label: 'Quizzes', icon: 'Z' },
         { to: '/settings', label: 'Settings', icon: '?' },
       ]
     : isParent ? [

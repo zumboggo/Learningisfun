@@ -26,12 +26,16 @@ import { CopyButton } from '@/components/common/CopyButton';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Modal } from '@/components/common/Modal';
 import { StatusBadge } from '@/components/common/StatusBadge';
+import { CreateQuizModal } from '@/pages/QuizzesPage';
+import { deleteQuiz, getQuizWithQuestions, publishQuiz } from '@/services/quiz.service';
+import { buildQtiAssessmentXml } from '@/services/qti-export';
 import { AddDecksToClassModal } from '@/components/common/AddDecksToClassModal';
 import { unassignDeck } from '@/services/flashcard.service';
 import { setTextClasses } from '@/services/text.service';
 import { RandomStudentModal } from '@/components/teacher/RandomStudentModal';
 import { CreateGroupsModal } from '@/components/teacher/CreateGroupsModal';
 import type { Class, ClassLink, ClassSession, LearningText } from '@/types';
+import { classLabel } from '@/utils/helpers';
 
 type WeeklyMaterial =
   | { kind: 'notes'; date: string; session: ClassSession }
@@ -60,6 +64,8 @@ export function ClassDetailPage() {
   const [pendingDeckRemoval, setPendingDeckRemoval] = useState<{ deckId: string; title: string } | null>(null);
   const [showPicker, setShowPicker] = useState(false);
   const [showGroups, setShowGroups] = useState(false);
+  const [showCreateQuiz, setShowCreateQuiz] = useState(false);
+  const [copiedQuizId, setCopiedQuizId] = useState('');
 
   const cls = useLiveQuery(() => (classId ? db.classes.get(classId) : undefined), [classId]);
   const members = useLiveQuery(
@@ -235,6 +241,19 @@ export function ClassDetailPage() {
     downloadCsv(`${cls.name.replace(/\s+/g, '-')}-student-logins.csv`, `${lines.join('\n')}\n`);
   };
 
+  const copyQuizText = async (quizId: string) => {
+    const record = await getQuizWithQuestions(quizId);
+    if (!record) return;
+    await navigator.clipboard.writeText(buildQtiAssessmentXml(record.quiz, record.questions));
+    setCopiedQuizId(quizId);
+    window.setTimeout(() => setCopiedQuizId(''), 1800);
+  };
+
+  const confirmDeleteQuiz = async (quizId: string) => {
+    if (!window.confirm('Are you sure you want to delete this quiz?')) return;
+    await deleteQuiz(quizId);
+  };
+
   if (!cls) {
     return <div className="p-4 text-gray-400">Loading class...</div>;
   }
@@ -325,8 +344,8 @@ export function ClassDetailPage() {
       <WeeklyClassReview materials={weeklyMaterials || []} />
 
       <section>
-        <div className="mb-3 flex items-center justify-between"><h2 className="text-lg font-semibold">Quizzes ({classQuizzes?.length || 0})</h2>{isOwner && <Link to="/quizzes"><Button size="sm" variant="secondary">Manage quizzes</Button></Link>}</div>
-        {classQuizzes?.length ? <div className="grid gap-3 sm:grid-cols-2">{classQuizzes.map(quiz => <Card key={quiz.$id}><div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{quiz.title}</h3><p className="text-sm text-gray-500">{quiz.questionCount} questions{quiz.timeLimitMinutes ? ` · ${quiz.timeLimitMinutes} min` : ''}</p></div><StatusBadge status={quiz.status}/></div><Link className="mt-3 block" to={`/quizzes/${quiz.$id}/take`}><Button size="sm" className="w-full">{isOwner ? 'Preview' : 'Start quiz'}</Button></Link></Card>)}</div> : <p className="rounded-xl border border-dashed p-5 text-center text-sm text-gray-400">No published quizzes for this class yet.</p>}
+        <div className="mb-3 flex items-center justify-between"><h2 className="text-lg font-semibold">Quizzes ({classQuizzes?.length || 0})</h2>{isOwner && <Button size="sm" onClick={() => setShowCreateQuiz(true)}>Create quiz</Button>}</div>
+        {classQuizzes?.length ? <div className="space-y-2">{classQuizzes.map(quiz => <div key={quiz.$id} className="relative flex flex-col gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0 pr-8"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{quiz.title}</h3>{isOwner && <StatusBadge status={quiz.status}/>}</div><p className="text-sm text-gray-500">{quiz.questionCount} questions{quiz.timeLimitMinutes ? ` · ${quiz.timeLimitMinutes} min` : ''}</p></div>{isOwner ? <div className="flex flex-wrap gap-2 pr-6"><Button size="sm" variant="secondary" onClick={() => void copyQuizText(quiz.$id)}>{copiedQuizId === quiz.$id ? 'Copied!' : 'Copy Text'}</Button>{quiz.status === 'draft' && <Button size="sm" onClick={() => user && void publishQuiz(quiz.$id, user.$id)}>Publish</Button>}<button type="button" aria-label="Delete quiz" title="Delete quiz" onClick={() => void confirmDeleteQuiz(quiz.$id)} className="absolute right-3 top-3 text-lg leading-none text-red-500 hover:text-red-700">×</button></div> : <Link to={`/quizzes/${quiz.$id}/take`}><Button size="sm">Take quiz</Button></Link>}</div>)}</div> : <p className="rounded-xl border border-dashed p-5 text-center text-sm text-gray-400">{isOwner ? 'No quizzes for this class yet.' : 'No published quizzes for this class yet.'}</p>}
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -604,7 +623,8 @@ export function ClassDetailPage() {
           classId={cls.$id}
           teacherId={user.$id}
           onClose={() => setShowAddDecks(false)}
-        /><AssignTextsToClassModal open={showAssignTexts} classId={cls.$id} teacherId={user.$id} onClose={() => setShowAssignTexts(false)} /></>
+        /><AssignTextsToClassModal open={showAssignTexts} classId={cls.$id} teacherId={user.$id} onClose={() => setShowAssignTexts(false)} />
+        {showCreateQuiz && <CreateQuizModal classes={(teacherClasses || []).map(item => ({ id: item.$id, name: classLabel(item) }))} sourceClassId={cls.$id} onClose={() => setShowCreateQuiz(false)} onCreated={() => setShowCreateQuiz(false)} />}</>
       )}
 
       {isOwner && (
