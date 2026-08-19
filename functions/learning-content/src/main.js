@@ -15,6 +15,32 @@ export default async ({ req, res, error }) => {
     const memberships = await db.listDocuments(databaseId, 'class_members', [Query.equal('userId', userId), Query.limit(500)]);
     const memberClassIds = new Set(memberships.documents.map(row => row.classId));
 
+    if (body.action === 'moveStudent') {
+      if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
+      const sourceClass = await db.getDocument(databaseId, 'classes', body.sourceClassId);
+      const targetClass = await db.getDocument(databaseId, 'classes', body.targetClassId);
+      if (sourceClass.teacherId !== userId || targetClass.teacherId !== userId) return res.json({ error: 'You must own both classes' }, 403);
+      const sourceResult = await db.listDocuments(databaseId, 'class_members', [Query.equal('classId', body.sourceClassId), Query.equal('userId', body.studentId), Query.equal('role', 'student'), Query.limit(1)]);
+      if (!sourceResult.total) return res.json({ error: 'Student is not in the source class' }, 404);
+      const targetResult = await db.listDocuments(databaseId, 'class_members', [Query.equal('classId', body.targetClassId), Query.equal('userId', body.studentId), Query.limit(1)]);
+      if (targetResult.total) {
+        await db.deleteDocument(databaseId, 'class_members', sourceResult.documents[0].$id);
+        return res.json({ removedId: sourceResult.documents[0].$id, membership: clean(targetResult.documents[0]) });
+      }
+      const membership = await db.updateDocument(databaseId, 'class_members', sourceResult.documents[0].$id, { classId: body.targetClassId });
+      return res.json({ removedId: sourceResult.documents[0].$id, membership: clean(membership) });
+    }
+
+    if (body.action === 'updateClassDetails') {
+      if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
+      const existingClass = await db.getDocument(databaseId, 'classes', body.classId);
+      if (existingClass.teacherId !== userId) return res.json({ error: 'Not the class owner' }, 403);
+      const courseName = String(body.courseName || '').trim(), name = String(body.name || '').trim();
+      if (!courseName || !name || courseName.length > 200 || name.length > 200) return res.json({ error: 'Course name and section are required' }, 400);
+      const updatedClass = await db.updateDocument(databaseId, 'classes', body.classId, { courseName, name });
+      return res.json({ class: clean(updatedClass) });
+    }
+
     if (body.action === 'readQuizzes') {
       const requested = [...new Set(Array.isArray(body.classIds) ? body.classIds.filter(Boolean) : [])];
       let allowedClassIds = requested.filter(classId => memberClassIds.has(classId));

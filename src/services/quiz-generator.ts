@@ -274,7 +274,8 @@ const LEADING_ARTICLE = /^(the|a|an)\s+/i;
 
 /**
  * Build 2-4 extra accepted spellings for a cloze answer so a student isn't
- * marked wrong for a plural, a hyphen, or an accent.
+ * marked wrong for a hyphen or an accent. Singular/plural variants are not
+ * generated because changing grammatical number can change the correct answer.
  *
  * Canvas already trims and compares case-insensitively, so case-only variants
  * are deliberately dropped — they'd pad the list without accepting anything new.
@@ -299,10 +300,6 @@ export function buildAnswerVariants(primary: string, max = 4): string[] {
   if (base.includes('-')) add(base.replace(/-/g, ' '));
   else if (/\s/.test(base)) add(base.replace(/\s+/g, '-'));
 
-  // Plural / singular
-  const other = togglePlural(base);
-  if (other) add(other);
-
   // Accents: "café" -> "cafe"
   const deaccented = base.normalize('NFD').replace(/\p{Diacritic}/gu, '');
   if (deaccented !== base) add(deaccented);
@@ -320,26 +317,6 @@ export function buildAnswerVariants(primary: string, max = 4): string[] {
     if (variants.length >= max) break;
   }
   return variants;
-}
-
-/** English plural <-> singular for the last word only. Conservative by design. */
-function togglePlural(phrase: string): string | null {
-  const match = phrase.match(/^(.*?)(\S+)$/);
-  if (!match) return null;
-  const [, prefix, word] = match;
-  if (word.length < 3) return null;
-
-  const lower = word.toLowerCase();
-  let toggled: string;
-
-  if (lower.endsWith('ies')) toggled = word.slice(0, -3) + 'y';
-  else if (lower.endsWith('ses') || lower.endsWith('xes') || lower.endsWith('zes') || lower.endsWith('ches') || lower.endsWith('shes')) toggled = word.slice(0, -2);
-  else if (lower.endsWith('s') && !lower.endsWith('ss') && !lower.endsWith('us')) toggled = word.slice(0, -1);
-  else if (/[^aeiou]y$/i.test(word)) toggled = word.slice(0, -1) + 'ies';
-  else if (/(s|x|z|ch|sh)$/i.test(word)) toggled = word + 'es';
-  else toggled = word + 's';
-
-  return prefix + toggled;
 }
 
 /* ------------------------------------------------------------------ *

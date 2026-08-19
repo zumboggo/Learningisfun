@@ -8,6 +8,7 @@ import {
   ensureParentCode,
   regenerateParentCode,
   removeStudent,
+  moveStudent,
   getClassMembers,
   importClassRoster,
   parseClassLinks,
@@ -43,6 +44,8 @@ export function ClassDetailPage() {
   const [newCode, setNewCode] = useState('');
   const [parentCode, setParentCode] = useState('');
   const [pendingRemoval, setPendingRemoval] = useState<{ id: string; name: string } | null>(null);
+  const [pendingMove, setPendingMove] = useState<{ id: string; name: string } | null>(null);
+  const [moveTargetClassId, setMoveTargetClassId] = useState('');
   const [showDiscussionModal, setShowDiscussionModal] = useState(false);
   const [discussionTitle, setDiscussionTitle] = useState('Class discussion');
   const [discussionFocus, setDiscussionFocus] = useState('');
@@ -64,6 +67,10 @@ export function ClassDetailPage() {
   );
 
   const isOwner = cls?.teacherId === user?.$id && isTeacher;
+  const teacherClasses = useLiveQuery(
+    () => user && isTeacher ? db.classes.where('teacherId').equals(user.$id).toArray() : [],
+    [user?.$id, isTeacher],
+  );
 
   const activeCode = newCode || cls?.joinCode || '';
   const joinLink = `${window.location.origin}${import.meta.env.BASE_URL}join/${activeCode}`;
@@ -475,6 +482,14 @@ export function ClassDetailPage() {
                   )}
                   {isOwner && (
                     <button
+                      onClick={() => { setPendingMove({ id: student.$id, name: student.name }); setMoveTargetClassId(teacherClasses?.find(item => item.$id !== classId)?.$id || ''); }}
+                      className="text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      Move
+                    </button>
+                  )}
+                  {isOwner && (
+                    <button
                       onClick={() => setPendingRemoval({ id: student.$id, name: student.name })}
                       className="text-sm text-red-500 hover:text-red-700"
                     >
@@ -511,6 +526,17 @@ export function ClassDetailPage() {
               Keep in class
             </Button>
           </div>
+        </div>
+      </Modal>
+
+      <Modal open={Boolean(pendingMove)} onClose={() => setPendingMove(null)} title="Move student">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">Move <strong>{pendingMove?.name}</strong> from {cls.courseName} — {cls.name} to another class?</p>
+          <select className="w-full rounded-lg border px-3 py-2" value={moveTargetClassId} onChange={event => setMoveTargetClassId(event.target.value)}>
+            {(teacherClasses || []).filter(item => item.$id !== classId).map(item => <option key={item.$id} value={item.$id}>{item.courseName} — {item.name}</option>)}
+          </select>
+          {(teacherClasses || []).filter(item => item.$id !== classId).length === 0 && <p className="text-sm text-amber-700">Create another class before moving this student.</p>}
+          <div className="flex gap-2"><Button variant="secondary" className="flex-1" onClick={() => setPendingMove(null)}>Cancel</Button><Button className="flex-1" disabled={!moveTargetClassId} onClick={() => { if (!pendingMove || !classId) return; void moveStudent(classId, moveTargetClassId, pendingMove.id).then(() => setPendingMove(null)); }}>Move student</Button></div>
         </div>
       </Modal>
 
@@ -623,10 +649,7 @@ function WeeklyClassReview({ materials }: { materials: WeeklyMaterial[] }) {
     groups.set(key, [...(groups.get(key) || []), material]);
   }
   const weeks = [...groups.entries()].sort((a, b) => b[0].localeCompare(a[0]));
-  const [openWeek, setOpenWeek] = useState(weeks[0]?.[0] || '');
-  useEffect(() => {
-    if (!openWeek && weeks[0]?.[0]) setOpenWeek(weeks[0][0]);
-  }, [openWeek, weeks]);
+  const [openWeeks, setOpenWeeks] = useState<Set<string>>(new Set());
 
   return (
     <section>
@@ -636,7 +659,7 @@ function WeeklyClassReview({ materials }: { materials: WeeklyMaterial[] }) {
       ) : (
         <div className="space-y-3">
           {weeks.map(([week, items]) => {
-            const isOpen = openWeek === week;
+            const isOpen = openWeeks.has(week);
             const counts = {
               notes: items.filter(item => item.kind === 'notes').length,
               discussions: items.filter(item => item.kind === 'discussion').length,
@@ -644,7 +667,7 @@ function WeeklyClassReview({ materials }: { materials: WeeklyMaterial[] }) {
             };
             return (
               <div key={week} className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-                <button className="flex w-full items-center justify-between gap-3 p-4 text-left hover:bg-gray-50" onClick={() => setOpenWeek(isOpen ? '' : week)}>
+                <button className="flex w-full items-center justify-between gap-3 p-4 text-left hover:bg-gray-50" onClick={() => setOpenWeeks(current => { const next = new Set(current); if (next.has(week)) next.delete(week); else next.add(week); return next; })}>
                   <span className="font-semibold">{isOpen ? '▾' : '▸'} Week of {formatWeek(week)}</span>
                   <span className="text-xs text-gray-500">{counts.notes} notes · {counts.discussions} discussions · {counts.texts} texts</span>
                 </button>

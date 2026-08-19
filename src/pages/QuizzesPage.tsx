@@ -117,7 +117,7 @@ function TeacherQuizzes() {
 
       {showCreate && classes && (
         <CreateQuizModal
-          classes={classes.map(c => ({ id: c.$id, name: classLabel(c) }))}
+          classes={classes.map(c => ({ id: c.$id, name: classLabel(c), courseName: c.courseName }))}
           onClose={() => setShowCreate(false)}
           onCreated={() => setShowCreate(false)}
         />
@@ -168,14 +168,14 @@ function CreateQuizModal({
   onClose,
   onCreated,
 }: {
-  classes: Array<{ id: string; name: string }>;
+  classes: Array<{ id: string; name: string; courseName: string }>;
   onClose: () => void;
   onCreated: () => void;
 }) {
   const { user } = useAuth();
   const [classId, setClassId] = useState(classes[0]?.id || '');
   const [classIds, setClassIds] = useState<Set<string>>(new Set(classes[0] ? [classes[0].id] : []));
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState(() => defaultQuizTitle(classes[0]?.courseName || 'Quiz'));
   const [recentWeight, setRecentWeight] = useState(60);
   const [mcWeight, setMcWeight] = useState(60);
   const [questionCount, setQuestionCount] = useState(10);
@@ -213,7 +213,7 @@ function CreateQuizModal({
         classId,
         classIds: [...classIds],
         createdBy: user.$id,
-        title: title.trim() || `Quiz - ${new Date().toLocaleDateString()}`,
+        title: title.trim() || defaultQuizTitle(classes.find(item => item.id === classId)?.courseName || 'Quiz'),
         timeLimitMinutes: timeLimit || null,
         recentWeight,
         preview,
@@ -313,7 +313,7 @@ function CreateQuizModal({
           <label className="block text-sm font-medium text-gray-700 mb-1">Source class</label>
           <select
             value={classId}
-            onChange={e => setClassId(e.target.value)}
+            onChange={e => { const nextId=e.target.value; const currentDefault=defaultQuizTitle(classes.find(item=>item.id===classId)?.courseName||'Quiz'); setClassId(nextId); if(!title.trim()||title===currentDefault)setTitle(defaultQuizTitle(classes.find(item=>item.id===nextId)?.courseName||'Quiz')); }}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
           >
             {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -329,7 +329,7 @@ function CreateQuizModal({
           <input
             value={title}
             onChange={e => setTitle(e.target.value)}
-            placeholder="e.g. Chapter 3 Quiz"
+            placeholder={defaultQuizTitle(classes.find(item => item.id === classId)?.courseName || 'Quiz')}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
           />
         </div>
@@ -397,6 +397,14 @@ function CreateQuizModal({
       </div>
     </Modal>
   );
+}
+
+function defaultQuizTitle(courseName: string, date = new Date()): string {
+  const day = date.getDate();
+  const remainder = day % 100;
+  const suffix = remainder >= 11 && remainder <= 13 ? 'th' : day % 10 === 1 ? 'st' : day % 10 === 2 ? 'nd' : day % 10 === 3 ? 'rd' : 'th';
+  const month = date.toLocaleDateString('en-US', { month: 'short' });
+  return `${month}. ${day}${suffix} - ${courseName}`;
 }
 
 function StudentQuizzes() {

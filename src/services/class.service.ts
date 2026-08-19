@@ -329,6 +329,20 @@ export async function removeStudent(classId: string, userId: string): Promise<vo
   }
 }
 
+export async function moveStudent(sourceClassId: string, targetClassId: string, studentId: string): Promise<void> {
+  if (sourceClassId === targetClassId) return;
+  const result = await executeLearningContent<{ removedId: string; membership: ClassMember }>({
+    action: 'moveStudent', sourceClassId, targetClassId, studentId,
+  });
+  await db.class_members.delete(result.removedId);
+  await db.class_members.put(result.membership);
+}
+
+export async function updateClassDetails(classId: string, courseName: string, name: string): Promise<void> {
+  const result = await executeLearningContent<{ class: Class }>({ action: 'updateClassDetails', classId, courseName, name });
+  await db.classes.update(classId, { courseName: result.class.courseName, name: result.class.name });
+}
+
 function parseRosterCsv(content: string): Array<{ name: string; email: string; password: string }> {
   const lines = content.split(/\r?\n/).filter(line => line.trim());
   if (lines.length === 0) return [];

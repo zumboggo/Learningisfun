@@ -20,12 +20,11 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const navItems = isTeacher
     ? [
-        { to: '/dashboard', label: 'Dashboard', icon: 'D' },
+        { to: '/classes', label: 'Classes', icon: 'C' },
         { to: '/discussions', label: 'Discussions', icon: 'Q' },
         { to: '/decks', label: 'Cards', icon: 'V' },
         { to: '/texts', label: 'Texts', icon: 'T' },
         { to: '/writing', label: 'Writing', icon: 'W' },
-        { to: '/classes', label: 'Classes', icon: 'C' },
         { to: '/quizzes', label: 'Quizzes', icon: 'Z' },
         { to: '/settings', label: 'Settings', icon: '?' },
       ]
@@ -96,7 +95,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col md:pl-56">
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
-        <Link to="/dashboard" className="text-lg font-bold text-blue-700">
+        <Link to="/classes" className="text-lg font-bold text-blue-700">
           Learning is Fun
         </Link>
         <div className="flex items-center gap-3">

@@ -96,7 +96,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user || !DATABASE_ID) return;
     const refresh = () => { if (document.visibilityState === 'visible') void syncUserData(user.$id); };
     document.addEventListener('visibilitychange', refresh);
-    const collections = [COLLECTIONS.quiz_assignments, COLLECTIONS.quizzes, COLLECTIONS.quiz_questions,
+    const collections = [COLLECTIONS.classes, COLLECTIONS.class_members,
+      COLLECTIONS.quiz_assignments, COLLECTIONS.quizzes, COLLECTIONS.quiz_questions,
       COLLECTIONS.writing_prompt_assignments, COLLECTIONS.writing_prompts, COLLECTIONS.peer_reviews,
       COLLECTIONS.text_assignments, COLLECTIONS.texts, COLLECTIONS.text_annotations,
       COLLECTIONS.text_discussion_posts, COLLECTIONS.text_discussion_votes];

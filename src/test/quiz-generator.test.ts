@@ -134,9 +134,9 @@ function makeCountingRng(seed: number): () => number {
 }
 
 describe('buildAnswerVariants', () => {
-  it('adds a plural form', () => {
-    expect(buildAnswerVariants('mitochondrion')).toContain('mitochondrions');
-    expect(buildAnswerVariants('cells')).toContain('cell');
+  it('does not invent singular or plural forms', () => {
+    expect(buildAnswerVariants('mitochondrion')).not.toContain('mitochondrions');
+    expect(buildAnswerVariants('cells')).not.toContain('cell');
   });
 
   it('drops a leading article', () => {

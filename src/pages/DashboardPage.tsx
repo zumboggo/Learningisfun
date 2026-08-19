@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
@@ -34,7 +34,7 @@ export function DashboardPage() {
   const { user, isTeacher, isParent } = useAuth();
   if (!user) return null;
 
-  return isTeacher ? <TeacherDashboard /> : isParent ? <ParentDashboard /> : <StudentDashboard />;
+  return isTeacher ? <Navigate to="/classes" replace /> : isParent ? <ParentDashboard /> : <StudentDashboard />;
 }
 
 function ParentDashboard() {
