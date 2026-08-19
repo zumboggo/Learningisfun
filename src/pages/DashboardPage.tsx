@@ -173,6 +173,7 @@ function StudentDashboard() {
   const [editingDecks, setEditingDecks] = useState(false);
   const [encouragement, setEncouragement] = useState<string | null>(null);
   const [selectedDeckIds, setSelectedDeckIds] = useState<string[] | null>(null);
+  const [studySessionSize, setStudySessionSize] = useState(30);
   const navigate = useNavigate();
 
   const memberships = useLiveQuery(
@@ -190,6 +191,14 @@ function StudentDashboard() {
       } else {
         setSelectedDeckIds(null);
       }
+    });
+  }, [user?.$id]);
+
+  useEffect(() => {
+    if (!user) return;
+    void db.app_metadata.get(`studySessionSize_${user.$id}`).then(entry => {
+      const value = Number(entry?.value || 30);
+      setStudySessionSize(Math.min(100, Math.max(5, Number.isFinite(value) ? value : 30)));
     });
   }, [user?.$id]);
 
@@ -597,6 +606,23 @@ function StudentDashboard() {
             <StatRow label="Longest streak" value={`${stats.longestStreak} days`} />
           </StatList>
         )}
+      </div>
+
+      <div className="student-section">
+        <h2 className="student-title">Settings</h2>
+        <div className="student-card mt-3 flex items-center justify-between gap-4 p-4">
+          <div><h3 className="text-sm font-semibold text-slate-800">Cards per study session</h3><p className="text-xs text-slate-500">The default is 30. Choose between 5 and 100.</p></div>
+          <input
+            aria-label="Cards per study session"
+            type="number"
+            min={5}
+            max={100}
+            value={studySessionSize}
+            onChange={event => setStudySessionSize(Math.min(100, Math.max(5, Number(event.target.value) || 30)))}
+            onBlur={() => { if (user) void db.app_metadata.put({ key: `studySessionSize_${user.$id}`, value: String(studySessionSize) }); }}
+            className="w-20 rounded-lg border border-slate-200 px-3 py-2 text-center font-semibold"
+          />
+        </div>
       </div>
     </div>
   );

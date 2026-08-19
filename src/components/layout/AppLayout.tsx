@@ -31,16 +31,14 @@ export function AppLayout({ children }: AppLayoutProps) {
       ]
     : isParent ? [
         { to: '/dashboard', label: 'Home', icon: 'home' },
+        { to: '/classes', label: 'Classes', icon: 'classes' },
         { to: '/decks', label: 'Cards', icon: 'cards' },
         { to: '/texts', label: 'Texts', icon: 'read' },
-        { to: '/discussions', label: 'Discussions', icon: 'chat' },
       ] : [
         { to: '/dashboard', label: 'Home', icon: 'home' },
+        { to: '/classes', label: 'Classes', icon: 'classes' },
         { to: '/decks', label: 'Cards', icon: 'cards' },
         { to: '/texts', label: 'Texts', icon: 'read' },
-        { to: '/writing', label: 'Writing', icon: 'write' },
-        { to: '/discussions', label: 'Discussions', icon: 'chat' },
-        { to: '/quizzes', label: 'Quizzes', icon: 'quiz' },
       ];
 
   if (!isTeacher) {
@@ -197,6 +195,9 @@ function NavIcon({ name }: { name: string }) {
         <path d="M7.5 14h3" />
       </svg>
     );
+  }
+  if (name === 'classes') {
+    return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V6l8-3 8 3v14"/><path d="M8 9h2M14 9h2M8 13h2M14 13h2M10 20v-3h4v3"/></svg>;
   }
   if (name === 'write') {
     return (

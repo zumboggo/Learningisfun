@@ -242,7 +242,7 @@ describe('generateQuizFromFlashcards', () => {
     }
   });
 
-  it('blanks the term inside the example sentence for cloze questions', () => {
+  it('uses definitions rather than examples for cloze questions', () => {
     const result = generateQuizFromFlashcards(
       makePools(6, 6),
       { ...seed, questionCount: 6, multipleChoiceWeight: 0 },
@@ -253,6 +253,16 @@ describe('generateQuizFromFlashcards', () => {
       expect(q.questionText).toContain('___');
       expect(q.cloze?.primary).toBeTruthy();
       expect(q.questionText.toLowerCase()).not.toContain(q.cloze!.primary.toLowerCase());
+      expect(q.questionText).not.toContain('We used');
+      expect(q.explanation).not.toContain('Example:');
+    }
+  });
+
+  it('never puts an MC answer in the same position three times consecutively', () => {
+    const result = generateQuizFromFlashcards(makePools(20, 20), { ...seed, questionCount: 30, multipleChoiceWeight: 100 }, SESSION_DATE);
+    const positions = result.questions.filter(q => q.type === 'mc').map(q => q.correctIndex);
+    for (let index = 2; index < positions.length; index++) {
+      expect(new Set(positions.slice(index - 2, index + 1)).size).toBeGreaterThan(1);
     }
   });
 

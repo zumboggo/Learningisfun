@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
@@ -15,6 +15,9 @@ export function DecksListPage() {
   const { user, isTeacher } = useAuth();
   const [assigningDeck, setAssigningDeck] = useState<FlashcardDeck | null>(null);
   const [editingDeck,setEditingDeck]=useState<FlashcardDeck|null>(null);
+  const [selectedDeckIds, setSelectedDeckIds] = useState<Set<string> | null>(null);
+  const [sessionSize, setSessionSize] = useState(30);
+  const navigate = useNavigate();
 
   const decks = useLiveQuery(async () => {
     if (!user) return [];
@@ -44,6 +47,37 @@ export function DecksListPage() {
 
   const teacherDecks = decks?.filter(d => d.type === 'teacher') || [];
   const personalDecks = decks?.filter(d => d.type === 'personal') || [];
+
+  useEffect(() => {
+    if (!user || isTeacher || !decks) return;
+    void Promise.all([
+      db.app_metadata.get(`studyDecks_${user.$id}`),
+      db.app_metadata.get(`studySessionSize_${user.$id}`),
+    ]).then(([savedDecks, savedSize]) => {
+      const available = new Set(decks.map(deck => deck.$id));
+      let ids = decks.map(deck => deck.$id);
+      if (savedDecks) {
+        try { ids = (JSON.parse(savedDecks.value) as string[]).filter(id => available.has(id)); } catch { /* use every deck */ }
+      }
+      setSelectedDeckIds(new Set(ids));
+      const parsedSize = Number(savedSize?.value || 30);
+      setSessionSize(Math.min(100, Math.max(5, Number.isFinite(parsedSize) ? parsedSize : 30)));
+    });
+  }, [decks, isTeacher, user]);
+
+  const toggleStudyDeck = (deckId: string) => {
+    if (!user) return;
+    const next = new Set(selectedDeckIds || []);
+    if (next.has(deckId)) next.delete(deckId); else next.add(deckId);
+    setSelectedDeckIds(next);
+    void db.app_metadata.put({ key: `studyDecks_${user.$id}`, value: JSON.stringify([...next]) });
+  };
+
+  const beginCombinedStudy = () => {
+    const ids = [...(selectedDeckIds || [])];
+    if (!ids.length) return;
+    navigate(`/decks/combined/review?decks=${encodeURIComponent(ids.join(','))}&limit=${sessionSize}&autostart=1`);
+  };
 
   const renderDeck = (deck: FlashcardDeck) => {
     const classNames = classNamesByDeck?.[deck.$id] || [];
@@ -90,7 +124,24 @@ export function DecksListPage() {
         )}
       </div>
 
-      {teacherDecks.length > 0 && (
+      {!isTeacher && decks && decks.length > 0 && (
+        <section className="mb-6 rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
+          <h2 className="text-lg font-semibold text-slate-900">Build today&apos;s session</h2>
+          <p className="mt-1 text-sm text-slate-500">Choose decks and study them together in one mixed session.</p>
+          <div className="mt-4 space-y-2">
+            {decks.map(deck => (
+              <label key={deck.$id} className="flex cursor-pointer items-center gap-3 rounded-xl border bg-white p-3">
+                <input type="checkbox" className="h-5 w-5 rounded" checked={selectedDeckIds?.has(deck.$id) ?? true} onChange={() => toggleStudyDeck(deck.$id)} />
+                <span className="min-w-0"><strong className="block truncate text-sm">{deck.title}</strong>{deck.description && <span className="block truncate text-xs text-slate-500">{deck.description}</span>}</span>
+              </label>
+            ))}
+          </div>
+          <div className="mt-4 flex items-center justify-between gap-4 text-sm text-slate-600"><span>{selectedDeckIds?.size ?? decks.length} decks selected</span><span>{sessionSize} cards</span></div>
+          <Button size="lg" className="mt-3 w-full bg-blue-600" disabled={(selectedDeckIds?.size ?? decks.length) === 0} onClick={beginCombinedStudy}>Study</Button>
+        </section>
+      )}
+
+      {isTeacher && teacherDecks.length > 0 && (
         <section className="mb-6">
           <h2 className="text-lg font-semibold mb-3">{isTeacher ? 'My decks' : 'Assigned'}</h2>
           <div className="space-y-3">
@@ -99,7 +150,7 @@ export function DecksListPage() {
         </section>
       )}
 
-      {!isTeacher && personalDecks.length > 0 && (
+      {isTeacher && personalDecks.length > 0 && (
         <section>
           <h2 className="text-lg font-semibold mb-3">My Cards</h2>
           <div className="space-y-3">

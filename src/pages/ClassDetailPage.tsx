@@ -136,6 +136,15 @@ export function ClassDetailPage() {
     return rows;
   }, [classId]);
 
+  const classQuizzes = useLiveQuery(async () => {
+    if (!classId) return [];
+    const assignments = await db.quiz_assignments.where('classId').equals(classId).toArray();
+    const quizIds = [...new Set(assignments.map(assignment => assignment.quizId))];
+    if (!quizIds.length) return [];
+    const quizzes = await db.quizzes.where('$id').anyOf(quizIds).toArray();
+    return quizzes.filter(quiz => isOwner || quiz.status === 'published').sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }, [classId, isOwner]);
+
   const weeklyMaterials = useLiveQuery(async (): Promise<WeeklyMaterial[]> => {
     if (!classId) return [];
     const sessions = await db.class_sessions.where('classId').equals(classId).toArray();
@@ -301,6 +310,11 @@ export function ClassDetailPage() {
       <ClassLinksPanel cls={cls} isOwner={Boolean(isOwner)} teacherId={user?.$id || ''} />
 
       <WeeklyClassReview materials={weeklyMaterials || []} />
+
+      <section>
+        <div className="mb-3 flex items-center justify-between"><h2 className="text-lg font-semibold">Quizzes ({classQuizzes?.length || 0})</h2>{isOwner && <Link to="/quizzes"><Button size="sm" variant="secondary">Manage quizzes</Button></Link>}</div>
+        {classQuizzes?.length ? <div className="grid gap-3 sm:grid-cols-2">{classQuizzes.map(quiz => <Card key={quiz.$id}><div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{quiz.title}</h3><p className="text-sm text-gray-500">{quiz.questionCount} questions{quiz.timeLimitMinutes ? ` · ${quiz.timeLimitMinutes} min` : ''}</p></div><StatusBadge status={quiz.status}/></div><Link className="mt-3 block" to={`/quizzes/${quiz.$id}/take`}><Button size="sm" className="w-full">{isOwner ? 'Preview' : 'Start quiz'}</Button></Link></Card>)}</div> : <p className="rounded-xl border border-dashed p-5 text-center text-sm text-gray-400">No published quizzes for this class yet.</p>}
+      </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section>

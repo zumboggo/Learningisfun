@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
@@ -43,27 +43,30 @@ interface CardTimeRecord {
 
 export function FlashcardReviewPage() {
   const { deckId } = useParams<{ deckId: string }>();
+  const [searchParams] = useSearchParams();
   const { user, isTeacher, isParent } = useAuth();
   const navigate = useNavigate();
+  const combinedDeckIds = useMemo(() => deckId === 'combined'
+    ? [...new Set((searchParams.get('decks') || '').split(',').filter(Boolean))]
+    : deckId ? [deckId] : [], [deckId, searchParams]);
+  const sessionLimit = Math.min(100, Math.max(5, Number(searchParams.get('limit') || 30) || 30));
+  const isCombined = deckId === 'combined';
 
-  const deck = useLiveQuery(() => (deckId ? db.flashcard_decks.get(deckId) : undefined), [deckId]);
+  const deck = useLiveQuery(() => (deckId && !isCombined ? db.flashcard_decks.get(deckId) : undefined), [deckId, isCombined]);
   const progress = useLiveQuery(
-    () => (deckId && user ? getDeckProgress(user.$id, deckId) : undefined),
-    [deckId, user?.$id],
+    () => (deckId && !isCombined && user ? getDeckProgress(user.$id, deckId) : undefined),
+    [deckId, isCombined, user?.$id],
   );
-  const classId = useLiveQuery(async () => {
-    if (!deckId || !user) return null;
+  const classByDeck = useLiveQuery(async () => {
+    const result: Record<string, string> = {};
+    if (!combinedDeckIds.length || !user) return result;
     const memberships = await db.class_members.where('userId').equals(user.$id).toArray();
     for (const membership of memberships) {
-      const assignment = await db.deck_assignments
-        .where('classId')
-        .equals(membership.classId)
-        .and(item => item.deckId === deckId)
-        .first();
-      if (assignment) return membership.classId;
+      const assignments = await db.deck_assignments.where('classId').equals(membership.classId).toArray();
+      for (const assignment of assignments) if (combinedDeckIds.includes(assignment.deckId) && !result[assignment.deckId]) result[assignment.deckId] = membership.classId;
     }
-    return null;
-  }, [deckId, user?.$id]);
+    return result;
+  }, [combinedDeckIds, user?.$id]);
 
   const [cards, setCards] = useState<FlashcardCard[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -87,6 +90,7 @@ export function FlashcardReviewPage() {
   const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sessionCategoryRef = useRef(new Map<string, 'new' | 'review'>());
   const finishedCardIdsRef = useRef(new Set<string>());
+  const autoStartedRef = useRef(false);
 
   useEffect(() => {
     studySessionIdRef.current = studySessionId;
@@ -101,11 +105,12 @@ export function FlashcardReviewPage() {
   const currentCard = cards[currentIndex];
 
   const startSession = async (mode: StudyMode) => {
-    if (!deckId || !user) return;
+    if (!combinedDeckIds.length || !user) return;
     // Unlimited practice runs over the whole deck, shuffled, with no cap.
-    const sessionCards = mode === 'unlimited'
-      ? shuffle(await buildFlashcardQueue(user.$id, deckId, 'all', Number.MAX_SAFE_INTEGER))
-      : await buildFlashcardQueue(user.$id, deckId, mode, 30);
+    const queues = await Promise.all(combinedDeckIds.map(id => buildFlashcardQueue(
+      user.$id, id, mode === 'unlimited' ? 'all' : mode, mode === 'unlimited' ? Number.MAX_SAFE_INTEGER : sessionLimit,
+    )));
+    const sessionCards = shuffle(queues.flat()).slice(0, mode === 'unlimited' ? Number.MAX_SAFE_INTEGER : sessionLimit);
     if (sessionCards.length === 0) {
       setEmptyMessage(
         mode === 'due' ? 'No due cards right now.'
@@ -118,7 +123,7 @@ export function FlashcardReviewPage() {
 
     const existingStates = await db.student_card_state
       .where('userId').equals(user.$id)
-      .and(state => state.deckId === deckId)
+      .and(state => combinedDeckIds.includes(state.deckId))
       .toArray();
     const stateByCard = new Map(existingStates.map(state => [state.cardId, state]));
     const categoryByCard = new Map<string, 'new' | 'review'>();
@@ -129,7 +134,7 @@ export function FlashcardReviewPage() {
     setSessionReviewRemaining([...categoryByCard.values()].filter(category => category === 'review').length);
     setSessionFinished(0);
 
-    const studySession = isParent ? null : await startFlashcardStudySession(user.$id, deckId, classId || null);
+    const studySession = isParent ? null : await startFlashcardStudySession(user.$id, combinedDeckIds[0], classByDeck?.[combinedDeckIds[0]] || null);
     activeSecondsRef.current = 0;
     setActiveSeconds(0);
     setStudySessionId(studySession?.$id || '');
@@ -144,6 +149,12 @@ export function FlashcardReviewPage() {
     setCardTimes([]);
     cardStartedAt.current = Date.now();
   };
+
+  useEffect(() => {
+    if (searchParams.get('autostart') !== '1' || !user || !combinedDeckIds.length || autoStartedRef.current) return;
+    autoStartedRef.current = true;
+    void startSession('mixed');
+  }, [combinedDeckIds, searchParams, user]);
 
   const finishSession = async () => {
     if (!studySessionId || !user) return;
@@ -164,7 +175,7 @@ export function FlashcardReviewPage() {
   };
 
   const handleRate = async (rating: ReviewRating) => {
-    if (!user || !currentCard || !deckId) return;
+    if (!user || !currentCard) return;
     if (inactivityTimerRef.current) {
       clearTimeout(inactivityTimerRef.current);
       inactivityTimerRef.current = null;
@@ -181,8 +192,8 @@ export function FlashcardReviewPage() {
     // itself is still timed, so the minutes still count towards their streak.
     let needsMorePractice = false;
     if (queueMode !== 'unlimited') {
-      const nextState = await reviewCard(user.$id, currentCard.$id, deckId, rating, {
-        classId: classId || null,
+      const nextState = await reviewCard(user.$id, currentCard.$id, currentCard.deckId, rating, {
+        classId: classByDeck?.[currentCard.deckId] || null,
         sessionId: studySessionId,
         elapsedSeconds,
       });
@@ -281,7 +292,7 @@ export function FlashcardReviewPage() {
     };
   }, [sessionStarted, sessionComplete, showAnswer, currentIndex]);
 
-  if (!deck) {
+  if (!deck && !isCombined) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-gray-400">Loading deck...</div>
@@ -293,8 +304,8 @@ export function FlashcardReviewPage() {
     return (
       <div className="p-4 max-w-lg mx-auto">
         <button onClick={() => navigate(-1)} className="text-gray-500 mb-4">Back</button>
-        <h1 className="text-2xl font-bold mb-2">{deck.title}</h1>
-        {deck.description && <p className="text-gray-500 mb-6">{deck.description}</p>}
+        <h1 className="text-2xl font-bold mb-2">{isCombined ? 'Mixed deck study' : deck!.title}</h1>
+        {!isCombined && deck!.description && <p className="text-gray-500 mb-6">{deck!.description}</p>}
 
         {progress && (
           <div className="grid grid-cols-4 gap-3 mb-6">
@@ -332,7 +343,7 @@ export function FlashcardReviewPage() {
           {selectedQueueMode === 'unlimited' ? 'Start unlimited study' : `Start ${selectedQueueMode} session`}
         </Button>
 
-        {isTeacher && (
+        {isTeacher && !isCombined && (
           <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4">
             <h3 className="font-medium">Teach this deck</h3>
             <p className="mt-1 text-sm text-gray-500">
@@ -392,8 +403,8 @@ export function FlashcardReviewPage() {
         </div>
 
         <div className="space-y-3">
-          <Button onClick={() => setSessionStarted(false)} className="w-full">
-            Back to deck
+          <Button onClick={() => isCombined ? navigate('/decks') : setSessionStarted(false)} className="w-full">
+            {isCombined ? 'Back to Cards' : 'Back to deck'}
           </Button>
           <Button onClick={() => navigate('/dashboard')} variant="ghost" className="w-full">
             Go to dashboard
@@ -410,9 +421,9 @@ export function FlashcardReviewPage() {
           <span aria-hidden="true">‹</span>
           <span>{queueMode === 'unlimited' ? 'Finish' : 'Exit'}</span>
         </button>
-        <div className="flashcard-deck-pill" title={deck.title}>
+        <div className="flashcard-deck-pill" title={isCombined ? 'Mixed deck study' : deck!.title}>
           <BookIcon />
-          <span>{deck.title}</span>
+          <span>{isCombined ? 'Mixed decks' : deck!.title}</span>
         </div>
       </div>
 

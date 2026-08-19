@@ -475,15 +475,10 @@ function buildCloze(
   const back = cardText(card, 'back');
   if (!front) return { skipped: 'card is missing a front' };
 
-  // Best case: the hint is an example sentence using the term, so blanking the
-  // term leaves a real sentence to reason about rather than bare recall.
-  const hint = (card.hint || '').trim();
-  let questionText = hint ? maskTerm(hint, front) : null;
-
-  if (!questionText) {
-    if (!back) return { skipped: 'no example sentence and no definition to build a blank from' };
-    questionText = `${back}\n\nThis describes: ${BLANK_TOKEN}`;
-  }
+  if (!back) return { skipped: 'card is missing a definition' };
+  // If the definition itself repeats the term, blank that occurrence so the
+  // question never gives away its own answer.
+  const questionText = maskTerm(back, front) || `${back}\n\nThis describes: ${BLANK_TOKEN}`;
 
   return {
     type: 'cloze',
@@ -503,10 +498,23 @@ function buildCloze(
 }
 
 function buildExplanation(card: FlashcardCard, front: string, back: string): string {
-  const parts = [back ? `${front} — ${back}` : front];
-  const hint = (card.hint || '').trim();
-  if (hint) parts.push(`Example: ${hint}`);
-  return parts.join('\n');
+  void card;
+  return back ? `${front} — ${back}` : front;
+}
+
+/** Keep answer positions varied without sacrificing deterministic generation. */
+function preventThreeMatchingAnswerPositions(questions: GeneratedQuestion[], rng: () => number): void {
+  const recent: number[] = [];
+  for (const question of questions) {
+    if (question.type !== 'mc') continue;
+    if (recent.length >= 2 && recent.at(-1) === question.correctIndex && recent.at(-2) === question.correctIndex) {
+      const alternatives = question.options.map((_, index) => index).filter(index => index !== question.correctIndex);
+      const nextIndex = alternatives[Math.floor(rng() * alternatives.length)];
+      [question.options[question.correctIndex], question.options[nextIndex]] = [question.options[nextIndex], question.options[question.correctIndex]];
+      question.correctIndex = nextIndex;
+    }
+    recent.push(question.correctIndex);
+  }
 }
 
 /**
@@ -560,6 +568,8 @@ export function generateQuizFromFlashcards(
       });
     }
   }
+
+  preventThreeMatchingAnswerPositions(questions, rng);
 
   return {
     questions,

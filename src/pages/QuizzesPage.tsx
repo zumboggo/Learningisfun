@@ -23,7 +23,7 @@ import { classLabel } from '@/utils/helpers';
 import type { Quiz, QuizAttempt } from '@/types';
 import { Modal } from '@/components/common/Modal';
 import { DailyCanvasQuizModal } from '@/components/quizzes/DailyCanvasQuizModal';
-import { buildQtiZip, downloadBlob } from '@/services/qti-export';
+import { buildQtiAssessmentXml, buildQtiZip, downloadBlob } from '@/services/qti-export';
 
 export function QuizzesPage() {
   const { user, isTeacher } = useAuth();
@@ -37,6 +37,7 @@ function TeacherQuizzes() {
   const [showCreate, setShowCreate] = useState(false);
   const [showCanvas, setShowCanvas] = useState(false);
   const [assigning, setAssigning] = useState<Quiz | null>(null);
+  const [copiedQuizId, setCopiedQuizId] = useState('');
 
   const classes = useLiveQuery(
     () => db.classes.where('teacherId').equals(user!.$id).toArray(),
@@ -101,6 +102,7 @@ function TeacherQuizzes() {
                 <Link to={`/quizzes/${quiz.$id}/take`}><Button size="sm" variant="secondary">Preview</Button></Link>
                 <Button size="sm" variant="secondary" onClick={() => setAssigning(quiz)}>Assign classes</Button>
                 <Button size="sm" variant="secondary" onClick={() => void exportQuiz(quiz)}>Export QTI</Button>
+                <Button size="sm" variant="secondary" onClick={() => void copyQuizText(quiz)}>{copiedQuizId === quiz.$id ? 'Copied!' : 'Copy Text'}</Button>
               </div>
             </Card>
           ))}
@@ -140,6 +142,14 @@ function TeacherQuizzes() {
     if (!record) return;
     const blob = await buildQtiZip(record.quiz, record.questions);
     downloadBlob(blob, `${quiz.title.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'quiz'}.qti.zip`);
+  }
+
+  async function copyQuizText(quiz: Quiz) {
+    const record = await getQuizWithQuestions(quiz.$id);
+    if (!record) return;
+    await navigator.clipboard.writeText(buildQtiAssessmentXml(record.quiz, record.questions));
+    setCopiedQuizId(quiz.$id);
+    window.setTimeout(() => setCopiedQuizId(''), 1800);
   }
 }
 

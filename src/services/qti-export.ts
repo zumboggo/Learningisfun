@@ -31,12 +31,17 @@ function parseVariants(raw?: string): string[] {
   try { const value = JSON.parse(raw || '[]'); return Array.isArray(value) ? value : []; } catch { return []; }
 }
 
-export async function buildQtiZip(quiz: Quiz, questions: QuizQuestion[]): Promise<Blob> {
+export function buildQtiAssessmentXml(quiz: Quiz, questions: QuizQuestion[]): string {
   const assessmentId = `quiz_${quiz.$id.replace(/[^a-zA-Z0-9_-]/g, '')}`;
-  const assessment = `<?xml version="1.0" encoding="UTF-8"?>
+  return `<?xml version="1.0" encoding="UTF-8"?>
 <questestinterop xmlns="http://www.imsglobal.org/xsd/ims_qtiasiv1p2">
   <assessment ident="${assessmentId}" title="${xml(quiz.title)}"><qtimetadata><qtimetadatafield><fieldlabel>quiz_type</fieldlabel><fieldentry>assignment</fieldentry></qtimetadatafield>${quiz.timeLimitMinutes ? `<qtimetadatafield><fieldlabel>time_limit</fieldlabel><fieldentry>${quiz.timeLimitMinutes}</fieldentry></qtimetadatafield>` : ''}</qtimetadata><section ident="root_section">${questions.map(questionXml).join('\n')}</section></assessment>
 </questestinterop>`;
+}
+
+export async function buildQtiZip(quiz: Quiz, questions: QuizQuestion[]): Promise<Blob> {
+  const assessmentId = `quiz_${quiz.$id.replace(/[^a-zA-Z0-9_-]/g, '')}`;
+  const assessment = buildQtiAssessmentXml(quiz, questions);
   const manifest = `<?xml version="1.0" encoding="UTF-8"?>
 <manifest identifier="${assessmentId}" xmlns="http://www.imsglobal.org/xsd/imscp_v1p1" xmlns:imsqti="http://www.imsglobal.org/xsd/imsqti_v2p1">
   <organizations/><resources><resource identifier="${assessmentId}" type="imsqti_xmlv1p2" href="assessment.xml"><file href="assessment.xml"/></resource></resources>
