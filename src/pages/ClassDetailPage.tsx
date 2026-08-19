@@ -8,6 +8,7 @@ import {
   ensureParentCode,
   regenerateParentCode,
   removeStudent,
+  deduplicateClassRoster,
   moveStudent,
   getClassMembers,
   importClassRoster,
@@ -94,8 +95,13 @@ export function ClassDetailPage() {
     if (user) void ensureParentCode(classId, user.$id).then(setParentCode);
   }, [classId, user]);
 
+  useEffect(() => {
+    if (!classId || !isOwner) return;
+    void deduplicateClassRoster(classId).then(() => syncClassRosterFromServer(classId));
+  }, [classId, isOwner]);
+
   const studentIds = useMemo(
-    () => (members || []).filter(m => m.role === 'student').map(m => m.userId),
+    () => [...new Set((members || []).filter(m => m.role === 'student').map(m => m.userId))],
     [members],
   );
 
@@ -198,7 +204,7 @@ export function ClassDetailPage() {
     if (!classId || !user) return;
     setRosterImporting(true);
     try {
-      const result = await importClassRoster(classId, user.$id, file);
+      const result = await importClassRoster(classId, file);
       setRosterResult(result);
     } finally {
       setRosterImporting(false);

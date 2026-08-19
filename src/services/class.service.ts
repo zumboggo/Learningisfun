@@ -139,34 +139,12 @@ export async function joinClass(userId: string, joinCode: string, role: 'student
   const cls = role === 'parent' ? await findClassByParentCode(joinCode) : await findClassByJoinCode(joinCode);
   if (!cls) return null;
 
-  const existing = await db.class_members
-    .where('[classId+userId]')
-    .equals([cls.$id, userId])
-    .first();
-
-  if (existing) return cls;
-
-  const memberId = generateId();
-  const member: ClassMember = {
-    $id: memberId,
-    classId: cls.$id,
-    userId,
-    role,
-    joinedAt: getTimestamp(),
-  };
-
-  await db.class_members.put(member);
-
-  try {
-    await databases.createDocument(DATABASE_ID, COLLECTIONS.class_members, memberId, {
-      classId: cls.$id,
-      userId,
-      role,
-      joinedAt: member.joinedAt,
-    });
-  } catch {
-    await addToQueue(userId, 'class_member', memberId, 'create', member);
-  }
+  const result = await executeLearningContent<{ membership: ClassMember }>({
+    action: 'joinClass', classId: cls.$id, joinCode, role,
+  });
+  const localDuplicates = await db.class_members.where('[classId+userId]').equals([cls.$id, userId]).toArray();
+  await db.class_members.bulkDelete(localDuplicates.map(member => member.$id));
+  await db.class_members.put(result.membership);
 
   return cls;
 }
@@ -191,7 +169,6 @@ export async function getClassMembers(classId: string): Promise<ClassMember[]> {
 
 export async function importClassRoster(
   classId: string,
-  teacherId: string,
   file: File,
 ): Promise<RosterImportResult> {
   const content = await readFileAsText(file);
@@ -209,29 +186,10 @@ export async function importClassRoster(
     const existedBefore = Boolean(await findUserByEmail(row.email));
     try {
       const student = await createStudentAccount(row.email, password, row.name);
-      const existingMember = await db.class_members
-        .where('[classId+userId]')
-        .equals([classId, student.$id])
-        .first();
+      const existingMember = await db.class_members.where('[classId+userId]').equals([classId, student.$id]).first();
       if (!existingMember) {
-        const member: ClassMember = {
-          $id: generateId(),
-          classId,
-          userId: student.$id,
-          role: 'student',
-          joinedAt: getTimestamp(),
-        };
-        await db.class_members.put(member);
-        try {
-          await databases.createDocument(DATABASE_ID, COLLECTIONS.class_members, member.$id, {
-            classId,
-            userId: student.$id,
-            role: 'student',
-            joinedAt: member.joinedAt,
-          });
-        } catch {
-          await addToQueue(teacherId, 'class_member', member.$id, 'create', member);
-        }
+        const membershipResult = await executeLearningContent<{ membership: ClassMember }>({ action: 'addStudentToClass', classId, studentId: student.$id });
+        await db.class_members.put(membershipResult.membership);
         result.added++;
       }
       if (existedBefore) result.existing++;
@@ -315,26 +273,22 @@ function normalizeClassLinkUrl(value: string): string {
 }
 
 export async function removeStudent(classId: string, userId: string): Promise<void> {
-  const member = await db.class_members
-    .where('[classId+userId]')
-    .equals([classId, userId])
-    .first();
-  if (member) {
-    await db.class_members.delete(member.$id);
-    try {
-      await databases.deleteDocument(DATABASE_ID, COLLECTIONS.class_members, member.$id);
-    } catch {
-      // Will sync later
-    }
-  }
+  const result = await executeLearningContent<{ removedIds: string[] }>({ action: 'removeStudent', classId, studentId: userId });
+  const local = await db.class_members.where('[classId+userId]').equals([classId, userId]).toArray();
+  await db.class_members.bulkDelete([...new Set([...result.removedIds, ...local.map(member => member.$id)])]);
+}
+
+export async function deduplicateClassRoster(classId: string): Promise<void> {
+  const result = await executeLearningContent<{ removedIds: string[] }>({ action: 'deduplicateClassRoster', classId });
+  if (result.removedIds.length) await db.class_members.bulkDelete(result.removedIds);
 }
 
 export async function moveStudent(sourceClassId: string, targetClassId: string, studentId: string): Promise<void> {
   if (sourceClassId === targetClassId) return;
-  const result = await executeLearningContent<{ removedId: string; membership: ClassMember }>({
+  const result = await executeLearningContent<{ removedIds: string[]; membership: ClassMember }>({
     action: 'moveStudent', sourceClassId, targetClassId, studentId,
   });
-  await db.class_members.delete(result.removedId);
+  await db.class_members.bulkDelete(result.removedIds);
   await db.class_members.put(result.membership);
 }
 
