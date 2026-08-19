@@ -28,7 +28,7 @@ import { Modal } from '@/components/common/Modal';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { CreateQuizModal } from '@/pages/QuizzesPage';
 import { deleteQuiz, getQuizWithQuestions, publishQuiz } from '@/services/quiz.service';
-import { buildQtiAssessmentXml } from '@/services/qti-export';
+import { buildQtiAssessmentXml, buildQtiZip, downloadBlob } from '@/services/qti-export';
 import { AddDecksToClassModal } from '@/components/common/AddDecksToClassModal';
 import { unassignDeck } from '@/services/flashcard.service';
 import { setTextClasses } from '@/services/text.service';
@@ -249,6 +249,14 @@ export function ClassDetailPage() {
     window.setTimeout(() => setCopiedQuizId(''), 1800);
   };
 
+  const exportQuizQti = async (quizId: string) => {
+    const record = await getQuizWithQuestions(quizId);
+    if (!record) return;
+    const blob = await buildQtiZip(record.quiz, record.questions);
+    const filename = record.quiz.title.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'quiz';
+    downloadBlob(blob, `${filename}.qti.zip`);
+  };
+
   const confirmDeleteQuiz = async (quizId: string) => {
     if (!window.confirm('Are you sure you want to delete this quiz?')) return;
     await deleteQuiz(quizId);
@@ -345,7 +353,7 @@ export function ClassDetailPage() {
 
       <section>
         <div className="mb-3 flex items-center justify-between"><h2 className="text-lg font-semibold">Quizzes ({classQuizzes?.length || 0})</h2>{isOwner && <Button size="sm" onClick={() => setShowCreateQuiz(true)}>Create quiz</Button>}</div>
-        {classQuizzes?.length ? <div className="space-y-2">{classQuizzes.map(quiz => <div key={quiz.$id} className="relative flex flex-col gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0 pr-8"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{quiz.title}</h3>{isOwner && <StatusBadge status={quiz.status}/>}</div><p className="text-sm text-gray-500">{quiz.questionCount} questions{quiz.timeLimitMinutes ? ` · ${quiz.timeLimitMinutes} min` : ''}</p></div>{isOwner ? <div className="flex flex-wrap gap-2 pr-6"><Button size="sm" variant="secondary" onClick={() => void copyQuizText(quiz.$id)}>{copiedQuizId === quiz.$id ? 'Copied!' : 'Copy Text'}</Button>{quiz.status === 'draft' && <Button size="sm" onClick={() => user && void publishQuiz(quiz.$id, user.$id)}>Publish</Button>}<button type="button" aria-label="Delete quiz" title="Delete quiz" onClick={() => void confirmDeleteQuiz(quiz.$id)} className="absolute right-3 top-3 text-lg leading-none text-red-500 hover:text-red-700">×</button></div> : <Link to={`/quizzes/${quiz.$id}/take`}><Button size="sm">Take quiz</Button></Link>}</div>)}</div> : <p className="rounded-xl border border-dashed p-5 text-center text-sm text-gray-400">{isOwner ? 'No quizzes for this class yet.' : 'No published quizzes for this class yet.'}</p>}
+        {classQuizzes?.length ? <div className="space-y-2">{classQuizzes.map(quiz => <div key={quiz.$id} className="relative flex flex-col gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0 pr-8"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{quiz.title}</h3>{isOwner && <StatusBadge status={quiz.status}/>}</div><p className="text-sm text-gray-500">{quiz.questionCount} questions{quiz.timeLimitMinutes ? ` · ${quiz.timeLimitMinutes} min` : ''}</p></div>{isOwner ? <div className="flex flex-wrap gap-2 pr-6"><Button size="sm" variant="secondary" onClick={() => void copyQuizText(quiz.$id)}>{copiedQuizId === quiz.$id ? 'Copied!' : 'Copy'}</Button><Button size="sm" variant="secondary" onClick={() => void exportQuizQti(quiz.$id)}>QTI</Button>{quiz.status === 'draft' && <Button size="sm" onClick={() => user && void publishQuiz(quiz.$id, user.$id)}>Publish</Button>}<button type="button" aria-label="Delete quiz" title="Delete quiz" onClick={() => void confirmDeleteQuiz(quiz.$id)} className="absolute right-3 top-3 text-lg leading-none text-red-500 hover:text-red-700">×</button></div> : <Link to={`/quizzes/${quiz.$id}/take`}><Button size="sm">Take quiz</Button></Link>}</div>)}</div> : <p className="rounded-xl border border-dashed p-5 text-center text-sm text-gray-400">{isOwner ? 'No quizzes for this class yet.' : 'No published quizzes for this class yet.'}</p>}
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
