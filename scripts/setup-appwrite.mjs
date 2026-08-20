@@ -99,7 +99,7 @@ const COLLECTIONS = [
     attributes: [
       S('classId', { required: true }),
       S('assignmentId', { required: false }),
-      ENUM('discussionType', ['qft', 'question', 'text', 'notes'], { required: false }),
+      ENUM('discussionType', ['qft', 'question', 'text', 'notes', 'presentation'], { required: false }),
       S('textId', { required: false }),
       TXT('promptMarkdown', { required: false }),
       S('title', { required: true }),
@@ -117,6 +117,7 @@ const COLLECTIONS = [
       { key: 'idx_classId', type: 'key', attributes: ['classId'] },
       { key: 'idx_sessionDate', type: 'key', attributes: ['sessionDate'] },
       { key: 'idx_status', type: 'key', attributes: ['status'] },
+      { key: 'idx_discussionType', type: 'key', attributes: ['discussionType'] },
     ],
   },
   {
@@ -548,6 +549,11 @@ const COLLECTIONS = [
     id: 'text_discussion_votes', name: 'Discussion Votes',
     attributes: [S('postId', { required: true }), S('classSessionId', { required: true }), S('textId', { required: false }), S('classId', { required: true }), S('userId', { required: true }), INT('value', { required: true }), DATE('createdAt', { required: true }), DATE('updatedAt', { required: true })],
     indexes: [{ key: 'idx_sessionId', type: 'key', attributes: ['classSessionId'] }, { key: 'idx_post_user', type: 'unique', attributes: ['postId','userId'] }, { key: 'idx_userId', type: 'key', attributes: ['userId'] }],
+  },
+  {
+    id: 'presentation_links', name: 'Presentation Links',
+    attributes: [S('teacherId', { required: true }), S('classId', { required: true }), S('title', { required: true }), TXT('url', { required: true }), DATE('assignedAt', { required: true }), DATE('watchedAt', { required: false })],
+    indexes: [{ key: 'idx_teacherId', type: 'key', attributes: ['teacherId'] }, { key: 'idx_classId', type: 'key', attributes: ['classId'] }, { key: 'idx_assignedAt', type: 'key', attributes: ['assignedAt'] }],
   },
 ];
 

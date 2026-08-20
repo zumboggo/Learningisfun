@@ -36,6 +36,7 @@ import type {
   TextAnnotation,
   TextDiscussionPost,
   TextDiscussionVote,
+  PresentationLink,
 } from '@/types';
 
 const db = new Dexie('LearningIsFunDB') as Dexie & {
@@ -73,6 +74,7 @@ const db = new Dexie('LearningIsFunDB') as Dexie & {
   text_annotations: EntityTable<TextAnnotation, '$id'>;
   text_discussion_posts: EntityTable<TextDiscussionPost, '$id'>;
   text_discussion_votes: EntityTable<TextDiscussionVote, '$id'>;
+  presentation_links: EntityTable<PresentationLink, '$id'>;
   sync_queue: EntityTable<SyncOperation, 'id'>;
   app_metadata: EntityTable<AppMetadata, 'key'>;
 };
@@ -316,6 +318,10 @@ db.version(10).stores({
     $id: crypto.randomUUID(), quizId: quiz.$id, classId: quiz.classId, assignedAt: quiz.createdAt,
   }));
   if (assignments.length) await tx.table('quiz_assignments').bulkPut(assignments);
+});
+
+db.version(11).stores({
+  presentation_links: '$id, teacherId, classId, assignedAt, watchedAt',
 });
 
 export { db };

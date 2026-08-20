@@ -50,6 +50,7 @@ export const COLLECTIONS = {
   text_annotations: 'text_annotations',
   text_discussion_posts: 'text_discussion_posts',
   text_discussion_votes: 'text_discussion_votes',
+  presentation_links: 'presentation_links',
 } as const;
 
 export const FUNCTION_IDS = {

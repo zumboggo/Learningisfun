@@ -29,18 +29,21 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { CreateQuizModal } from '@/pages/QuizzesPage';
 import { createPracticeQuiz, deleteQuiz, getQuizWithQuestions, publishQuiz } from '@/services/quiz.service';
 import { buildQtiAssessmentXml, buildQtiZip, downloadBlob } from '@/services/qti-export';
+import { addPresentationLinks, createLivePresentation, deletePresentationLink, setPresentationWatched, syncPresentationLinks, type LiveQuestionDraft } from '@/services/presentation.service';
 import { AddDecksToClassModal } from '@/components/common/AddDecksToClassModal';
 import { unassignDeck } from '@/services/flashcard.service';
 import { setTextClasses } from '@/services/text.service';
 import { RandomStudentModal } from '@/components/teacher/RandomStudentModal';
 import { CreateGroupsModal } from '@/components/teacher/CreateGroupsModal';
-import type { Class, ClassLink, ClassSession, LearningText } from '@/types';
+import type { Class, ClassLink, ClassSession, LearningText, PresentationLink, Quiz } from '@/types';
 import { classLabel } from '@/utils/helpers';
 
 type WeeklyMaterial =
   | { kind: 'notes'; date: string; session: ClassSession }
   | { kind: 'discussion'; date: string; session: ClassSession }
-  | { kind: 'text'; date: string; text: LearningText };
+  | { kind: 'text'; date: string; text: LearningText }
+  | { kind: 'quiz'; date: string; quiz: Quiz }
+  | { kind: 'presentation'; date: string; presentation: PresentationLink };
 
 export function ClassDetailPage() {
   const { classId } = useParams<{ classId: string }>();
@@ -68,6 +71,8 @@ export function ClassDetailPage() {
   const [copiedQuizId, setCopiedQuizId] = useState('');
   const [generatingPracticeQuiz, setGeneratingPracticeQuiz] = useState(false);
   const [practiceQuizError, setPracticeQuizError] = useState('');
+  const [showAddPresentation, setShowAddPresentation] = useState(false);
+  const [showLivePresentation, setShowLivePresentation] = useState(false);
 
   const cls = useLiveQuery(() => (classId ? db.classes.get(classId) : undefined), [classId]);
   const members = useLiveQuery(
@@ -149,12 +154,22 @@ export function ClassDetailPage() {
 
   const discussions = useLiveQuery(async () => {
     if (!classId) return [];
-    const sessions = (await db.class_sessions.where('classId').equals(classId).reverse().sortBy('sessionDate')).filter(session => session.discussionType !== 'notes');
+    const sessions = (await db.class_sessions.where('classId').equals(classId).reverse().sortBy('sessionDate')).filter(session => session.discussionType !== 'notes' && session.discussionType !== 'presentation');
     const rows = await Promise.all(sessions.map(async session => ({
       session,
       questionCount: await db.discussion_questions.where('classSessionId').equals(session.$id).count(),
     })));
     return rows;
+  }, [classId]);
+
+  const presentationLinks = useLiveQuery(() => classId ? db.presentation_links.where('classId').equals(classId).reverse().sortBy('assignedAt') : [], [classId]);
+  const livePresentations = useLiveQuery(() => classId ? db.class_sessions.where('classId').equals(classId).and(session => session.discussionType === 'presentation' && session.status === 'active').toArray() : [], [classId]);
+
+  useEffect(() => {
+    if (!classId) return;
+    void syncPresentationLinks([classId]);
+    const timer = window.setInterval(() => void syncPresentationLinks([classId]), 3000);
+    return () => window.clearInterval(timer);
   }, [classId]);
 
   const classQuizzes = useLiveQuery(async () => {
@@ -178,8 +193,10 @@ export function ClassDetailPage() {
       const text = texts[index];
       return text?.status === 'published' ? [{ kind: 'text' as const, date: assignment.assignedAt, text }] : [];
     });
-    return [...sessionMaterials, ...textMaterials].sort((a, b) => b.date.localeCompare(a.date));
-  }, [classId]);
+    const quizMaterials: WeeklyMaterial[] = (await Promise.all((await db.quiz_assignments.where('classId').equals(classId).toArray()).map(item => db.quizzes.get(item.quizId)))).filter((quiz): quiz is Quiz => Boolean(quiz && (isOwner || quiz.status === 'published'))).map(quiz => ({ kind: 'quiz', date: quiz.createdAt, quiz }));
+    const presentationMaterials: WeeklyMaterial[] = (await db.presentation_links.where('classId').equals(classId).toArray()).map(presentation => ({ kind: 'presentation', date: presentation.assignedAt, presentation }));
+    return [...sessionMaterials, ...textMaterials, ...quizMaterials, ...presentationMaterials].sort((a, b) => b.date.localeCompare(a.date));
+  }, [classId, isOwner, presentationLinks?.length]);
 
   const handleRegenerateCode = async () => {
     if (!classId || !user) return;
@@ -293,6 +310,7 @@ export function ClassDetailPage() {
             <Link to={`/classes/${cls.$id}/notes/today`}><Button size="sm">Today&apos;s Notes</Button></Link>
             <Button onClick={messageClass} disabled={!students?.some(student => student.email && student.email !== 'Profile not synced yet')} size="sm" variant="secondary">Message class</Button>
             <Button onClick={() => setShowDiscussionModal(true)} size="sm">Start discussion</Button>
+            <Button onClick={() => setShowLivePresentation(true)} size="sm">Presentation Mode</Button>
             <Button onClick={() => setShowAssignTexts(true)} size="sm" variant="secondary">Assign texts</Button>
             <Button onClick={() => setShowPicker(true)} size="sm" variant="secondary">Pick a student</Button>
             <Button onClick={() => setShowGroups(true)} size="sm" variant="secondary">Create groups</Button>
@@ -363,6 +381,10 @@ export function ClassDetailPage() {
       )}
 
       <ClassLinksPanel cls={cls} isOwner={Boolean(isOwner)} teacherId={user?.$id || ''} />
+      <PresentationLinksPanel links={presentationLinks || []} isOwner={Boolean(isOwner)} onAdd={() => setShowAddPresentation(true)} />
+      {!isOwner && !isParent && <Link to="/writing" className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 hover:border-blue-300"><span><strong className="block">Writing Feedback</strong><span className="text-sm text-gray-500">Get private AI feedback on any piece of writing.</span></span><span aria-hidden="true">→</span></Link>}
+
+      {livePresentations?.length ? <section><h2 className="mb-3 text-lg font-semibold">Live now</h2>{livePresentations.map(session => <Link key={session.$id} to={`/presentations/${session.$id}/live`} className="flex items-center justify-between rounded-xl bg-gray-950 p-4 text-white"><span><strong className="block">{session.title}</strong><span className="text-sm text-gray-300">{isOwner ? 'Control questions and view responses' : 'Join the live presentation'}</span></span><span aria-hidden="true">→</span></Link>)}</section> : null}
 
       <WeeklyClassReview materials={weeklyMaterials || []} />
 
@@ -650,6 +672,8 @@ export function ClassDetailPage() {
         /><AssignTextsToClassModal open={showAssignTexts} classId={cls.$id} teacherId={user.$id} onClose={() => setShowAssignTexts(false)} />
         {showCreateQuiz && <CreateQuizModal classes={(teacherClasses || []).map(item => ({ id: item.$id, name: classLabel(item) }))} sourceClassId={cls.$id} onClose={() => setShowCreateQuiz(false)} onCreated={() => setShowCreateQuiz(false)} />}</>
       )}
+      {isOwner && user && showAddPresentation && <AddPresentationModal sourceClassId={cls.$id} classes={teacherClasses || []} onClose={() => setShowAddPresentation(false)} />}
+      {isOwner && showLivePresentation && <CreateLivePresentationModal classId={cls.$id} onClose={() => setShowLivePresentation(false)} onCreated={sessionId => navigate(`/presentations/${sessionId}/live`)} />}
 
       {isOwner && (
         <>
@@ -692,6 +716,24 @@ function AssignTextsToClassModal({ open, classId, teacherId, onClose }: { open: 
   return <Modal open={open} onClose={() => { setChosen(null); onClose(); }} title="Assign texts to class"><div className="space-y-4"><p className="text-sm text-gray-500">Choose any texts students in this class should be able to read.</p><div className="max-h-80 space-y-2 overflow-auto">{texts?.length ? texts.map(text => <label key={text.$id} className="flex items-start gap-3 rounded-lg border p-3"><input type="checkbox" className="mt-1" checked={selected.has(text.$id)} onChange={() => toggle(text.$id)} /><span><strong className="block text-sm">{text.title}</strong><span className="text-xs text-gray-500">{text.author || 'Unknown author'}</span></span></label>) : <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">Create or upload a text in the Texts section first.</p>}</div><Button className="w-full" onClick={() => void save()}>Save text assignments</Button></div></Modal>;
 }
 
+function PresentationLinksPanel({ links, isOwner, onAdd }: { links: PresentationLink[]; isOwner: boolean; onAdd: () => void }) {
+  const [open, setOpen] = useState(true);
+  return <section className="overflow-hidden rounded-xl border border-gray-200 bg-white"><button className="flex w-full items-center justify-between p-4 text-left hover:bg-gray-50" onClick={() => setOpen(value => !value)}><span className="text-lg font-semibold">{open ? '▾' : '▸'} Presentations</span><span className="text-sm text-gray-500">{links.length}</span></button>{open && <div className="border-t p-4"><div className="mb-3 flex items-center justify-between"><p className="text-sm text-gray-500">Slides and presentations assigned to this class.</p>{isOwner && <Button size="sm" onClick={onAdd}>Add</Button>}</div><div className="max-h-80 space-y-2 overflow-y-auto pr-1">{links.length ? links.map(link => <div key={link.$id} className="flex items-center gap-3 rounded-lg border p-3"><label className="flex min-w-0 flex-1 items-center gap-3"><input type="checkbox" checked={Boolean(link.watchedAt)} disabled={!isOwner} onChange={event => void setPresentationWatched(link.$id, event.target.checked)} className="h-5 w-5 rounded"/><span className="min-w-0"><a href={link.url} target="_blank" rel="noreferrer" className="block truncate font-medium text-blue-700 hover:underline" onClick={event => event.stopPropagation()}>{link.title}</a><span className="text-xs text-gray-500">{link.watchedAt ? 'Watched' : 'Not watched yet'} · {formatDate(link.assignedAt)}</span></span></label>{isOwner && <button className="text-sm text-red-600" onClick={() => window.confirm('Delete this presentation link?') && void deletePresentationLink(link.$id)}>Delete</button>}</div>) : <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No presentation links yet.</p>}</div></div>}</section>;
+}
+
+function AddPresentationModal({ sourceClassId, classes, onClose }: { sourceClassId: string; classes: Class[]; onClose: () => void }) {
+  const [title, setTitle] = useState(''); const [url, setUrl] = useState(''); const [assignedAt, setAssignedAt] = useState(todayKey()); const [selected, setSelected] = useState(new Set([sourceClassId])); const [busy, setBusy] = useState(false); const [error, setError] = useState('');
+  const save = async () => { setBusy(true); setError(''); try { await addPresentationLinks({ title: title.trim(), url: url.trim(), classIds: [...selected], assignedAt: new Date(`${assignedAt}T12:00:00`).toISOString() }); onClose(); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not add presentation.'); } finally { setBusy(false); } };
+  return <Modal open onClose={onClose} title="Add presentation"><div className="space-y-4">{error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}<label className="block text-sm font-medium">Title<input className="mt-1 w-full rounded-lg border px-3 py-2" value={title} onChange={event => setTitle(event.target.value)} /></label><label className="block text-sm font-medium">Presentation link<input className="mt-1 w-full rounded-lg border px-3 py-2" type="url" placeholder="https://…" value={url} onChange={event => setUrl(event.target.value)} /></label><label className="block text-sm font-medium">Week assigned<input className="mt-1 w-full rounded-lg border px-3 py-2" type="date" value={assignedAt} onChange={event => setAssignedAt(event.target.value)} /></label><fieldset><legend className="mb-2 text-sm font-medium">Add to classes</legend><div className="max-h-48 space-y-2 overflow-auto">{classes.map(item => <label key={item.$id} className="flex gap-2 text-sm"><input type="checkbox" checked={selected.has(item.$id)} onChange={() => setSelected(current => { const next = new Set(current); if (next.has(item.$id)) next.delete(item.$id); else next.add(item.$id); return next; })}/>{classLabel(item)}</label>)}</div></fieldset><Button className="w-full" loading={busy} disabled={!title.trim() || !/^https?:\/\//i.test(url) || !selected.size} onClick={() => void save()}>Add presentation</Button></div></Modal>;
+}
+
+function CreateLivePresentationModal({ classId, onClose, onCreated }: { classId: string; onClose: () => void; onCreated: (sessionId: string) => void }) {
+  const [title, setTitle] = useState('Live questions'); const [questions, setQuestions] = useState<LiveQuestionDraft[]>([{ type: 'mc', text: '', options: ['', '', '', ''], answer: '' }]); const [busy, setBusy] = useState(false); const [error, setError] = useState('');
+  const update = (index: number, patch: Partial<LiveQuestionDraft>) => setQuestions(current => current.map((question, i) => i === index ? { ...question, ...patch } : question));
+  const save = async () => { setBusy(true); setError(''); try { onCreated(await createLivePresentation(classId, title, questions)); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not start presentation mode.'); } finally { setBusy(false); } };
+  return <Modal open onClose={onClose} title="Presentation Mode"><div className="max-h-[75vh] space-y-4 overflow-auto">{error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}<label className="block text-sm font-medium">Session title<input className="mt-1 w-full rounded-lg border px-3 py-2" value={title} onChange={event => setTitle(event.target.value)} /></label>{questions.map((question, index) => <div key={index} className="space-y-2 rounded-xl border p-3"><div className="flex items-center justify-between"><strong className="text-sm">Question {index + 1}</strong>{questions.length > 1 && <button className="text-sm text-red-600" onClick={() => setQuestions(current => current.filter((_, i) => i !== index))}>Remove</button>}</div><select className="w-full rounded-lg border px-3 py-2 text-sm" value={question.type} onChange={event => update(index, { type: event.target.value as LiveQuestionDraft['type'] })}><option value="mc">Multiple choice</option><option value="short">Short answer</option><option value="paragraph">Paragraph</option><option value="cloze">Fill in the blank</option></select><textarea className="w-full rounded-lg border px-3 py-2" rows={2} placeholder="Question" value={question.text} onChange={event => update(index, { text: event.target.value })}/>{question.type === 'mc' && question.options.map((option, optionIndex) => <input key={optionIndex} className="w-full rounded-lg border px-3 py-2 text-sm" placeholder={`Choice ${optionIndex + 1}`} value={option} onChange={event => update(index, { options: question.options.map((item, i) => i === optionIndex ? event.target.value : item) })}/>)}{question.type === 'cloze' && <input className="w-full rounded-lg border px-3 py-2 text-sm" placeholder="Expected answer (optional)" value={question.answer} onChange={event => update(index, { answer: event.target.value })}/>}</div>)}<Button variant="secondary" className="w-full" onClick={() => setQuestions(current => [...current, { type: 'short', text: '', options: ['', '', '', ''], answer: '' }])}>+ Add question</Button><Button className="w-full" loading={busy} disabled={questions.some(question => !question.text.trim() || (question.type === 'mc' && question.options.some(option => !option.trim())))} onClick={() => void save()}>Open teacher controls</Button></div></Modal>;
+}
+
 function WeeklyClassReview({ materials }: { materials: WeeklyMaterial[] }) {
   const groups = new Map<string, WeeklyMaterial[]>();
   for (const material of materials) {
@@ -705,7 +747,7 @@ function WeeklyClassReview({ materials }: { materials: WeeklyMaterial[] }) {
     <section>
       <h2 className="mb-3 text-lg font-semibold">Weekly class materials</h2>
       {weeks.length === 0 ? (
-        <Card><p className="text-sm text-gray-500">Notes, discussions, and texts will appear here by week.</p></Card>
+        <Card><p className="text-sm text-gray-500">Notes, quizzes, discussions, texts, and presentations will appear here by week.</p></Card>
       ) : (
         <div className="space-y-3">
           {weeks.map(([week, items]) => {
@@ -714,12 +756,14 @@ function WeeklyClassReview({ materials }: { materials: WeeklyMaterial[] }) {
               notes: items.filter(item => item.kind === 'notes').length,
               discussions: items.filter(item => item.kind === 'discussion').length,
               texts: items.filter(item => item.kind === 'text').length,
+              quizzes: items.filter(item => item.kind === 'quiz').length,
+              presentations: items.filter(item => item.kind === 'presentation').length,
             };
             return (
               <div key={week} className="overflow-hidden rounded-xl border border-gray-200 bg-white">
                 <button className="flex w-full items-center justify-between gap-3 p-4 text-left hover:bg-gray-50" onClick={() => setOpenWeeks(current => { const next = new Set(current); if (next.has(week)) next.delete(week); else next.add(week); return next; })}>
-                  <span className="font-semibold">{isOpen ? '▾' : '▸'} Week of {formatWeek(week)}</span>
-                  <span className="text-xs text-gray-500">{counts.notes} notes · {counts.discussions} discussions · {counts.texts} texts</span>
+                  <span className="font-semibold">{isOpen ? '▾' : '▸'} {week === weekStart(new Date().toISOString()) ? `This week · ${formatWeek(week)}` : `Week of ${formatWeek(week)}`}</span>
+                  <span className="text-xs text-gray-500">{counts.notes} notes · {counts.discussions} discussions · {counts.texts} texts · {counts.quizzes} quizzes · {counts.presentations} presentations</span>
                 </button>
                 {isOpen && (
                   <div className="space-y-3 border-t bg-gray-50 p-4">
@@ -734,12 +778,16 @@ function WeeklyClassReview({ materials }: { materials: WeeklyMaterial[] }) {
                         <h3 className="mt-1 font-semibold">{item.session.title}</h3>
                         {item.session.promptMarkdown && <p className="mt-1 line-clamp-2 text-sm text-gray-500">{item.session.promptMarkdown}</p>}
                       </Link>
-                    ) : (
+                    ) : item.kind === 'text' ? (
                       <Link key={`text-${item.text.$id}`} to={`/texts/${item.text.$id}`} className="block rounded-xl border bg-white p-4 hover:border-blue-300">
                         <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Text · {formatDate(item.date)}</p>
                         <h3 className="mt-1 font-semibold">{item.text.title}</h3>
                         <p className="text-sm text-gray-500">{item.text.author || 'Unknown author'}</p>
                       </Link>
+                    ) : item.kind === 'quiz' ? (
+                      <Link key={`quiz-${item.quiz.$id}`} to={`/quizzes/${item.quiz.$id}/take`} className="block rounded-xl border bg-white p-4 hover:border-blue-300"><p className="text-xs font-semibold uppercase tracking-wide text-amber-600">Quiz · {formatDate(item.date)}</p><h3 className="mt-1 font-semibold">{item.quiz.title}</h3></Link>
+                    ) : (
+                      <a key={`presentation-${item.presentation.$id}`} href={item.presentation.url} target="_blank" rel="noreferrer" className="block rounded-xl border bg-white p-4 hover:border-blue-300"><p className="text-xs font-semibold uppercase tracking-wide text-fuchsia-600">Presentation · {formatDate(item.date)}</p><h3 className="mt-1 font-semibold">{item.presentation.title}</h3><p className="text-sm text-gray-500">{item.presentation.watchedAt ? 'Watched' : 'Not watched yet'}</p></a>
                     ))}
                   </div>
                 )}

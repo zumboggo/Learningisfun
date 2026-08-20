@@ -111,6 +111,104 @@ export default async ({ req, res, error }) => {
       return res.json({ class: clean(updatedClass) });
     }
 
+    if (body.action === 'readPresentationLinks') {
+      const requested = [...new Set(Array.isArray(body.classIds) ? body.classIds.filter(Boolean) : [])];
+      const owned = profile.role === 'teacher' ? await db.listDocuments(databaseId, 'classes', [Query.equal('teacherId', userId), Query.limit(500)]) : { documents: [] };
+      const ownedIds = new Set(owned.documents.map(row => row.$id));
+      const allowed = requested.filter(id => memberClassIds.has(id) || ownedIds.has(id));
+      if (!allowed.length) return res.json({ links: [], liveSessions: [] });
+      const [result, sessionResult] = await Promise.all([
+        db.listDocuments(databaseId, 'presentation_links', [Query.equal('classId', allowed), Query.limit(5000)]),
+        db.listDocuments(databaseId, 'class_sessions', [Query.equal('classId', allowed), Query.equal('discussionType', 'presentation'), Query.equal('status', 'active'), Query.limit(500)]),
+      ]);
+      return res.json({ links: result.documents.map(clean), liveSessions: sessionResult.documents.map(clean) });
+    }
+
+    if (body.action === 'addPresentationLinks') {
+      if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
+      const title = String(body.title || '').trim(), url = String(body.url || '').trim();
+      const classIds = [...new Set(Array.isArray(body.classIds) ? body.classIds.filter(Boolean) : [])];
+      if (!title || title.length > 255 || !/^https?:\/\//i.test(url) || url.length > 1000000 || !classIds.length) return res.json({ error: 'Valid title, link, and class are required' }, 400);
+      const classes = await db.listDocuments(databaseId, 'classes', [Query.equal('$id', classIds), Query.equal('teacherId', userId), Query.limit(500)]);
+      if (classes.total !== classIds.length) return res.json({ error: 'You must own every selected class' }, 403);
+      const assignedAt = String(body.assignedAt || new Date().toISOString());
+      const links = [];
+      for (const classId of classIds) links.push(await db.createDocument(databaseId, 'presentation_links', ID.unique(), { teacherId: userId, classId, title, url, assignedAt, watchedAt: null }));
+      return res.json({ links: links.map(clean) });
+    }
+
+    if (body.action === 'setPresentationWatched' || body.action === 'deletePresentationLink') {
+      if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
+      const link = await db.getDocument(databaseId, 'presentation_links', body.linkId);
+      if (link.teacherId !== userId) return res.json({ error: 'Not the presentation owner' }, 403);
+      if (body.action === 'deletePresentationLink') { await db.deleteDocument(databaseId, 'presentation_links', link.$id); return res.json({ deleted: link.$id }); }
+      const updated = await db.updateDocument(databaseId, 'presentation_links', link.$id, { watchedAt: body.watched ? new Date().toISOString() : null });
+      return res.json({ link: clean(updated) });
+    }
+
+    if (body.action === 'createLivePresentation') {
+      if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
+      const targetClass = await db.getDocument(databaseId, 'classes', body.classId);
+      if (targetClass.teacherId !== userId) return res.json({ error: 'Not the class owner' }, 403);
+      const questions = Array.isArray(body.questions) ? body.questions.slice(0, 100) : [];
+      const validTypes = new Set(['mc', 'short', 'paragraph', 'cloze']);
+      if (!questions.length || questions.some(q => !validTypes.has(q.type) || !String(q.text || '').trim())) return res.json({ error: 'Add at least one valid question' }, 400);
+      const normalizedQuestions = questions.map(q => ({ ...q, options: q.type === 'mc' ? (Array.isArray(q.options) ? q.options.slice(0, 4).map(value => String(value).trim()) : []) : [] }));
+      if (normalizedQuestions.some(q => q.type === 'mc' && (q.options.length < 2 || q.options.some(value => !value)))) return res.json({ error: 'Multiple-choice questions need at least two choices' }, 400);
+      const now = new Date().toISOString();
+      const session = await db.createDocument(databaseId, 'class_sessions', ID.unique(), { classId: body.classId, assignmentId: null, discussionType: 'presentation', textId: null, promptMarkdown: '', title: String(body.title || '').trim() || 'Live presentation', sessionDate: now.slice(0, 10), status: 'active', votesPerStudent: 0, allowStackedVotes: false, notesMarkdown: JSON.stringify({ reveal: false }), publishedNotesMarkdown: '', publishedAt: null, createdAt: now, updatedAt: now });
+      for (let index = 0; index < normalizedQuestions.length; index++) {
+        const q = normalizedQuestions[index], options = q.options;
+        await db.createDocument(databaseId, 'discussion_questions', ID.unique(), { classSessionId: session.$id, authorId: userId, questionText: String(q.text).trim(), selectedPassage: JSON.stringify({ type: q.type, options, answer: String(q.answer || '') }), voteCount: index, moderationStatus: 'visible', discussionStatus: 'none', discussionNotesMarkdown: '', notesUpdatedAt: null, isTeacherQuestion: true, teacherVisibleBeforeSubmission: true, createdAt: now });
+      }
+      return res.json({ sessionId: session.$id });
+    }
+
+    if (['readLivePresentation', 'controlLivePresentation', 'submitLiveAnswer'].includes(body.action)) {
+      const session = await db.getDocument(databaseId, 'class_sessions', body.sessionId);
+      if (session.discussionType !== 'presentation') return res.json({ error: 'Not a live presentation' }, 400);
+      const targetClass = await db.getDocument(databaseId, 'classes', session.classId);
+      const owns = profile.role === 'teacher' && targetClass.teacherId === userId;
+      const enrolled = memberClassIds.has(session.classId);
+      if (!owns && !enrolled) return res.json({ error: 'Not enrolled' }, 403);
+      const questionResult = await db.listDocuments(databaseId, 'discussion_questions', [Query.equal('classSessionId', session.$id), Query.limit(500)]);
+      const questions = questionResult.documents.sort((a, b) => a.voteCount - b.voteCount);
+      if (body.action === 'controlLivePresentation') {
+        if (!owns) return res.json({ error: 'Teacher role required' }, 403);
+        let priorState = {}; try { priorState = JSON.parse(session.notesMarkdown || '{}'); } catch { /* invalid state */ }
+        let index = questions.findIndex(q => q.$id === session.assignmentId || (!session.assignmentId && q.$id === priorState.lastQuestionId)), assignmentId = session.assignmentId || null, reveal = false, status = session.status, lastQuestionId = priorState.lastQuestionId || null;
+        if (body.command === 'next') assignmentId = questions[Math.min(index + 1, questions.length - 1)]?.$id || null;
+        if (body.command === 'previous') assignmentId = questions[Math.max(index - 1, 0)]?.$id || null;
+        if (body.command === 'pause') { lastQuestionId = session.assignmentId || lastQuestionId; assignmentId = null; }
+        if (body.command === 'reveal') reveal = true;
+        if (body.command === 'hide') reveal = false;
+        if (body.command === 'end') { assignmentId = null; status = 'published'; }
+        if (assignmentId) lastQuestionId = assignmentId;
+        await db.updateDocument(databaseId, 'class_sessions', session.$id, { assignmentId, status, notesMarkdown: JSON.stringify({ reveal, lastQuestionId }), updatedAt: new Date().toISOString(), publishedAt: status === 'published' ? new Date().toISOString() : null });
+        return res.json({ ok: true });
+      }
+      const active = questions.find(q => q.$id === session.assignmentId) || null;
+      if (body.action === 'submitLiveAnswer') {
+        if (profile.role !== 'student' || !active || session.status !== 'active') return res.json({ error: 'No question is accepting answers' }, 403);
+        let config = {}; try { config = JSON.parse(active.selectedPassage || '{}'); } catch { /* invalid configuration */ }
+        const answer = String(body.answer ?? '').trim();
+        if (!answer || answer.length > 10000) return res.json({ error: 'Enter a valid answer' }, 400);
+        if (config.type === 'mc' && (!/^\d+$/.test(answer) || Number(answer) < 0 || Number(answer) >= config.options.length)) return res.json({ error: 'Choose a valid answer' }, 400);
+        const prior = await db.listDocuments(databaseId, 'discussion_answers', [Query.equal('questionId', active.$id), Query.equal('authorId', userId), Query.limit(1)]), now = new Date().toISOString();
+        const data = { questionId: active.$id, authorId: userId, authorName: '', answerText: answer, createdAt: prior.documents[0]?.createdAt || now, updatedAt: now };
+        if (prior.total) await db.updateDocument(databaseId, 'discussion_answers', prior.documents[0].$id, data); else await db.createDocument(databaseId, 'discussion_answers', ID.unique(), data);
+        return res.json({ ok: true });
+      }
+      const answerResult = active ? await db.listDocuments(databaseId, 'discussion_answers', [Query.equal('questionId', active.$id), Query.limit(5000)]) : { documents: [] };
+      const myAnswer = answerResult.documents.find(row => row.authorId === userId)?.answerText || null;
+      let config = {}; try { config = active ? JSON.parse(active.selectedPassage || '{}') : {}; } catch { /* invalid configuration */ }
+      const reveal = (() => { try { return Boolean(JSON.parse(session.notesMarkdown || '{}').reveal); } catch { return false; } })();
+      const mcCounts = Array.isArray(config.options) ? config.options.map((_, i) => answerResult.documents.filter(row => Number(row.answerText) === i).length) : [];
+      const roster = await db.listDocuments(databaseId, 'class_members', [Query.equal('classId', session.classId), Query.equal('role', 'student'), Query.limit(5000)]);
+      const projectQuestion = q => { let c = {}; try { c = JSON.parse(q.selectedPassage || '{}'); } catch { /* invalid */ } return { id: q.$id, text: q.questionText, sortOrder: q.voteCount, type: c.type || 'short', options: c.options || [], answer: owns || reveal ? c.answer || '' : '' }; };
+      return res.json({ session: clean(session), questions: owns ? questions.map(projectQuestion) : [], activeQuestion: active ? projectQuestion(active) : null, ownAnswer: myAnswer, answeredCount: answerResult.documents.length, enrolledCount: roster.total, mcCounts: owns || myAnswer ? mcCounts : [], reveal, responses: owns && active ? answerResult.documents.map((row, i) => ({ id: row.$id, answer: row.answerText, label: `Response ${i + 1}` })) : [], isTeacher: owns });
+    }
+
     if (body.action === 'deleteQuiz') {
       if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
       const quiz = await db.getDocument(databaseId, 'quizzes', body.quizId);

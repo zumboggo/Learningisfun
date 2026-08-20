@@ -9,6 +9,7 @@ import * as flashcardService from '@/services/flashcard.service';
 import * as quizService from '@/services/quiz.service';
 import * as writingService from '@/services/writing.service';
 import * as textService from '@/services/text.service';
+import * as presentationService from '@/services/presentation.service';
 import { client, DATABASE_ID, COLLECTIONS } from '@/lib/appwrite';
 
 interface AuthContextType {
@@ -54,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       quizService.syncQuizzesFromServer(classIds),
       writingService.syncWritingFromServer(classIds, userId, isTeacher),
       textService.syncTextsFromServer(classIds, userId, isTeacher),
+      presentationService.syncPresentationLinks(classIds),
     ]);
   }, []);
 
@@ -96,7 +98,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user || !DATABASE_ID) return;
     const refresh = () => { if (document.visibilityState === 'visible') void syncUserData(user.$id); };
     document.addEventListener('visibilitychange', refresh);
-    const collections = [COLLECTIONS.classes, COLLECTIONS.class_members,
+    const collections = [COLLECTIONS.classes, COLLECTIONS.class_members, COLLECTIONS.class_sessions,
+      COLLECTIONS.discussion_questions, COLLECTIONS.discussion_answers, COLLECTIONS.presentation_links,
       COLLECTIONS.quiz_assignments, COLLECTIONS.quizzes, COLLECTIONS.quiz_questions,
       COLLECTIONS.writing_prompt_assignments, COLLECTIONS.writing_prompts, COLLECTIONS.peer_reviews,
       COLLECTIONS.text_assignments, COLLECTIONS.texts, COLLECTIONS.text_annotations,

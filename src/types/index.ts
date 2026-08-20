@@ -42,7 +42,7 @@ export interface ClassSession {
   $id: string;
   classId: string;
   assignmentId?: string;
-  discussionType?: 'qft' | 'question' | 'text' | 'notes';
+  discussionType?: 'qft' | 'question' | 'text' | 'notes' | 'presentation';
   textId?: string | null;
   promptMarkdown?: string;
   title: string;
@@ -56,6 +56,16 @@ export interface ClassSession {
   createdAt: string;
   updatedAt: string;
   syncStatus: SyncStatus;
+}
+
+export interface PresentationLink {
+  $id: string;
+  teacherId: string;
+  classId: string;
+  title: string;
+  url: string;
+  assignedAt: string;
+  watchedAt: string | null;
 }
 
 export interface ClassSessionItem {

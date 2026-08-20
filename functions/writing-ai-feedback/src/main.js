@@ -41,7 +41,7 @@ export default async ({ req, res, error }) => {
 
     if (typeof request.personalText === 'string') {
       const profile = await db.getDocument(databaseId, 'users', userId);
-      if (profile.role !== 'student') return res.json({ error: 'Student role required' }, 403);
+      if (profile.role === 'parent') return res.json({ error: 'Student or teacher role required' }, 403);
       const studentText = request.personalText.trim();
       const feedbackRequest = typeof request.feedbackRequest === 'string' ? request.feedbackRequest.trim() : '';
       if (!studentText) return res.json({ error: 'There is nothing written yet' }, 400);
