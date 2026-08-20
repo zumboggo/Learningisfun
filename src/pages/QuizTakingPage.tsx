@@ -1,11 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
-import { getQuizWithQuestions, startQuizAttempt, submitQuizAttempt } from '@/services/quiz.service';
+import { deleteLocalPracticeQuiz, getQuizWithQuestions, startQuizAttempt, submitQuizAttempt } from '@/services/quiz.service';
 import type { Quiz, QuizQuestion } from '@/types';
 import { Confetti } from '@/pages/FlashcardReviewPage';
 
@@ -13,6 +13,9 @@ export function QuizTakingPage() {
   const { quizId } = useParams<{ quizId: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isPractice = searchParams.get('practice') === '1';
+  const returnTo = searchParams.get('returnTo') || '/classes';
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -69,9 +72,10 @@ export function QuizTakingPage() {
     if (!attemptId) return;
     if (timerRef.current) clearInterval(timerRef.current);
     const answerArray = Object.entries(answers).map(([questionId, answer]) => ({ questionId, answer }));
-    const result = await submitQuizAttempt(attemptId, answerArray);
+    const result = await submitQuizAttempt(attemptId, answerArray, { sync: !isPractice });
     setResults(result);
     setSubmitted(true);
+    if (isPractice && quizId) await deleteLocalPracticeQuiz(quizId);
   };
 
   const formatTime = (seconds: number) => {
@@ -120,7 +124,7 @@ export function QuizTakingPage() {
               ))}
             </div>
 
-            <Button onClick={() => navigate('/quizzes')} className="w-full">Back to quizzes</Button>
+            <Button onClick={() => navigate(isPractice ? returnTo : '/quizzes')} className="w-full">{isPractice ? 'Back to class' : 'Back to quizzes'}</Button>
           </div>
         </Card>
       </div>
@@ -130,7 +134,7 @@ export function QuizTakingPage() {
   if (!started) {
     return (
       <div className="p-4 max-w-lg mx-auto">
-        <button onClick={() => navigate('/quizzes')} className="text-gray-500 mb-4">Back</button>
+        <button onClick={() => navigate(isPractice ? returnTo : '/quizzes')} className="text-gray-500 mb-4">Back</button>
         <Card>
           <h1 className="text-2xl font-bold mb-2">{quiz.title}</h1>
           <p className="text-gray-500 mb-4">{questions.length} questions</p>
@@ -146,7 +150,7 @@ export function QuizTakingPage() {
   return (
     <div className="p-4 max-w-lg mx-auto">
       <div className="flex items-center justify-between mb-4">
-        <button onClick={() => navigate('/quizzes')} className="text-gray-500">Exit</button>
+        <button onClick={() => navigate(isPractice ? returnTo : '/quizzes')} className="text-gray-500">Exit</button>
         <span className="text-sm text-gray-400">
           {Object.keys(answers).length} / {questions.length} answered
         </span>

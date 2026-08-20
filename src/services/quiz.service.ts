@@ -195,6 +195,44 @@ export async function saveFlashcardQuiz(params: {
   return quiz;
 }
 
+/** Build a device-local quiz for student practice. It is never synchronized. */
+export async function createPracticeQuiz(classId: string, userId: string, questionCount = 10): Promise<Quiz> {
+  const preview = await previewFlashcardQuiz({
+    classId,
+    questionCount,
+    recentWeight: 50,
+    multipleChoiceWeight: 60,
+    seed: `${classId}:${userId}:${Date.now()}`,
+  });
+  const quiz: Quiz = {
+    $id: ID.unique(), classId, sourceClassId: classId, createdBy: userId,
+    title: 'Practice Quiz', sourceType: 'flashcards', notesWeight: 0, flashcardWeight: 100,
+    questionCount: preview.result.questions.length, timeLimitMinutes: null,
+    status: 'published', publishedAt: getTimestamp(), createdAt: getTimestamp(), syncStatus: 'synced',
+  };
+  const questions: QuizQuestion[] = preview.result.questions.map((question, index) => ({
+    $id: ID.unique(), quizId: quiz.$id, type: question.type, questionText: question.questionText,
+    options: JSON.stringify(question.options), correctIndex: question.correctIndex,
+    clozeAnswer: question.cloze?.primary || '', clozeVariants: JSON.stringify(question.cloze?.variants || []),
+    explanation: question.explanation, sortOrder: index,
+  }));
+  await db.transaction('rw', db.quizzes, db.quiz_questions, async () => {
+    await db.quizzes.put(quiz);
+    await db.quiz_questions.bulkPut(questions);
+  });
+  return quiz;
+}
+
+export async function deleteLocalPracticeQuiz(quizId: string): Promise<void> {
+  const questionIds = await db.quiz_questions.where('quizId').equals(quizId).primaryKeys();
+  const attemptIds = await db.quiz_attempts.where('quizId').equals(quizId).primaryKeys();
+  await db.transaction('rw', db.quizzes, db.quiz_questions, db.quiz_attempts, async () => {
+    await db.quiz_questions.bulkDelete(questionIds);
+    await db.quiz_attempts.bulkDelete(attemptIds);
+    await db.quizzes.delete(quizId);
+  });
+}
+
 function parseClozeVariants(raw: string | undefined): string[] {
   if (!raw) return [];
   try {
@@ -252,6 +290,7 @@ export async function startQuizAttempt(quizId: string, userId: string): Promise<
 export async function submitQuizAttempt(
   attemptId: string,
   answers: Array<{ questionId: string; answer: number | string }>,
+  options: { sync?: boolean } = {},
 ): Promise<{ score: number; total: number; results: Array<{ correct: boolean; explanation: string }> }> {
   const attempt = await db.quiz_attempts.get(attemptId);
   if (!attempt) throw new Error('Attempt not found');
@@ -292,7 +331,7 @@ export async function submitQuizAttempt(
   });
 
   const updated = await db.quiz_attempts.get(attemptId);
-  if (updated) await addToQueue(updated.userId, 'quiz_attempt', attemptId, 'update', updated);
+  if (updated && options.sync !== false) await addToQueue(updated.userId, 'quiz_attempt', attemptId, 'update', updated);
 
   return { score, total: questions.length, results };
 }

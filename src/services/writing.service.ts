@@ -730,6 +730,27 @@ export async function generateAiFeedbackForSubmission(
   return record;
 }
 
+export async function generatePersonalWritingFeedback(
+  studentText: string,
+  feedbackRequest: string,
+): Promise<{ www: string; improvements: string[]; generatedAt: string }> {
+  const text = studentText.trim();
+  if (!text) throw new Error('Paste or write something first.');
+  if (!FUNCTION_IDS.writingAiFeedback) throw new Error('AI feedback is not configured on the server yet.');
+  const execution = await functions.createExecution(
+    FUNCTION_IDS.writingAiFeedback,
+    JSON.stringify({ personalText: text, feedbackRequest: feedbackRequest.trim() }),
+  );
+  if (execution.status === 'failed') throw new Error(execution.errors || 'AI feedback failed');
+  const result = JSON.parse(execution.responseBody || '{}') as { error?: string; www?: string; improvements?: string[]; generatedAt?: string };
+  if (result.error) throw new Error(result.error);
+  return {
+    www: result.www || '',
+    improvements: Array.isArray(result.improvements) ? result.improvements : [],
+    generatedAt: result.generatedAt || getTimestamp(),
+  };
+}
+
 /** Pull writing resources needed by this user. Server permissions remain authoritative. */
 export async function syncWritingFromServer(classIds: string[], userId: string, isTeacher: boolean): Promise<void> {
   if (!DATABASE_ID || classIds.length === 0) return;

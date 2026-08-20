@@ -14,6 +14,7 @@ import {
   createWritingPrompt,
   defaultRubric,
   getPromptsForClasses,
+  generatePersonalWritingFeedback,
   parseRubric,
   rubricTotalPoints,
   updateWritingPromptStatus,
@@ -472,6 +473,11 @@ function CreatePromptModal({
 
 function StudentWriting() {
   const { user } = useAuth();
+  const [personalText, setPersonalText] = useState('');
+  const [feedbackRequest, setFeedbackRequest] = useState('');
+  const [personalFeedback, setPersonalFeedback] = useState<{ www: string; improvements: string[]; generatedAt: string } | null>(null);
+  const [feedbackBusy, setFeedbackBusy] = useState(false);
+  const [feedbackError, setFeedbackError] = useState('');
 
   const memberships = useLiveQuery(
     () => db.class_members.where('userId').equals(user!.$id).toArray(),
@@ -534,6 +540,20 @@ function StudentWriting() {
           Write, review three classmates, then unlock the feedback on your own piece.
         </p>
       </header>
+
+      <Card className="border-gray-300">
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold">Get feedback on your own writing</h2>
+            <p className="mt-1 text-sm text-gray-500">This is private practice. It is not submitted to a class or shared for peer review.</p>
+          </div>
+          <label className="block text-sm font-medium text-gray-700">Your writing<textarea value={personalText} onChange={event => setPersonalText(event.target.value)} rows={10} maxLength={30000} className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-3 text-base leading-7 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100" placeholder="Paste or write anything you would like feedback on…" /></label>
+          <label className="block text-sm font-medium text-gray-700">What would you especially like feedback on? <span className="font-normal text-gray-400">(optional)</span><input value={feedbackRequest} onChange={event => setFeedbackRequest(event.target.value)} maxLength={1000} className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100" placeholder="For example: Is my argument clear? Focus on sentence variety." /></label>
+          {feedbackError && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{feedbackError}</p>}
+          <Button loading={feedbackBusy} disabled={!personalText.trim()} onClick={() => { setFeedbackBusy(true); setFeedbackError(''); void generatePersonalWritingFeedback(personalText, feedbackRequest).then(setPersonalFeedback).catch(cause => setFeedbackError(cause instanceof Error ? cause.message : 'Could not generate feedback.')).finally(() => setFeedbackBusy(false)); }}>Generate AI Feedback</Button>
+          {personalFeedback && <div className="space-y-3 rounded-xl bg-gray-50 p-4" aria-live="polite"><div><h3 className="font-semibold text-green-800">What is working well</h3><p className="mt-1 whitespace-pre-wrap text-sm text-gray-700">{personalFeedback.www}</p></div><div><h3 className="font-semibold text-amber-800">Ideas for revision</h3><ol className="mt-1 list-decimal space-y-2 pl-5 text-sm text-gray-700">{personalFeedback.improvements.map((item, index) => <li key={`${index}-${item}`}>{item}</li>)}</ol></div><p className="text-xs text-gray-400">Fresh feedback generated {new Date(personalFeedback.generatedAt).toLocaleString()}</p></div>}
+        </div>
+      </Card>
 
       {rows && rows.length > 0 ? (
         <div className="space-y-3">
