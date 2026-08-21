@@ -3,9 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 const read = vi.fn();
+const submit = vi.fn();
 vi.mock('@/services/presentation.service', () => ({
   readLivePresentation: (...args: unknown[]) => read(...args),
-  submitLiveAnswer: vi.fn(),
+  submitLiveAnswer: (...args:unknown[])=>submit(...args),
   controlLivePresentation: vi.fn(),
 }));
 
@@ -20,10 +21,11 @@ const state = {
   reveal: false,
   responses: [],
   isTeacher: false,
+  allowResubmission: false,
 };
 
 describe('Live writing prompt', () => {
-  beforeEach(() => { vi.useFakeTimers(); read.mockReset(); read.mockResolvedValue(state); });
+  beforeEach(() => { vi.useFakeTimers(); read.mockReset(); submit.mockReset(); read.mockResolvedValue(state); });
   afterEach(() => { vi.useRealTimers(); });
   it('pauses server polling while the student is typing so focus is preserved', async () => {
     const { LivePresentationPage } = await import('@/pages/LivePresentationPage');
@@ -40,5 +42,18 @@ describe('Live writing prompt', () => {
     fireEvent.blur(editor);
     await act(async () => { await Promise.resolve(); });
     expect(read.mock.calls.length).toBeGreaterThan(callsWhileFocused);
+  });
+  it('lets a student replace a submitted response when the teacher enables resubmission', async () => {
+    read.mockResolvedValue({...state,ownAnswer:'First response',allowResubmission:true});
+    const { LivePresentationPage } = await import('@/pages/LivePresentationPage');
+    render(<MemoryRouter initialEntries={['/presentations/session-1/live']}><Routes><Route path="/presentations/:sessionId/live" element={<LivePresentationPage />}/></Routes></MemoryRouter>);
+    await act(async()=>{await vi.advanceTimersByTimeAsync(1)});
+    fireEvent.click(screen.getByRole('button',{name:/revise and resubmit/i}));
+    const editor=screen.getByPlaceholderText(/paragraph response/i);
+    expect(editor).toHaveValue('First response');
+    fireEvent.change(editor,{target:{value:'Improved response'}});
+    fireEvent.click(screen.getByRole('button',{name:/update response/i}));
+    await act(async()=>{await Promise.resolve()});
+    expect(submit).toHaveBeenCalledWith('session-1','Improved response');
   });
 });

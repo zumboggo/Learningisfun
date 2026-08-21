@@ -12,6 +12,7 @@ export function LivePresentationPage() {
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('');
   const [selectedResponse, setSelectedResponse] = useState('');
+  const [revising, setRevising] = useState(false);
   const editing = useRef(false);
 
   const refresh = useCallback(async () => {
@@ -34,7 +35,7 @@ export function LivePresentationPage() {
   const submit = async () => {
     if (!sessionId || !answer.trim()) return;
     setBusy(true); setError(''); editing.current = false;
-    try { await submitLiveAnswer(sessionId, answer); await refresh(); }
+    try { await submitLiveAnswer(sessionId, answer); setRevising(false); await refresh(); }
     catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not submit your response.'); }
     finally { setBusy(false); }
   };
@@ -55,5 +56,5 @@ export function LivePresentationPage() {
 
   if (!question || state.session.status !== 'active') return <main className="flex min-h-screen items-center justify-center bg-gray-950 p-8 text-center text-white"><div><h1 className="text-3xl font-bold">This writing prompt is finished</h1><Link to={`/classes/${state.session.classId}`} className="mt-5 inline-block underline">Back to class</Link></div></main>;
 
-  return <main className="min-h-screen bg-slate-950 p-4 text-white sm:p-8"><div className="mx-auto max-w-3xl"><p className="text-sm font-semibold uppercase tracking-wide text-blue-200">Writing Prompt</p><h1 className="mt-3 text-3xl font-bold leading-tight !text-white sm:text-5xl">{question.text}</h1>{state.ownAnswer !== null ? <div className="mt-8 space-y-5"><div className="rounded-xl border border-white/20 bg-white/10 p-5 text-white"><p className="mb-2 text-sm text-blue-100">Your response</p><p className="whitespace-pre-wrap text-lg leading-8 text-white">{state.ownAnswer}</p></div><p className="text-center text-blue-100">Submitted. Your teacher can share it anonymously.</p></div> : <div className="mt-8"><textarea rows={12} className="w-full rounded-xl bg-white p-4 text-base leading-7 text-gray-950 focus:outline-none focus:ring-4 focus:ring-blue-400" placeholder="Write your paragraph response…" value={answer} onFocus={() => { editing.current = true; }} onBlur={() => { editing.current = false; void refresh(); }} onChange={event => setAnswer(event.target.value)}/><Button className="mt-4 w-full" size="lg" loading={busy} disabled={!answer.trim()} onMouseDown={() => { editing.current = false; }} onClick={() => void submit()}>Submit response</Button></div>}{error && <p className="mt-4 text-red-300">{error}</p>}</div></main>;
+  return <main className="min-h-screen bg-slate-950 p-4 text-white sm:p-8"><div className="mx-auto max-w-3xl"><p className="text-sm font-semibold uppercase tracking-wide text-blue-200">Writing Prompt</p><h1 className="mt-3 text-3xl font-bold leading-tight !text-white sm:text-5xl">{question.text}</h1>{state.ownAnswer !== null && !revising ? <div className="mt-8 space-y-5"><div className="rounded-xl border border-white/20 bg-white/10 p-5 text-white"><p className="mb-2 text-sm text-blue-100">Your response</p><p className="whitespace-pre-wrap text-lg leading-8 text-white">{state.ownAnswer}</p></div><p className="text-center text-blue-100">Submitted. Your teacher can share it anonymously.</p>{state.allowResubmission&&<Button className="w-full" size="lg" variant="secondary" onClick={()=>{setAnswer(state.ownAnswer||'');setRevising(true);editing.current=true}}>Revise and resubmit</Button>}</div> : <div className="mt-8"><textarea autoFocus={revising} rows={12} className="w-full rounded-xl bg-white p-4 text-base leading-7 text-gray-950 focus:outline-none focus:ring-4 focus:ring-blue-400" placeholder="Write your paragraph response…" value={answer} onFocus={() => { editing.current = true; }} onBlur={() => { editing.current = false; void refresh(); }} onChange={event => setAnswer(event.target.value)}/><Button className="mt-4 w-full" size="lg" loading={busy} disabled={!answer.trim()} onMouseDown={() => { editing.current = false; }} onClick={() => void submit()}>{revising?'Update response':'Submit response'}</Button>{revising&&<button className="mt-3 w-full text-sm text-blue-200" onClick={()=>{setRevising(false);editing.current=false;setAnswer('')}}>Cancel revision</button>}</div>}{error && <p className="mt-4 text-red-300">{error}</p>}</div></main>;
 }

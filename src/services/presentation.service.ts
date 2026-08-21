@@ -16,6 +16,7 @@ export interface LivePresentationState {
   reveal: boolean;
   responses: Array<{ id: string; answer: string; label: string }>;
   isTeacher: boolean;
+  allowResubmission: boolean;
 }
 
 export async function syncPresentationLinks(classIds: string[]): Promise<PresentationLink[]> {
@@ -41,13 +42,13 @@ export async function deletePresentationLink(linkId: string): Promise<void> {
   await db.presentation_links.delete(linkId);
 }
 
-export async function createLivePresentation(classId: string, title: string, questions: LiveQuestionDraft[]): Promise<string> {
-  const result = await executeLearningContent<{ sessionId: string }>({ action: 'createLivePresentation', classId, title, questions });
+export async function createLivePresentation(classId: string, title: string, questions: LiveQuestionDraft[], allowResubmission = false): Promise<string> {
+  const result = await executeLearningContent<{ sessionId: string }>({ action: 'createLivePresentation', classId, title, questions, allowResubmission });
   return result.sessionId;
 }
 
-export async function createWritingPrompt(classId: string, prompt: string): Promise<string> {
-  return createLivePresentation(classId, 'Writing Prompt', [{ type: 'paragraph', text: prompt.trim(), options: [], answer: '' }]);
+export async function createWritingPrompt(classId: string, prompt: string, allowResubmission = false): Promise<string> {
+  return createLivePresentation(classId, 'Writing Prompt', [{ type: 'paragraph', text: prompt.trim(), options: [], answer: '' }], allowResubmission);
 }
 
 export async function readLivePresentation(sessionId: string): Promise<LivePresentationState> {
