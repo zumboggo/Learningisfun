@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '@/contexts/AuthContext';
@@ -42,7 +42,7 @@ import { Markdown } from '@/components/common/Markdown';
 type WeeklyMaterial =
   | { kind: 'notes'; date: string; session: ClassSession }
   | { kind: 'discussion'; date: string; session: ClassSession }
-  | { kind: 'text'; date: string; text: LearningText; dueClassNumber?: number }
+  | { kind: 'text'; date: string; text: LearningText }
   | { kind: 'quiz'; date: string; quiz: Quiz }
   | { kind: 'presentation'; date: string; presentation: PresentationLink }
   | { kind: 'writingPrompt'; date: string; session: ClassSession };
@@ -193,7 +193,7 @@ export function ClassDetailPage() {
     const texts = await Promise.all(assignments.map(assignment => db.texts.get(assignment.textId)));
     const textMaterials: WeeklyMaterial[] = assignments.flatMap((assignment, index) => {
       const text = texts[index];
-      return text?.status === 'published' ? [{ kind: 'text' as const, date: assignment.assignedAt, text, dueClassNumber: assignment.dueClassNumber }] : [];
+      return text?.status === 'published' ? [{ kind: 'text' as const, date: assignment.assignedAt, text }] : [];
     });
     const quizMaterials: WeeklyMaterial[] = (await Promise.all((await db.quiz_assignments.where('classId').equals(classId).toArray()).map(item => db.quizzes.get(item.quizId)))).filter((quiz): quiz is Quiz => Boolean(quiz && (isOwner || quiz.status === 'published'))).map(quiz => ({ kind: 'quiz', date: quiz.createdAt, quiz }));
     const presentationMaterials: WeeklyMaterial[] = (await db.presentation_links.where('classId').equals(classId).toArray()).map(presentation => ({ kind: 'presentation', date: presentation.assignedAt, presentation }));
@@ -706,8 +706,7 @@ function AssignTextsToClassModal({ open, classId, teacherId, onClose }: { open: 
   const [mode, setMode] = useState<'existing' | 'new'>('existing');
   const [contentMode, setContentMode] = useState<'full' | 'link'>('full');
   const [chosen, setChosen] = useState<Set<string> | null>(null);
-  const [week, setWeek] = useState(todayKey());
-  const [dueClassNumber, setDueClassNumber] = useState(1);
+  const [dueDate, setDueDate] = useState(todayKey());
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [source, setSource] = useState('');
@@ -717,7 +716,7 @@ function AssignTextsToClassModal({ open, classId, teacherId, onClose }: { open: 
   const [error, setError] = useState('');
   const selected = chosen || new Set(assignments?.map(assignment => assignment.textId) || []);
   const toggle = (textId: string) => { const next = new Set(selected); if (next.has(textId)) next.delete(textId); else next.add(textId); setChosen(next); };
-  const schedule = { assignedAt: new Date(`${week}T12:00:00`).toISOString(), dueClassNumber };
+  const schedule = { assignedAt: new Date(`${dueDate}T12:00:00`).toISOString() };
   const save = async () => {
     setBusy(true); setError('');
     try {
@@ -742,7 +741,7 @@ function AssignTextsToClassModal({ open, classId, teacherId, onClose }: { open: 
   };
   const close = () => { if (busy) return; setChosen(null); setError(''); onClose(); };
   const newTextValid = Boolean(title.trim()) && (contentMode === 'link' ? /^https?:\/\//i.test(externalUrl) : splitParagraphs(copiedText).length > 0);
-  return <Modal open={open} onClose={close} title="Assign Text"><div className="space-y-4"><div className="grid grid-cols-2 gap-1 rounded-lg bg-gray-100 p-1"><button className={`rounded-md px-3 py-2 text-sm font-medium ${mode==='existing'?'bg-white shadow-sm':''}`} onClick={()=>setMode('existing')}>Choose existing</button><button className={`rounded-md px-3 py-2 text-sm font-medium ${mode==='new'?'bg-white shadow-sm':''}`} onClick={()=>setMode('new')}>Add new text</button></div>{error&&<p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}<div className="grid grid-cols-2 gap-3"><label className="text-sm font-medium">Week beginning<input type="date" className="mt-1 w-full rounded-lg border px-3 py-2" value={week} onChange={e=>setWeek(e.target.value)}/></label><label className="text-sm font-medium">Read by class<select className="mt-1 w-full rounded-lg border px-3 py-2" value={dueClassNumber} onChange={e=>setDueClassNumber(Number(e.target.value))}><option value={1}>Class 1</option><option value={2}>Class 2</option><option value={3}>Class 3</option></select></label></div>{mode==='existing'?<><p className="text-sm text-gray-500">Choose from texts you have already added.</p><div className="max-h-72 space-y-2 overflow-auto">{texts?.length ? texts.map(text => <label key={text.$id} className="flex items-start gap-3 rounded-lg border p-3"><input type="checkbox" className="mt-1" checked={selected.has(text.$id)} onChange={() => toggle(text.$id)} /><span><strong className="block text-sm">{text.title}</strong><span className="text-xs text-gray-500">{text.author || 'Unknown author'}{text.contentMode==='link'?' · Link':''}</span></span></label>) : <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No saved texts yet. Choose “Add new text” above.</p>}</div><Button className="w-full" loading={busy} onClick={() => void save()}>Save text assignments</Button></>:<><div className="grid grid-cols-2 gap-1 rounded-lg border p-1"><button className={`rounded-md px-3 py-2 text-sm ${contentMode==='full'?'bg-blue-50 font-semibold text-blue-700':''}`} onClick={()=>setContentMode('full')}>Paste full text</button><button className={`rounded-md px-3 py-2 text-sm ${contentMode==='link'?'bg-blue-50 font-semibold text-blue-700':''}`} onClick={()=>setContentMode('link')}>Post a link</button></div><input className="w-full rounded-lg border px-3 py-2" placeholder="Text title" value={title} onChange={e=>setTitle(e.target.value)}/><div className="grid grid-cols-2 gap-3"><input className="w-full rounded-lg border px-3 py-2" placeholder="Author (optional)" value={author} onChange={e=>setAuthor(e.target.value)}/><input className="w-full rounded-lg border px-3 py-2" placeholder="Source (optional)" value={source} onChange={e=>setSource(e.target.value)}/></div>{contentMode==='link'?<input type="url" className="w-full rounded-lg border px-3 py-2" placeholder="https://…" value={externalUrl} onChange={e=>setExternalUrl(e.target.value)}/>:<><textarea autoFocus className="w-full rounded-lg border px-3 py-3 text-base" rows={9} placeholder="Paste the full text here. Blank lines will become separate paragraphs for annotation." value={copiedText} onChange={e=>setCopiedText(e.target.value)}/><p className="text-xs text-gray-500">{splitParagraphs(copiedText).length} paragraph{splitParagraphs(copiedText).length===1?'':'s'} detected</p></>}<Button className="w-full" loading={busy} disabled={!newTextValid} onClick={()=>void createAndAssign()}>Add and assign text</Button></>}</div></Modal>;
+  return <Modal open={open} onClose={close} title="Assign Text"><div className="space-y-4"><div className="grid grid-cols-2 gap-1 rounded-lg bg-gray-100 p-1"><button className={`rounded-md px-3 py-2 text-sm font-medium ${mode==='existing'?'bg-white shadow-sm':''}`} onClick={()=>setMode('existing')}>Choose existing</button><button className={`rounded-md px-3 py-2 text-sm font-medium ${mode==='new'?'bg-white shadow-sm':''}`} onClick={()=>setMode('new')}>Add new text</button></div>{error&&<p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}<label className="block text-sm font-medium">Due date<input type="date" className="mt-1 w-full rounded-lg border px-3 py-2" value={dueDate} onChange={e=>setDueDate(e.target.value)}/></label>{mode==='existing'?<><p className="text-sm text-gray-500">Choose from texts you have already added.</p><div className="max-h-72 space-y-2 overflow-auto">{texts?.length ? texts.map(text => <label key={text.$id} className="flex items-start gap-3 rounded-lg border p-3"><input type="checkbox" className="mt-1" checked={selected.has(text.$id)} onChange={() => toggle(text.$id)} /><span><strong className="block text-sm">{text.title}</strong><span className="text-xs text-gray-500">{text.author || 'Unknown author'}{text.contentMode==='link'?' · Link':''}</span></span></label>) : <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No saved texts yet. Choose “Add new text” above.</p>}</div><Button className="w-full" loading={busy} onClick={() => void save()}>Save text assignments</Button></>:<><div className="grid grid-cols-2 gap-1 rounded-lg border p-1"><button className={`rounded-md px-3 py-2 text-sm ${contentMode==='full'?'bg-blue-50 font-semibold text-blue-700':''}`} onClick={()=>setContentMode('full')}>Paste full text</button><button className={`rounded-md px-3 py-2 text-sm ${contentMode==='link'?'bg-blue-50 font-semibold text-blue-700':''}`} onClick={()=>setContentMode('link')}>Post a link</button></div><input className="w-full rounded-lg border px-3 py-2" placeholder="Text title" value={title} onChange={e=>setTitle(e.target.value)}/><div className="grid grid-cols-2 gap-3"><input className="w-full rounded-lg border px-3 py-2" placeholder="Author (optional)" value={author} onChange={e=>setAuthor(e.target.value)}/><input className="w-full rounded-lg border px-3 py-2" placeholder="Source (optional)" value={source} onChange={e=>setSource(e.target.value)}/></div>{contentMode==='link'?<input type="url" className="w-full rounded-lg border px-3 py-2" placeholder="https://…" value={externalUrl} onChange={e=>setExternalUrl(e.target.value)}/>:<><textarea autoFocus className="w-full rounded-lg border px-3 py-3 text-base" rows={9} placeholder="Paste the full text here. Blank lines will become separate paragraphs for annotation." value={copiedText} onChange={e=>setCopiedText(e.target.value)}/><p className="text-xs text-gray-500">{splitParagraphs(copiedText).length} paragraph{splitParagraphs(copiedText).length===1?'':'s'} detected</p></>}<Button className="w-full" loading={busy} disabled={!newTextValid} onClick={()=>void createAndAssign()}>Add and assign text</Button></>}</div></Modal>;
 }
 
 function PresentationLinksPanel({ links, isOwner, onAdd }: { links: PresentationLink[]; isOwner: boolean; onAdd: () => void }) {
@@ -770,6 +769,7 @@ function WeeklyClassReview({ materials, isOwner }: { materials: WeeklyMaterial[]
   }
   const weeks = [...groups.entries()].sort((a, b) => b[0].localeCompare(a[0]));
   const [openWeeks, setOpenWeeks] = useState<Set<string>>(new Set());
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set());
 
   return (
     <section>
@@ -798,7 +798,9 @@ function WeeklyClassReview({ materials, isOwner }: { materials: WeeklyMaterial[]
                 </button>
                 {isOpen && (
                   <div className="space-y-3 border-t bg-gray-50 p-4">
-                    {items.map(item => item.kind === 'notes' ? (
+                    {counts.texts > 0 && <CompactWeekSection title="Texts" count={counts.texts} color="emerald" open={openSections.has(`${week}-texts`)} onToggle={() => setOpenSections(current => toggleSetValue(current, `${week}-texts`))}>{items.filter((item): item is Extract<WeeklyMaterial,{kind:'text'}> => item.kind === 'text').map(item => <Link key={item.text.$id} to={`/texts/${item.text.$id}`} className="block border-t border-emerald-100 px-4 py-2.5 hover:bg-emerald-100/50"><span className="block text-sm font-semibold text-emerald-950">{item.text.title}</span><span className="text-xs text-emerald-800">Due {formatDate(item.date)}{item.text.author ? ` · ${item.text.author}` : ''}</span></Link>)}</CompactWeekSection>}
+                    {counts.presentations > 0 && <CompactWeekSection title="Presentations" count={counts.presentations} color="fuchsia" open={openSections.has(`${week}-presentations`)} onToggle={() => setOpenSections(current => toggleSetValue(current, `${week}-presentations`))}>{items.filter((item): item is Extract<WeeklyMaterial,{kind:'presentation'}> => item.kind === 'presentation').map(item => <div key={item.presentation.$id} className="flex items-center gap-3 border-t border-fuchsia-100 px-4 py-2.5"><input aria-label={`Mark ${item.presentation.title} watched`} type="checkbox" className="h-5 w-5" checked={Boolean(item.presentation.watchedAt)} disabled={!isOwner} onChange={event=>void setPresentationWatched(item.presentation.$id,event.target.checked)}/><a href={item.presentation.url} target="_blank" rel="noreferrer" className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-fuchsia-950">{item.presentation.title}</span><span className="text-xs text-fuchsia-800">{item.presentation.watchedAt?'Watched':'Posted · not watched'} · {formatDate(item.date)}</span></a></div>)}</CompactWeekSection>}
+                    {items.filter(item => item.kind !== 'text' && item.kind !== 'presentation').map(item => item.kind === 'notes' ? (
                       <article key={`notes-${item.session.$id}`} className="rounded-xl border bg-white p-5">
                         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-blue-600">Class notes · {formatDate(item.date)}</p>
                         <Markdown content={item.session.publishedNotesMarkdown} className="text-base leading-7 text-gray-800" />
@@ -811,18 +813,9 @@ function WeeklyClassReview({ materials, isOwner }: { materials: WeeklyMaterial[]
                       </Link>
                     ) : item.kind === 'writingPrompt' ? (
                       <article key={`writing-${item.session.$id}`} className="rounded-xl border bg-white p-5"><p className="mb-2 text-xs font-semibold uppercase tracking-wide text-cyan-700">Writing Prompt · {formatDate(item.date)}</p><Markdown content={item.session.publishedNotesMarkdown} className="text-sm text-gray-800" /></article>
-                    ) : item.kind === 'text' ? (
-                      <Link key={`text-${item.text.$id}`} to={`/texts/${item.text.$id}`} className="block rounded-xl border bg-white p-4 hover:border-blue-300">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Text · {formatDate(item.date)}</p>
-                        <h3 className="mt-1 font-semibold">{item.text.title}</h3>
-                        <p className="text-sm text-gray-500">{item.text.author || 'Unknown author'}</p>
-                        {item.dueClassNumber && <p className="mt-1 text-xs font-medium text-emerald-700">Read by class {item.dueClassNumber}</p>}
-                      </Link>
                     ) : item.kind === 'quiz' ? (
                       <Link key={`quiz-${item.quiz.$id}`} to={`/quizzes/${item.quiz.$id}/take`} className="block rounded-xl border bg-white p-4 hover:border-blue-300"><p className="text-xs font-semibold uppercase tracking-wide text-amber-600">Quiz · {formatDate(item.date)}</p><h3 className="mt-1 font-semibold">{item.quiz.title}</h3></Link>
-                    ) : (
-                      <article key={`presentation-${item.presentation.$id}`} className="flex items-center gap-3 rounded-xl border bg-white p-4"><input aria-label={`Mark ${item.presentation.title} watched`} type="checkbox" className="h-5 w-5" checked={Boolean(item.presentation.watchedAt)} disabled={!isOwner} onChange={e=>void setPresentationWatched(item.presentation.$id,e.target.checked)}/><a href={item.presentation.url} target="_blank" rel="noreferrer" className="min-w-0 flex-1 hover:text-blue-700"><p className="text-xs font-semibold uppercase tracking-wide text-fuchsia-600">Presentation · {formatDate(item.date)}</p><h3 className="mt-1 truncate font-semibold">{item.presentation.title}</h3><p className="text-sm text-gray-500">{item.presentation.watchedAt ? 'Watched' : 'Posted · not watched yet'}</p></a></article>
-                    ))}
+                    ) : null)}
                   </div>
                 )}
               </div>
@@ -833,6 +826,13 @@ function WeeklyClassReview({ materials, isOwner }: { materials: WeeklyMaterial[]
     </section>
   );
 }
+
+function CompactWeekSection({ title, count, color, open, onToggle, children }: { title: string; count: number; color: 'emerald'|'fuchsia'; open: boolean; onToggle: () => void; children: ReactNode }) {
+  const styles = color === 'emerald' ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900';
+  return <section className={`overflow-hidden rounded-xl border ${styles}`}><button className="flex w-full items-center justify-between px-4 py-3 text-left" onClick={onToggle}><span className="font-semibold">{open?'▾':'▸'} {title}</span><span className="text-xs font-medium">{count}</span></button>{open&&<div>{children}</div>}</section>;
+}
+
+function toggleSetValue(current: Set<string>, value: string): Set<string> { const next = new Set(current); if (next.has(value)) next.delete(value); else next.add(value); return next; }
 
 function weekStart(value: string): string {
   const date = new Date(value.length === 10 ? `${value}T12:00:00` : value);

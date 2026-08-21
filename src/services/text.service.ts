@@ -37,7 +37,7 @@ export async function createText(params: { teacherId: string; title: string; aut
 
 export async function updateTextMetadata(textId:string,teacherId:string,updates:{title:string;author:string;source:string;externalUrl?:string}):Promise<void>{const text=await db.texts.get(textId);if(!text||text.teacherId!==teacherId)throw new Error('Only the text creator can edit it');const patch={title:updates.title.trim(),author:updates.author.trim(),source:updates.source.trim(),externalUrl:updates.externalUrl?.trim() || text.externalUrl || '',updatedAt:getTimestamp(),syncStatus:'local' as const};await db.texts.update(textId,patch);const updated=await db.texts.get(textId);if(updated)await addToQueue(teacherId,'text',textId,'update',updated);}
 
-export async function setTextClasses(textId: string, classIds: string[], userId: string, schedule?: { assignedAt: string; dueClassNumber: number }): Promise<void> {
+export async function setTextClasses(textId: string, classIds: string[], userId: string, schedule?: { assignedAt: string; dueClassNumber?: number }): Promise<void> {
   const current = await db.text_assignments.where('textId').equals(textId).toArray(); const wanted = new Set(classIds);
   for (const classId of wanted) if (!current.some(a => a.classId === classId)) {
     const a: TextAssignment = { $id: ID.unique(), textId, classId, assignedAt: schedule?.assignedAt || getTimestamp(), dueClassNumber: schedule?.dueClassNumber };
