@@ -438,6 +438,18 @@ const COLLECTIONS = [
     ],
   },
   {
+    id: 'peer_review_activities',
+    name: 'Peer Review Activities',
+    attributes: [S('classId', { required: true }), S('teacherId', { required: true }), S('title', { required: true }), ENUM('assignmentType', ['presentation_pvlegs'], { required: true }), INT('reviewsRequired', { required: true, min: 1, max: 20 }), ENUM('status', ['active','closed'], { required: true }), DATE('createdAt', { required: true }), DATE('updatedAt', { required: true })],
+    indexes: [{ key: 'idx_classId', type: 'key', attributes: ['classId'] }, { key: 'idx_teacherId', type: 'key', attributes: ['teacherId'] }, { key: 'idx_status', type: 'key', attributes: ['status'] }],
+  },
+  {
+    id: 'presentation_peer_reviews',
+    name: 'Presentation Peer Reviews',
+    attributes: [S('activityId', { required: true }), S('classId', { required: true }), S('presenterId', { required: true }), S('reviewerId', { required: true }), INT('poise', { required: true, min: 1, max: 3 }), INT('voice', { required: true, min: 1, max: 3 }), INT('life', { required: true, min: 1, max: 3 }), INT('eyeContact', { required: true, min: 1, max: 3 }), INT('gestures', { required: true, min: 1, max: 3 }), INT('speed', { required: true, min: 1, max: 3 }), TXT('strengthComment', { required: true }), TXT('nextStepComment', { required: true }), ENUM('moderationStatus', ['visible','hidden'], { required: true }), BOOL('flagged', { required: true }), TXT('flagReason', { required: false }), DATE('createdAt', { required: true }), DATE('updatedAt', { required: true })],
+    indexes: [{ key: 'idx_activityId', type: 'key', attributes: ['activityId'] }, { key: 'idx_presenterId', type: 'key', attributes: ['presenterId'] }, { key: 'idx_reviewerId', type: 'key', attributes: ['reviewerId'] }, { key: 'idx_activity_presenter_reviewer', type: 'unique', attributes: ['activityId','presenterId','reviewerId'] }, { key: 'idx_flagged', type: 'key', attributes: ['flagged'] }],
+  },
+  {
     id: 'writing_ai_feedback', name: 'Writing AI Feedback',
     attributes: [S('submissionId', { required: true }), TXT('wwwSummary', { required: false }), TXT('improvementsJson', { required: false }), S('model', { required: true }), DATE('generatedAt', { required: true })],
     indexes: [{ key: 'idx_submissionId', type: 'unique', attributes: ['submissionId'] }],

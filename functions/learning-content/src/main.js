@@ -305,6 +305,97 @@ export default async ({ req, res, error }) => {
       });
     }
 
+    if (body.action === 'createPeerReviewActivity') {
+      if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
+      const targetClass = await db.getDocument(databaseId, 'classes', body.classId);
+      if (targetClass.teacherId !== userId) return res.json({ error: 'Not the class owner' }, 403);
+      const title = String(body.title || '').trim(), reviewsRequired = Number(body.reviewsRequired || 3), now = new Date().toISOString();
+      if (!title || title.length > 200 || !Number.isInteger(reviewsRequired) || reviewsRequired < 1 || reviewsRequired > 20) return res.json({ error: 'Invalid activity settings' }, 400);
+      const activity = await db.createDocument(databaseId, 'peer_review_activities', ID.unique(), { classId: targetClass.$id, teacherId: userId, title, assignmentType: 'presentation_pvlegs', reviewsRequired, status: 'active', createdAt: now, updatedAt: now });
+      return res.json({ activity: clean(activity) });
+    }
+
+    if (body.action === 'listPeerReviewActivities') {
+      const targetClass = await db.getDocument(databaseId, 'classes', body.classId);
+      const owns = profile.role === 'teacher' && targetClass.teacherId === userId;
+      if (!owns && !memberClassIds.has(targetClass.$id)) return res.json({ error: 'Not enrolled' }, 403);
+      const result = await db.listDocuments(databaseId, 'peer_review_activities', [Query.equal('classId', targetClass.$id), Query.limit(500)]);
+      const visible = result.documents.filter(row => owns || row.status === 'active').sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+      let flagCounts = new Map();
+      if (owns && visible.length) {
+        const flagged = await db.listDocuments(databaseId, 'presentation_peer_reviews', [Query.equal('activityId', visible.map(row=>row.$id)), Query.equal('flagged', true), Query.limit(5000)]);
+        for (const review of flagged.documents) flagCounts.set(review.activityId,(flagCounts.get(review.activityId)||0)+1);
+      }
+      return res.json({ activities: visible.map(row=>({...clean(row),flaggedCount:flagCounts.get(row.$id)||0})) });
+    }
+
+    if (['readPeerReviewActivity','setPeerReviewActivityStatus','submitPresentationPeerReview','flagPresentationPeerReview','moderatePresentationPeerReview'].includes(body.action)) {
+      let review = null, activityId = body.activityId;
+      if (body.reviewId) { review = await db.getDocument(databaseId, 'presentation_peer_reviews', body.reviewId); activityId = review.activityId; }
+      const activity = await db.getDocument(databaseId, 'peer_review_activities', activityId);
+      const targetClass = await db.getDocument(databaseId, 'classes', activity.classId);
+      const owns = profile.role === 'teacher' && targetClass.teacherId === userId;
+      const enrolled = memberClassIds.has(activity.classId) && memberships.documents.some(row => row.classId === activity.classId && row.role === 'student');
+      if (!owns && !enrolled) return res.json({ error: 'Not enrolled' }, 403);
+
+      if (body.action === 'setPeerReviewActivityStatus') {
+        if (!owns || !['active','closed'].includes(body.status)) return res.json({ error: 'Teacher role required' }, 403);
+        await db.updateDocument(databaseId, 'peer_review_activities', activity.$id, { status: body.status, updatedAt: new Date().toISOString() });
+        return res.json({ ok: true });
+      }
+
+      if (body.action === 'submitPresentationPeerReview') {
+        if (!enrolled || profile.role !== 'student' || activity.status !== 'active') return res.json({ error: 'This activity is not accepting reviews' }, 403);
+        if (body.presenterId === userId) return res.json({ error: 'You cannot review yourself' }, 400);
+        const presenterMembership = await db.listDocuments(databaseId, 'class_members', [Query.equal('classId', activity.classId), Query.equal('userId', body.presenterId), Query.equal('role', 'student'), Query.limit(1)]);
+        if (!presenterMembership.total) return res.json({ error: 'Choose a student in this class' }, 400);
+        const prior = await db.listDocuments(databaseId, 'presentation_peer_reviews', [Query.equal('activityId', activity.$id), Query.equal('presenterId', body.presenterId), Query.equal('reviewerId', userId), Query.limit(1)]);
+        if (prior.total) return res.json({ error: 'Choose a different presenter next' }, 409);
+        const ratings = body.ratings || {}, keys = ['poise','voice','life','eyeContact','gestures','speed'];
+        if (keys.some(key => ![1,2,3].includes(Number(ratings[key])))) return res.json({ error: 'Complete every PVLEGS rating' }, 400);
+        const strengthComment = String(body.strengthComment || '').trim(), nextStepComment = String(body.nextStepComment || '').trim();
+        if (strengthComment.split(/\s+/).length < 3 || nextStepComment.split(/\s+/).length < 3 || strengthComment.length > 1000 || nextStepComment.length > 1000) return res.json({ error: 'Write at least three words for both comments' }, 400);
+        const now = new Date().toISOString();
+        await db.createDocument(databaseId, 'presentation_peer_reviews', ID.unique(), { activityId: activity.$id, classId: activity.classId, presenterId: body.presenterId, reviewerId: userId, ...Object.fromEntries(keys.map(key=>[key,Number(ratings[key])])), strengthComment, nextStepComment, moderationStatus: 'visible', flagged: false, flagReason: '', createdAt: now, updatedAt: now });
+        return res.json({ ok: true });
+      }
+
+      if (body.action === 'flagPresentationPeerReview') {
+        if (!enrolled || review.presenterId !== userId) return res.json({ error: 'Only the recipient can flag this feedback' }, 403);
+        await db.updateDocument(databaseId, 'presentation_peer_reviews', review.$id, { flagged: true, flagReason: String(body.reason || 'Inappropriate feedback').trim().slice(0,500), updatedAt: new Date().toISOString() });
+        return res.json({ ok: true });
+      }
+
+      if (body.action === 'moderatePresentationPeerReview') {
+        if (!owns) return res.json({ error: 'Teacher role required' }, 403);
+        if (body.command === 'delete') { await db.deleteDocument(databaseId, 'presentation_peer_reviews', review.$id); return res.json({ ok: true }); }
+        if (body.command === 'hide' || body.command === 'show') { await db.updateDocument(databaseId, 'presentation_peer_reviews', review.$id, { moderationStatus: body.command === 'hide' ? 'hidden' : 'visible', flagged: false, flagReason: '', updatedAt: new Date().toISOString() }); return res.json({ ok: true }); }
+        if (body.command === 'update') {
+          const ratings = body.ratings || {}, keys = ['poise','voice','life','eyeContact','gestures','speed'];
+          if (keys.some(key => ![1,2,3].includes(Number(ratings[key])))) return res.json({ error: 'Invalid ratings' }, 400);
+          const strengthComment = String(body.strengthComment || '').trim(), nextStepComment = String(body.nextStepComment || '').trim();
+          if (!strengthComment || !nextStepComment) return res.json({ error: 'Comments are required' }, 400);
+          await db.updateDocument(databaseId, 'presentation_peer_reviews', review.$id, { ...Object.fromEntries(keys.map(key=>[key,Number(ratings[key])])), strengthComment: strengthComment.slice(0,1000), nextStepComment: nextStepComment.slice(0,1000), flagged: false, flagReason: '', updatedAt: new Date().toISOString() });
+          return res.json({ ok: true });
+        }
+        return res.json({ error: 'Invalid moderation command' }, 400);
+      }
+
+      const [rosterResult, reviewResult] = await Promise.all([
+        db.listDocuments(databaseId, 'class_members', [Query.equal('classId', activity.classId), Query.equal('role', 'student'), Query.limit(5000)]),
+        db.listDocuments(databaseId, 'presentation_peer_reviews', [Query.equal('activityId', activity.$id), Query.limit(5000)]),
+      ]);
+      const rosterIds = [...new Set(rosterResult.documents.map(row=>row.userId))];
+      const userResult = rosterIds.length ? await db.listDocuments(databaseId, 'users', [Query.equal('$id', rosterIds), Query.limit(5000)]) : { documents: [] };
+      const names = new Map(userResult.documents.map(row=>[row.$id,row.name || row.email || 'Student']));
+      const roster = rosterIds.map(id=>({id,name:names.get(id)||'Student'})).sort((a,b)=>a.name.localeCompare(b.name));
+      if (owns) return res.json({ activity: clean(activity), roster, reviews: reviewResult.documents.map(row=>({...clean(row),reviewerName:names.get(row.reviewerId)||'Student'})), writtenCount: 0, feedbackUnlocked: true, isTeacher: true });
+      const written = reviewResult.documents.filter(row=>row.reviewerId===userId), feedbackUnlocked = written.length >= activity.reviewsRequired;
+      const ownWritten = written.map(row=>clean(row));
+      const received = feedbackUnlocked ? reviewResult.documents.filter(row=>row.presenterId===userId && row.moderationStatus==='visible').map(row=>{const projected=clean(row);delete projected.reviewerId;return projected;}) : [];
+      return res.json({ activity: clean(activity), roster, reviews: [...ownWritten,...received], writtenCount: written.length, feedbackUnlocked, isTeacher: false });
+    }
+
     if (body.action === 'readTexts') {
       const requested = Array.isArray(body.classIds) ? body.classIds : [];
       const allowedClassIds = requested.filter(classId => memberClassIds.has(classId));

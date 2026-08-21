@@ -68,6 +68,43 @@ export interface PresentationLink {
   watchedAt: string | null;
 }
 
+export interface PeerReviewActivity {
+  $id: string;
+  classId: string;
+  teacherId: string;
+  title: string;
+  assignmentType: 'presentation_pvlegs';
+  reviewsRequired: number;
+  status: 'active' | 'closed';
+  createdAt: string;
+  updatedAt: string;
+  flaggedCount?: number;
+}
+
+export type PvlegsRating = 1 | 2 | 3;
+
+export interface PresentationPeerReview {
+  $id: string;
+  activityId: string;
+  classId: string;
+  presenterId: string;
+  reviewerId?: string;
+  reviewerName?: string;
+  poise: PvlegsRating;
+  voice: PvlegsRating;
+  life: PvlegsRating;
+  eyeContact: PvlegsRating;
+  gestures: PvlegsRating;
+  speed: PvlegsRating;
+  strengthComment: string;
+  nextStepComment: string;
+  moderationStatus: 'visible' | 'hidden';
+  flagged: boolean;
+  flagReason: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ClassSessionItem {
   $id: string;
   classSessionId: string;

@@ -51,6 +51,8 @@ export const COLLECTIONS = {
   text_discussion_posts: 'text_discussion_posts',
   text_discussion_votes: 'text_discussion_votes',
   presentation_links: 'presentation_links',
+  peer_review_activities: 'peer_review_activities',
+  presentation_peer_reviews: 'presentation_peer_reviews',
 } as const;
 
 export const FUNCTION_IDS = {

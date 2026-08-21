@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '@/contexts/AuthContext';
@@ -38,6 +38,8 @@ import { CreateGroupsModal } from '@/components/teacher/CreateGroupsModal';
 import type { Class, ClassLink, ClassSession, LearningText, PresentationLink, Quiz } from '@/types';
 import { classLabel } from '@/utils/helpers';
 import { Markdown } from '@/components/common/Markdown';
+import { createPeerReviewActivity, listPeerReviewActivities } from '@/services/presentation-peer-review.service';
+import type { PeerReviewActivity } from '@/types';
 
 type WeeklyMaterial =
   | { kind: 'notes'; date: string; session: ClassSession }
@@ -388,6 +390,8 @@ export function ClassDetailPage() {
 
       {livePresentations?.length ? <section><h2 className="mb-3 text-lg font-semibold">Writing now</h2>{livePresentations.map(session => <Link key={session.$id} to={`/presentations/${session.$id}/live`} className="flex items-center justify-between rounded-xl bg-gray-950 p-4 text-white"><span><strong className="block">Writing Prompt</strong><span className="text-sm text-gray-300">{isOwner ? 'View and present anonymous responses' : 'Write your response'}</span></span><span aria-hidden="true">→</span></Link>)}</section> : null}
 
+      <PeerReviewClassPanel classId={cls.$id} isOwner={Boolean(isOwner)} isParent={Boolean(isParent)} />
+
       <WeeklyClassReview materials={weeklyMaterials || []} isOwner={Boolean(isOwner)} />
 
       <section>
@@ -693,6 +697,15 @@ export function ClassDetailPage() {
       )}
     </div>
   );
+}
+
+function PeerReviewClassPanel({classId,isOwner,isParent}:{classId:string;isOwner:boolean;isParent:boolean}){
+  const [activities,setActivities]=useState<PeerReviewActivity[]>([]),[creating,setCreating]=useState(false),[title,setTitle]=useState(`Presentation Peer Review · ${new Date().toLocaleDateString()}`),[required,setRequired]=useState(3),[busy,setBusy]=useState(false),[error,setError]=useState('');
+  const load=useCallback(async()=>{try{setActivities((await listPeerReviewActivities(classId)).activities)}catch{/* offline */}},[classId]);
+  useEffect(()=>{const initial=window.setTimeout(()=>void load(),0);const timer=window.setInterval(()=>void load(),5000);return()=>{window.clearTimeout(initial);window.clearInterval(timer)}},[load]);
+  const create=async()=>{setBusy(true);setError('');try{await createPeerReviewActivity(classId,title,required);setCreating(false);await load()}catch(cause){setError(cause instanceof Error?cause.message:'Could not create peer review.')}finally{setBusy(false)}};
+  if(isParent)return null;
+  return <section className="overflow-hidden rounded-xl border border-sky-200 bg-sky-50"><div className="flex items-center justify-between gap-3 p-4"><div><h2 className="font-semibold text-sky-950">Peer Review</h2><p className="text-sm text-sky-800">Live, no-upload presentation feedback</p></div>{isOwner&&<Button size="sm" onClick={()=>setCreating(true)}>New Peer Review</Button>}</div>{activities.length>0&&<div className="space-y-2 border-t border-sky-200 p-3">{activities.slice(0,isOwner?6:3).map(activity=><Link key={activity.$id} to={`/peer-reviews/${activity.$id}`} className="flex items-center justify-between rounded-lg bg-white px-3 py-2 hover:ring-1 hover:ring-sky-300"><span><strong className="block text-sm">{activity.title}</strong><span className="text-xs text-gray-500">PVLEGS · {activity.reviewsRequired} reviews required{activity.flaggedCount?` · ${activity.flaggedCount} flagged`:''}</span></span><span className={`rounded-full px-2 py-1 text-xs font-medium ${activity.flaggedCount?'bg-red-100 text-red-800':activity.status==='active'?'bg-green-100 text-green-800':'bg-gray-100 text-gray-600'}`}>{activity.flaggedCount?`${activity.flaggedCount} flag${activity.flaggedCount===1?'':'s'}`:activity.status}</span></Link>)}</div>} {creating&&<Modal open onClose={()=>setCreating(false)} title="New Peer Review"><div className="space-y-4">{error&&<p className="rounded bg-red-50 p-2 text-sm text-red-700">{error}</p>}<label className="block text-sm font-medium">Assignment type<select className="mt-1 w-full rounded-lg border px-3 py-2"><option>Presentation — PVLEGS</option></select></label><label className="block text-sm font-medium">Activity title<input className="mt-1 w-full rounded-lg border px-3 py-2" value={title} onChange={e=>setTitle(e.target.value)}/></label><label className="block text-sm font-medium">Reviews students must submit to unlock feedback<input type="number" min={1} max={20} className="mt-1 w-full rounded-lg border px-3 py-2" value={required} onChange={e=>setRequired(Number(e.target.value))}/></label><p className="text-xs text-gray-500">Students select different classmates from the roster. Reviews are anonymous to peers but identifiable to you.</p><Button className="w-full" loading={busy} disabled={!title.trim()||required<1} onClick={()=>void create()}>Open peer review</Button></div></Modal>}</section>;
 }
 
 function escapeCsv(value: string): string {

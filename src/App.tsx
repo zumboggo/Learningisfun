@@ -16,6 +16,7 @@ import { WritingPage } from '@/pages/WritingPage';
 import { LivePresentationPage } from '@/pages/LivePresentationPage';
 import { TextsPage } from '@/pages/TextsPage';
 import { TextReaderPage } from '@/pages/TextReaderPage';
+import { PeerReviewPage } from '@/pages/PeerReviewPage';
 import { StudentProgressPage } from '@/pages/StudentProgressPage';
 import { ClassesListPage } from '@/pages/ClassesListPage';
 import { ClassDetailPage } from '@/pages/ClassDetailPage';
@@ -110,6 +111,7 @@ export default function App() {
           <Route path="/texts" element={<ProtectedRoute><TextsPage /></ProtectedRoute>} />
           <Route path="/texts/:textId" element={<ProtectedRoute><TextReaderPage /></ProtectedRoute>} />
           <Route path="/texts/:textId/present" element={<FullscreenTeacherRoute><TextPresentPage /></FullscreenTeacherRoute>} />
+          <Route path="/peer-reviews/:activityId" element={<ProtectedRoute><PeerReviewPage /></ProtectedRoute>} />
 
           <Route path="/decks" element={<ProtectedRoute><DecksListPage /></ProtectedRoute>} />
           <Route path="/decks/:deckId/review" element={<ProtectedRoute><FlashcardReviewPage /></ProtectedRoute>} />

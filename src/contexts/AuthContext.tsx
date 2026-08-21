@@ -103,7 +103,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       COLLECTIONS.quiz_assignments, COLLECTIONS.quizzes, COLLECTIONS.quiz_questions,
       COLLECTIONS.writing_prompt_assignments, COLLECTIONS.writing_prompts, COLLECTIONS.peer_reviews,
       COLLECTIONS.text_assignments, COLLECTIONS.texts, COLLECTIONS.text_annotations,
-      COLLECTIONS.text_discussion_posts, COLLECTIONS.text_discussion_votes];
+      COLLECTIONS.text_discussion_posts, COLLECTIONS.text_discussion_votes,
+      COLLECTIONS.peer_review_activities, COLLECTIONS.presentation_peer_reviews];
     const unsubscribe = client.subscribe(collections.map(id => `databases.${DATABASE_ID}.collections.${id}.documents`), () => void syncUserData(user.$id));
     return () => { document.removeEventListener('visibilitychange', refresh); unsubscribe(); };
   }, [user, syncUserData]);
