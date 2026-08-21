@@ -32,10 +32,10 @@ import { buildQtiAssessmentXml, buildQtiZip, downloadBlob } from '@/services/qti
 import { addPresentationLinks, createWritingPrompt, deletePresentationLink, setPresentationWatched, syncPresentationLinks } from '@/services/presentation.service';
 import { AddDecksToClassModal } from '@/components/common/AddDecksToClassModal';
 import { unassignDeck } from '@/services/flashcard.service';
-import { createText, setTextClasses, splitParagraphs } from '@/services/text.service';
+import { createText, setTextAssignmentDueDate, setTextClasses, splitParagraphs } from '@/services/text.service';
 import { RandomStudentModal } from '@/components/teacher/RandomStudentModal';
 import { CreateGroupsModal } from '@/components/teacher/CreateGroupsModal';
-import type { Class, ClassLink, ClassSession, LearningText, PresentationLink, Quiz } from '@/types';
+import type { Class, ClassLink, ClassSession, LearningText, PresentationLink, Quiz, TextAssignment } from '@/types';
 import { classLabel } from '@/utils/helpers';
 import { Markdown } from '@/components/common/Markdown';
 import { createPeerReviewActivity, listPeerReviewActivities } from '@/services/presentation-peer-review.service';
@@ -44,7 +44,7 @@ import type { PeerReviewActivity } from '@/types';
 type WeeklyMaterial =
   | { kind: 'notes'; date: string; session: ClassSession }
   | { kind: 'discussion'; date: string; session: ClassSession }
-  | { kind: 'text'; date: string; text: LearningText }
+  | { kind: 'text'; date: string; text: LearningText; assignment: TextAssignment }
   | { kind: 'quiz'; date: string; quiz: Quiz }
   | { kind: 'presentation'; date: string; presentation: PresentationLink }
   | { kind: 'writingPrompt'; date: string; session: ClassSession };
@@ -196,7 +196,7 @@ export function ClassDetailPage() {
     const texts = await Promise.all(assignments.map(assignment => db.texts.get(assignment.textId)));
     const textMaterials: WeeklyMaterial[] = assignments.flatMap((assignment, index) => {
       const text = texts[index];
-      return text?.status === 'published' ? [{ kind: 'text' as const, date: assignment.assignedAt, text }] : [];
+      return text?.status === 'published' ? [{ kind: 'text' as const, date: assignment.assignedAt, text, assignment }] : [];
     });
     const quizMaterials: WeeklyMaterial[] = (await Promise.all((await db.quiz_assignments.where('classId').equals(classId).toArray()).map(item => db.quizzes.get(item.quizId)))).filter((quiz): quiz is Quiz => Boolean(quiz && (isOwner || quiz.status === 'published'))).map(quiz => ({ kind: 'quiz', date: quiz.createdAt, quiz }));
     const presentationMaterials: WeeklyMaterial[] = (await db.presentation_links.where('classId').equals(classId).toArray()).map(presentation => ({ kind: 'presentation', date: presentation.assignedAt, presentation }));
@@ -776,6 +776,7 @@ function CreateWritingPromptModal({ classId, onClose, onCreated }: { classId: st
 }
 
 function WeeklyClassReview({ materials, isOwner }: { materials: WeeklyMaterial[]; isOwner: boolean }) {
+  const { user } = useAuth();
   const groups = new Map<string, WeeklyMaterial[]>();
   for (const material of materials) {
     const key = weekStart(material.date);
@@ -784,8 +785,24 @@ function WeeklyClassReview({ materials, isOwner }: { materials: WeeklyMaterial[]
   const weeks = [...groups.entries()].sort((a, b) => b[0].localeCompare(a[0]));
   const [openWeeks, setOpenWeeks] = useState<Set<string>>(new Set());
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
+  const [editingDueDate, setEditingDueDate] = useState<Extract<WeeklyMaterial, { kind: 'text' }> | null>(null);
+  const [dueDate, setDueDate] = useState('');
+  const [savingDueDate, setSavingDueDate] = useState(false);
+  const editDueDate = (item: Extract<WeeklyMaterial, { kind: 'text' }>) => {
+    setEditingDueDate(item);
+    setDueDate(item.date.slice(0, 10));
+  };
+  const saveDueDate = async () => {
+    if (!editingDueDate || !dueDate || !user) return;
+    setSavingDueDate(true);
+    try {
+      await setTextAssignmentDueDate(editingDueDate.assignment.$id, user.$id, new Date(`${dueDate}T12:00:00`).toISOString());
+      setEditingDueDate(null);
+    } finally { setSavingDueDate(false); }
+  };
 
   return (
+    <>
     <section>
       <h2 className="mb-3 text-lg font-semibold">Weekly class materials</h2>
       {weeks.length === 0 ? (
@@ -812,24 +829,12 @@ function WeeklyClassReview({ materials, isOwner }: { materials: WeeklyMaterial[]
                 </button>
                 {isOpen && (
                   <div className="space-y-3 border-t bg-gray-50 p-4">
-                    {counts.texts > 0 && <CompactWeekSection title="Texts" count={counts.texts} color="emerald" open={openSections.has(`${week}-texts`)} onToggle={() => setOpenSections(current => toggleSetValue(current, `${week}-texts`))}>{items.filter((item): item is Extract<WeeklyMaterial,{kind:'text'}> => item.kind === 'text').map(item => <Link key={item.text.$id} to={`/texts/${item.text.$id}`} className="block border-t border-emerald-100 px-4 py-2.5 hover:bg-emerald-100/50"><span className="block text-sm font-semibold text-emerald-950">{item.text.title}</span><span className="text-xs text-emerald-800">Due {formatDate(item.date)}{item.text.author ? ` · ${item.text.author}` : ''}</span></Link>)}</CompactWeekSection>}
+                    {counts.texts > 0 && <CompactWeekSection title="Texts" count={counts.texts} color="emerald" open={openSections.has(`${week}-texts`)} onToggle={() => setOpenSections(current => toggleSetValue(current, `${week}-texts`))}>{items.filter((item): item is Extract<WeeklyMaterial,{kind:'text'}> => item.kind === 'text').map(item => <div key={item.assignment.$id} className="flex items-center gap-3 border-t border-emerald-100 px-4 py-2.5 hover:bg-emerald-100/50"><Link to={`/texts/${item.text.$id}`} className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-emerald-950">{item.text.title}</span><span className="text-xs text-emerald-800">Due {formatDate(item.date)}{item.text.author ? ` · ${item.text.author}` : ''}</span></Link>{isOwner&&<button className="shrink-0 text-xs font-semibold text-emerald-800 underline" onClick={()=>editDueDate(item)}>Edit due date</button>}</div>)}</CompactWeekSection>}
                     {counts.presentations > 0 && <CompactWeekSection title="Presentations" count={counts.presentations} color="fuchsia" open={openSections.has(`${week}-presentations`)} onToggle={() => setOpenSections(current => toggleSetValue(current, `${week}-presentations`))}>{items.filter((item): item is Extract<WeeklyMaterial,{kind:'presentation'}> => item.kind === 'presentation').map(item => <div key={item.presentation.$id} className="flex items-center gap-3 border-t border-fuchsia-100 px-4 py-2.5"><input aria-label={`Mark ${item.presentation.title} watched`} type="checkbox" className="h-5 w-5" checked={Boolean(item.presentation.watchedAt)} disabled={!isOwner} onChange={event=>void setPresentationWatched(item.presentation.$id,event.target.checked)}/><a href={item.presentation.url} target="_blank" rel="noreferrer" className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-fuchsia-950">{item.presentation.title}</span><span className="text-xs text-fuchsia-800">{item.presentation.watchedAt?'Watched':'Posted · not watched'} · {formatDate(item.date)}</span></a></div>)}</CompactWeekSection>}
-                    {items.filter(item => item.kind !== 'text' && item.kind !== 'presentation').map(item => item.kind === 'notes' ? (
-                      <article key={`notes-${item.session.$id}`} className="rounded-xl border bg-white p-5">
-                        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-blue-600">Class notes · {formatDate(item.date)}</p>
-                        <Markdown content={item.session.publishedNotesMarkdown} className="text-base leading-7 text-gray-800" />
-                      </article>
-                    ) : item.kind === 'discussion' ? (
-                      <Link key={`discussion-${item.session.$id}`} to={`/discussions/${item.session.$id}`} className="block rounded-xl border bg-white p-4 hover:border-blue-300">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-violet-600">Discussion · {formatDate(item.date)}</p>
-                        <h3 className="mt-1 font-semibold">{item.session.title}</h3>
-                        {item.session.promptMarkdown && <p className="mt-1 line-clamp-2 text-sm text-gray-500">{item.session.promptMarkdown}</p>}
-                      </Link>
-                    ) : item.kind === 'writingPrompt' ? (
-                      <article key={`writing-${item.session.$id}`} className="rounded-xl border bg-white p-5"><p className="mb-2 text-xs font-semibold uppercase tracking-wide text-cyan-700">Writing Prompt · {formatDate(item.date)}</p><Markdown content={item.session.publishedNotesMarkdown} className="text-sm text-gray-800" /></article>
-                    ) : item.kind === 'quiz' ? (
-                      <Link key={`quiz-${item.quiz.$id}`} to={`/quizzes/${item.quiz.$id}/take`} className="block rounded-xl border bg-white p-4 hover:border-blue-300"><p className="text-xs font-semibold uppercase tracking-wide text-amber-600">Quiz · {formatDate(item.date)}</p><h3 className="mt-1 font-semibold">{item.quiz.title}</h3></Link>
-                    ) : null)}
+                    {counts.notes > 0 && <CompactWeekSection title="Class notes" count={counts.notes} color="blue" open={openSections.has(`${week}-notes`)} onToggle={()=>setOpenSections(current=>toggleSetValue(current,`${week}-notes`))}>{items.filter((item):item is Extract<WeeklyMaterial,{kind:'notes'}>=>item.kind==='notes').map(item=><article key={item.session.$id} className="border-t border-blue-100 px-4 py-3"><p className="mb-2 text-xs font-semibold text-blue-700">{formatDate(item.date)}</p><Markdown content={item.session.publishedNotesMarkdown} className="text-base leading-7 text-gray-800" /></article>)}</CompactWeekSection>}
+                    {counts.writingPrompts > 0 && <CompactWeekSection title="Writing prompts" count={counts.writingPrompts} color="cyan" open={openSections.has(`${week}-writing`)} onToggle={()=>setOpenSections(current=>toggleSetValue(current,`${week}-writing`))}>{items.filter((item):item is Extract<WeeklyMaterial,{kind:'writingPrompt'}>=>item.kind==='writingPrompt').map(item=><article key={item.session.$id} className="border-t border-cyan-100 px-4 py-3"><p className="mb-2 text-xs font-semibold text-cyan-800">{formatDate(item.date)}</p><Markdown content={item.session.publishedNotesMarkdown} className="text-sm text-gray-800" /></article>)}</CompactWeekSection>}
+                    {counts.discussions > 0 && <CompactWeekSection title="Discussions" count={counts.discussions} color="violet" open={openSections.has(`${week}-discussions`)} onToggle={()=>setOpenSections(current=>toggleSetValue(current,`${week}-discussions`))}>{items.filter((item):item is Extract<WeeklyMaterial,{kind:'discussion'}>=>item.kind==='discussion').map(item=><Link key={item.session.$id} to={`/discussions/${item.session.$id}`} className="block border-t border-violet-100 px-4 py-3 hover:bg-violet-100/50"><span className="block text-sm font-semibold text-violet-950">{item.session.title}</span><span className="text-xs text-violet-800">{formatDate(item.date)}</span></Link>)}</CompactWeekSection>}
+                    {counts.quizzes > 0 && <CompactWeekSection title="Quizzes" count={counts.quizzes} color="amber" open={openSections.has(`${week}-quizzes`)} onToggle={()=>setOpenSections(current=>toggleSetValue(current,`${week}-quizzes`))}>{items.filter((item):item is Extract<WeeklyMaterial,{kind:'quiz'}>=>item.kind==='quiz').map(item=><Link key={item.quiz.$id} to={`/quizzes/${item.quiz.$id}/take`} className="block border-t border-amber-100 px-4 py-3 hover:bg-amber-100/50"><span className="block text-sm font-semibold text-amber-950">{item.quiz.title}</span><span className="text-xs text-amber-800">{formatDate(item.date)}</span></Link>)}</CompactWeekSection>}
                   </div>
                 )}
               </div>
@@ -838,12 +843,15 @@ function WeeklyClassReview({ materials, isOwner }: { materials: WeeklyMaterial[]
         </div>
       )}
     </section>
+    {editingDueDate&&<Modal open onClose={()=>setEditingDueDate(null)} title="Edit text due date"><div className="space-y-4"><p className="text-sm text-gray-600">Move <strong>{editingDueDate.text.title}</strong> to a different date and week.</p><label className="block text-sm font-medium">Due date<input type="date" className="mt-1 w-full rounded-lg border px-3 py-2" value={dueDate} onChange={event=>setDueDate(event.target.value)}/></label><Button className="w-full" loading={savingDueDate} disabled={!dueDate} onClick={()=>void saveDueDate()}>Save due date</Button></div></Modal>}
+    </>
   );
 }
 
-function CompactWeekSection({ title, count, color, open, onToggle, children }: { title: string; count: number; color: 'emerald'|'fuchsia'; open: boolean; onToggle: () => void; children: ReactNode }) {
-  const styles = color === 'emerald' ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900';
-  return <section className={`overflow-hidden rounded-xl border ${styles}`}><button className="flex w-full items-center justify-between px-4 py-3 text-left" onClick={onToggle}><span className="font-semibold">{open?'▾':'▸'} {title}</span><span className="text-xs font-medium">{count}</span></button>{open&&<div>{children}</div>}</section>;
+type WeekSectionColor = 'emerald'|'fuchsia'|'blue'|'cyan'|'violet'|'amber';
+function CompactWeekSection({ title, count, color, open, onToggle, children }: { title: string; count: number; color: WeekSectionColor; open: boolean; onToggle: () => void; children: ReactNode }) {
+  const styles: Record<WeekSectionColor,string> = { emerald:'border-emerald-200 bg-emerald-50 text-emerald-900', fuchsia:'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900', blue:'border-blue-200 bg-blue-50 text-blue-900', cyan:'border-cyan-200 bg-cyan-50 text-cyan-900', violet:'border-violet-200 bg-violet-50 text-violet-900', amber:'border-amber-200 bg-amber-50 text-amber-900' };
+  return <section className={`overflow-hidden rounded-xl border ${styles[color]}`}><button className="flex w-full items-center justify-between px-4 py-3 text-left" onClick={onToggle}><span className="font-semibold">{open?'▾':'▸'} {title}</span><span className="text-xs font-medium">{count}</span></button>{open&&<div>{children}</div>}</section>;
 }
 
 function toggleSetValue(current: Set<string>, value: string): Set<string> { const next = new Set(current); if (next.has(value)) next.delete(value); else next.add(value); return next; }

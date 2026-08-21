@@ -50,6 +50,14 @@ export async function setTextClasses(textId: string, classIds: string[], userId:
   for (const a of current) if (!wanted.has(a.classId)) { await db.text_assignments.delete(a.$id); await addToQueue(userId, 'text_assignment', a.$id, 'delete', a); }
 }
 
+export async function setTextAssignmentDueDate(assignmentId: string, userId: string, assignedAt: string): Promise<void> {
+  const assignment = await db.text_assignments.get(assignmentId);
+  if (!assignment) throw new Error('Text assignment not found');
+  const updated: TextAssignment = { ...assignment, assignedAt };
+  await db.text_assignments.put(updated);
+  await addToQueue(userId, 'text_assignment', assignmentId, 'update', updated);
+}
+
 export async function addAnnotation(params: { textId: string; paragraphId: string; classId: string; authorId: string; type: TextAnnotation['type']; content: string }): Promise<TextAnnotation> {
   const now = getTimestamp(); const id = ID.unique();
   const annotation: TextAnnotation = { $id: id, textId: params.textId, paragraphId: params.paragraphId, classId: params.classId,
