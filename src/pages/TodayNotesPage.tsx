@@ -62,7 +62,7 @@ export function TodayNotesPage() {
           style={{ fontSize, lineHeight: 1.5 }}
           value={notes}
           onChange={event => { setNotes(event.target.value); setSavedAt(null); }}
-          placeholder="Write today's notes…"
+          placeholder="Write today's notes… Markdown such as **bold**, *italics*, lists, and tables is supported."
         />
         <footer className="h-8 px-6 text-right text-xs text-slate-400 sm:px-10">{savedAt ? `Saved at ${savedAt}` : ''}</footer>
       </div>

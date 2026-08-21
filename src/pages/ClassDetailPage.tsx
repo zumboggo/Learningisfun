@@ -42,7 +42,7 @@ import { Markdown } from '@/components/common/Markdown';
 type WeeklyMaterial =
   | { kind: 'notes'; date: string; session: ClassSession }
   | { kind: 'discussion'; date: string; session: ClassSession }
-  | { kind: 'text'; date: string; text: LearningText }
+  | { kind: 'text'; date: string; text: LearningText; dueClassNumber?: number }
   | { kind: 'quiz'; date: string; quiz: Quiz }
   | { kind: 'presentation'; date: string; presentation: PresentationLink }
   | { kind: 'writingPrompt'; date: string; session: ClassSession };
@@ -168,11 +168,11 @@ export function ClassDetailPage() {
   const livePresentations = useLiveQuery(() => classId ? db.class_sessions.where('classId').equals(classId).and(session => session.discussionType === 'presentation' && session.status === 'active').toArray() : [], [classId]);
 
   useEffect(() => {
-    if (!classId) return;
+    if (!classId || showWritingPrompt || showDiscussionModal || showAddPresentation) return;
     void syncPresentationLinks([classId]);
     const timer = window.setInterval(() => void syncPresentationLinks([classId]), 3000);
     return () => window.clearInterval(timer);
-  }, [classId]);
+  }, [classId, showWritingPrompt, showDiscussionModal, showAddPresentation]);
 
   const classQuizzes = useLiveQuery(async () => {
     if (!classId) return [];
@@ -193,7 +193,7 @@ export function ClassDetailPage() {
     const texts = await Promise.all(assignments.map(assignment => db.texts.get(assignment.textId)));
     const textMaterials: WeeklyMaterial[] = assignments.flatMap((assignment, index) => {
       const text = texts[index];
-      return text?.status === 'published' ? [{ kind: 'text' as const, date: assignment.assignedAt, text }] : [];
+      return text?.status === 'published' ? [{ kind: 'text' as const, date: assignment.assignedAt, text, dueClassNumber: assignment.dueClassNumber }] : [];
     });
     const quizMaterials: WeeklyMaterial[] = (await Promise.all((await db.quiz_assignments.where('classId').equals(classId).toArray()).map(item => db.quizzes.get(item.quizId)))).filter((quiz): quiz is Quiz => Boolean(quiz && (isOwner || quiz.status === 'published'))).map(quiz => ({ kind: 'quiz', date: quiz.createdAt, quiz }));
     const presentationMaterials: WeeklyMaterial[] = (await db.presentation_links.where('classId').equals(classId).toArray()).map(presentation => ({ kind: 'presentation', date: presentation.assignedAt, presentation }));
@@ -388,7 +388,7 @@ export function ClassDetailPage() {
 
       {livePresentations?.length ? <section><h2 className="mb-3 text-lg font-semibold">Writing now</h2>{livePresentations.map(session => <Link key={session.$id} to={`/presentations/${session.$id}/live`} className="flex items-center justify-between rounded-xl bg-gray-950 p-4 text-white"><span><strong className="block">Writing Prompt</strong><span className="text-sm text-gray-300">{isOwner ? 'View and present anonymous responses' : 'Write your response'}</span></span><span aria-hidden="true">→</span></Link>)}</section> : null}
 
-      <WeeklyClassReview materials={weeklyMaterials || []} />
+      <WeeklyClassReview materials={weeklyMaterials || []} isOwner={Boolean(isOwner)} />
 
       <section>
         <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-lg font-semibold">Quizzes ({classQuizzes?.length || 0})</h2>{isOwner ? <Button size="sm" onClick={() => setShowCreateQuiz(true)}>Create quiz</Button> : !isParent ? <Button size="sm" loading={generatingPracticeQuiz} onClick={() => void generatePracticeQuiz()}>Generate Practice Quiz</Button> : null}</div>
@@ -704,6 +704,8 @@ function AssignTextsToClassModal({ open, classId, teacherId, onClose }: { open: 
   const texts = useLiveQuery(() => db.texts.where('teacherId').equals(teacherId).and(text => text.status !== 'archived').toArray(), [teacherId]);
   const assignments = useLiveQuery(() => db.text_assignments.where('classId').equals(classId).toArray(), [classId]);
   const [chosen, setChosen] = useState<Set<string> | null>(null);
+  const [week, setWeek] = useState(todayKey());
+  const [dueClassNumber, setDueClassNumber] = useState(1);
   const selected = chosen || new Set(assignments?.map(assignment => assignment.textId) || []);
   const toggle = (textId: string) => { const next = new Set(selected); if (next.has(textId)) next.delete(textId); else next.add(textId); setChosen(next); };
   const save = async () => {
@@ -711,11 +713,11 @@ function AssignTextsToClassModal({ open, classId, teacherId, onClose }: { open: 
       const current = await db.text_assignments.where('textId').equals(text.$id).toArray();
       const classIds = new Set(current.map(assignment => assignment.classId));
       if (selected.has(text.$id)) classIds.add(classId); else classIds.delete(classId);
-      await setTextClasses(text.$id, [...classIds], teacherId);
+      await setTextClasses(text.$id, [...classIds], teacherId, selected.has(text.$id) ? { assignedAt: new Date(`${week}T12:00:00`).toISOString(), dueClassNumber } : undefined);
     }
     setChosen(null); onClose();
   };
-  return <Modal open={open} onClose={() => { setChosen(null); onClose(); }} title="Assign texts to class"><div className="space-y-4"><p className="text-sm text-gray-500">Choose any texts students in this class should be able to read.</p><div className="max-h-80 space-y-2 overflow-auto">{texts?.length ? texts.map(text => <label key={text.$id} className="flex items-start gap-3 rounded-lg border p-3"><input type="checkbox" className="mt-1" checked={selected.has(text.$id)} onChange={() => toggle(text.$id)} /><span><strong className="block text-sm">{text.title}</strong><span className="text-xs text-gray-500">{text.author || 'Unknown author'}</span></span></label>) : <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">Create or upload a text in the Texts section first.</p>}</div><Button className="w-full" onClick={() => void save()}>Save text assignments</Button></div></Modal>;
+  return <Modal open={open} onClose={() => { setChosen(null); onClose(); }} title="Assign texts to class"><div className="space-y-4"><p className="text-sm text-gray-500">Choose readings and place them in an upcoming week.</p><div className="grid grid-cols-2 gap-3"><label className="text-sm font-medium">Week beginning<input type="date" className="mt-1 w-full rounded-lg border px-3 py-2" value={week} onChange={e=>setWeek(e.target.value)}/></label><label className="text-sm font-medium">Read by class<select className="mt-1 w-full rounded-lg border px-3 py-2" value={dueClassNumber} onChange={e=>setDueClassNumber(Number(e.target.value))}><option value={1}>Class 1</option><option value={2}>Class 2</option><option value={3}>Class 3</option></select></label></div><div className="max-h-80 space-y-2 overflow-auto">{texts?.length ? texts.map(text => <label key={text.$id} className="flex items-start gap-3 rounded-lg border p-3"><input type="checkbox" className="mt-1" checked={selected.has(text.$id)} onChange={() => toggle(text.$id)} /><span><strong className="block text-sm">{text.title}</strong><span className="text-xs text-gray-500">{text.author || 'Unknown author'}{text.contentMode==='link'?' · Link':''}</span></span></label>) : <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">Create or upload a text in the Texts section first.</p>}</div><Button className="w-full" onClick={() => void save()}>Save text assignments</Button></div></Modal>;
 }
 
 function PresentationLinksPanel({ links, isOwner, onAdd }: { links: PresentationLink[]; isOwner: boolean; onAdd: () => void }) {
@@ -735,7 +737,7 @@ function CreateWritingPromptModal({ classId, onClose, onCreated }: { classId: st
   return <Modal open onClose={onClose} title="Writing Prompt"><div className="space-y-4">{error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}<p className="text-sm text-gray-500">Students will write one paragraph response. You can display their answers anonymously, then save the prompt and responses into this week.</p><label className="block text-sm font-medium">Prompt<textarea autoFocus className="mt-1 w-full rounded-lg border px-3 py-3 text-base" rows={5} placeholder="What would you like students to write about?" value={prompt} onChange={event => setPrompt(event.target.value)}/></label><Button className="w-full" loading={busy} disabled={!prompt.trim()} onClick={() => void save()}>Open writing prompt</Button></div></Modal>;
 }
 
-function WeeklyClassReview({ materials }: { materials: WeeklyMaterial[] }) {
+function WeeklyClassReview({ materials, isOwner }: { materials: WeeklyMaterial[]; isOwner: boolean }) {
   const groups = new Map<string, WeeklyMaterial[]>();
   for (const material of materials) {
     const key = weekStart(material.date);
@@ -751,7 +753,9 @@ function WeeklyClassReview({ materials }: { materials: WeeklyMaterial[] }) {
         <Card><p className="text-sm text-gray-500">Notes, writing prompts, quizzes, discussions, texts, and presentations will appear here by week.</p></Card>
       ) : (
         <div className="space-y-3">
-          {weeks.map(([week, items]) => {
+          {weeks.map(([week, unsortedItems]) => {
+            const priority: Record<WeeklyMaterial['kind'], number> = { text: 0, presentation: 1, notes: 2, writingPrompt: 3, discussion: 4, quiz: 5 };
+            const items = [...unsortedItems].sort((a,b) => priority[a.kind] - priority[b.kind] || b.date.localeCompare(a.date));
             const isOpen = openWeeks.has(week);
             const counts = {
               notes: items.filter(item => item.kind === 'notes').length,
@@ -772,7 +776,7 @@ function WeeklyClassReview({ materials }: { materials: WeeklyMaterial[] }) {
                     {items.map(item => item.kind === 'notes' ? (
                       <article key={`notes-${item.session.$id}`} className="rounded-xl border bg-white p-5">
                         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-blue-600">Class notes · {formatDate(item.date)}</p>
-                        <div className="whitespace-pre-wrap text-base leading-7 text-gray-800">{item.session.publishedNotesMarkdown}</div>
+                        <Markdown content={item.session.publishedNotesMarkdown} className="text-base leading-7 text-gray-800" />
                       </article>
                     ) : item.kind === 'discussion' ? (
                       <Link key={`discussion-${item.session.$id}`} to={`/discussions/${item.session.$id}`} className="block rounded-xl border bg-white p-4 hover:border-blue-300">
@@ -787,11 +791,12 @@ function WeeklyClassReview({ materials }: { materials: WeeklyMaterial[] }) {
                         <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Text · {formatDate(item.date)}</p>
                         <h3 className="mt-1 font-semibold">{item.text.title}</h3>
                         <p className="text-sm text-gray-500">{item.text.author || 'Unknown author'}</p>
+                        {item.dueClassNumber && <p className="mt-1 text-xs font-medium text-emerald-700">Read by class {item.dueClassNumber}</p>}
                       </Link>
                     ) : item.kind === 'quiz' ? (
                       <Link key={`quiz-${item.quiz.$id}`} to={`/quizzes/${item.quiz.$id}/take`} className="block rounded-xl border bg-white p-4 hover:border-blue-300"><p className="text-xs font-semibold uppercase tracking-wide text-amber-600">Quiz · {formatDate(item.date)}</p><h3 className="mt-1 font-semibold">{item.quiz.title}</h3></Link>
                     ) : (
-                      <a key={`presentation-${item.presentation.$id}`} href={item.presentation.url} target="_blank" rel="noreferrer" className="block rounded-xl border bg-white p-4 hover:border-blue-300"><p className="text-xs font-semibold uppercase tracking-wide text-fuchsia-600">Presentation · {formatDate(item.date)}</p><h3 className="mt-1 font-semibold">{item.presentation.title}</h3><p className="text-sm text-gray-500">{item.presentation.watchedAt ? 'Watched' : 'Not watched yet'}</p></a>
+                      <article key={`presentation-${item.presentation.$id}`} className="flex items-center gap-3 rounded-xl border bg-white p-4"><input aria-label={`Mark ${item.presentation.title} watched`} type="checkbox" className="h-5 w-5" checked={Boolean(item.presentation.watchedAt)} disabled={!isOwner} onChange={e=>void setPresentationWatched(item.presentation.$id,e.target.checked)}/><a href={item.presentation.url} target="_blank" rel="noreferrer" className="min-w-0 flex-1 hover:text-blue-700"><p className="text-xs font-semibold uppercase tracking-wide text-fuchsia-600">Presentation · {formatDate(item.date)}</p><h3 className="mt-1 truncate font-semibold">{item.presentation.title}</h3><p className="text-sm text-gray-500">{item.presentation.watchedAt ? 'Watched' : 'Posted · not watched yet'}</p></a></article>
                     ))}
                   </div>
                 )}

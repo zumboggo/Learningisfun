@@ -34,6 +34,7 @@ import { DeckPresentPage } from '@/pages/teacher/DeckPresentPage';
 import { TeacherSettingsPage } from '@/pages/TeacherSettingsPage';
 
 import type { ReactNode } from 'react';
+import { getLastPage } from '@/utils/last-page';
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
@@ -75,6 +76,13 @@ function PublicRoute({ children }: { children: ReactNode }) {
   if (loading) return null;
   if (user) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
+}
+
+function HomeRoute() {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  return <Navigate to={getLastPage(user.$id)} replace />;
 }
 
 export default function App() {
@@ -123,7 +131,7 @@ export default function App() {
 
           <Route path="/classes/new" element={<ProtectedRoute><TeacherRoute><CreateClassPage /></TeacherRoute></ProtectedRoute>} />
 
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<HomeRoute />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </AuthProvider>

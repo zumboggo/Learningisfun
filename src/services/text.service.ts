@@ -22,10 +22,10 @@ export async function paragraphsFromFile(file: File): Promise<string[]> {
   return splitParagraphs(await file.text());
 }
 
-export async function createText(params: { teacherId: string; title: string; author: string; source: string; paragraphs: string[]; classIds: string[] }): Promise<LearningText> {
+export async function createText(params: { teacherId: string; title: string; author: string; source: string; paragraphs: string[]; classIds: string[]; contentMode?: 'full' | 'link'; externalUrl?: string }): Promise<LearningText> {
   const now = getTimestamp();
   const text: LearningText = { $id: ID.unique(), teacherId: params.teacherId, title: params.title, author: params.author,
-    source: params.source, status: 'published', createdAt: now, updatedAt: now, syncStatus: 'local' };
+    source: params.source, contentMode: params.contentMode || 'full', externalUrl: params.externalUrl || '', status: 'published', createdAt: now, updatedAt: now, syncStatus: 'local' };
   await db.texts.put(text); await addToQueue(params.teacherId, 'text', text.$id, 'create', text);
   for (let i = 0; i < params.paragraphs.length; i++) {
     const paragraph: TextParagraph = { $id: ID.unique(), textId: text.$id, sortOrder: i, content: params.paragraphs[i] };
@@ -35,13 +35,17 @@ export async function createText(params: { teacherId: string; title: string; aut
   return text;
 }
 
-export async function updateTextMetadata(textId:string,teacherId:string,updates:{title:string;author:string;source:string}):Promise<void>{const text=await db.texts.get(textId);if(!text||text.teacherId!==teacherId)throw new Error('Only the text creator can edit it');const patch={title:updates.title.trim(),author:updates.author.trim(),source:updates.source.trim(),updatedAt:getTimestamp(),syncStatus:'local' as const};await db.texts.update(textId,patch);const updated=await db.texts.get(textId);if(updated)await addToQueue(teacherId,'text',textId,'update',updated);}
+export async function updateTextMetadata(textId:string,teacherId:string,updates:{title:string;author:string;source:string;externalUrl?:string}):Promise<void>{const text=await db.texts.get(textId);if(!text||text.teacherId!==teacherId)throw new Error('Only the text creator can edit it');const patch={title:updates.title.trim(),author:updates.author.trim(),source:updates.source.trim(),externalUrl:updates.externalUrl?.trim() || text.externalUrl || '',updatedAt:getTimestamp(),syncStatus:'local' as const};await db.texts.update(textId,patch);const updated=await db.texts.get(textId);if(updated)await addToQueue(teacherId,'text',textId,'update',updated);}
 
-export async function setTextClasses(textId: string, classIds: string[], userId: string): Promise<void> {
+export async function setTextClasses(textId: string, classIds: string[], userId: string, schedule?: { assignedAt: string; dueClassNumber: number }): Promise<void> {
   const current = await db.text_assignments.where('textId').equals(textId).toArray(); const wanted = new Set(classIds);
   for (const classId of wanted) if (!current.some(a => a.classId === classId)) {
-    const a: TextAssignment = { $id: ID.unique(), textId, classId, assignedAt: getTimestamp() };
+    const a: TextAssignment = { $id: ID.unique(), textId, classId, assignedAt: schedule?.assignedAt || getTimestamp(), dueClassNumber: schedule?.dueClassNumber };
     await db.text_assignments.put(a); await addToQueue(userId, 'text_assignment', a.$id, 'create', a);
+  }
+  if (schedule) for (const a of current) if (wanted.has(a.classId) && (a.assignedAt !== schedule.assignedAt || a.dueClassNumber !== schedule.dueClassNumber)) {
+    const updated = { ...a, assignedAt: schedule.assignedAt, dueClassNumber: schedule.dueClassNumber };
+    await db.text_assignments.put(updated); await addToQueue(userId, 'text_assignment', a.$id, 'update', updated);
   }
   for (const a of current) if (!wanted.has(a.classId)) { await db.text_assignments.delete(a.$id); await addToQueue(userId, 'text_assignment', a.$id, 'delete', a); }
 }

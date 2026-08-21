@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/common/Button';
+import { getLastPage } from '@/utils/last-page';
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -16,8 +17,8 @@ export function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
-      navigate('/dashboard');
+      const signedIn = await login(email, password);
+      navigate(getLastPage(signedIn.$id), { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {

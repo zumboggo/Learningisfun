@@ -443,6 +443,8 @@ export interface LearningText {
   title: string;
   author: string;
   source: string;
+  contentMode?: 'full' | 'link';
+  externalUrl?: string;
   status: 'draft' | 'published' | 'archived';
   createdAt: string;
   updatedAt: string;
@@ -454,6 +456,7 @@ export interface TextAssignment {
   textId: string;
   classId: string;
   assignedAt: string;
+  dueClassNumber?: number;
 }
 
 export interface TextParagraph {

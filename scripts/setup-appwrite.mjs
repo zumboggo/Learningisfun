@@ -522,12 +522,12 @@ const COLLECTIONS = [
   },
   {
     id: 'texts', name: 'Texts',
-    attributes: [S('teacherId', { required: true }), S('title', { required: true }), S('author', { required: false }), TXT('source', { required: false }), ENUM('status', ['draft','published','archived'], { required: true }), DATE('createdAt', { required: true }), DATE('updatedAt', { required: true })],
+    attributes: [S('teacherId', { required: true }), S('title', { required: true }), S('author', { required: false }), TXT('source', { required: false }), ENUM('contentMode', ['full','link'], { required: false }), TXT('externalUrl', { required: false }), ENUM('status', ['draft','published','archived'], { required: true }), DATE('createdAt', { required: true }), DATE('updatedAt', { required: true })],
     indexes: [{ key: 'idx_teacherId', type: 'key', attributes: ['teacherId'] }, { key: 'idx_status', type: 'key', attributes: ['status'] }],
   },
   {
     id: 'text_assignments', name: 'Text Assignments',
-    attributes: [S('textId', { required: true }), S('classId', { required: true }), DATE('assignedAt', { required: true })],
+    attributes: [S('textId', { required: true }), S('classId', { required: true }), DATE('assignedAt', { required: true }), INT('dueClassNumber', { required: false, min: 1, max: 3 })],
     indexes: [{ key: 'idx_textId', type: 'key', attributes: ['textId'] }, { key: 'idx_classId', type: 'key', attributes: ['classId'] }, { key: 'idx_text_class', type: 'unique', attributes: ['textId','classId'] }],
   },
   {

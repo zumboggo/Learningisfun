@@ -1,9 +1,10 @@
-import { type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSyncStatus } from '@/hooks/useSyncStatus';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { SyncIndicator } from './SyncIndicator';
+import { isRememberablePage, lastPageKey } from '@/utils/last-page';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -17,6 +18,11 @@ export function AppLayout({ children }: AppLayoutProps) {
   const isStudyRoute = /\/decks\/[^/]+\/review$/.test(location.pathname);
 
   const isActualTeacher = user?.role === 'teacher' || user?.role === 'admin';
+
+  useEffect(() => {
+    if (!user || !isRememberablePage(location.pathname)) return;
+    localStorage.setItem(lastPageKey(user.$id), `${location.pathname}${location.search}`);
+  }, [location.pathname, location.search, user]);
 
   const navItems = isTeacher
     ? [

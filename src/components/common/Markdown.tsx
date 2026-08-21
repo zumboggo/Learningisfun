@@ -41,6 +41,25 @@ function renderBlocks(content: string): ReactNode[] {
       continue;
     }
 
+    if (index + 1 < lines.length && isTableRow(trimmed) && isTableSeparator(lines[index + 1])) {
+      const headers = tableCells(trimmed);
+      index += 2;
+      const rows: string[][] = [];
+      while (index < lines.length && isTableRow(lines[index].trim())) {
+        rows.push(tableCells(lines[index].trim()));
+        index += 1;
+      }
+      blocks.push(
+        <div key={`table-${index}`} className="overflow-x-auto">
+          <table className="w-full border-collapse text-left text-sm">
+            <thead><tr>{headers.map((cell, i) => <th key={i} className="border bg-gray-50 px-3 py-2 font-semibold">{renderInline(cell, `th-${index}-${i}`)}</th>)}</tr></thead>
+            <tbody>{rows.map((row, r) => <tr key={r}>{headers.map((_, c) => <td key={c} className="border px-3 py-2 align-top">{renderInline(row[c] || '', `td-${index}-${r}-${c}`)}</td>)}</tr>)}</tbody>
+          </table>
+        </div>,
+      );
+      continue;
+    }
+
     if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
       const items: string[] = [];
       while (index < lines.length) {
@@ -108,6 +127,10 @@ function renderBlocks(content: string): ReactNode[] {
 
   return blocks;
 }
+
+function isTableRow(line: string): boolean { return line.includes('|') && tableCells(line).length > 1; }
+function isTableSeparator(line: string): boolean { const cells = tableCells(line.trim()); return cells.length > 1 && cells.every(cell => /^:?-{3,}:?$/.test(cell)); }
+function tableCells(line: string): string[] { return line.replace(/^\|/, '').replace(/\|$/, '').split('|').map(cell => cell.trim()); }
 
 function renderInline(text: string, keyPrefix: string): ReactNode[] {
   const nodes: ReactNode[] = [];

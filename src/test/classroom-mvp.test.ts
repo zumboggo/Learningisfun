@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { countMarkdownWords } from '@/components/common/Markdown';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { Markdown } from '@/components/common/Markdown';
+import { createElement } from 'react';
 import { masteryBucketForState } from '@/services/flashcard.service';
 import { sortQuestionsForDiscussion } from '@/services/question.service';
 import { detectMapping, parseCsvContent } from '@/utils/csv-parser';
@@ -8,6 +11,13 @@ import type { DiscussionQuestion, StudentCardState } from '@/types';
 describe('Classroom MVP rules', () => {
   it('counts Markdown words without counting formatting syntax', () => {
     expect(countMarkdownWords('**Bold idea** and *careful* `code` [link text](https://example.com)')).toBe(7);
+  });
+
+  it('renders Markdown tables used in class notes', () => {
+    const html = renderToStaticMarkup(createElement(Markdown, { content: '| Idea | Evidence |\n| --- | --- |\n| **Claim** | *Quote* |' }));
+    expect(html).toContain('<table');
+    expect(html).toContain('<strong>Claim</strong>');
+    expect(html).toContain('<em>Quote</em>');
   });
 
 
