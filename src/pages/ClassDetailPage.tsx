@@ -32,7 +32,7 @@ import { buildQtiAssessmentXml, buildQtiZip, downloadBlob } from '@/services/qti
 import { addPresentationLinks, createWritingPrompt, deletePresentationLink, setPresentationWatched, syncPresentationLinks } from '@/services/presentation.service';
 import { AddDecksToClassModal } from '@/components/common/AddDecksToClassModal';
 import { unassignDeck } from '@/services/flashcard.service';
-import { setTextClasses } from '@/services/text.service';
+import { createText, setTextClasses, splitParagraphs } from '@/services/text.service';
 import { RandomStudentModal } from '@/components/teacher/RandomStudentModal';
 import { CreateGroupsModal } from '@/components/teacher/CreateGroupsModal';
 import type { Class, ClassLink, ClassSession, LearningText, PresentationLink, Quiz } from '@/types';
@@ -168,11 +168,11 @@ export function ClassDetailPage() {
   const livePresentations = useLiveQuery(() => classId ? db.class_sessions.where('classId').equals(classId).and(session => session.discussionType === 'presentation' && session.status === 'active').toArray() : [], [classId]);
 
   useEffect(() => {
-    if (!classId || showWritingPrompt || showDiscussionModal || showAddPresentation) return;
+    if (!classId || showWritingPrompt || showDiscussionModal || showAddPresentation || showAssignTexts) return;
     void syncPresentationLinks([classId]);
     const timer = window.setInterval(() => void syncPresentationLinks([classId]), 3000);
     return () => window.clearInterval(timer);
-  }, [classId, showWritingPrompt, showDiscussionModal, showAddPresentation]);
+  }, [classId, showWritingPrompt, showDiscussionModal, showAddPresentation, showAssignTexts]);
 
   const classQuizzes = useLiveQuery(async () => {
     if (!classId) return [];
@@ -313,7 +313,7 @@ export function ClassDetailPage() {
             <Button onClick={messageClass} disabled={!students?.some(student => student.email && student.email !== 'Profile not synced yet')} size="sm" variant="secondary">Message class</Button>
             <Button onClick={() => setShowDiscussionModal(true)} size="sm">Start discussion</Button>
             <Button onClick={() => setShowWritingPrompt(true)} size="sm">Writing Prompt</Button>
-            <Button onClick={() => setShowAssignTexts(true)} size="sm" variant="secondary">Assign texts</Button>
+            <Button onClick={() => setShowAssignTexts(true)} size="sm" variant="secondary">Assign Text</Button>
             <Button onClick={() => setShowPicker(true)} size="sm" variant="secondary">Pick a student</Button>
             <Button onClick={() => setShowGroups(true)} size="sm" variant="secondary">Create groups</Button>
             <Link to={`/classes/${cls.$id}/reports`}>
@@ -703,21 +703,46 @@ function escapeCsv(value: string): string {
 function AssignTextsToClassModal({ open, classId, teacherId, onClose }: { open: boolean; classId: string; teacherId: string; onClose: () => void }) {
   const texts = useLiveQuery(() => db.texts.where('teacherId').equals(teacherId).and(text => text.status !== 'archived').toArray(), [teacherId]);
   const assignments = useLiveQuery(() => db.text_assignments.where('classId').equals(classId).toArray(), [classId]);
+  const [mode, setMode] = useState<'existing' | 'new'>('existing');
+  const [contentMode, setContentMode] = useState<'full' | 'link'>('full');
   const [chosen, setChosen] = useState<Set<string> | null>(null);
   const [week, setWeek] = useState(todayKey());
   const [dueClassNumber, setDueClassNumber] = useState(1);
+  const [title, setTitle] = useState('');
+  const [author, setAuthor] = useState('');
+  const [source, setSource] = useState('');
+  const [externalUrl, setExternalUrl] = useState('');
+  const [copiedText, setCopiedText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
   const selected = chosen || new Set(assignments?.map(assignment => assignment.textId) || []);
   const toggle = (textId: string) => { const next = new Set(selected); if (next.has(textId)) next.delete(textId); else next.add(textId); setChosen(next); };
+  const schedule = { assignedAt: new Date(`${week}T12:00:00`).toISOString(), dueClassNumber };
   const save = async () => {
-    for (const text of texts || []) {
-      const current = await db.text_assignments.where('textId').equals(text.$id).toArray();
-      const classIds = new Set(current.map(assignment => assignment.classId));
-      if (selected.has(text.$id)) classIds.add(classId); else classIds.delete(classId);
-      await setTextClasses(text.$id, [...classIds], teacherId, selected.has(text.$id) ? { assignedAt: new Date(`${week}T12:00:00`).toISOString(), dueClassNumber } : undefined);
-    }
-    setChosen(null); onClose();
+    setBusy(true); setError('');
+    try {
+      for (const text of texts || []) {
+        const current = await db.text_assignments.where('textId').equals(text.$id).toArray();
+        const classIds = new Set(current.map(assignment => assignment.classId));
+        if (selected.has(text.$id)) classIds.add(classId); else classIds.delete(classId);
+        await setTextClasses(text.$id, [...classIds], teacherId, selected.has(text.$id) ? schedule : undefined);
+      }
+      setChosen(null); onClose();
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not assign texts.'); }
+    finally { setBusy(false); }
   };
-  return <Modal open={open} onClose={() => { setChosen(null); onClose(); }} title="Assign texts to class"><div className="space-y-4"><p className="text-sm text-gray-500">Choose readings and place them in an upcoming week.</p><div className="grid grid-cols-2 gap-3"><label className="text-sm font-medium">Week beginning<input type="date" className="mt-1 w-full rounded-lg border px-3 py-2" value={week} onChange={e=>setWeek(e.target.value)}/></label><label className="text-sm font-medium">Read by class<select className="mt-1 w-full rounded-lg border px-3 py-2" value={dueClassNumber} onChange={e=>setDueClassNumber(Number(e.target.value))}><option value={1}>Class 1</option><option value={2}>Class 2</option><option value={3}>Class 3</option></select></label></div><div className="max-h-80 space-y-2 overflow-auto">{texts?.length ? texts.map(text => <label key={text.$id} className="flex items-start gap-3 rounded-lg border p-3"><input type="checkbox" className="mt-1" checked={selected.has(text.$id)} onChange={() => toggle(text.$id)} /><span><strong className="block text-sm">{text.title}</strong><span className="text-xs text-gray-500">{text.author || 'Unknown author'}{text.contentMode==='link'?' · Link':''}</span></span></label>) : <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">Create or upload a text in the Texts section first.</p>}</div><Button className="w-full" onClick={() => void save()}>Save text assignments</Button></div></Modal>;
+  const createAndAssign = async () => {
+    setBusy(true); setError('');
+    try {
+      const text = await createText({ teacherId, title: title.trim(), author: author.trim(), source: source.trim(), paragraphs: contentMode === 'full' ? splitParagraphs(copiedText) : [], classIds: [], contentMode, externalUrl: contentMode === 'link' ? externalUrl.trim() : '' });
+      await setTextClasses(text.$id, [classId], teacherId, schedule);
+      onClose();
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not add this text.'); }
+    finally { setBusy(false); }
+  };
+  const close = () => { if (busy) return; setChosen(null); setError(''); onClose(); };
+  const newTextValid = Boolean(title.trim()) && (contentMode === 'link' ? /^https?:\/\//i.test(externalUrl) : splitParagraphs(copiedText).length > 0);
+  return <Modal open={open} onClose={close} title="Assign Text"><div className="space-y-4"><div className="grid grid-cols-2 gap-1 rounded-lg bg-gray-100 p-1"><button className={`rounded-md px-3 py-2 text-sm font-medium ${mode==='existing'?'bg-white shadow-sm':''}`} onClick={()=>setMode('existing')}>Choose existing</button><button className={`rounded-md px-3 py-2 text-sm font-medium ${mode==='new'?'bg-white shadow-sm':''}`} onClick={()=>setMode('new')}>Add new text</button></div>{error&&<p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}<div className="grid grid-cols-2 gap-3"><label className="text-sm font-medium">Week beginning<input type="date" className="mt-1 w-full rounded-lg border px-3 py-2" value={week} onChange={e=>setWeek(e.target.value)}/></label><label className="text-sm font-medium">Read by class<select className="mt-1 w-full rounded-lg border px-3 py-2" value={dueClassNumber} onChange={e=>setDueClassNumber(Number(e.target.value))}><option value={1}>Class 1</option><option value={2}>Class 2</option><option value={3}>Class 3</option></select></label></div>{mode==='existing'?<><p className="text-sm text-gray-500">Choose from texts you have already added.</p><div className="max-h-72 space-y-2 overflow-auto">{texts?.length ? texts.map(text => <label key={text.$id} className="flex items-start gap-3 rounded-lg border p-3"><input type="checkbox" className="mt-1" checked={selected.has(text.$id)} onChange={() => toggle(text.$id)} /><span><strong className="block text-sm">{text.title}</strong><span className="text-xs text-gray-500">{text.author || 'Unknown author'}{text.contentMode==='link'?' · Link':''}</span></span></label>) : <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No saved texts yet. Choose “Add new text” above.</p>}</div><Button className="w-full" loading={busy} onClick={() => void save()}>Save text assignments</Button></>:<><div className="grid grid-cols-2 gap-1 rounded-lg border p-1"><button className={`rounded-md px-3 py-2 text-sm ${contentMode==='full'?'bg-blue-50 font-semibold text-blue-700':''}`} onClick={()=>setContentMode('full')}>Paste full text</button><button className={`rounded-md px-3 py-2 text-sm ${contentMode==='link'?'bg-blue-50 font-semibold text-blue-700':''}`} onClick={()=>setContentMode('link')}>Post a link</button></div><input className="w-full rounded-lg border px-3 py-2" placeholder="Text title" value={title} onChange={e=>setTitle(e.target.value)}/><div className="grid grid-cols-2 gap-3"><input className="w-full rounded-lg border px-3 py-2" placeholder="Author (optional)" value={author} onChange={e=>setAuthor(e.target.value)}/><input className="w-full rounded-lg border px-3 py-2" placeholder="Source (optional)" value={source} onChange={e=>setSource(e.target.value)}/></div>{contentMode==='link'?<input type="url" className="w-full rounded-lg border px-3 py-2" placeholder="https://…" value={externalUrl} onChange={e=>setExternalUrl(e.target.value)}/>:<><textarea autoFocus className="w-full rounded-lg border px-3 py-3 text-base" rows={9} placeholder="Paste the full text here. Blank lines will become separate paragraphs for annotation." value={copiedText} onChange={e=>setCopiedText(e.target.value)}/><p className="text-xs text-gray-500">{splitParagraphs(copiedText).length} paragraph{splitParagraphs(copiedText).length===1?'':'s'} detected</p></>}<Button className="w-full" loading={busy} disabled={!newTextValid} onClick={()=>void createAndAssign()}>Add and assign text</Button></>}</div></Modal>;
 }
 
 function PresentationLinksPanel({ links, isOwner, onAdd }: { links: PresentationLink[]; isOwner: boolean; onAdd: () => void }) {
