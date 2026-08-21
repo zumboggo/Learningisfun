@@ -22,10 +22,11 @@ export function LivePresentationPage() {
   }, [sessionId]);
 
   useEffect(() => {
-    const initial = window.setTimeout(() => void refresh(), 0);
-    const timer = window.setInterval(() => void refresh(), 1200);
+    const refreshWhenVisible = () => { if (document.visibilityState === 'visible') void refresh(); };
+    const initial = window.setTimeout(refreshWhenVisible, 0);
+    const timer = window.setInterval(refreshWhenVisible, state?.isTeacher ? 3000 : 7000);
     return () => { window.clearTimeout(initial); window.clearInterval(timer); };
-  }, [refresh]);
+  }, [refresh, state?.isTeacher]);
 
   const responses = useMemo(
     () => (state?.responses || []).filter(item => item.answer.toLowerCase().includes(filter.toLowerCase())),

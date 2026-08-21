@@ -96,7 +96,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!user || !DATABASE_ID) return;
-    const refresh = () => { if (document.visibilityState === 'visible') void syncUserData(user.$id); };
+    let timer: number | undefined;
+    let syncing = false;
+    let pending = false;
+    let disposed = false;
+    const runSync = async () => {
+      if (disposed || document.visibilityState !== 'visible') return;
+      if (syncing) { pending = true; return; }
+      syncing = true;
+      try { await syncUserData(user.$id); }
+      finally {
+        syncing = false;
+        if (pending && !disposed) { pending = false; scheduleSync(2000); }
+      }
+    };
+    const scheduleSync = (delay = 2000) => {
+      if (timer !== undefined) window.clearTimeout(timer);
+      timer = window.setTimeout(() => void runSync(), delay);
+    };
+    const refresh = () => { if (document.visibilityState === 'visible') scheduleSync(250); };
     document.addEventListener('visibilitychange', refresh);
     const collections = [COLLECTIONS.classes, COLLECTIONS.class_members, COLLECTIONS.class_sessions,
       COLLECTIONS.discussion_questions, COLLECTIONS.discussion_answers, COLLECTIONS.presentation_links,
@@ -105,8 +123,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       COLLECTIONS.text_assignments, COLLECTIONS.texts, COLLECTIONS.text_annotations,
       COLLECTIONS.text_discussion_posts, COLLECTIONS.text_discussion_votes,
       COLLECTIONS.peer_review_activities, COLLECTIONS.presentation_peer_reviews];
-    const unsubscribe = client.subscribe(collections.map(id => `databases.${DATABASE_ID}.collections.${id}.documents`), () => void syncUserData(user.$id));
-    return () => { document.removeEventListener('visibilitychange', refresh); unsubscribe(); };
+    const unsubscribe = client.subscribe(collections.map(id => `databases.${DATABASE_ID}.collections.${id}.documents`), () => scheduleSync());
+    return () => {
+      disposed = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+      document.removeEventListener('visibilitychange', refresh);
+      unsubscribe();
+    };
   }, [user, syncUserData]);
 
   const loginHandler = useCallback(async (email: string, password: string) => {
