@@ -325,6 +325,8 @@ export function ClassDetailPage() {
         )}
       </div>
 
+      {livePresentations?.length ? <section aria-label="Active writing prompt" className="space-y-2">{livePresentations.map(session => <Link key={session.$id} to={`/presentations/${session.$id}/live`} className="flex items-center justify-between rounded-xl border border-blue-700 bg-blue-600 p-4 !text-white shadow-sm hover:bg-blue-700"><span><span className="block text-xs font-semibold uppercase tracking-wide text-blue-100">Writing now</span><strong className="mt-1 block text-lg !text-white">Writing Prompt</strong><span className="text-sm text-blue-100">{isOwner ? 'View and present anonymous responses' : 'Open prompt and write your response'}</span></span><span className="text-2xl text-white" aria-hidden="true">→</span></Link>)}</section> : null}
+
       {isOwner && (
         <Card>
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -387,8 +389,6 @@ export function ClassDetailPage() {
       <ClassLinksPanel cls={cls} isOwner={Boolean(isOwner)} teacherId={user?.$id || ''} />
       <PresentationLinksPanel links={presentationLinks || []} isOwner={Boolean(isOwner)} onAdd={() => setShowAddPresentation(true)} />
       {!isOwner && !isParent && <Link to="/writing" className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 hover:border-blue-300"><span><strong className="block">Writing Feedback</strong><span className="text-sm text-gray-500">Get private AI feedback on any piece of writing.</span></span><span aria-hidden="true">→</span></Link>}
-
-      {livePresentations?.length ? <section><h2 className="mb-3 text-lg font-semibold">Writing now</h2>{livePresentations.map(session => <Link key={session.$id} to={`/presentations/${session.$id}/live`} className="flex items-center justify-between rounded-xl bg-gray-950 p-4 text-white"><span><strong className="block">Writing Prompt</strong><span className="text-sm text-gray-300">{isOwner ? 'View and present anonymous responses' : 'Write your response'}</span></span><span aria-hidden="true">→</span></Link>)}</section> : null}
 
       <PeerReviewClassPanel classId={cls.$id} isOwner={Boolean(isOwner)} isParent={Boolean(isParent)} />
 
