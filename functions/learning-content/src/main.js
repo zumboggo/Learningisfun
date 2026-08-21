@@ -351,8 +351,8 @@ export default async ({ req, res, error }) => {
       if (body.action === 'submitPresentationPeerReview') {
         if (!enrolled || profile.role !== 'student' || activity.status !== 'active') return res.json({ error: 'This activity is not accepting reviews' }, 403);
         if (body.presenterId === userId) return res.json({ error: 'You cannot review yourself' }, 400);
-        const presenterMembership = await db.listDocuments(databaseId, 'class_members', [Query.equal('classId', activity.classId), Query.equal('userId', body.presenterId), Query.equal('role', 'student'), Query.limit(1)]);
-        if (!presenterMembership.total) return res.json({ error: 'Choose a student in this class' }, 400);
+        const presenterMembership = await db.listDocuments(databaseId, 'class_members', [Query.equal('classId', activity.classId), Query.equal('userId', body.presenterId), Query.limit(10)]);
+        if (!presenterMembership.documents.some(row => row.role === 'student')) return res.json({ error: 'Choose a student in this class' }, 400);
         const prior = await db.listDocuments(databaseId, 'presentation_peer_reviews', [Query.equal('activityId', activity.$id), Query.equal('presenterId', body.presenterId), Query.equal('reviewerId', userId), Query.limit(1)]);
         if (prior.total) return res.json({ error: 'Choose a different presenter next' }, 409);
         const ratings = body.ratings || {}, keys = ['poise','voice','life','eyeContact','gestures','speed'];
@@ -386,10 +386,10 @@ export default async ({ req, res, error }) => {
       }
 
       const [rosterResult, reviewResult] = await Promise.all([
-        db.listDocuments(databaseId, 'class_members', [Query.equal('classId', activity.classId), Query.equal('role', 'student'), Query.limit(5000)]),
+        db.listDocuments(databaseId, 'class_members', [Query.equal('classId', activity.classId), Query.limit(5000)]),
         db.listDocuments(databaseId, 'presentation_peer_reviews', [Query.equal('activityId', activity.$id), Query.limit(5000)]),
       ]);
-      const rosterIds = [...new Set(rosterResult.documents.map(row=>row.userId))];
+      const rosterIds = [...new Set(rosterResult.documents.filter(row=>row.role==='student').map(row=>row.userId))];
       const userResult = rosterIds.length ? await db.listDocuments(databaseId, 'users', [Query.equal('$id', rosterIds), Query.limit(5000)]) : { documents: [] };
       const names = new Map(userResult.documents.map(row=>[row.$id,row.name || row.email || 'Student']));
       const roster = rosterIds.map(id=>({id,name:names.get(id)||'Student'})).sort((a,b)=>a.name.localeCompare(b.name));
