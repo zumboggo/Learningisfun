@@ -119,7 +119,7 @@ export default async ({ req, res, error }) => {
       if (!allowed.length) return res.json({ links: [], liveSessions: [] });
       const [result, sessionResult] = await Promise.all([
         db.listDocuments(databaseId, 'presentation_links', [Query.equal('classId', allowed), Query.limit(5000)]),
-        db.listDocuments(databaseId, 'class_sessions', [Query.equal('classId', allowed), Query.equal('discussionType', 'presentation'), Query.equal('status', 'active'), Query.limit(500)]),
+        db.listDocuments(databaseId, 'class_sessions', [Query.equal('classId', allowed), Query.equal('discussionType', 'presentation'), Query.limit(5000)]),
       ]);
       return res.json({ links: result.documents.map(clean), liveSessions: sessionResult.documents.map(clean) });
     }
@@ -156,11 +156,14 @@ export default async ({ req, res, error }) => {
       const normalizedQuestions = questions.map(q => ({ ...q, options: q.type === 'mc' ? (Array.isArray(q.options) ? q.options.slice(0, 4).map(value => String(value).trim()) : []) : [] }));
       if (normalizedQuestions.some(q => q.type === 'mc' && (q.options.length < 2 || q.options.some(value => !value)))) return res.json({ error: 'Multiple-choice questions need at least two choices' }, 400);
       const now = new Date().toISOString();
-      const session = await db.createDocument(databaseId, 'class_sessions', ID.unique(), { classId: body.classId, assignmentId: null, discussionType: 'presentation', textId: null, promptMarkdown: '', title: String(body.title || '').trim() || 'Live presentation', sessionDate: now.slice(0, 10), status: 'active', votesPerStudent: 0, allowStackedVotes: false, notesMarkdown: JSON.stringify({ reveal: false }), publishedNotesMarkdown: '', publishedAt: null, createdAt: now, updatedAt: now });
+      const session = await db.createDocument(databaseId, 'class_sessions', ID.unique(), { classId: body.classId, assignmentId: null, discussionType: 'presentation', textId: null, promptMarkdown: String(normalizedQuestions[0].text).trim(), title: String(body.title || '').trim() || 'Writing Prompt', sessionDate: now.slice(0, 10), status: 'active', votesPerStudent: 0, allowStackedVotes: false, notesMarkdown: JSON.stringify({ reveal: false }), publishedNotesMarkdown: '', publishedAt: null, createdAt: now, updatedAt: now });
+      let firstQuestionId = null;
       for (let index = 0; index < normalizedQuestions.length; index++) {
         const q = normalizedQuestions[index], options = q.options;
-        await db.createDocument(databaseId, 'discussion_questions', ID.unique(), { classSessionId: session.$id, authorId: userId, questionText: String(q.text).trim(), selectedPassage: JSON.stringify({ type: q.type, options, answer: String(q.answer || '') }), voteCount: index, moderationStatus: 'visible', discussionStatus: 'none', discussionNotesMarkdown: '', notesUpdatedAt: null, isTeacherQuestion: true, teacherVisibleBeforeSubmission: true, createdAt: now });
+        const created = await db.createDocument(databaseId, 'discussion_questions', ID.unique(), { classSessionId: session.$id, authorId: userId, questionText: String(q.text).trim(), selectedPassage: JSON.stringify({ type: q.type, options, answer: String(q.answer || '') }), voteCount: index, moderationStatus: 'visible', discussionStatus: 'none', discussionNotesMarkdown: '', notesUpdatedAt: null, isTeacherQuestion: true, teacherVisibleBeforeSubmission: true, createdAt: now });
+        if (!firstQuestionId) firstQuestionId = created.$id;
       }
+      await db.updateDocument(databaseId, 'class_sessions', session.$id, { assignmentId: firstQuestionId, notesMarkdown: JSON.stringify({ reveal: false, lastQuestionId: firstQuestionId }) });
       return res.json({ sessionId: session.$id });
     }
 
@@ -182,9 +185,16 @@ export default async ({ req, res, error }) => {
         if (body.command === 'pause') { lastQuestionId = session.assignmentId || lastQuestionId; assignmentId = null; }
         if (body.command === 'reveal') reveal = true;
         if (body.command === 'hide') reveal = false;
-        if (body.command === 'end') { assignmentId = null; status = 'published'; }
+        let publishedNotesMarkdown = session.publishedNotesMarkdown || '';
+        if (body.command === 'end') {
+          assignmentId = null; status = 'published';
+          const ids = questions.map(q => q.$id);
+          const allAnswers = ids.length ? await db.listDocuments(databaseId, 'discussion_answers', [Query.equal('questionId', ids), Query.limit(5000)]) : { documents: [] };
+          const sections = questions.map(q => { const responses = allAnswers.documents.filter(row => row.questionId === q.$id); return `## ${q.questionText}\n\n${responses.length ? responses.map(row => `- ${row.answerText}`).join('\n\n') : '_No responses submitted._'}`; });
+          publishedNotesMarkdown = `# Writing Prompt\n\n${sections.join('\n\n---\n\n')}`;
+        }
         if (assignmentId) lastQuestionId = assignmentId;
-        await db.updateDocument(databaseId, 'class_sessions', session.$id, { assignmentId, status, notesMarkdown: JSON.stringify({ reveal, lastQuestionId }), updatedAt: new Date().toISOString(), publishedAt: status === 'published' ? new Date().toISOString() : null });
+        await db.updateDocument(databaseId, 'class_sessions', session.$id, { assignmentId, status, notesMarkdown: JSON.stringify({ reveal, lastQuestionId }), publishedNotesMarkdown, updatedAt: new Date().toISOString(), publishedAt: status === 'published' ? new Date().toISOString() : null });
         return res.json({ ok: true });
       }
       const active = questions.find(q => q.$id === session.assignmentId) || null;

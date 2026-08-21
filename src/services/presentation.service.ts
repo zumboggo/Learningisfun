@@ -46,6 +46,10 @@ export async function createLivePresentation(classId: string, title: string, que
   return result.sessionId;
 }
 
+export async function createWritingPrompt(classId: string, prompt: string): Promise<string> {
+  return createLivePresentation(classId, 'Writing Prompt', [{ type: 'paragraph', text: prompt.trim(), options: [], answer: '' }]);
+}
+
 export async function readLivePresentation(sessionId: string): Promise<LivePresentationState> {
   return executeLearningContent<LivePresentationState>({ action: 'readLivePresentation', sessionId });
 }

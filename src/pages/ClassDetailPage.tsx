@@ -29,7 +29,7 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { CreateQuizModal } from '@/pages/QuizzesPage';
 import { createPracticeQuiz, deleteQuiz, getQuizWithQuestions, publishQuiz } from '@/services/quiz.service';
 import { buildQtiAssessmentXml, buildQtiZip, downloadBlob } from '@/services/qti-export';
-import { addPresentationLinks, createLivePresentation, deletePresentationLink, setPresentationWatched, syncPresentationLinks, type LiveQuestionDraft } from '@/services/presentation.service';
+import { addPresentationLinks, createWritingPrompt, deletePresentationLink, setPresentationWatched, syncPresentationLinks } from '@/services/presentation.service';
 import { AddDecksToClassModal } from '@/components/common/AddDecksToClassModal';
 import { unassignDeck } from '@/services/flashcard.service';
 import { setTextClasses } from '@/services/text.service';
@@ -37,13 +37,15 @@ import { RandomStudentModal } from '@/components/teacher/RandomStudentModal';
 import { CreateGroupsModal } from '@/components/teacher/CreateGroupsModal';
 import type { Class, ClassLink, ClassSession, LearningText, PresentationLink, Quiz } from '@/types';
 import { classLabel } from '@/utils/helpers';
+import { Markdown } from '@/components/common/Markdown';
 
 type WeeklyMaterial =
   | { kind: 'notes'; date: string; session: ClassSession }
   | { kind: 'discussion'; date: string; session: ClassSession }
   | { kind: 'text'; date: string; text: LearningText }
   | { kind: 'quiz'; date: string; quiz: Quiz }
-  | { kind: 'presentation'; date: string; presentation: PresentationLink };
+  | { kind: 'presentation'; date: string; presentation: PresentationLink }
+  | { kind: 'writingPrompt'; date: string; session: ClassSession };
 
 export function ClassDetailPage() {
   const { classId } = useParams<{ classId: string }>();
@@ -72,7 +74,7 @@ export function ClassDetailPage() {
   const [generatingPracticeQuiz, setGeneratingPracticeQuiz] = useState(false);
   const [practiceQuizError, setPracticeQuizError] = useState('');
   const [showAddPresentation, setShowAddPresentation] = useState(false);
-  const [showLivePresentation, setShowLivePresentation] = useState(false);
+  const [showWritingPrompt, setShowWritingPrompt] = useState(false);
 
   const cls = useLiveQuery(() => (classId ? db.classes.get(classId) : undefined), [classId]);
   const members = useLiveQuery(
@@ -185,8 +187,8 @@ export function ClassDetailPage() {
     if (!classId) return [];
     const sessions = await db.class_sessions.where('classId').equals(classId).toArray();
     const sessionMaterials: WeeklyMaterial[] = sessions
-      .filter(session => session.status === 'published' || (session.discussionType !== 'notes' && session.status === 'active'))
-      .map(session => ({ kind: session.discussionType === 'notes' ? 'notes' : 'discussion', date: session.sessionDate, session }));
+      .filter(session => session.discussionType === 'presentation' ? session.status === 'published' : session.status === 'published' || (session.discussionType !== 'notes' && session.status === 'active'))
+      .map(session => ({ kind: session.discussionType === 'presentation' ? 'writingPrompt' : session.discussionType === 'notes' ? 'notes' : 'discussion', date: session.sessionDate, session }));
     const assignments = await db.text_assignments.where('classId').equals(classId).toArray();
     const texts = await Promise.all(assignments.map(assignment => db.texts.get(assignment.textId)));
     const textMaterials: WeeklyMaterial[] = assignments.flatMap((assignment, index) => {
@@ -310,7 +312,7 @@ export function ClassDetailPage() {
             <Link to={`/classes/${cls.$id}/notes/today`}><Button size="sm">Today&apos;s Notes</Button></Link>
             <Button onClick={messageClass} disabled={!students?.some(student => student.email && student.email !== 'Profile not synced yet')} size="sm" variant="secondary">Message class</Button>
             <Button onClick={() => setShowDiscussionModal(true)} size="sm">Start discussion</Button>
-            <Button onClick={() => setShowLivePresentation(true)} size="sm">Presentation Mode</Button>
+            <Button onClick={() => setShowWritingPrompt(true)} size="sm">Writing Prompt</Button>
             <Button onClick={() => setShowAssignTexts(true)} size="sm" variant="secondary">Assign texts</Button>
             <Button onClick={() => setShowPicker(true)} size="sm" variant="secondary">Pick a student</Button>
             <Button onClick={() => setShowGroups(true)} size="sm" variant="secondary">Create groups</Button>
@@ -384,7 +386,7 @@ export function ClassDetailPage() {
       <PresentationLinksPanel links={presentationLinks || []} isOwner={Boolean(isOwner)} onAdd={() => setShowAddPresentation(true)} />
       {!isOwner && !isParent && <Link to="/writing" className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 hover:border-blue-300"><span><strong className="block">Writing Feedback</strong><span className="text-sm text-gray-500">Get private AI feedback on any piece of writing.</span></span><span aria-hidden="true">→</span></Link>}
 
-      {livePresentations?.length ? <section><h2 className="mb-3 text-lg font-semibold">Live now</h2>{livePresentations.map(session => <Link key={session.$id} to={`/presentations/${session.$id}/live`} className="flex items-center justify-between rounded-xl bg-gray-950 p-4 text-white"><span><strong className="block">{session.title}</strong><span className="text-sm text-gray-300">{isOwner ? 'Control questions and view responses' : 'Join the live presentation'}</span></span><span aria-hidden="true">→</span></Link>)}</section> : null}
+      {livePresentations?.length ? <section><h2 className="mb-3 text-lg font-semibold">Writing now</h2>{livePresentations.map(session => <Link key={session.$id} to={`/presentations/${session.$id}/live`} className="flex items-center justify-between rounded-xl bg-gray-950 p-4 text-white"><span><strong className="block">Writing Prompt</strong><span className="text-sm text-gray-300">{isOwner ? 'View and present anonymous responses' : 'Write your response'}</span></span><span aria-hidden="true">→</span></Link>)}</section> : null}
 
       <WeeklyClassReview materials={weeklyMaterials || []} />
 
@@ -673,7 +675,7 @@ export function ClassDetailPage() {
         {showCreateQuiz && <CreateQuizModal classes={(teacherClasses || []).map(item => ({ id: item.$id, name: classLabel(item) }))} sourceClassId={cls.$id} onClose={() => setShowCreateQuiz(false)} onCreated={() => setShowCreateQuiz(false)} />}</>
       )}
       {isOwner && user && showAddPresentation && <AddPresentationModal sourceClassId={cls.$id} classes={teacherClasses || []} onClose={() => setShowAddPresentation(false)} />}
-      {isOwner && showLivePresentation && <CreateLivePresentationModal classId={cls.$id} onClose={() => setShowLivePresentation(false)} onCreated={sessionId => navigate(`/presentations/${sessionId}/live`)} />}
+      {isOwner && showWritingPrompt && <CreateWritingPromptModal classId={cls.$id} onClose={() => setShowWritingPrompt(false)} onCreated={sessionId => navigate(`/presentations/${sessionId}/live`)} />}
 
       {isOwner && (
         <>
@@ -727,11 +729,10 @@ function AddPresentationModal({ sourceClassId, classes, onClose }: { sourceClass
   return <Modal open onClose={onClose} title="Add presentation"><div className="space-y-4">{error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}<label className="block text-sm font-medium">Title<input className="mt-1 w-full rounded-lg border px-3 py-2" value={title} onChange={event => setTitle(event.target.value)} /></label><label className="block text-sm font-medium">Presentation link<input className="mt-1 w-full rounded-lg border px-3 py-2" type="url" placeholder="https://…" value={url} onChange={event => setUrl(event.target.value)} /></label><label className="block text-sm font-medium">Week assigned<input className="mt-1 w-full rounded-lg border px-3 py-2" type="date" value={assignedAt} onChange={event => setAssignedAt(event.target.value)} /></label><fieldset><legend className="mb-2 text-sm font-medium">Add to classes</legend><div className="max-h-48 space-y-2 overflow-auto">{classes.map(item => <label key={item.$id} className="flex gap-2 text-sm"><input type="checkbox" checked={selected.has(item.$id)} onChange={() => setSelected(current => { const next = new Set(current); if (next.has(item.$id)) next.delete(item.$id); else next.add(item.$id); return next; })}/>{classLabel(item)}</label>)}</div></fieldset><Button className="w-full" loading={busy} disabled={!title.trim() || !/^https?:\/\//i.test(url) || !selected.size} onClick={() => void save()}>Add presentation</Button></div></Modal>;
 }
 
-function CreateLivePresentationModal({ classId, onClose, onCreated }: { classId: string; onClose: () => void; onCreated: (sessionId: string) => void }) {
-  const [title, setTitle] = useState('Live questions'); const [questions, setQuestions] = useState<LiveQuestionDraft[]>([{ type: 'mc', text: '', options: ['', '', '', ''], answer: '' }]); const [busy, setBusy] = useState(false); const [error, setError] = useState('');
-  const update = (index: number, patch: Partial<LiveQuestionDraft>) => setQuestions(current => current.map((question, i) => i === index ? { ...question, ...patch } : question));
-  const save = async () => { setBusy(true); setError(''); try { onCreated(await createLivePresentation(classId, title, questions)); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not start presentation mode.'); } finally { setBusy(false); } };
-  return <Modal open onClose={onClose} title="Presentation Mode"><div className="max-h-[75vh] space-y-4 overflow-auto">{error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}<label className="block text-sm font-medium">Session title<input className="mt-1 w-full rounded-lg border px-3 py-2" value={title} onChange={event => setTitle(event.target.value)} /></label>{questions.map((question, index) => <div key={index} className="space-y-2 rounded-xl border p-3"><div className="flex items-center justify-between"><strong className="text-sm">Question {index + 1}</strong>{questions.length > 1 && <button className="text-sm text-red-600" onClick={() => setQuestions(current => current.filter((_, i) => i !== index))}>Remove</button>}</div><select className="w-full rounded-lg border px-3 py-2 text-sm" value={question.type} onChange={event => update(index, { type: event.target.value as LiveQuestionDraft['type'] })}><option value="mc">Multiple choice</option><option value="short">Short answer</option><option value="paragraph">Paragraph</option><option value="cloze">Fill in the blank</option></select><textarea className="w-full rounded-lg border px-3 py-2" rows={2} placeholder="Question" value={question.text} onChange={event => update(index, { text: event.target.value })}/>{question.type === 'mc' && question.options.map((option, optionIndex) => <input key={optionIndex} className="w-full rounded-lg border px-3 py-2 text-sm" placeholder={`Choice ${optionIndex + 1}`} value={option} onChange={event => update(index, { options: question.options.map((item, i) => i === optionIndex ? event.target.value : item) })}/>)}{question.type === 'cloze' && <input className="w-full rounded-lg border px-3 py-2 text-sm" placeholder="Expected answer (optional)" value={question.answer} onChange={event => update(index, { answer: event.target.value })}/>}</div>)}<Button variant="secondary" className="w-full" onClick={() => setQuestions(current => [...current, { type: 'short', text: '', options: ['', '', '', ''], answer: '' }])}>+ Add question</Button><Button className="w-full" loading={busy} disabled={questions.some(question => !question.text.trim() || (question.type === 'mc' && question.options.some(option => !option.trim())))} onClick={() => void save()}>Open teacher controls</Button></div></Modal>;
+function CreateWritingPromptModal({ classId, onClose, onCreated }: { classId: string; onClose: () => void; onCreated: (sessionId: string) => void }) {
+  const [prompt, setPrompt] = useState(''); const [busy, setBusy] = useState(false); const [error, setError] = useState('');
+  const save = async () => { setBusy(true); setError(''); try { onCreated(await createWritingPrompt(classId, prompt)); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not open the writing prompt.'); } finally { setBusy(false); } };
+  return <Modal open onClose={onClose} title="Writing Prompt"><div className="space-y-4">{error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}<p className="text-sm text-gray-500">Students will write one paragraph response. You can display their answers anonymously, then save the prompt and responses into this week.</p><label className="block text-sm font-medium">Prompt<textarea autoFocus className="mt-1 w-full rounded-lg border px-3 py-3 text-base" rows={5} placeholder="What would you like students to write about?" value={prompt} onChange={event => setPrompt(event.target.value)}/></label><Button className="w-full" loading={busy} disabled={!prompt.trim()} onClick={() => void save()}>Open writing prompt</Button></div></Modal>;
 }
 
 function WeeklyClassReview({ materials }: { materials: WeeklyMaterial[] }) {
@@ -747,7 +748,7 @@ function WeeklyClassReview({ materials }: { materials: WeeklyMaterial[] }) {
     <section>
       <h2 className="mb-3 text-lg font-semibold">Weekly class materials</h2>
       {weeks.length === 0 ? (
-        <Card><p className="text-sm text-gray-500">Notes, quizzes, discussions, texts, and presentations will appear here by week.</p></Card>
+        <Card><p className="text-sm text-gray-500">Notes, writing prompts, quizzes, discussions, texts, and presentations will appear here by week.</p></Card>
       ) : (
         <div className="space-y-3">
           {weeks.map(([week, items]) => {
@@ -758,12 +759,13 @@ function WeeklyClassReview({ materials }: { materials: WeeklyMaterial[] }) {
               texts: items.filter(item => item.kind === 'text').length,
               quizzes: items.filter(item => item.kind === 'quiz').length,
               presentations: items.filter(item => item.kind === 'presentation').length,
+              writingPrompts: items.filter(item => item.kind === 'writingPrompt').length,
             };
             return (
               <div key={week} className="overflow-hidden rounded-xl border border-gray-200 bg-white">
                 <button className="flex w-full items-center justify-between gap-3 p-4 text-left hover:bg-gray-50" onClick={() => setOpenWeeks(current => { const next = new Set(current); if (next.has(week)) next.delete(week); else next.add(week); return next; })}>
                   <span className="font-semibold">{isOpen ? '▾' : '▸'} {week === weekStart(new Date().toISOString()) ? `This week · ${formatWeek(week)}` : `Week of ${formatWeek(week)}`}</span>
-                  <span className="text-xs text-gray-500">{counts.notes} notes · {counts.discussions} discussions · {counts.texts} texts · {counts.quizzes} quizzes · {counts.presentations} presentations</span>
+                  <span className="text-xs text-gray-500">{counts.notes} notes · {counts.writingPrompts} writing prompts · {counts.discussions} discussions · {counts.texts} texts · {counts.quizzes} quizzes · {counts.presentations} presentations</span>
                 </button>
                 {isOpen && (
                   <div className="space-y-3 border-t bg-gray-50 p-4">
@@ -778,6 +780,8 @@ function WeeklyClassReview({ materials }: { materials: WeeklyMaterial[] }) {
                         <h3 className="mt-1 font-semibold">{item.session.title}</h3>
                         {item.session.promptMarkdown && <p className="mt-1 line-clamp-2 text-sm text-gray-500">{item.session.promptMarkdown}</p>}
                       </Link>
+                    ) : item.kind === 'writingPrompt' ? (
+                      <article key={`writing-${item.session.$id}`} className="rounded-xl border bg-white p-5"><p className="mb-2 text-xs font-semibold uppercase tracking-wide text-cyan-700">Writing Prompt · {formatDate(item.date)}</p><Markdown content={item.session.publishedNotesMarkdown} className="text-sm text-gray-800" /></article>
                     ) : item.kind === 'text' ? (
                       <Link key={`text-${item.text.$id}`} to={`/texts/${item.text.$id}`} className="block rounded-xl border bg-white p-4 hover:border-blue-300">
                         <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Text · {formatDate(item.date)}</p>
