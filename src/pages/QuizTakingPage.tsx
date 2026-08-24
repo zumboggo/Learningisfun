@@ -1,11 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/db/schema';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
-import { deleteLocalPracticeQuiz, getQuizWithQuestions, startQuizAttempt, submitQuizAttempt } from '@/services/quiz.service';
+import { deleteLocalPracticeQuiz, getQuizWithQuestions, startQuizAttempt, submitQuizAttempt, syncQuizFromServer } from '@/services/quiz.service';
 import type { Quiz, QuizQuestion } from '@/types';
 import { Confetti } from '@/pages/FlashcardReviewPage';
 
@@ -30,7 +28,9 @@ export function QuizTakingPage() {
 
   useEffect(() => {
     if (!quizId) return;
-    getQuizWithQuestions(quizId).then(data => {
+    const load = async () => {
+      if (!isPractice) await syncQuizFromServer(quizId);
+      const data = await getQuizWithQuestions(quizId);
       if (data) {
         setQuiz(data.quiz);
         setQuestions(data.questions);
@@ -39,8 +39,9 @@ export function QuizTakingPage() {
         }
       }
       setLoading(false);
-    });
-  }, [quizId]);
+    };
+    void load();
+  }, [quizId, isPractice]);
 
   useEffect(() => {
     if (!started || submitted || timeLeft === null) return;

@@ -12,6 +12,7 @@ import { classLabel } from '@/utils/helpers';
 import type { ClassSession } from '@/types';
 import { Modal } from '@/components/common/Modal';
 import { createClassSession } from '@/services/class-session.service';
+import { runCachedSync, SYNC_WINDOWS } from '@/services/sync-policy';
 
 interface DiscussionSessionRow {
   session: ClassSession;
@@ -29,7 +30,7 @@ export function DiscussionsListPage() {
   const userId = user?.$id;
   useEffect(() => {
     if (!userId) return;
-    void syncMyClassSessionsFromServer(userId);
+    void runCachedSync(`sessions:${userId}`, SYNC_WINDOWS.catalog, () => syncMyClassSessionsFromServer(userId));
   }, [userId]);
 
   const rows = useLiveQuery(async (): Promise<DiscussionSessionRow[]> => {

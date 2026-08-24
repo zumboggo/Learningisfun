@@ -327,12 +327,22 @@ function generateTemporaryPassword(): string {
   return `Edu-${token}!`;
 }
 
-export async function syncClassesFromServer(userId: string): Promise<void> {
+export async function syncClassesFromServer(userId: string): Promise<boolean> {
   try {
-    const memberResult = await databases.listDocuments(DATABASE_ID, COLLECTIONS.class_members, [
-      Query.equal('userId', userId),
-      Query.limit(200),
+    const [memberResult, taughtResult] = await Promise.all([
+      databases.listDocuments(DATABASE_ID, COLLECTIONS.class_members, [Query.equal('userId', userId), Query.limit(50)]),
+      databases.listDocuments(DATABASE_ID, COLLECTIONS.classes, [Query.equal('teacherId', userId), Query.limit(50)]),
     ]);
+
+    for (const classDoc of taughtResult.documents) {
+      await db.classes.put({
+        $id: classDoc.$id, name: classDoc.name, courseName: classDoc.courseName,
+        schoolYear: classDoc.schoolYear, teacherId: classDoc.teacherId,
+        joinCode: classDoc.joinCode, joinCodeActive: classDoc.joinCodeActive,
+        parentCode: (classDoc.parentCode as string) || '', parentCodeActive: Boolean(classDoc.parentCodeActive),
+        linksJson: (classDoc.linksJson as string) || '[]', status: classDoc.status, createdAt: classDoc.createdAt,
+      });
+    }
 
     for (const doc of memberResult.documents) {
       await db.class_members.put({
@@ -364,13 +374,12 @@ export async function syncClassesFromServer(userId: string): Promise<void> {
       }
     }
   } catch {
-    // Offline - will retry later
+    return false;
   }
 
-  // The loop above only ever pulls this user's own membership rows. A teacher
-  // also needs everyone else's, or students who joined from their own phones
-  // stay invisible on the roster.
-  await syncTaughtClassRosters(userId);
+  // Full class rosters are intentionally loaded only when a teacher opens that
+  // class. Pulling every roster on every login was the largest idle read cost.
+  return true;
 }
 
 /**

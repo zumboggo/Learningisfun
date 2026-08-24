@@ -8,7 +8,6 @@ import {
   ensureParentCode,
   regenerateParentCode,
   removeStudent,
-  deduplicateClassRoster,
   moveStudent,
   getClassMembers,
   importClassRoster,
@@ -29,7 +28,7 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { CreateQuizModal } from '@/pages/QuizzesPage';
 import { createPracticeQuiz, deleteQuiz, getQuizWithQuestions, publishQuiz } from '@/services/quiz.service';
 import { buildQtiAssessmentXml, buildQtiZip, downloadBlob } from '@/services/qti-export';
-import { addPresentationLinks, createWritingPrompt, deletePresentationLink, setPresentationWatched, syncPresentationLinks } from '@/services/presentation.service';
+import { addPresentationLinks, createWritingPrompt, deletePresentationLink, setPresentationWatched } from '@/services/presentation.service';
 import { AddDecksToClassModal } from '@/components/common/AddDecksToClassModal';
 import { unassignDeck } from '@/services/flashcard.service';
 import { createText, setTextAssignmentDueDate, setTextClasses, splitParagraphs } from '@/services/text.service';
@@ -107,15 +106,10 @@ export function ClassDetailPage() {
   };
 
   useEffect(() => {
-    if (!classId) return;
+    if (!classId || !isOwner) return;
     void syncClassRosterFromServer(classId);
     if (user) void ensureParentCode(classId, user.$id).then(setParentCode);
-  }, [classId, user]);
-
-  useEffect(() => {
-    if (!classId || !isOwner) return;
-    void deduplicateClassRoster(classId).then(() => syncClassRosterFromServer(classId));
-  }, [classId, isOwner]);
+  }, [classId, user, isOwner]);
 
   const studentIds = useMemo(
     () => [...new Set((members || []).filter(m => m.role === 'student').map(m => m.userId))],
@@ -168,14 +162,6 @@ export function ClassDetailPage() {
 
   const presentationLinks = useLiveQuery(() => classId ? db.presentation_links.where('classId').equals(classId).reverse().sortBy('assignedAt') : [], [classId]);
   const livePresentations = useLiveQuery(() => classId ? db.class_sessions.where('classId').equals(classId).and(session => session.discussionType === 'presentation' && session.status === 'active').toArray() : [], [classId]);
-
-  useEffect(() => {
-    if (!classId || showWritingPrompt || showDiscussionModal || showAddPresentation || showAssignTexts) return;
-    const refresh = () => { if (document.visibilityState === 'visible') void syncPresentationLinks([classId]); };
-    refresh();
-    window.addEventListener('focus', refresh);
-    return () => window.removeEventListener('focus', refresh);
-  }, [classId, showWritingPrompt, showDiscussionModal, showAddPresentation, showAssignTexts]);
 
   const classQuizzes = useLiveQuery(async () => {
     if (!classId) return [];
@@ -703,7 +689,7 @@ export function ClassDetailPage() {
 function PeerReviewClassPanel({classId,isOwner,isParent}:{classId:string;isOwner:boolean;isParent:boolean}){
   const [activities,setActivities]=useState<PeerReviewActivity[]>([]),[creating,setCreating]=useState(false),[title,setTitle]=useState(`Presentation Peer Review · ${new Date().toLocaleDateString()}`),[required,setRequired]=useState(3),[busy,setBusy]=useState(false),[error,setError]=useState('');
   const load=useCallback(async()=>{try{setActivities((await listPeerReviewActivities(classId)).activities)}catch{/* offline */}},[classId]);
-  useEffect(()=>{const refresh=()=>{if(document.visibilityState==='visible')void load()};const initial=window.setTimeout(refresh,0);const timer=window.setInterval(refresh,30000);window.addEventListener('focus',refresh);return()=>{window.clearTimeout(initial);window.clearInterval(timer);window.removeEventListener('focus',refresh)}},[load]);
+  useEffect(()=>{const refresh=()=>{if(document.visibilityState==='visible')void load()};const initial=window.setTimeout(refresh,0);window.addEventListener('focus',refresh);const timer=isOwner?window.setInterval(refresh,60000):undefined;return()=>{window.clearTimeout(initial);if(timer!==undefined)window.clearInterval(timer);window.removeEventListener('focus',refresh)}},[load,isOwner]);
   const create=async()=>{setBusy(true);setError('');try{await createPeerReviewActivity(classId,title,required);setCreating(false);await load()}catch(cause){setError(cause instanceof Error?cause.message:'Could not create peer review.')}finally{setBusy(false)}};
   if(isParent)return null;
   return <section className="overflow-hidden rounded-xl border border-sky-200 bg-sky-50"><div className="flex items-center justify-between gap-3 p-4"><div><h2 className="font-semibold text-sky-950">Peer Review</h2><p className="text-sm text-sky-800">Live, no-upload presentation feedback</p></div>{isOwner&&<Button size="sm" onClick={()=>setCreating(true)}>New Peer Review</Button>}</div>{activities.length>0&&<div className="space-y-2 border-t border-sky-200 p-3">{activities.slice(0,isOwner?6:3).map(activity=><Link key={activity.$id} to={`/peer-reviews/${activity.$id}`} className="flex items-center justify-between rounded-lg bg-white px-3 py-2 hover:ring-1 hover:ring-sky-300"><span><strong className="block text-sm">{activity.title}</strong><span className="text-xs text-gray-500">PVLEGS · {activity.reviewsRequired} reviews required{activity.flaggedCount?` · ${activity.flaggedCount} flagged`:''}</span></span><span className={`rounded-full px-2 py-1 text-xs font-medium ${activity.flaggedCount?'bg-red-100 text-red-800':activity.status==='active'?'bg-green-100 text-green-800':'bg-gray-100 text-gray-600'}`}>{activity.flaggedCount?`${activity.flaggedCount} flag${activity.flaggedCount===1?'':'s'}`:activity.status}</span></Link>)}</div>} {creating&&<Modal open onClose={()=>setCreating(false)} title="New Peer Review"><div className="space-y-4">{error&&<p className="rounded bg-red-50 p-2 text-sm text-red-700">{error}</p>}<label className="block text-sm font-medium">Assignment type<select className="mt-1 w-full rounded-lg border px-3 py-2"><option>Presentation — PVLEGS</option></select></label><label className="block text-sm font-medium">Activity title<input className="mt-1 w-full rounded-lg border px-3 py-2" value={title} onChange={e=>setTitle(e.target.value)}/></label><label className="block text-sm font-medium">Reviews students must submit to unlock feedback<input type="number" min={1} max={20} className="mt-1 w-full rounded-lg border px-3 py-2" value={required} onChange={e=>setRequired(Number(e.target.value))}/></label><p className="text-xs text-gray-500">Students select different classmates from the roster. Reviews are anonymous to peers but identifiable to you.</p><Button className="w-full" loading={busy} disabled={!title.trim()||required<1} onClick={()=>void create()}>Open peer review</Button></div></Modal>}</section>;

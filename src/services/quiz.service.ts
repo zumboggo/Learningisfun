@@ -355,8 +355,8 @@ export async function getClassQuizzes(classId: string): Promise<Quiz[]> {
 }
 
 /** Pull quizzes assigned to the user's classes, including their questions. */
-export async function syncQuizzesFromServer(classIds: string[]): Promise<void> {
-  if (!DATABASE_ID || classIds.length === 0) return;
+export async function syncQuizzesFromServer(classIds: string[], options: { includeDetails?: boolean; quizId?: string } = {}): Promise<boolean> {
+  if (!DATABASE_ID || classIds.length === 0) return true;
   try {
     const result = await executeLearningContent<{
       assignments: Array<{ $id: string } & Record<string, unknown>>;
@@ -364,7 +364,7 @@ export async function syncQuizzesFromServer(classIds: string[]): Promise<void> {
       questions: Array<{ $id: string } & Record<string, unknown>>;
       attempts: Array<{ $id: string } & Record<string, unknown>>;
       expiredQuizIds: string[];
-    }>({ action: 'readQuizzes', classIds });
+    }>({ action: 'readQuizzes', classIds, includeDetails: Boolean(options.includeDetails), quizId: options.quizId });
     for (const quizId of result.expiredQuizIds || []) {
       const assignmentIds = await db.quiz_assignments.where('quizId').equals(quizId).primaryKeys();
       const questionIds = await db.quiz_questions.where('quizId').equals(quizId).primaryKeys();
@@ -379,10 +379,12 @@ export async function syncQuizzesFromServer(classIds: string[]): Promise<void> {
       assignedAt: doc.assignedAt as string,
     } satisfies QuizAssignment));
     await db.transaction('rw', db.quiz_assignments, async () => {
-      for (const classId of classIds) {
-        const cached = await db.quiz_assignments.where('classId').equals(classId).toArray();
-        const visibleIds = new Set(assignments.filter(row => row.classId === classId).map(row => row.$id));
-        await db.quiz_assignments.bulkDelete(cached.filter(row => !visibleIds.has(row.$id)).map(row => row.$id));
+      if (!options.quizId) {
+        for (const classId of classIds) {
+          const cached = await db.quiz_assignments.where('classId').equals(classId).toArray();
+          const visibleIds = new Set(assignments.filter(row => row.classId === classId).map(row => row.$id));
+          await db.quiz_assignments.bulkDelete(cached.filter(row => !visibleIds.has(row.$id)).map(row => row.$id));
+        }
       }
       if (assignments.length) await db.quiz_assignments.bulkPut(assignments);
     });
@@ -413,7 +415,14 @@ export async function syncQuizzesFromServer(classIds: string[]): Promise<void> {
         answers: (doc.answers as string) || '[]', syncStatus: 'synced',
       });
     }
-  } catch { /* offline or backend not provisioned yet */ }
+    return true;
+  } catch { return false; }
+}
+
+export async function syncQuizFromServer(quizId: string): Promise<void> {
+  const assignments = await db.quiz_assignments.where('quizId').equals(quizId).toArray();
+  const classIds = [...new Set(assignments.map(assignment => assignment.classId))];
+  if (classIds.length) await syncQuizzesFromServer(classIds, { includeDetails: true, quizId });
 }
 
 export async function getStudentQuizAttempts(userId: string, quizId: string): Promise<QuizAttempt[]> {

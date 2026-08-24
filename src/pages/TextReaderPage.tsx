@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema'; import { useAuth } from '@/contexts/AuthContext'; import { Card } from '@/components/common/Card'; import { Button } from '@/components/common/Button';
-import { addAnnotation, ANNOTATIONS_TO_UNLOCK, canSeePeerAnnotations } from '@/services/text.service';
+import { addAnnotation, ANNOTATIONS_TO_UNLOCK, canSeePeerAnnotations, syncTextFromServer } from '@/services/text.service';
+import { runCachedSync } from '@/services/sync-policy';
 
 export function TextReaderPage(){ const {textId}=useParams(); const {user,isTeacher,isParent}=useAuth(); const [drafts,setDrafts]=useState<Record<string,string>>({}); const [types,setTypes]=useState<Record<string,'observation'|'question'>>({});
  const text=useLiveQuery(()=>textId?db.texts.get(textId):undefined,[textId]); const paragraphs=useLiveQuery(()=>textId?db.text_paragraphs.where('textId').equals(textId).sortBy('sortOrder'):[],[textId]);
  const classId=useLiveQuery(async()=>{if(!textId||!user)return '';const assigned=await db.text_assignments.where('textId').equals(textId).toArray();if(isTeacher)return assigned[0]?.classId||'';const mine=await db.class_members.where('userId').equals(user.$id).toArray();return assigned.find(a=>mine.some(m=>m.classId===a.classId))?.classId||''},[textId,user?.$id,isTeacher]);
+ useEffect(()=>{if(!textId||!classId)return;const refresh=()=>{if(document.visibilityState==='visible')void runCachedSync(`text-content:${textId}:${classId}`,5*60*1000,()=>syncTextFromServer(textId,classId))};refresh();window.addEventListener('focus',refresh);return()=>window.removeEventListener('focus',refresh)},[textId,classId]);
  const annotations=useLiveQuery(async()=>{if(!textId||!classId||!user)return [];const all=await db.text_annotations.where('[textId+classId]').equals([textId,classId]).toArray();const unlocked=isTeacher||isParent||await canSeePeerAnnotations(textId,classId,user.$id);return all.filter(a=>a.moderationStatus==='visible'&&(unlocked||a.authorId===user.$id));},[textId,classId,user?.$id,isTeacher,isParent]);
  const mine=annotations?.filter(a=>a.authorId===user?.$id).length||0; if(!text||!user)return <div className="p-6 text-gray-400">Loading…</div>;
  return <div className="p-4 max-w-3xl mx-auto space-y-5"><header><Link to="/texts" className="text-sm text-blue-600">← Texts</Link><h1 className="text-2xl font-bold mt-2">{text.title}</h1><p className="text-gray-500">{text.author}</p>{text.contentMode!=='link'&&!isTeacher&&!isParent&&mine<ANNOTATIONS_TO_UNLOCK&&<p className="mt-2 text-sm rounded bg-blue-50 p-2">Add {ANNOTATIONS_TO_UNLOCK-mine} more observation{ANNOTATIONS_TO_UNLOCK-mine===1?'':'s'} or question{ANNOTATIONS_TO_UNLOCK-mine===1?'':'s'} to reveal classmates’ notes.</p>}</header>

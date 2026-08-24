@@ -671,12 +671,21 @@ export async function getPersonalNote(userId: string, cardId: string): Promise<S
   return db.student_deck_notes.get(`${userId}_${cardId}`);
 }
 
-export async function syncDecksFromServer(): Promise<void> {
+export async function syncDecksFromServer(classIds: string[], userId: string, isTeacher: boolean): Promise<boolean> {
   try {
-    const deckResult = await databases.listDocuments(DATABASE_ID, COLLECTIONS.flashcard_decks, [
-      Query.equal('status', 'published'),
-      Query.limit(100),
+    const assignmentResult = classIds.length
+      ? await databases.listDocuments(DATABASE_ID, COLLECTIONS.deck_assignments, [Query.equal('classId', classIds), Query.limit(200)])
+      : { documents: [] };
+    const assignedDeckIds = [...new Set(assignmentResult.documents.map(doc => doc.deckId as string))];
+    const [assignedDecks, ownedDecks] = await Promise.all([
+      assignedDeckIds.length
+        ? databases.listDocuments(DATABASE_ID, COLLECTIONS.flashcard_decks, [Query.equal('$id', assignedDeckIds), Query.equal('status', 'published'), Query.limit(200)])
+        : Promise.resolve({ documents: [] }),
+      isTeacher
+        ? databases.listDocuments(DATABASE_ID, COLLECTIONS.flashcard_decks, [Query.equal('creatorId', userId), Query.limit(200)])
+        : Promise.resolve({ documents: [] }),
     ]);
+    const deckResult = { documents: [...new Map([...assignedDecks.documents, ...ownedDecks.documents].map(doc => [doc.$id, doc])).values()] };
     for (const doc of deckResult.documents) {
       await db.flashcard_decks.put({
         $id: doc.$id,
@@ -690,9 +699,10 @@ export async function syncDecksFromServer(): Promise<void> {
       });
     }
 
-    const cardResult = await databases.listDocuments(DATABASE_ID, COLLECTIONS.flashcard_cards, [
-      Query.limit(500),
-    ]);
+    const deckIds = deckResult.documents.map(doc => doc.$id);
+    const cardResult = deckIds.length
+      ? await databases.listDocuments(DATABASE_ID, COLLECTIONS.flashcard_cards, [Query.equal('deckId', deckIds), Query.limit(2000)])
+      : { documents: [] };
     for (const doc of cardResult.documents) {
       await db.flashcard_cards.put({
         $id: doc.$id,
@@ -708,10 +718,7 @@ export async function syncDecksFromServer(): Promise<void> {
       });
     }
 
-    const assignResult = await databases.listDocuments(DATABASE_ID, COLLECTIONS.deck_assignments, [
-      Query.limit(100),
-    ]);
-    for (const doc of assignResult.documents) {
+    for (const doc of assignmentResult.documents) {
       await db.deck_assignments.put({
         $id: doc.$id,
         deckId: doc.deckId,
@@ -721,7 +728,6 @@ export async function syncDecksFromServer(): Promise<void> {
         assignedAt: doc.assignedAt,
       });
     }
-  } catch {
-    // Offline
-  }
+    return true;
+  } catch { return false; }
 }

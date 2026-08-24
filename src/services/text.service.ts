@@ -70,15 +70,30 @@ export async function canSeePeerAnnotations(textId: string, classId: string, use
   return (await db.text_annotations.where('[textId+classId]').equals([textId, classId]).and(a => a.authorId === userId).count()) >= ANNOTATIONS_TO_UNLOCK;
 }
 
-export async function syncTextsFromServer(classIds: string[], _userId: string, isTeacher: boolean): Promise<void> {
-  if (!FUNCTION_IDS.learningContent || !classIds.length) return;
+export async function syncTextsFromServer(classIds: string[], _userId: string, isTeacher: boolean): Promise<boolean> {
+  if (!FUNCTION_IDS.learningContent || !classIds.length) return true;
   try {
-    const result = await executeLearningContent<{ assignments: TextAssignment[]; texts: LearningText[]; paragraphs: TextParagraph[]; annotations: TextAnnotation[] }>({ action: 'readTexts', classIds });
+    const result = await executeLearningContent<{ assignments: TextAssignment[]; texts: LearningText[]; paragraphs: TextParagraph[]; annotations: TextAnnotation[] }>({ action: 'readTexts', classIds, includeContent: false });
     const assignments = result.assignments;
     await db.text_assignments.bulkPut(assignments); const ids = [...new Set(assignments.map(a => a.textId))];
-    if (!ids.length && !isTeacher) return;
+    if (!ids.length && !isTeacher) return true;
     for (const text of result.texts) await db.texts.put({ ...text, syncStatus: 'synced' });
     for (const paragraph of result.paragraphs) await db.text_paragraphs.put(paragraph);
     for (const annotation of result.annotations) await db.text_annotations.put({ ...annotation, syncStatus: 'synced' });
-  } catch { /* offline / not provisioned */ }
+    return true;
+  } catch { return false; }
+}
+
+export async function syncTextFromServer(textId: string, classId: string): Promise<boolean> {
+  if (!FUNCTION_IDS.learningContent || !textId || !classId) return true;
+  try {
+    const result = await executeLearningContent<{ assignments: TextAssignment[]; texts: LearningText[]; paragraphs: TextParagraph[]; annotations: TextAnnotation[] }>({
+      action: 'readTexts', classIds: [classId], textId, includeContent: true,
+    });
+    if (result.assignments.length) await db.text_assignments.bulkPut(result.assignments);
+    for (const text of result.texts) await db.texts.put({ ...text, syncStatus: 'synced' });
+    for (const paragraph of result.paragraphs) await db.text_paragraphs.put(paragraph);
+    for (const annotation of result.annotations) await db.text_annotations.put({ ...annotation, syncStatus: 'synced' });
+    return true;
+  } catch { return false; }
 }

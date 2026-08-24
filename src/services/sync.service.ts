@@ -7,6 +7,7 @@ const MAX_RETRIES = 5;
 const SYNC_DEBOUNCE_MS = 2000;
 let syncTimer: ReturnType<typeof setTimeout> | null = null;
 let isSyncing = false;
+let listenersInstalled = false;
 
 export function getDeviceId(): string {
   return generateDeviceId();
@@ -269,6 +270,8 @@ export async function clearSyncedOperations(): Promise<void> {
 }
 
 export function setupSyncListeners(): void {
+  if (listenersInstalled) return;
+  listenersInstalled = true;
   window.addEventListener('online', () => {
     void processQueue();
   });

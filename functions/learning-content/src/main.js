@@ -212,12 +212,14 @@ export default async ({ req, res, error }) => {
         if (prior.total) await db.updateDocument(databaseId, 'discussion_answers', prior.documents[0].$id, data); else await db.createDocument(databaseId, 'discussion_answers', ID.unique(), data);
         return res.json({ ok: true });
       }
-      const answerResult = active ? await db.listDocuments(databaseId, 'discussion_answers', [Query.equal('questionId', active.$id), Query.limit(5000)]) : { documents: [] };
+      const answerQueries = active ? [Query.equal('questionId', active.$id), Query.limit(owns ? 500 : 1)] : [];
+      if (active && !owns) answerQueries.unshift(Query.equal('authorId', userId));
+      const answerResult = active ? await db.listDocuments(databaseId, 'discussion_answers', answerQueries) : { documents: [] };
       const myAnswer = answerResult.documents.find(row => row.authorId === userId)?.answerText || null;
       let config = {}; try { config = active ? JSON.parse(active.selectedPassage || '{}') : {}; } catch { /* invalid configuration */ }
       const reveal = (() => { try { return Boolean(JSON.parse(session.notesMarkdown || '{}').reveal); } catch { return false; } })();
       const mcCounts = Array.isArray(config.options) ? config.options.map((_, i) => answerResult.documents.filter(row => Number(row.answerText) === i).length) : [];
-      const roster = await db.listDocuments(databaseId, 'class_members', [Query.equal('classId', session.classId), Query.equal('role', 'student'), Query.limit(5000)]);
+      const roster = owns ? await db.listDocuments(databaseId, 'class_members', [Query.equal('classId', session.classId), Query.equal('role', 'student'), Query.limit(100)]) : { total: 0 };
       const projectQuestion = q => { let c = {}; try { c = JSON.parse(q.selectedPassage || '{}'); } catch { /* invalid */ } return { id: q.$id, text: q.questionText, sortOrder: q.voteCount, type: c.type || 'short', options: c.options || [], answer: owns || reveal ? c.answer || '' : '' }; };
       const allowResubmission = (() => { try { return Boolean(JSON.parse(session.notesMarkdown || '{}').allowResubmission); } catch { return false; } })();
       return res.json({ session: clean(session), questions: owns ? questions.map(projectQuestion) : [], activeQuestion: active ? projectQuestion(active) : null, ownAnswer: myAnswer, answeredCount: answerResult.documents.length, enrolledCount: roster.total, mcCounts: owns || myAnswer ? mcCounts : [], reveal, responses: owns && active ? answerResult.documents.map((row, i) => ({ id: row.$id, answer: row.answerText, label: `Response ${i + 1}` })) : [], isTeacher: owns, allowResubmission });
@@ -258,9 +260,11 @@ export default async ({ req, res, error }) => {
         assignedQuizzes = quizResult.documents;
       }
       const quizzesById = new Map([...ownedQuizzes, ...assignedQuizzes].map(row => [row.$id, row]));
-      const quizzes = [...quizzesById.values()].filter(row => profile.role === 'teacher' || row.status === 'published');
+      let quizzes = [...quizzesById.values()].filter(row => profile.role === 'teacher' || row.status === 'published');
+      if (body.quizId) quizzes = quizzes.filter(row => row.$id === body.quizId);
       const quizIds = quizzes.map(row => row.$id);
       if (!quizIds.length) return res.json({ assignments: assignmentResult.documents.map(clean), quizzes: [], questions: [], attempts: [], expiredQuizIds });
+      if (!body.includeDetails) return res.json({ assignments: assignmentResult.documents.filter(row => quizIds.includes(row.quizId)).map(clean), quizzes: quizzes.map(clean), questions: [], attempts: [], expiredQuizIds });
       const questionResult = await db.listDocuments(databaseId, 'quiz_questions', [Query.equal('quizId', quizIds), Query.limit(5000)]);
       let attempts = [];
       if (profile.role !== 'parent') {
@@ -385,32 +389,42 @@ export default async ({ req, res, error }) => {
         return res.json({ error: 'Invalid moderation command' }, 400);
       }
 
-      const [rosterResult, reviewResult] = await Promise.all([
-        db.listDocuments(databaseId, 'class_members', [Query.equal('classId', activity.classId), Query.limit(5000)]),
-        db.listDocuments(databaseId, 'presentation_peer_reviews', [Query.equal('activityId', activity.$id), Query.limit(5000)]),
-      ]);
+      const rosterResult = await db.listDocuments(databaseId, 'class_members', [Query.equal('classId', activity.classId), Query.equal('role', 'student'), Query.limit(100)]);
       const rosterIds = [...new Set(rosterResult.documents.filter(row=>row.role==='student').map(row=>row.userId))];
-      const userResult = rosterIds.length ? await db.listDocuments(databaseId, 'users', [Query.equal('$id', rosterIds), Query.limit(5000)]) : { documents: [] };
+      const userResult = rosterIds.length ? await db.listDocuments(databaseId, 'users', [Query.equal('$id', rosterIds), Query.limit(100)]) : { documents: [] };
       const names = new Map(userResult.documents.map(row=>[row.$id,row.name || row.email || 'Student']));
       const roster = rosterIds.map(id=>({id,name:names.get(id)||'Student'})).sort((a,b)=>a.name.localeCompare(b.name));
-      if (owns) return res.json({ activity: clean(activity), roster, reviews: reviewResult.documents.map(row=>({...clean(row),reviewerName:names.get(row.reviewerId)||'Student'})), writtenCount: 0, feedbackUnlocked: true, isTeacher: true });
-      const written = reviewResult.documents.filter(row=>row.reviewerId===userId), feedbackUnlocked = written.length >= activity.reviewsRequired;
+      if (owns) {
+        const reviewResult = await db.listDocuments(databaseId, 'presentation_peer_reviews', [Query.equal('activityId', activity.$id), Query.limit(500)]);
+        return res.json({ activity: clean(activity), roster, reviews: reviewResult.documents.map(row=>({...clean(row),reviewerName:names.get(row.reviewerId)||'Student'})), writtenCount: 0, feedbackUnlocked: true, isTeacher: true });
+      }
+      const writtenResult = await db.listDocuments(databaseId, 'presentation_peer_reviews', [Query.equal('reviewerId', userId), Query.limit(500)]);
+      const written = writtenResult.documents.filter(row=>row.activityId===activity.$id), feedbackUnlocked = written.length >= activity.reviewsRequired;
       const ownWritten = written.map(row=>clean(row));
-      const received = feedbackUnlocked ? reviewResult.documents.filter(row=>row.presenterId===userId && row.moderationStatus==='visible').map(row=>{const projected=clean(row);delete projected.reviewerId;return projected;}) : [];
+      const receivedResult = feedbackUnlocked ? await db.listDocuments(databaseId, 'presentation_peer_reviews', [Query.equal('presenterId', userId), Query.limit(500)]) : { documents: [] };
+      const received = receivedResult.documents.filter(row=>row.activityId===activity.$id&&row.moderationStatus==='visible').map(row=>{const projected=clean(row);delete projected.reviewerId;return projected;});
       return res.json({ activity: clean(activity), roster, reviews: [...ownWritten,...received], writtenCount: written.length, feedbackUnlocked, isTeacher: false });
     }
 
     if (body.action === 'readTexts') {
       const requested = Array.isArray(body.classIds) ? body.classIds : [];
-      const allowedClassIds = requested.filter(classId => memberClassIds.has(classId));
+      let allowedClassIds = requested.filter(classId => memberClassIds.has(classId));
+      if (profile.role === 'teacher') {
+        const ownedClasses = await db.listDocuments(databaseId, 'classes', [Query.equal('teacherId', userId), Query.limit(100)]);
+        const ownedClassIds = new Set(ownedClasses.documents.map(row => row.$id));
+        allowedClassIds = requested.filter(classId => ownedClassIds.has(classId));
+      }
       if (!allowedClassIds.length) return res.json({ assignments: [], texts: [], paragraphs: [], annotations: [] });
-      const assignmentResult = await db.listDocuments(databaseId, 'text_assignments', [Query.equal('classId', allowedClassIds), Query.limit(5000)]);
+      const assignmentQueries = [Query.equal('classId', allowedClassIds), Query.limit(500)];
+      if (body.textId) assignmentQueries.unshift(Query.equal('textId', body.textId));
+      const assignmentResult = await db.listDocuments(databaseId, 'text_assignments', assignmentQueries);
       const assignments = assignmentResult.documents, textIds = [...new Set(assignments.map(row => row.textId))];
       if (!textIds.length) return res.json({ assignments: [], texts: [], paragraphs: [], annotations: [] });
-      const [textResult, paragraphResult, annotationResult] = await Promise.all([
-        db.listDocuments(databaseId, 'texts', [Query.equal('$id', textIds), Query.limit(5000)]),
-        db.listDocuments(databaseId, 'text_paragraphs', [Query.equal('textId', textIds), Query.limit(5000)]),
-        db.listDocuments(databaseId, 'text_annotations', [Query.equal('textId', textIds), Query.equal('classId', allowedClassIds), Query.limit(5000)]),
+      const textResult = await db.listDocuments(databaseId, 'texts', [Query.equal('$id', textIds), Query.limit(500)]);
+      if (!body.includeContent) return res.json({ assignments: assignments.map(clean), texts: textResult.documents.map(clean), paragraphs: [], annotations: [] });
+      const [paragraphResult, annotationResult] = await Promise.all([
+        db.listDocuments(databaseId, 'text_paragraphs', [Query.equal('textId', textIds), Query.limit(1000)]),
+        db.listDocuments(databaseId, 'text_annotations', [Query.equal('textId', textIds), Query.equal('classId', allowedClassIds), Query.limit(1000)]),
       ]);
       const ownCounts = new Map();
       for (const row of annotationResult.documents) if (row.authorId === userId) ownCounts.set(`${row.textId}:${row.classId}`, (ownCounts.get(`${row.textId}:${row.classId}`) || 0) + 1);

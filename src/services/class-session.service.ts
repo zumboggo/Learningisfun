@@ -177,8 +177,8 @@ export async function addSessionItem(
 // ---------------------------------------------------------------------------
 
 /** Fetch every discussion belonging to these classes into the local database. */
-export async function syncClassSessionsFromServer(classIds: string[]): Promise<void> {
-  if (classIds.length === 0) return;
+export async function syncClassSessionsFromServer(classIds: string[]): Promise<boolean> {
+  if (classIds.length === 0) return true;
   try {
     const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.class_sessions, [
       Query.equal('classId', classIds),
@@ -211,9 +211,8 @@ export async function syncClassSessionsFromServer(classIds: string[]): Promise<v
         syncStatus: 'synced',
       });
     }
-  } catch {
-    // Offline — whatever is cached stays on screen.
-  }
+    return true;
+  } catch { return false; }
 }
 
 /** Every discussion in every class this user belongs to. */

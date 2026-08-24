@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/common/Button';
 import { controlLivePresentation, readLivePresentation, submitLiveAnswer, type LivePresentationState } from '@/services/presentation.service';
+import { client, COLLECTIONS, DATABASE_ID } from '@/lib/appwrite';
 
 export function LivePresentationPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -22,11 +23,21 @@ export function LivePresentationPage() {
   }, [sessionId]);
 
   useEffect(() => {
-    const refreshWhenVisible = () => { if (document.visibilityState === 'visible') void refresh(); };
-    const initial = window.setTimeout(refreshWhenVisible, 0);
-    const timer = window.setInterval(refreshWhenVisible, state?.isTeacher ? 3000 : 7000);
-    return () => { window.clearTimeout(initial); window.clearInterval(timer); };
-  }, [refresh, state?.isTeacher]);
+    const initial = window.setTimeout(() => void refresh(), 0);
+    return () => window.clearTimeout(initial);
+  }, [refresh]);
+
+  useEffect(() => {
+    if (!state?.isTeacher || !sessionId || !DATABASE_ID) return;
+    let timer: number | undefined;
+    const unsubscribe = client.subscribe(`databases.${DATABASE_ID}.collections.${COLLECTIONS.discussion_answers}.documents`, event => {
+      const payload = event.payload as { classSessionId?: string };
+      if (payload.classSessionId !== sessionId) return;
+      if (timer !== undefined) window.clearTimeout(timer);
+      timer = window.setTimeout(() => void refresh(), 500);
+    });
+    return () => { if (timer !== undefined) window.clearTimeout(timer); unsubscribe(); };
+  }, [refresh, sessionId, state?.isTeacher]);
 
   const responses = useMemo(
     () => (state?.responses || []).filter(item => item.answer.toLowerCase().includes(filter.toLowerCase())),

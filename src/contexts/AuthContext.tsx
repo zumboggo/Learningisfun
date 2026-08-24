@@ -11,6 +11,11 @@ import * as writingService from '@/services/writing.service';
 import * as textService from '@/services/text.service';
 import * as presentationService from '@/services/presentation.service';
 import { client, DATABASE_ID, COLLECTIONS } from '@/lib/appwrite';
+import { db } from '@/db/schema';
+import { runCachedSync, SYNC_WINDOWS } from '@/services/sync-policy';
+
+type SyncDomain = 'account' | 'sessions' | 'flashcards' | 'quizzes' | 'writing' | 'texts' | 'presentations';
+const ALL_SYNC_DOMAINS: SyncDomain[] = ['account', 'sessions', 'flashcards', 'quizzes', 'writing', 'texts', 'presentations'];
 
 interface AuthContextType {
   user: User | null;
@@ -39,24 +44,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = effectiveRole === 'admin';
   const isParent = effectiveRole === 'parent';
 
-  const syncUserData = useCallback(async (userId: string) => {
-    // Order matters: classes and memberships first, since the discussion pull
-    // is driven by which classes this user is in.
-    await classService.syncClassesFromServer(userId);
-    await classSessionService.syncMyClassSessionsFromServer(userId);
-
-    await flashcardService.syncDecksFromServer();
-    const memberships = await (await import('@/db/schema')).db.class_members.where('userId').equals(userId).toArray();
-    const taught = await (await import('@/db/schema')).db.classes.where('teacherId').equals(userId).toArray();
+  const syncUserData = useCallback(async (userId: string, force = false, requestedDomains: SyncDomain[] = ALL_SYNC_DOMAINS) => {
+    const domains = new Set(requestedDomains);
+    if (domains.has('account')) {
+      await runCachedSync(`account:${userId}`, SYNC_WINDOWS.account, () => classService.syncClassesFromServer(userId), force);
+    }
+    const memberships = await db.class_members.where('userId').equals(userId).toArray();
+    const taught = await db.classes.where('teacherId').equals(userId).toArray();
     const classIds = [...new Set([...memberships.map(m => m.classId), ...taught.map(c => c.$id)])];
     const cachedUser = await authService.getCachedUser();
     const isTeacher = cachedUser?.role === 'teacher' || cachedUser?.role === 'admin';
-    await Promise.all([
-      quizService.syncQuizzesFromServer(classIds),
-      writingService.syncWritingFromServer(classIds, userId, isTeacher),
-      textService.syncTextsFromServer(classIds, userId, isTeacher),
-      presentationService.syncPresentationLinks(classIds),
-    ]);
+    const tasks: Promise<void>[] = [];
+    if (domains.has('sessions')) tasks.push(runCachedSync(`sessions:${userId}`, SYNC_WINDOWS.catalog, () => classSessionService.syncClassSessionsFromServer(classIds), force));
+    if (domains.has('flashcards')) tasks.push(runCachedSync(`flashcards:${userId}`, SYNC_WINDOWS.stableContent, () => flashcardService.syncDecksFromServer(classIds, userId, isTeacher), force));
+    if (domains.has('quizzes')) tasks.push(runCachedSync(`quizzes:${userId}`, SYNC_WINDOWS.catalog, () => quizService.syncQuizzesFromServer(classIds), force));
+    if (domains.has('writing')) tasks.push(runCachedSync(`writing:${userId}`, SYNC_WINDOWS.catalog, () => writingService.syncWritingFromServer(classIds), force));
+    if (domains.has('texts')) tasks.push(runCachedSync(`texts:${userId}`, SYNC_WINDOWS.catalog, () => textService.syncTextsFromServer(classIds, userId, isTeacher), force));
+    if (domains.has('presentations')) tasks.push(runCachedSync(`presentations:${userId}`, SYNC_WINDOWS.catalog, async () => { await presentationService.syncPresentationLinks(classIds); }, force));
+    await Promise.all(tasks);
   }, []);
 
   const refreshUser = useCallback(async () => {
@@ -97,33 +102,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user || !DATABASE_ID) return;
     let timer: number | undefined;
-    let syncing = false;
-    let pending = false;
     let disposed = false;
-    const runSync = async () => {
+    const pendingDomains = new Set<SyncDomain>();
+    const runSync = async (force = false) => {
       if (disposed || document.visibilityState !== 'visible') return;
-      if (syncing) { pending = true; return; }
-      syncing = true;
-      try { await syncUserData(user.$id); }
-      finally {
-        syncing = false;
-        if (pending && !disposed) { pending = false; scheduleSync(2000); }
-      }
+      const domains = pendingDomains.size ? [...pendingDomains] : ALL_SYNC_DOMAINS;
+      pendingDomains.clear();
+      await syncUserData(user.$id, force, domains);
     };
-    const scheduleSync = (delay = 2000) => {
+    const scheduleSync = (delay = 5000, force = false) => {
       if (timer !== undefined) window.clearTimeout(timer);
-      timer = window.setTimeout(() => void runSync(), delay);
+      timer = window.setTimeout(() => void runSync(force), delay);
     };
-    const refresh = () => { if (document.visibilityState === 'visible') scheduleSync(250); };
+    const refresh = () => { if (document.visibilityState === 'visible') scheduleSync(500, false); };
     document.addEventListener('visibilitychange', refresh);
-    const collections = [COLLECTIONS.classes, COLLECTIONS.class_members, COLLECTIONS.class_sessions,
-      COLLECTIONS.discussion_questions, COLLECTIONS.discussion_answers, COLLECTIONS.presentation_links,
-      COLLECTIONS.quiz_assignments, COLLECTIONS.quizzes, COLLECTIONS.quiz_questions,
-      COLLECTIONS.writing_prompt_assignments, COLLECTIONS.writing_prompts, COLLECTIONS.peer_reviews,
-      COLLECTIONS.text_assignments, COLLECTIONS.texts, COLLECTIONS.text_annotations,
-      COLLECTIONS.text_discussion_posts, COLLECTIONS.text_discussion_votes,
-      COLLECTIONS.peer_review_activities, COLLECTIONS.presentation_peer_reviews];
-    const unsubscribe = client.subscribe(collections.map(id => `databases.${DATABASE_ID}.collections.${id}.documents`), () => scheduleSync());
+    const domainCollections: Array<[SyncDomain, string[]]> = [
+      ['account', [COLLECTIONS.classes, COLLECTIONS.class_members]],
+      ['sessions', [COLLECTIONS.class_sessions]],
+      ['flashcards', [COLLECTIONS.deck_assignments, COLLECTIONS.flashcard_decks, COLLECTIONS.flashcard_cards]],
+      ['quizzes', [COLLECTIONS.quiz_assignments, COLLECTIONS.quizzes, COLLECTIONS.quiz_questions]],
+      ['writing', [COLLECTIONS.writing_prompt_assignments, COLLECTIONS.writing_prompts]],
+      ['texts', [COLLECTIONS.text_assignments, COLLECTIONS.texts]],
+      ['presentations', [COLLECTIONS.presentation_links]],
+    ];
+    const collections = [...new Set(domainCollections.flatMap(([, ids]) => ids))];
+    const unsubscribe = client.subscribe(collections.map(id => `databases.${DATABASE_ID}.collections.${id}.documents`), event => {
+      const channels = event.channels.join(' ');
+      for (const [domain, ids] of domainCollections) {
+        if (ids.some(id => channels.includes(`collections.${id}.documents`))) pendingDomains.add(domain);
+      }
+      scheduleSync(5000, true);
+    });
     return () => {
       disposed = true;
       if (timer !== undefined) window.clearTimeout(timer);
