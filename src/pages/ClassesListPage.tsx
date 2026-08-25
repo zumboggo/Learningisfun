@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -12,6 +12,7 @@ import type { Class } from '@/types';
 export function ClassesListPage() {
   const { user, isTeacher } = useAuth();
   const [editing, setEditing] = useState<Class | null>(null);
+  const [query, setQuery] = useState('');
 
   const classes = useLiveQuery(async () => {
     if (!user) return [];
@@ -27,13 +28,28 @@ export function ClassesListPage() {
     return result.sort((a, b) => a.courseName.localeCompare(b.courseName, undefined, { sensitivity: 'base' }) || a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
   }, [user?.$id, isTeacher]);
 
+  const visibleClasses = useMemo(() => {
+    const normalized = query.trim().toLocaleLowerCase();
+    if (!normalized) return classes || [];
+    return (classes || []).filter(cls => `${cls.courseName} ${cls.name} ${cls.schoolYear}`.toLocaleLowerCase().includes(normalized));
+  }, [classes, query]);
+
+  const courseGroups = useMemo(() => {
+    const groups = new Map<string, Class[]>();
+    for (const cls of visibleClasses) {
+      const group = groups.get(cls.courseName) || [];
+      group.push(cls);
+      groups.set(cls.courseName, group);
+    }
+    return [...groups.entries()];
+  }, [visibleClasses]);
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-8">
-      <div className="mb-6 flex items-start justify-between gap-4 sm:mb-8 sm:items-center">
+      <div className="mb-5 flex items-start justify-between gap-4 sm:items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-gray-950 sm:text-4xl">Classes</h1>
-          {isTeacher && <p className="mt-1 text-sm text-gray-500">Open a class to manage its students and learning materials.</p>}
-          {classes && <p className="mt-2 text-sm font-medium text-gray-700">{classes.length} {classes.length === 1 ? 'class' : 'classes'}</p>}
+          <p className="mt-1 text-sm text-gray-500">{isTeacher ? 'Your home for this week’s teaching and class tools.' : 'Choose a class to see what is happening this week.'}</p>
         </div>
         {isTeacher && (
           <Link to="/classes/new">
@@ -44,42 +60,47 @@ export function ClassesListPage() {
         )}
       </div>
 
-      {classes && classes.length > 0 ? (
-        <div className={isTeacher ? 'grid gap-3 md:grid-cols-2' : 'space-y-3'}>
-          {classes.map(cls => (
-              <Card key={cls.$id} padding={isTeacher ? 'none' : 'md'} className={isTeacher ? 'group overflow-hidden rounded-2xl border-gray-300 shadow-none transition hover:border-gray-500 hover:shadow-sm' : ''}>
-                {isTeacher ? (
-                  <div className="flex min-h-32 flex-col p-4 sm:p-5">
-                    <Link className="min-w-0 flex-1 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-4" to={`/classes/${cls.$id}`}>
-                      <h2 className="truncate text-lg font-bold tracking-tight text-gray-950 sm:text-xl">{cls.courseName}</h2>
-                      <p className="mt-0.5 truncate text-sm text-gray-600">{cls.name} <span aria-hidden="true">·</span> {cls.schoolYear}</p>
+      {classes && classes.length > 5 && (
+        <label className="mb-4 block">
+          <span className="sr-only">Find a class</span>
+          <div className="relative">
+            <SearchIcon />
+            <input value={query} onChange={event => setQuery(event.target.value)} type="search" placeholder="Find a class…" className="h-11 w-full rounded-xl border border-gray-300 bg-white pl-10 pr-4 text-sm outline-none transition focus:border-gray-950 focus:ring-2 focus:ring-gray-200" />
+          </div>
+        </label>
+      )}
+
+      {classes && <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">{visibleClasses.length} {visibleClasses.length === 1 ? 'class' : 'classes'}</p>}
+
+      {classes && classes.length > 0 && visibleClasses.length > 0 ? (
+        <div className="grid gap-3 lg:grid-cols-2">
+          {courseGroups.map(([courseName, groupedClasses]) => (
+            <section key={courseName} className="overflow-hidden rounded-2xl border border-gray-300 bg-white shadow-sm">
+              <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3">
+                <h2 className="min-w-0 truncate text-base font-bold tracking-tight text-gray-950 sm:text-lg">{courseName}</h2>
+                {groupedClasses.length > 1 && <span className="shrink-0 rounded-full bg-white px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-gray-200">{groupedClasses.length} sections</span>}
+              </div>
+              <div className="divide-y divide-gray-200">
+                {groupedClasses.map(cls => (
+                  <div key={cls.$id} className="group flex min-h-16 items-center gap-2 px-3 py-2 transition hover:bg-gray-50 sm:px-4">
+                    <Link className="min-w-0 flex-1 rounded-lg px-1 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-950" to={`/classes/${cls.$id}`}>
+                      <h3 className="truncate font-semibold text-gray-950">{cls.name}</h3>
+                      <p className="truncate text-xs text-gray-500">{cls.schoolYear}</p>
                     </Link>
-                    <div className="mt-4 flex items-center justify-between gap-3 border-t border-dashed border-gray-200 pt-3">
-                      <span className="rounded-lg bg-gray-100 px-2.5 py-1.5 text-xs text-gray-600">Code: <strong className="ml-1 font-mono text-gray-950">{cls.joinCode}</strong></span>
-                      <div className="flex items-center gap-1">
-                        <button type="button" onClick={() => setEditing(cls)} className="inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-950" aria-label={`Edit ${cls.courseName}, ${cls.name}`}>
-                          <EditIcon /> <span>Edit</span>
-                        </button>
-                        <Link to={`/classes/${cls.$id}`} className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-gray-950 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-950" aria-label={`Open ${cls.courseName}, ${cls.name}`}>
-                          <ArrowIcon />
-                        </Link>
-                      </div>
-                    </div>
+                    {isTeacher && <button type="button" onClick={() => setEditing(cls)} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-950" aria-label={`Edit ${cls.courseName}, ${cls.name}`}><EditIcon /></button>}
+                    <Link to={`/classes/${cls.$id}`} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-gray-950 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-950" aria-label={`Open ${cls.courseName}, ${cls.name}`}><ArrowIcon /></Link>
                   </div>
-                ) : (
-                  <Link className="block min-w-0" to={`/classes/${cls.$id}`}>
-                    <h3 className="font-medium">{cls.courseName}</h3>
-                    <p className="text-sm text-gray-500">{cls.name} · {cls.schoolYear}</p>
-                  </Link>
-                )}
-              </Card>
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       ) : (
         <Card className="text-center py-8">
-          <p className="text-gray-400">
-            {isTeacher ? 'No classes yet. Create one!' : 'No classes joined yet'}
+          <p className="text-gray-500">
+            {classes?.length ? 'No classes match that search.' : isTeacher ? 'No classes yet. Create one!' : 'No classes joined yet'}
           </p>
+          {classes?.length ? <button type="button" onClick={() => setQuery('')} className="mt-4 inline-flex min-h-10 items-center rounded-lg bg-gray-950 px-4 text-sm font-semibold text-white hover:bg-gray-800">Clear search</button> : !isTeacher && <Link to="/dashboard" className="mt-4 inline-flex min-h-10 items-center rounded-lg bg-gray-950 px-4 text-sm font-semibold text-white hover:bg-gray-800">Join a class</Link>}
         </Card>
       )}
       {editing && <EditClassModal cls={editing} onClose={() => setEditing(null)} />}
@@ -93,6 +114,10 @@ function EditIcon() {
 
 function ArrowIcon() {
   return <svg aria-hidden="true" className="h-5 w-5 transition-transform group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>;
+}
+
+function SearchIcon() {
+  return <svg aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>;
 }
 
 function EditClassModal({ cls, onClose }: { cls: Class; onClose: () => void }) {

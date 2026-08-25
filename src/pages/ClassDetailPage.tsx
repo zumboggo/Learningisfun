@@ -292,32 +292,40 @@ export function ClassDetailPage() {
   }
 
   return (
-    <div className="p-4 max-w-5xl mx-auto space-y-6">
+    <div className="mx-auto max-w-5xl space-y-5 p-4 sm:space-y-6 sm:p-6">
+      <Link to="/classes" className="inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-950"><span aria-hidden="true">←</span> All classes</Link>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{cls.courseName}</h1>
-          <p className="text-gray-500">{cls.name} | {cls.schoolYear}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-950 sm:text-3xl">{cls.courseName}</h1>
+          <p className="mt-0.5 text-sm text-gray-500">{cls.name} <span aria-hidden="true">·</span> {cls.schoolYear}</p>
         </div>
         {isOwner && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 sm:justify-end">
             <Link to={`/classes/${cls.$id}/notes/today`}><Button size="sm">Today&apos;s Notes</Button></Link>
-            <Button onClick={messageClass} disabled={!students?.some(student => student.email && student.email !== 'Profile not synced yet')} size="sm" variant="secondary">Message class</Button>
-            <Button onClick={() => setShowDiscussionModal(true)} size="sm">Start discussion</Button>
             <Button onClick={() => setShowWritingPrompt(true)} size="sm">Writing Prompt</Button>
-            <Button onClick={() => setShowAssignTexts(true)} size="sm" variant="secondary">Add a Text</Button>
-            <Button onClick={() => setShowPicker(true)} size="sm" variant="secondary">Pick a student</Button>
-            <Button onClick={() => setShowGroups(true)} size="sm" variant="secondary">Create groups</Button>
-            <Link to={`/classes/${cls.$id}/reports`}>
-              <Button size="sm" variant="secondary">Reports</Button>
-            </Link>
+            <Button onClick={() => setShowDiscussionModal(true)} size="sm" variant="secondary">Discussion</Button>
+            <details className="relative">
+              <summary className="inline-flex min-h-9 cursor-pointer list-none items-center rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-950">More <span className="ml-1 text-xs" aria-hidden="true">▾</span></summary>
+              <div className="absolute right-0 z-20 mt-2 grid w-52 gap-1 rounded-xl border border-gray-200 bg-white p-2 shadow-xl">
+                <button onClick={() => setShowAssignTexts(true)} className="rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-gray-100">Add a text</button>
+                <button onClick={() => setShowPicker(true)} className="rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-gray-100">Pick a student</button>
+                <button onClick={() => setShowGroups(true)} className="rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-gray-100">Create groups</button>
+                <button onClick={messageClass} disabled={!students?.some(student => student.email && student.email !== 'Profile not synced yet')} className="rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-gray-100 disabled:text-gray-400">Message class</button>
+                <Link to={`/classes/${cls.$id}/reports`} className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-gray-100">Reports</Link>
+              </div>
+            </details>
           </div>
         )}
       </div>
 
       {livePresentations?.length ? <section aria-label="Active writing prompt" className="space-y-2">{livePresentations.map(session => <Link key={session.$id} to={`/presentations/${session.$id}/live`} className="flex items-center justify-between rounded-xl border border-blue-700 bg-blue-600 p-4 !text-white shadow-sm hover:bg-blue-700"><span><span className="block text-xs font-semibold uppercase tracking-wide text-blue-100">Writing now</span><strong className="mt-1 block text-lg !text-white">Writing Prompt</strong><span className="text-sm text-blue-100">{isOwner ? 'View and present anonymous responses' : 'Open prompt and write your response'}</span></span><span className="text-2xl text-white" aria-hidden="true">→</span></Link>)}</section> : null}
 
+      <WeeklyClassMaterials classId={cls.$id} materials={weeklyMaterials || []} isOwner={Boolean(isOwner)} />
+
       {isOwner && (
-        <Card>
+        <details className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+          <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 font-semibold text-gray-900 hover:bg-gray-50"><span>People &amp; access</span><span className="text-xs font-medium text-gray-500">{students?.length || 0} students · {parents?.length || 0} parents <span className="ml-2" aria-hidden="true">▾</span></span></summary>
+        <Card className="rounded-none border-x-0 border-b-0 shadow-none">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
               <h3 className="font-semibold">Class join code</h3>
@@ -373,16 +381,22 @@ export function ClassDetailPage() {
             </div>
           )}
         </Card>
+        </details>
       )}
 
-      <ClassLinksPanel cls={cls} isOwner={Boolean(isOwner)} teacherId={user?.$id || ''} />
-      {!isParent && <ClassNicknamesPanel classId={cls.$id} userId={user?.$id || ''} isOwner={Boolean(isOwner)} />}
-      <SimplePresentationLinksPanel links={presentationLinks || []} isOwner={Boolean(isOwner)} />
       {!isOwner && !isParent && <Link to="/writing" className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 hover:border-blue-300"><span><strong className="block">Writing Feedback</strong><span className="text-sm text-gray-500">Get private AI feedback on any piece of writing.</span></span><span aria-hidden="true">→</span></Link>}
 
       <PeerReviewClassPanel classId={cls.$id} isOwner={Boolean(isOwner)} isParent={Boolean(isParent)} />
 
-      <WeeklyClassMaterials classId={cls.$id} materials={weeklyMaterials || []} isOwner={Boolean(isOwner)} />
+      <details className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 hover:bg-gray-50">
+          <span><strong className="block text-gray-950">Class resources</strong><span className="text-sm text-gray-500">Links, presentations, quizzes, discussions, and card decks</span></span>
+          <span className="shrink-0 text-sm font-medium text-gray-500" aria-hidden="true">Show ▾</span>
+        </summary>
+        <div className="space-y-5 border-t bg-gray-50/60 p-3 sm:p-4">
+      <ClassLinksPanel cls={cls} isOwner={Boolean(isOwner)} teacherId={user?.$id || ''} />
+      {!isParent && <ClassNicknamesPanel classId={cls.$id} userId={user?.$id || ''} isOwner={Boolean(isOwner)} />}
+      <SimplePresentationLinksPanel links={presentationLinks || []} isOwner={Boolean(isOwner)} />
 
       <section>
         <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-lg font-semibold">Quizzes ({classQuizzes?.length || 0})</h2>{isOwner ? <Button size="sm" onClick={() => setShowCreateQuiz(true)}>Create quiz</Button> : !isParent ? <Button size="sm" loading={generatingPracticeQuiz} onClick={() => void generatePracticeQuiz()}>Generate Practice Quiz</Button> : null}</div>
@@ -516,7 +530,12 @@ export function ClassDetailPage() {
         </section>
       </div>
 
-      <section>
+        </div>
+      </details>
+
+      {isOwner && <details className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 font-semibold hover:bg-gray-50"><span>Student roster</span><span className="text-sm font-medium text-gray-500">{students?.length || 0} students <span className="ml-2" aria-hidden="true">▾</span></span></summary>
+      <section className="border-t p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Students ({students?.length || 0})</h2>
           {isOwner && (
@@ -574,6 +593,7 @@ export function ClassDetailPage() {
           />
         )}
       </section>
+      </details>}
 
       <Modal
         open={Boolean(pendingRemoval)}
@@ -775,7 +795,7 @@ function AssignTextsToClassModal({ open, classId, teacherId, onClose }: { open: 
 }
 
 function SimplePresentationLinksPanel({ links, isOwner }: { links: PresentationLink[]; isOwner: boolean }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   return (
     <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
       <button className="flex w-full items-center justify-between p-4 text-left hover:bg-gray-50" onClick={() => setOpen(value => !value)}>
@@ -814,8 +834,11 @@ function WeeklyClassMaterials({ classId, materials, isOwner }: { classId: string
     if (!groups.has(currentWeek)) groups.set(currentWeek, []);
     if (!groups.has(upcomingWeek)) groups.set(upcomingWeek, []);
   }
-  const weeks = [...groups.entries()].sort((a, b) => b[0].localeCompare(a[0]));
-  const [openWeeks, setOpenWeeks] = useState<Set<string>>(new Set());
+  const weeks = [...groups.entries()].sort((a, b) => {
+    const rank = (week: string) => week === currentWeek ? 0 : week === upcomingWeek ? 1 : week > currentWeek ? 2 : 3;
+    return rank(a[0]) - rank(b[0]) || b[0].localeCompare(a[0]);
+  });
+  const [openWeeks, setOpenWeeks] = useState<Set<string>>(new Set([currentWeek]));
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
   const [quickAdd, setQuickAdd] = useState<{ kind: 'text' | 'presentation'; week: string } | null>(null);
   const [title, setTitle] = useState('');
@@ -869,7 +892,7 @@ function WeeklyClassMaterials({ classId, materials, isOwner }: { classId: string
           return <div key={week} className="overflow-hidden rounded-xl border border-gray-200 bg-white">
             <button className="flex w-full items-center justify-between gap-3 p-4 text-left hover:bg-gray-50" onClick={() => setOpenWeeks(current => toggleSetValue(current, week))}>
               <span className="font-semibold">{isOpen ? '▾' : '▸'} {weekLabel}</span>
-              <span className="text-xs text-gray-500">{texts.length} texts · {presentations.length} presentations · {notes.length + writingPrompts.length + discussions.length + quizzes.length} other</span>
+              <span className="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">{items.length} {items.length === 1 ? 'item' : 'items'}</span>
             </button>
             {isOpen && <div className="space-y-3 border-t bg-gray-50 p-4">
               {isOwner && <div className="flex flex-wrap gap-2"><Button size="sm" onClick={() => openQuickAdd('presentation', week)}>+ Presentation</Button><Button size="sm" variant="secondary" onClick={() => openQuickAdd('text', week)}>+ Text</Button></div>}
