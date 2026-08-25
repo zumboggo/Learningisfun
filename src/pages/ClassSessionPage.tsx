@@ -23,6 +23,7 @@ import { Card } from '@/components/common/Card';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Markdown } from '@/components/common/Markdown';
 import { MarkdownToolbar } from '@/components/common/MarkdownToolbar';
+import { clipboardToMarkdown } from '@/utils/rich-text';
 import { Modal } from '@/components/common/Modal';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { getApiKey, generateFlashcardsFromNotes, type GeneratedCard } from '@/services/ai.service';
@@ -547,6 +548,17 @@ function NotesPanel({
           ref={sessionNotesRef}
           value={sessionNotes}
           onChange={e => onNotesChange(e.target.value)}
+          onPaste={event => {
+            const html = event.clipboardData.getData('text/html');
+            if (!html.trim()) return;
+            event.preventDefault();
+            const pasted = clipboardToMarkdown(html, event.clipboardData.getData('text/plain'));
+            const textarea = sessionNotesRef.current;
+            const start = textarea?.selectionStart ?? sessionNotes.length;
+            const end = textarea?.selectionEnd ?? start;
+            onNotesChange(`${sessionNotes.slice(0, start)}${pasted}${sessionNotes.slice(end)}`);
+            requestAnimationFrame(() => textarea?.setSelectionRange(start + pasted.length, start + pasted.length));
+          }}
           rows={12}
           className="w-full resize-y rounded-b-lg border border-gray-300 px-3 py-2 font-mono text-sm"
           placeholder="Markdown notes for the day"

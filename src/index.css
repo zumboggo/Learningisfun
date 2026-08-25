@@ -1408,3 +1408,27 @@ input, textarea, select, button {
     transition: none;
   }
 }
+
+.rich-notes-editor:empty::before {
+  content: attr(data-placeholder);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.rich-notes-editor p,
+.rich-notes-editor ul,
+.rich-notes-editor ol,
+.rich-notes-editor blockquote,
+.rich-notes-editor table {
+  margin: 0 0 1em;
+}
+
+.rich-notes-editor ul { list-style: disc; padding-left: 1.5em; }
+.rich-notes-editor ol { list-style: decimal; padding-left: 1.5em; }
+.rich-notes-editor h1 { font-size: 1.5em; font-weight: 700; margin-bottom: .7em; }
+.rich-notes-editor h2 { font-size: 1.3em; font-weight: 700; margin-bottom: .7em; }
+.rich-notes-editor h3 { font-size: 1.15em; font-weight: 600; margin-bottom: .7em; }
+.rich-notes-editor a { color: #2563eb; text-decoration: underline; }
+.rich-notes-editor table { width: 100%; border-collapse: collapse; font-size: .8em; }
+.rich-notes-editor th,
+.rich-notes-editor td { border: 1px solid #cbd5e1; padding: .4em .6em; text-align: left; }
