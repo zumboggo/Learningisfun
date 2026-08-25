@@ -22,7 +22,7 @@ export async function paragraphsFromFile(file: File): Promise<string[]> {
   return splitParagraphs(await file.text());
 }
 
-export async function createText(params: { teacherId: string; title: string; author: string; source: string; paragraphs: string[]; classIds: string[]; contentMode?: 'full' | 'link'; externalUrl?: string }): Promise<LearningText> {
+export async function createText(params: { teacherId: string; title: string; author: string; source: string; paragraphs: string[]; classIds: string[]; contentMode?: 'full' | 'link'; externalUrl?: string; schedule?: { assignedAt: string; dueClassNumber?: number } }): Promise<LearningText> {
   const now = getTimestamp();
   const text: LearningText = { $id: ID.unique(), teacherId: params.teacherId, title: params.title, author: params.author,
     source: params.source, contentMode: params.contentMode || 'full', externalUrl: params.externalUrl || '', status: 'published', createdAt: now, updatedAt: now, syncStatus: 'local' };
@@ -31,7 +31,7 @@ export async function createText(params: { teacherId: string; title: string; aut
     const paragraph: TextParagraph = { $id: ID.unique(), textId: text.$id, sortOrder: i, content: params.paragraphs[i] };
     await db.text_paragraphs.put(paragraph); await addToQueue(params.teacherId, 'text_paragraph', paragraph.$id, 'create', paragraph);
   }
-  await setTextClasses(text.$id, params.classIds, params.teacherId);
+  await setTextClasses(text.$id, params.classIds, params.teacherId, params.schedule);
   return text;
 }
 

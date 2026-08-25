@@ -40,6 +40,8 @@ import { Markdown } from '@/components/common/Markdown';
 import { createPeerReviewActivity, listPeerReviewActivities } from '@/services/presentation-peer-review.service';
 import type { PeerReviewActivity } from '@/types';
 
+const PRESENTATION_FOLDER_URL = 'https://lifeplusworldwide-my.sharepoint.com/:f:/g/personal/david_hepting_cdischina_com/IgCKVDp4qOqzR5itb7Q70yDbAb7A95ZN6fG4XHD74ghu3lU?e=1W9www';
+
 type WeeklyMaterial =
   | { kind: 'notes'; date: string; session: ClassSession }
   | { kind: 'discussion'; date: string; session: ClassSession }
@@ -74,7 +76,6 @@ export function ClassDetailPage() {
   const [copiedQuizId, setCopiedQuizId] = useState('');
   const [generatingPracticeQuiz, setGeneratingPracticeQuiz] = useState(false);
   const [practiceQuizError, setPracticeQuizError] = useState('');
-  const [showAddPresentation, setShowAddPresentation] = useState(false);
   const [showWritingPrompt, setShowWritingPrompt] = useState(false);
 
   const cls = useLiveQuery(() => (classId ? db.classes.get(classId) : undefined), [classId]);
@@ -302,7 +303,7 @@ export function ClassDetailPage() {
             <Button onClick={messageClass} disabled={!students?.some(student => student.email && student.email !== 'Profile not synced yet')} size="sm" variant="secondary">Message class</Button>
             <Button onClick={() => setShowDiscussionModal(true)} size="sm">Start discussion</Button>
             <Button onClick={() => setShowWritingPrompt(true)} size="sm">Writing Prompt</Button>
-            <Button onClick={() => setShowAssignTexts(true)} size="sm" variant="secondary">Assign Text</Button>
+            <Button onClick={() => setShowAssignTexts(true)} size="sm" variant="secondary">Add a Text</Button>
             <Button onClick={() => setShowPicker(true)} size="sm" variant="secondary">Pick a student</Button>
             <Button onClick={() => setShowGroups(true)} size="sm" variant="secondary">Create groups</Button>
             <Link to={`/classes/${cls.$id}/reports`}>
@@ -374,12 +375,12 @@ export function ClassDetailPage() {
       )}
 
       <ClassLinksPanel cls={cls} isOwner={Boolean(isOwner)} teacherId={user?.$id || ''} />
-      <PresentationLinksPanel links={presentationLinks || []} isOwner={Boolean(isOwner)} onAdd={() => setShowAddPresentation(true)} />
+      <SimplePresentationLinksPanel links={presentationLinks || []} isOwner={Boolean(isOwner)} />
       {!isOwner && !isParent && <Link to="/writing" className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 hover:border-blue-300"><span><strong className="block">Writing Feedback</strong><span className="text-sm text-gray-500">Get private AI feedback on any piece of writing.</span></span><span aria-hidden="true">→</span></Link>}
 
       <PeerReviewClassPanel classId={cls.$id} isOwner={Boolean(isOwner)} isParent={Boolean(isParent)} />
 
-      <WeeklyClassReview materials={weeklyMaterials || []} isOwner={Boolean(isOwner)} />
+      <WeeklyClassMaterials classId={cls.$id} materials={weeklyMaterials || []} isOwner={Boolean(isOwner)} />
 
       <section>
         <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-lg font-semibold">Quizzes ({classQuizzes?.length || 0})</h2>{isOwner ? <Button size="sm" onClick={() => setShowCreateQuiz(true)}>Create quiz</Button> : !isParent ? <Button size="sm" loading={generatingPracticeQuiz} onClick={() => void generatePracticeQuiz()}>Generate Practice Quiz</Button> : null}</div>
@@ -665,7 +666,6 @@ export function ClassDetailPage() {
         /><AssignTextsToClassModal open={showAssignTexts} classId={cls.$id} teacherId={user.$id} onClose={() => setShowAssignTexts(false)} />
         {showCreateQuiz && <CreateQuizModal classes={(teacherClasses || []).map(item => ({ id: item.$id, name: classLabel(item) }))} sourceClassId={cls.$id} onClose={() => setShowCreateQuiz(false)} onCreated={() => setShowCreateQuiz(false)} />}</>
       )}
-      {isOwner && user && showAddPresentation && <AddPresentationModal sourceClassId={cls.$id} classes={teacherClasses || []} onClose={() => setShowAddPresentation(false)} />}
       {isOwner && showWritingPrompt && <CreateWritingPromptModal classId={cls.$id} onClose={() => setShowWritingPrompt(false)} onCreated={sessionId => navigate(`/presentations/${sessionId}/live`)} />}
 
       {isOwner && (
@@ -703,7 +703,7 @@ function escapeCsv(value: string): string {
 function AssignTextsToClassModal({ open, classId, teacherId, onClose }: { open: boolean; classId: string; teacherId: string; onClose: () => void }) {
   const texts = useLiveQuery(() => db.texts.where('teacherId').equals(teacherId).and(text => text.status !== 'archived').toArray(), [teacherId]);
   const assignments = useLiveQuery(() => db.text_assignments.where('classId').equals(classId).toArray(), [classId]);
-  const [mode, setMode] = useState<'existing' | 'new'>('existing');
+  const [mode, setMode] = useState<'existing' | 'new'>('new');
   const [contentMode, setContentMode] = useState<'full' | 'link'>('full');
   const [chosen, setChosen] = useState<Set<string> | null>(null);
   const [dueDate, setDueDate] = useState(todayKey());
@@ -733,8 +733,7 @@ function AssignTextsToClassModal({ open, classId, teacherId, onClose }: { open: 
   const createAndAssign = async () => {
     setBusy(true); setError('');
     try {
-      const text = await createText({ teacherId, title: title.trim(), author: author.trim(), source: source.trim(), paragraphs: contentMode === 'full' ? splitParagraphs(copiedText) : [], classIds: [], contentMode, externalUrl: contentMode === 'link' ? externalUrl.trim() : '' });
-      await setTextClasses(text.$id, [classId], teacherId, schedule);
+      await createText({ teacherId, title: title.trim(), author: author.trim(), source: source.trim(), paragraphs: contentMode === 'full' ? splitParagraphs(copiedText) : [], classIds: [classId], contentMode, externalUrl: contentMode === 'link' ? externalUrl.trim() : '', schedule });
       onClose();
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not add this text.'); }
     finally { setBusy(false); }
@@ -744,6 +743,138 @@ function AssignTextsToClassModal({ open, classId, teacherId, onClose }: { open: 
   return <Modal open={open} onClose={close} title="Assign Text"><div className="space-y-4"><div className="grid grid-cols-2 gap-1 rounded-lg bg-gray-100 p-1"><button className={`rounded-md px-3 py-2 text-sm font-medium ${mode==='existing'?'bg-white shadow-sm':''}`} onClick={()=>setMode('existing')}>Choose existing</button><button className={`rounded-md px-3 py-2 text-sm font-medium ${mode==='new'?'bg-white shadow-sm':''}`} onClick={()=>setMode('new')}>Add new text</button></div>{error&&<p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}<label className="block text-sm font-medium">Due date<input type="date" className="mt-1 w-full rounded-lg border px-3 py-2" value={dueDate} onChange={e=>setDueDate(e.target.value)}/></label>{mode==='existing'?<><p className="text-sm text-gray-500">Choose from texts you have already added.</p><div className="max-h-72 space-y-2 overflow-auto">{texts?.length ? texts.map(text => <label key={text.$id} className="flex items-start gap-3 rounded-lg border p-3"><input type="checkbox" className="mt-1" checked={selected.has(text.$id)} onChange={() => toggle(text.$id)} /><span><strong className="block text-sm">{text.title}</strong><span className="text-xs text-gray-500">{text.author || 'Unknown author'}{text.contentMode==='link'?' · Link':''}</span></span></label>) : <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No saved texts yet. Choose “Add new text” above.</p>}</div><Button className="w-full" loading={busy} onClick={() => void save()}>Save text assignments</Button></>:<><div className="grid grid-cols-2 gap-1 rounded-lg border p-1"><button className={`rounded-md px-3 py-2 text-sm ${contentMode==='full'?'bg-blue-50 font-semibold text-blue-700':''}`} onClick={()=>setContentMode('full')}>Paste full text</button><button className={`rounded-md px-3 py-2 text-sm ${contentMode==='link'?'bg-blue-50 font-semibold text-blue-700':''}`} onClick={()=>setContentMode('link')}>Post a link</button></div><input className="w-full rounded-lg border px-3 py-2" placeholder="Text title" value={title} onChange={e=>setTitle(e.target.value)}/><div className="grid grid-cols-2 gap-3"><input className="w-full rounded-lg border px-3 py-2" placeholder="Author (optional)" value={author} onChange={e=>setAuthor(e.target.value)}/><input className="w-full rounded-lg border px-3 py-2" placeholder="Source (optional)" value={source} onChange={e=>setSource(e.target.value)}/></div>{contentMode==='link'?<input type="url" className="w-full rounded-lg border px-3 py-2" placeholder="https://…" value={externalUrl} onChange={e=>setExternalUrl(e.target.value)}/>:<><textarea autoFocus className="w-full rounded-lg border px-3 py-3 text-base" rows={9} placeholder="Paste the full text here. Blank lines will become separate paragraphs for annotation." value={copiedText} onChange={e=>setCopiedText(e.target.value)}/><p className="text-xs text-gray-500">{splitParagraphs(copiedText).length} paragraph{splitParagraphs(copiedText).length===1?'':'s'} detected</p></>}<Button className="w-full" loading={busy} disabled={!newTextValid} onClick={()=>void createAndAssign()}>Add and assign text</Button></>}</div></Modal>;
 }
 
+function SimplePresentationLinksPanel({ links, isOwner }: { links: PresentationLink[]; isOwner: boolean }) {
+  const [open, setOpen] = useState(true);
+  return (
+    <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+      <button className="flex w-full items-center justify-between p-4 text-left hover:bg-gray-50" onClick={() => setOpen(value => !value)}>
+        <span className="text-lg font-semibold">{open ? '▾' : '▸'} Presentations</span>
+        <span className="text-sm text-gray-500">{links.length}</span>
+      </button>
+      {open && <div className="space-y-3 border-t p-4">
+        <a href={PRESENTATION_FOLDER_URL} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-lg bg-fuchsia-50 px-4 py-3 font-semibold text-fuchsia-900 hover:bg-fuchsia-100">
+          <span>Open presentation folder</span><span aria-hidden="true">↗</span>
+        </a>
+        <p className="text-sm text-gray-500">Search the shared folder using the presentation name below. Add new entries from the appropriate week.</p>
+        <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
+          {links.length ? links.map(link => <div key={link.$id} className="flex items-center gap-3 rounded-lg border p-3">
+            <label className="flex min-w-0 flex-1 items-center gap-3">
+              <input type="checkbox" checked={Boolean(link.watchedAt)} disabled={!isOwner} onChange={event => void setPresentationWatched(link.$id, event.target.checked)} className="h-5 w-5 rounded" />
+              <span className="min-w-0"><a href={link.url || PRESENTATION_FOLDER_URL} target="_blank" rel="noreferrer" className="block truncate font-medium text-blue-700 hover:underline" onClick={event => event.stopPropagation()}>{link.title}</a><span className="text-xs text-gray-500">{link.watchedAt ? 'Watched' : 'Not watched yet'} · {formatDate(link.assignedAt)}</span></span>
+            </label>
+            {isOwner && <button className="text-sm text-red-600" onClick={() => window.confirm('Delete this presentation entry?') && void deletePresentationLink(link.$id)}>Delete</button>}
+          </div>) : <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No presentations recorded yet. Open a week below to add one.</p>}
+        </div>
+      </div>}
+    </section>
+  );
+}
+
+function WeeklyClassMaterials({ classId, materials, isOwner }: { classId: string; materials: WeeklyMaterial[]; isOwner: boolean }) {
+  const { user } = useAuth();
+  const groups = new Map<string, WeeklyMaterial[]>();
+  for (const material of materials) {
+    const key = weekStart(material.date);
+    groups.set(key, [...(groups.get(key) || []), material]);
+  }
+  const currentWeek = weekStart(todayKey());
+  const upcomingWeek = addDays(currentWeek, 7);
+  if (isOwner) {
+    if (!groups.has(currentWeek)) groups.set(currentWeek, []);
+    if (!groups.has(upcomingWeek)) groups.set(upcomingWeek, []);
+  }
+  const weeks = [...groups.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+  const [openWeeks, setOpenWeeks] = useState<Set<string>>(new Set());
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set());
+  const [quickAdd, setQuickAdd] = useState<{ kind: 'text' | 'presentation'; week: string } | null>(null);
+  const [title, setTitle] = useState('');
+  const [url, setUrl] = useState('');
+  const [itemDate, setItemDate] = useState('');
+  const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState('');
+  const [editingDueDate, setEditingDueDate] = useState<Extract<WeeklyMaterial, { kind: 'text' }> | null>(null);
+  const [dueDate, setDueDate] = useState('');
+  const [savingDueDate, setSavingDueDate] = useState(false);
+
+  const openQuickAdd = (kind: 'text' | 'presentation', week: string) => {
+    setTitle(''); setUrl(''); setItemDate(''); setAddError(''); setQuickAdd({ kind, week });
+  };
+  const saveQuickAdd = async () => {
+    if (!quickAdd || !user || !title.trim()) return;
+    if (url.trim() && !/^https?:\/\//i.test(url.trim())) { setAddError('The optional link must begin with http:// or https://.'); return; }
+    setAdding(true); setAddError('');
+    try {
+      const assignedDate = itemDate || quickAdd.week;
+      const assignedAt = new Date(`${assignedDate}T12:00:00`).toISOString();
+      if (quickAdd.kind === 'presentation') {
+        await addPresentationLinks({ title: title.trim(), url: url.trim() || PRESENTATION_FOLDER_URL, classIds: [classId], assignedAt });
+      } else {
+        await createText({ teacherId: user.$id, title: title.trim(), author: '', source: '', paragraphs: [], classIds: [classId], contentMode: 'link', externalUrl: url.trim(), schedule: { assignedAt } });
+      }
+      setOpenSections(current => new Set(current).add(`${quickAdd.week}-${quickAdd.kind === 'text' ? 'texts' : 'presentations'}`));
+      setQuickAdd(null);
+    } catch (cause) { setAddError(cause instanceof Error ? cause.message : `Could not add this ${quickAdd.kind}.`); }
+    finally { setAdding(false); }
+  };
+  const editDueDate = (item: Extract<WeeklyMaterial, { kind: 'text' }>) => { setEditingDueDate(item); setDueDate(item.date.slice(0, 10)); };
+  const saveDueDate = async () => {
+    if (!editingDueDate || !dueDate || !user) return;
+    setSavingDueDate(true);
+    try { await setTextAssignmentDueDate(editingDueDate.assignment.$id, user.$id, new Date(`${dueDate}T12:00:00`).toISOString()); setEditingDueDate(null); }
+    finally { setSavingDueDate(false); }
+  };
+
+  return <>
+    <section>
+      <h2 className="mb-3 text-lg font-semibold">Weekly class materials</h2>
+      {!weeks.length ? <Card><p className="text-sm text-gray-500">Notes, writing prompts, quizzes, discussions, texts, and presentations will appear here by week.</p></Card> : <div className="space-y-3">
+        {weeks.map(([week, unsortedItems]) => {
+          const priority: Record<WeeklyMaterial['kind'], number> = { text: 0, presentation: 1, notes: 2, writingPrompt: 3, discussion: 4, quiz: 5 };
+          const items = [...unsortedItems].sort((a, b) => priority[a.kind] - priority[b.kind] || b.date.localeCompare(a.date));
+          const isOpen = openWeeks.has(week);
+          const byKind = <K extends WeeklyMaterial['kind']>(kind: K) => items.filter((item): item is Extract<WeeklyMaterial, { kind: K }> => item.kind === kind);
+          const texts = byKind('text'), presentations = byKind('presentation'), notes = byKind('notes'), writingPrompts = byKind('writingPrompt'), discussions = byKind('discussion'), quizzes = byKind('quiz');
+          const weekLabel = week === currentWeek ? `This week · ${formatWeek(week)}` : week === upcomingWeek ? `Upcoming week · ${formatWeek(week)}` : `Week of ${formatWeek(week)}`;
+          return <div key={week} className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <button className="flex w-full items-center justify-between gap-3 p-4 text-left hover:bg-gray-50" onClick={() => setOpenWeeks(current => toggleSetValue(current, week))}>
+              <span className="font-semibold">{isOpen ? '▾' : '▸'} {weekLabel}</span>
+              <span className="text-xs text-gray-500">{texts.length} texts · {presentations.length} presentations · {notes.length + writingPrompts.length + discussions.length + quizzes.length} other</span>
+            </button>
+            {isOpen && <div className="space-y-3 border-t bg-gray-50 p-4">
+              {isOwner && <div className="flex flex-wrap gap-2"><Button size="sm" onClick={() => openQuickAdd('presentation', week)}>+ Presentation</Button><Button size="sm" variant="secondary" onClick={() => openQuickAdd('text', week)}>+ Text</Button></div>}
+              {texts.length > 0 && <CompactWeekSection title="Texts" count={texts.length} color="emerald" open={openSections.has(`${week}-texts`)} onToggle={() => setOpenSections(current => toggleSetValue(current, `${week}-texts`))}>{texts.map(item => <div key={item.assignment.$id} className="flex items-center gap-3 border-t border-emerald-100 px-4 py-2.5 hover:bg-emerald-100/50"><TextMaterialLink item={item} />{isOwner && <button className="shrink-0 text-xs font-semibold text-emerald-800 underline" onClick={() => editDueDate(item)}>Edit date</button>}</div>)}</CompactWeekSection>}
+              {presentations.length > 0 && <CompactWeekSection title="Presentations" count={presentations.length} color="fuchsia" open={openSections.has(`${week}-presentations`)} onToggle={() => setOpenSections(current => toggleSetValue(current, `${week}-presentations`))}>{presentations.map(item => <div key={item.presentation.$id} className="flex items-center gap-3 border-t border-fuchsia-100 px-4 py-2.5"><input aria-label={`Mark ${item.presentation.title} watched`} type="checkbox" className="h-5 w-5" checked={Boolean(item.presentation.watchedAt)} disabled={!isOwner} onChange={event => void setPresentationWatched(item.presentation.$id, event.target.checked)} /><a href={item.presentation.url || PRESENTATION_FOLDER_URL} target="_blank" rel="noreferrer" className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-fuchsia-950">{item.presentation.title}</span><span className="text-xs text-fuchsia-800">{item.presentation.watchedAt ? 'Watched' : 'Posted · not watched'} · {formatDate(item.date)}</span></a>{isOwner && <button className="text-xs font-semibold text-red-700 underline" onClick={() => window.confirm('Delete this presentation entry?') && void deletePresentationLink(item.presentation.$id)}>Delete</button>}</div>)}</CompactWeekSection>}
+              {notes.length > 0 && <CompactWeekSection title="Class notes" count={notes.length} color="blue" open={openSections.has(`${week}-notes`)} onToggle={() => setOpenSections(current => toggleSetValue(current, `${week}-notes`))}>{notes.map(item => <article key={item.session.$id} className="border-t border-blue-100 px-4 py-3"><p className="mb-2 text-xs font-semibold text-blue-700">{formatDate(item.date)}</p><Markdown content={item.session.publishedNotesMarkdown} className="text-base leading-7 text-gray-800" /></article>)}</CompactWeekSection>}
+              {writingPrompts.length > 0 && <CompactWeekSection title="Writing prompts" count={writingPrompts.length} color="cyan" open={openSections.has(`${week}-writing`)} onToggle={() => setOpenSections(current => toggleSetValue(current, `${week}-writing`))}>{writingPrompts.map(item => <article key={item.session.$id} className="border-t border-cyan-100 px-4 py-3"><p className="mb-2 text-xs font-semibold text-cyan-800">{formatDate(item.date)}</p><Markdown content={item.session.publishedNotesMarkdown} className="text-sm text-gray-800" /></article>)}</CompactWeekSection>}
+              {discussions.length > 0 && <CompactWeekSection title="Discussions" count={discussions.length} color="violet" open={openSections.has(`${week}-discussions`)} onToggle={() => setOpenSections(current => toggleSetValue(current, `${week}-discussions`))}>{discussions.map(item => <Link key={item.session.$id} to={`/discussions/${item.session.$id}`} className="block border-t border-violet-100 px-4 py-3 hover:bg-violet-100/50"><span className="block text-sm font-semibold text-violet-950">{item.session.title}</span><span className="text-xs text-violet-800">{formatDate(item.date)}</span></Link>)}</CompactWeekSection>}
+              {quizzes.length > 0 && <CompactWeekSection title="Quizzes" count={quizzes.length} color="amber" open={openSections.has(`${week}-quizzes`)} onToggle={() => setOpenSections(current => toggleSetValue(current, `${week}-quizzes`))}>{quizzes.map(item => <Link key={item.quiz.$id} to={`/quizzes/${item.quiz.$id}/take`} className="block border-t border-amber-100 px-4 py-3 hover:bg-amber-100/50"><span className="block text-sm font-semibold text-amber-950">{item.quiz.title}</span><span className="text-xs text-amber-800">{formatDate(item.date)}</span></Link>)}</CompactWeekSection>}
+              {!items.length && <p className="rounded-lg border border-dashed p-4 text-sm text-gray-500">Nothing has been added to this week yet.</p>}
+            </div>}
+          </div>;
+        })}
+      </div>}
+    </section>
+    {quickAdd && <Modal open onClose={() => !adding && setQuickAdd(null)} title={`Add ${quickAdd.kind} · ${formatWeek(quickAdd.week)}`}><div className="space-y-4">
+      {addError && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{addError}</p>}
+      <label className="block text-sm font-medium">Name<input autoFocus className="mt-1 w-full rounded-lg border px-3 py-2" value={title} onChange={event => setTitle(event.target.value)} placeholder={quickAdd.kind === 'presentation' ? 'Presentation name' : 'Text title'} /></label>
+      <label className="block text-sm font-medium">Link <span className="font-normal text-gray-500">(optional)</span><input type="url" className="mt-1 w-full rounded-lg border px-3 py-2" value={url} onChange={event => setUrl(event.target.value)} placeholder="https://…" /></label>
+      {quickAdd.kind === 'presentation' && <p className="rounded-lg bg-fuchsia-50 p-3 text-sm text-fuchsia-900">If you leave the link blank, this opens the shared OneDrive presentation folder so students can search by name.</p>}
+      {quickAdd.kind === 'text' && <p className="text-sm text-gray-500">This quick entry is for a title or link. Use “Add a Text” at the top of the class to paste the complete text for annotation.</p>}
+      <label className="block text-sm font-medium">Specific date <span className="font-normal text-gray-500">(optional)</span><input type="date" min={quickAdd.week} max={addDays(quickAdd.week, 6)} className="mt-1 w-full rounded-lg border px-3 py-2" value={itemDate} onChange={event => setItemDate(event.target.value)} /></label>
+      <Button className="w-full" loading={adding} disabled={!title.trim()} onClick={() => void saveQuickAdd()}>Add to this week</Button>
+    </div></Modal>}
+    {editingDueDate && <Modal open onClose={() => setEditingDueDate(null)} title="Edit text date"><div className="space-y-4"><p className="text-sm text-gray-600">Move <strong>{editingDueDate.text.title}</strong> to a different date and week.</p><label className="block text-sm font-medium">Date<input type="date" className="mt-1 w-full rounded-lg border px-3 py-2" value={dueDate} onChange={event => setDueDate(event.target.value)} /></label><Button className="w-full" loading={savingDueDate} disabled={!dueDate} onClick={() => void saveDueDate()}>Save date</Button></div></Modal>}
+  </>;
+}
+
+function TextMaterialLink({ item }: { item: Extract<WeeklyMaterial, { kind: 'text' }> }) {
+  const content = <><span className="block truncate text-sm font-semibold text-emerald-950">{item.text.title}</span><span className="text-xs text-emerald-800">{formatDate(item.date)}{item.text.author ? ` · ${item.text.author}` : ''}</span></>;
+  if (item.text.externalUrl) return <a href={item.text.externalUrl} target="_blank" rel="noreferrer" className="min-w-0 flex-1">{content}</a>;
+  if (item.text.contentMode === 'link') return <div className="min-w-0 flex-1">{content}</div>;
+  return <Link to={`/texts/${item.text.$id}`} className="min-w-0 flex-1">{content}</Link>;
+}
+
+/* eslint-disable @typescript-eslint/no-unused-vars -- remove after the weekly-materials UI rollout is complete */
 function PresentationLinksPanel({ links, isOwner, onAdd }: { links: PresentationLink[]; isOwner: boolean; onAdd: () => void }) {
   const [open, setOpen] = useState(true);
   return <section className="overflow-hidden rounded-xl border border-gray-200 bg-white"><button className="flex w-full items-center justify-between p-4 text-left hover:bg-gray-50" onClick={() => setOpen(value => !value)}><span className="text-lg font-semibold">{open ? '▾' : '▸'} Presentations</span><span className="text-sm text-gray-500">{links.length}</span></button>{open && <div className="border-t p-4"><div className="mb-3 flex items-center justify-between"><p className="text-sm text-gray-500">Slides and presentations assigned to this class.</p>{isOwner && <Button size="sm" onClick={onAdd}>Add</Button>}</div><div className="max-h-80 space-y-2 overflow-y-auto pr-1">{links.length ? links.map(link => <div key={link.$id} className="flex items-center gap-3 rounded-lg border p-3"><label className="flex min-w-0 flex-1 items-center gap-3"><input type="checkbox" checked={Boolean(link.watchedAt)} disabled={!isOwner} onChange={event => void setPresentationWatched(link.$id, event.target.checked)} className="h-5 w-5 rounded"/><span className="min-w-0"><a href={link.url} target="_blank" rel="noreferrer" className="block truncate font-medium text-blue-700 hover:underline" onClick={event => event.stopPropagation()}>{link.title}</a><span className="text-xs text-gray-500">{link.watchedAt ? 'Watched' : 'Not watched yet'} · {formatDate(link.assignedAt)}</span></span></label>{isOwner && <button className="text-sm text-red-600" onClick={() => window.confirm('Delete this presentation link?') && void deletePresentationLink(link.$id)}>Delete</button>}</div>) : <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No presentation links yet.</p>}</div></div>}</section>;
@@ -834,6 +965,8 @@ function WeeklyClassReview({ materials, isOwner }: { materials: WeeklyMaterial[]
   );
 }
 
+/* eslint-enable @typescript-eslint/no-unused-vars */
+
 type WeekSectionColor = 'emerald'|'fuchsia'|'blue'|'cyan'|'violet'|'amber';
 function CompactWeekSection({ title, count, color, open, onToggle, children }: { title: string; count: number; color: WeekSectionColor; open: boolean; onToggle: () => void; children: ReactNode }) {
   const styles: Record<WeekSectionColor,string> = { emerald:'border-emerald-200 bg-emerald-50 text-emerald-900', fuchsia:'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900', blue:'border-blue-200 bg-blue-50 text-blue-900', cyan:'border-cyan-200 bg-cyan-50 text-cyan-900', violet:'border-violet-200 bg-violet-50 text-violet-900', amber:'border-amber-200 bg-amber-50 text-amber-900' };
@@ -846,7 +979,18 @@ function weekStart(value: string): string {
   const date = new Date(value.length === 10 ? `${value}T12:00:00` : value);
   const daysSinceMonday = (date.getDay() + 6) % 7;
   date.setDate(date.getDate() - daysSinceMonday);
-  return date.toISOString().slice(0, 10);
+  return localDateKey(date);
+}
+
+function addDays(value: string, amount: number): string {
+  const date = new Date(`${value}T12:00:00`);
+  date.setDate(date.getDate() + amount);
+  return localDateKey(date);
+}
+
+function localDateKey(date: Date): string {
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
 function formatWeek(value: string): string {
