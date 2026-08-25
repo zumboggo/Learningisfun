@@ -1,6 +1,7 @@
 import { db } from '@/db/schema';
 import { masteryBucketForState } from './flashcard.service';
 import type { ClassMember, User } from '@/types';
+import { executeLearningContent } from '@/services/learning-content.service';
 
 export interface ParticipationRow {
   studentName: string;
@@ -10,6 +11,8 @@ export interface ParticipationRow {
   totalPosts: number;
   totalWords: number;
   totalUpvotes: number;
+  annotationsTotal: number;
+  annotationsThisWeek: number;
   responseStatus: string;
   responseWords: number;
   belowMinimum: boolean;
@@ -30,6 +33,11 @@ export async function buildClassParticipationRows(
     .and(m => m.role === 'student')
     .toArray();
   const users = await usersForMembers(members);
+  let serverAnnotationCounts = new Map<string,{total:number;thisWeek:number}>();
+  try {
+    const result = await executeLearningContent<{counts:Array<{userId:string;total:number;thisWeek:number}>}>({action:'readAnnotationReport',classId});
+    serverAnnotationCounts = new Map(result.counts.map(count=>[count.userId,{total:count.total,thisWeek:count.thisWeek}]));
+  } catch { /* Use the local cache while offline. */ }
   const rows: ParticipationRow[] = [];
 
   for (const member of members) {
@@ -57,6 +65,8 @@ export async function buildClassParticipationRows(
     const oldAnswers = oldQuestionIds.length ? await db.discussion_answers.where('questionId').anyOf(oldQuestionIds).and(a=>a.authorId===member.userId).toArray() : [];
     const redditPosts = await db.text_discussion_posts.where('classId').equals(classId).and(p=>p.authorId===member.userId&&p.moderationStatus==='visible').toArray();
     const annotations = await db.text_annotations.where('classId').equals(classId).and(a=>a.authorId===member.userId&&a.moderationStatus==='visible').toArray();
+    const weekStart = startOfCurrentWeek();
+    const annotationCounts = serverAnnotationCounts.get(member.userId) || { total:annotations.length, thisWeek:annotations.filter(annotation => annotation.createdAt >= weekStart).length };
     const redditIds = redditPosts.map(p=>p.$id);
     const positiveVotes = redditIds.length ? await db.text_discussion_votes.where('postId').anyOf(redditIds).and(v=>v.value===1).count() : 0;
     const totalPosts = oldQuestions.length + oldAnswers.length + redditPosts.length + annotations.length;
@@ -70,6 +80,8 @@ export async function buildClassParticipationRows(
       totalPosts,
       totalWords,
       totalUpvotes: oldQuestions.reduce((sum,q)=>sum+q.voteCount,0)+positiveVotes,
+      annotationsTotal: annotationCounts.total,
+      annotationsThisWeek: annotationCounts.thisWeek,
       responseStatus: 'n/a',
       responseWords: 0,
       belowMinimum: false,
@@ -93,6 +105,8 @@ export function rowsToCsv(rows: ParticipationRow[]): string {
     'totalPosts',
     'totalWords',
     'totalUpvotes',
+    'annotationsTotal',
+    'annotationsThisWeek',
     'responseStatus',
     'responseWords',
     'belowMinimum',
@@ -107,6 +121,14 @@ export function rowsToCsv(rows: ParticipationRow[]): string {
     lines.push(headers.map(header => escapeCsv(row[header])).join(','));
   }
   return `${lines.join('\n')}\n`;
+}
+
+function startOfCurrentWeek(): string {
+  const date = new Date();
+  const daysSinceMonday = (date.getDay() + 6) % 7;
+  date.setDate(date.getDate() - daysSinceMonday);
+  date.setHours(0, 0, 0, 0);
+  return date.toISOString();
 }
 
 export function downloadCsv(filename: string, csv: string): void {

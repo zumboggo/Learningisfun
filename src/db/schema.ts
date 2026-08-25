@@ -324,5 +324,10 @@ db.version(11).stores({
   presentation_links: '$id, teacherId, classId, assignedAt, watchedAt',
 });
 
+db.version(12).stores({
+  users: '$id, email, role, nicknameUpdatedAt',
+  text_annotations: '$id, textId, paragraphId, classId, authorId, parentId, flagged, createdAt, [textId+classId], syncStatus',
+});
+
 export { db };
 export default db;

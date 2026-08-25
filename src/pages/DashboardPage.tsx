@@ -24,6 +24,7 @@ import { ReviewPaceChart } from '@/components/student/ReviewPaceChart';
 import { KnownGrowthChart } from '@/components/student/KnownGrowthChart';
 import { DeckMakeup } from '@/components/student/DeckMakeup';
 import type { Class, ClassSession, DeckAssignment, FlashcardDeck, FlashcardReviewEvent, FlashcardStudySession } from '@/types';
+import { nextNicknameChangeAt, nicknameValidationError, updateNickname } from '@/services/nickname.service';
 
 interface DeckAction {
   assignment: DeckAssignment;
@@ -174,7 +175,11 @@ function StudentDashboard() {
   const [encouragement, setEncouragement] = useState<string | null>(null);
   const [selectedDeckIds, setSelectedDeckIds] = useState<string[] | null>(null);
   const [studySessionSize, setStudySessionSize] = useState(30);
+  const [nickname, setNickname] = useState(user?.name || '');
+  const [savingNickname, setSavingNickname] = useState(false);
+  const [nicknameMessage, setNicknameMessage] = useState('');
   const navigate = useNavigate();
+  const localProfile = useLiveQuery(() => user ? db.users.get(user.$id) : undefined, [user?.$id]);
 
   const memberships = useLiveQuery(
     () => db.class_members.where('userId').equals(user!.$id).toArray(),
@@ -378,6 +383,15 @@ function StudentDashboard() {
     } finally {
       setJoining(false);
     }
+  };
+
+  const saveNickname = async () => {
+    const validation = nicknameValidationError(nickname);
+    if (validation) { setNicknameMessage(validation); return; }
+    setSavingNickname(true); setNicknameMessage('');
+    try { const updated = await updateNickname(nickname); setNickname(updated.name); setNicknameMessage('Nickname saved. You can change it again in 24 hours.'); }
+    catch (cause) { setNicknameMessage(cause instanceof Error ? cause.message : 'Could not update your nickname.'); }
+    finally { setSavingNickname(false); }
   };
 
   const stats = progress || {
@@ -610,6 +624,12 @@ function StudentDashboard() {
 
       <div className="student-section">
         <h2 className="student-title">Settings</h2>
+        <div className="student-card mt-3 space-y-3 p-4">
+          <div><h3 className="text-sm font-semibold text-slate-800">Class nickname</h3><p className="text-xs text-slate-500">Choose a school-appropriate name. You can change it once every 24 hours.</p></div>
+          <div className="flex flex-col gap-2 sm:flex-row"><input aria-label="Class nickname" value={nickname} maxLength={24} disabled={Boolean(localProfile && nextNicknameChangeAt(localProfile))} onChange={event => { setNickname(event.target.value); setNicknameMessage(''); }} className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2" /><Button size="sm" loading={savingNickname} disabled={Boolean(localProfile && nextNicknameChangeAt(localProfile)) || !nickname.trim() || nickname === localProfile?.name} onClick={() => void saveNickname()}>Save nickname</Button></div>
+          {localProfile && nextNicknameChangeAt(localProfile) && <p className="text-xs text-slate-500">Next change: {nextNicknameChangeAt(localProfile)?.toLocaleString()}</p>}
+          {nicknameMessage && <p className={`text-xs ${nicknameMessage.startsWith('Nickname saved') ? 'text-green-700' : 'text-red-700'}`}>{nicknameMessage}</p>}
+        </div>
         <div className="student-card mt-3 flex items-center justify-between gap-4 p-4">
           <div><h3 className="text-sm font-semibold text-slate-800">Cards per study session</h3><p className="text-xs text-slate-500">The default is 30. Choose between 5 and 100.</p></div>
           <input

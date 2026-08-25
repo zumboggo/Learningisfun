@@ -58,16 +58,42 @@ export async function setTextAssignmentDueDate(assignmentId: string, userId: str
   await addToQueue(userId, 'text_assignment', assignmentId, 'update', updated);
 }
 
-export async function addAnnotation(params: { textId: string; paragraphId: string; classId: string; authorId: string; type: TextAnnotation['type']; content: string }): Promise<TextAnnotation> {
+export async function addAnnotation(params: { textId: string; paragraphId: string; classId: string; authorId: string; type: TextAnnotation['type']; content: string; kind?: NonNullable<TextAnnotation['kind']>; selectedText?: string; tags?: string[]; parentId?: string | null; visibility?: NonNullable<TextAnnotation['visibility']> }): Promise<TextAnnotation> {
   const now = getTimestamp(); const id = ID.unique();
   const annotation: TextAnnotation = { $id: id, textId: params.textId, paragraphId: params.paragraphId, classId: params.classId,
-    authorId: params.authorId, anonymousLabel: `Reader ${id.slice(-4).toUpperCase()}`, type: params.type, content: params.content.trim(),
-    moderationStatus: 'visible', createdAt: now, updatedAt: now, syncStatus: 'local' };
+    authorId: params.authorId, anonymousLabel: `Reader ${params.authorId.slice(-4).toUpperCase()}`, type: params.type, kind: params.kind || 'annotation', content: params.content.trim(),
+    selectedText: params.selectedText?.trim() || '', tagsJson: JSON.stringify((params.tags || []).map(tag=>tag.trim().toLowerCase()).filter(Boolean).slice(0,8)), parentId: params.parentId || null, visibility: params.visibility || 'class',
+    moderationStatus: 'visible', flagged: false, flagReason: '', createdAt: now, updatedAt: now, syncStatus: 'local' };
   await db.text_annotations.put(annotation); await addToQueue(params.authorId, 'text_annotation', id, 'create', annotation); return annotation;
 }
 
+export async function updateAnnotation(annotationId: string, userId: string, content: string, tags: string[]): Promise<void> {
+  const annotation = await db.text_annotations.get(annotationId);
+  if (!annotation || annotation.authorId !== userId) throw new Error('You can only edit your own annotation');
+  const updated: TextAnnotation = { ...annotation, content: content.trim(), tagsJson: JSON.stringify(tags.map(tag=>tag.trim().toLowerCase()).filter(Boolean).slice(0,8)), updatedAt: getTimestamp(), syncStatus: 'local' };
+  await db.text_annotations.put(updated); await addToQueue(userId, 'text_annotation', annotationId, 'update', updated);
+}
+
+export async function deleteAnnotation(annotationId: string, userId: string): Promise<void> {
+  const annotation = await db.text_annotations.get(annotationId);
+  if (!annotation || annotation.authorId !== userId) throw new Error('You can only delete your own annotation');
+  const replies = await db.text_annotations.where('parentId').equals(annotationId).toArray();
+  await db.text_annotations.bulkDelete([annotationId, ...replies.map(reply=>reply.$id)]);
+  await addToQueue(userId, 'text_annotation', annotation.$id, 'delete', annotation);
+}
+
+export async function flagAnnotation(annotationId: string, reason: string): Promise<void> {
+  await executeLearningContent({ action: 'flagTextAnnotation', annotationId, reason: reason.trim() });
+}
+
+export async function moderateAnnotation(annotationId: string, command: 'hide'|'show'|'delete'|'dismissFlag'): Promise<void> {
+  await executeLearningContent({ action: 'moderateTextAnnotation', annotationId, command });
+  if (command === 'delete') await db.text_annotations.delete(annotationId);
+  else { const item=await db.text_annotations.get(annotationId); if(item)await db.text_annotations.put({...item,moderationStatus:command==='hide'?'hidden':command==='show'?'visible':item.moderationStatus,flagged:false,flagReason:''}); }
+}
+
 export async function canSeePeerAnnotations(textId: string, classId: string, userId: string): Promise<boolean> {
-  return (await db.text_annotations.where('[textId+classId]').equals([textId, classId]).and(a => a.authorId === userId).count()) >= ANNOTATIONS_TO_UNLOCK;
+  return (await db.text_annotations.where('[textId+classId]').equals([textId, classId]).and(a => a.authorId === userId && (a.visibility || 'class') === 'class' && (a.kind || 'annotation') === 'annotation').count()) >= ANNOTATIONS_TO_UNLOCK;
 }
 
 export async function syncTextsFromServer(classIds: string[], _userId: string, isTeacher: boolean): Promise<boolean> {

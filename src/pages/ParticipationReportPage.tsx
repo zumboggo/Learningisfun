@@ -105,6 +105,8 @@ export function ParticipationReportPage() {
                 <th className="px-3 py-2">Total posts</th>
                 <th className="px-3 py-2">Total words</th>
                 <th className="px-3 py-2">Upvotes received</th>
+                <th className="px-3 py-2">Annotations</th>
+                <th className="px-3 py-2">This week</th>
                 <th className="px-3 py-2">Response</th>
                 <th className="px-3 py-2">Words</th>
                 <th className="px-3 py-2">Flag</th>
@@ -127,6 +129,8 @@ export function ParticipationReportPage() {
                   <td className="px-3 py-2">{row.totalPosts}</td>
                   <td className="px-3 py-2">{row.totalWords}</td>
                   <td className="px-3 py-2">{row.totalUpvotes}</td>
+                  <td className="px-3 py-2">{row.annotationsTotal}</td>
+                  <td className="px-3 py-2">{row.annotationsThisWeek}</td>
                   <td className="px-3 py-2">{row.responseStatus}</td>
                   <td className="px-3 py-2">{row.responseWords}</td>
                   <td className="px-3 py-2">{row.belowMinimum ? 'Short' : ''}</td>
@@ -139,12 +143,12 @@ export function ParticipationReportPage() {
               ))}
               {!loading && rows.length === 0 && (
                 <tr>
-                  <td className="px-3 py-8 text-center text-gray-400" colSpan={14}>No students found</td>
+                  <td className="px-3 py-8 text-center text-gray-400" colSpan={16}>No students found</td>
                 </tr>
               )}
               {loading && (
                 <tr>
-                  <td className="px-3 py-8 text-center text-gray-400" colSpan={14}>Loading...</td>
+                  <td className="px-3 py-8 text-center text-gray-400" colSpan={16}>Loading...</td>
                 </tr>
               )}
             </tbody>

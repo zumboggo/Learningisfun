@@ -88,6 +88,8 @@ export async function findUserByEmail(email: string): Promise<User | null> {
       deviceId: doc.deviceId,
       lastSyncAt: doc.lastSyncAt,
       createdAt: doc.createdAt,
+      nicknameUpdatedAt: doc.nicknameUpdatedAt,
+      nicknameModerationStatus: doc.nicknameModerationStatus,
     };
     await db.users.put(user);
     return user;
@@ -120,6 +122,8 @@ export async function login(email: string, password: string): Promise<User> {
       deviceId: doc.deviceId,
       lastSyncAt: doc.lastSyncAt,
       createdAt: doc.createdAt,
+      nicknameUpdatedAt: doc.nicknameUpdatedAt,
+      nicknameModerationStatus: doc.nicknameModerationStatus,
     };
   } catch {
     user = {
@@ -211,8 +215,6 @@ export async function getCurrentUser(): Promise<User | null> {
   try {
     const appwriteUser = await account.get();
     const localUser = await db.users.get(appwriteUser.$id);
-    if (localUser) return localUser;
-
     try {
       const doc = await databases.getDocument(DATABASE_ID, COLLECTIONS.users, appwriteUser.$id);
       const user: User = {
@@ -223,11 +225,13 @@ export async function getCurrentUser(): Promise<User | null> {
         deviceId: doc.deviceId,
         lastSyncAt: doc.lastSyncAt,
         createdAt: doc.createdAt,
+        nicknameUpdatedAt: doc.nicknameUpdatedAt,
+        nicknameModerationStatus: doc.nicknameModerationStatus,
       };
       await db.users.put(user);
       return user;
     } catch {
-      return null;
+      return localUser || null;
     }
   } catch {
     const meta = await db.app_metadata.get('currentUserId');

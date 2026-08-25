@@ -53,6 +53,7 @@ export const COLLECTIONS = {
   presentation_links: 'presentation_links',
   peer_review_activities: 'peer_review_activities',
   presentation_peer_reviews: 'presentation_peer_reviews',
+  nickname_reports: 'nickname_reports',
 } as const;
 
 export const FUNCTION_IDS = {

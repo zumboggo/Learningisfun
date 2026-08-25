@@ -39,6 +39,7 @@ import { classLabel } from '@/utils/helpers';
 import { Markdown } from '@/components/common/Markdown';
 import { createPeerReviewActivity, listPeerReviewActivities } from '@/services/presentation-peer-review.service';
 import type { PeerReviewActivity } from '@/types';
+import { moderateNicknameReport, readClassNicknames, reportNickname, type ClassNickname, type NicknameReport } from '@/services/nickname.service';
 
 const PRESENTATION_FOLDER_URL = 'https://lifeplusworldwide-my.sharepoint.com/:f:/g/personal/david_hepting_cdischina_com/IgCKVDp4qOqzR5itb7Q70yDbAb7A95ZN6fG4XHD74ghu3lU?e=1W9www';
 
@@ -375,6 +376,7 @@ export function ClassDetailPage() {
       )}
 
       <ClassLinksPanel cls={cls} isOwner={Boolean(isOwner)} teacherId={user?.$id || ''} />
+      {!isParent && <ClassNicknamesPanel classId={cls.$id} userId={user?.$id || ''} isOwner={Boolean(isOwner)} />}
       <SimplePresentationLinksPanel links={presentationLinks || []} isOwner={Boolean(isOwner)} />
       {!isOwner && !isParent && <Link to="/writing" className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 hover:border-blue-300"><span><strong className="block">Writing Feedback</strong><span className="text-sm text-gray-500">Get private AI feedback on any piece of writing.</span></span><span aria-hidden="true">→</span></Link>}
 
@@ -698,6 +700,35 @@ function PeerReviewClassPanel({classId,isOwner,isParent}:{classId:string;isOwner
 function escapeCsv(value: string): string {
   if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
   return value;
+}
+
+function ClassNicknamesPanel({ classId, userId, isOwner }: { classId: string; userId: string; isOwner: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [nicknames, setNicknames] = useState<ClassNickname[]>([]);
+  const [reports, setReports] = useState<NicknameReport[]>([]);
+  const [reporting, setReporting] = useState<ClassNickname | null>(null);
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  const load = useCallback(async () => {
+    try { const result = await readClassNicknames(classId); setNicknames(result.nicknames); setReports(result.reports); }
+    catch { /* Cached class content remains usable while offline. */ }
+  }, [classId]);
+  const sendReport = async () => {
+    if (!reporting || reason.trim().length < 3) return;
+    setBusy(true); setMessage('');
+    try { await reportNickname(classId, reporting.userId, reason); setReporting(null); setReason(''); setMessage('Your teacher has been notified.'); }
+    catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Could not send this report.'); }
+    finally { setBusy(false); }
+  };
+  const moderate = async (reportId: string, command: 'dismiss' | 'reset') => { setBusy(true); try { await moderateNicknameReport(reportId, command); await load(); } finally { setBusy(false); } };
+  return <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+    <button className="flex w-full items-center justify-between p-4 text-left hover:bg-gray-50" onClick={() => { const next=!open;setOpen(next);if(next)void load(); }}><span className="text-lg font-semibold">{open ? '▾' : '▸'} Class nicknames</span>{isOwner && reports.length > 0 ? <span className="rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-800">{reports.length} flagged</span> : null}</button>
+    {open && <div className="space-y-3 border-t p-4">{message && <p className="text-sm text-blue-700">{message}</p>}{isOwner && reports.length > 0 && <div className="space-y-2 rounded-xl border border-red-200 bg-red-50 p-3"><h3 className="font-semibold text-red-900">Nickname reports</h3>{reports.map(report => <div key={report.$id} className="rounded-lg bg-white p-3 text-sm"><p><strong>{report.targetName || report.nickname}</strong> was reported: {report.reason}</p><p className="mt-1 text-xs text-gray-500">Reported by {report.reporterName || 'a student'}</p><div className="mt-2 flex gap-3 text-xs font-semibold"><button disabled={busy} className="text-red-700" onClick={() => void moderate(report.$id, 'reset')}>Reset nickname</button><button disabled={busy} className="text-gray-600" onClick={() => void moderate(report.$id, 'dismiss')}>Dismiss report</button></div></div>)}</div>}
+      <div className="grid gap-2 sm:grid-cols-2">{nicknames.map(item => <div key={item.userId} className="flex items-center justify-between rounded-lg border px-3 py-2"><span className="font-medium">{item.userId === userId ? `${item.nickname} (you)` : item.nickname}</span>{!isOwner && item.userId !== userId && <button className="text-xs text-red-600" onClick={() => { setReporting(item); setReason(''); setMessage(''); }}>Flag</button>}</div>)}</div>
+    </div>}
+    {reporting && <Modal open onClose={() => !busy && setReporting(null)} title="Report nickname"><div className="space-y-4"><p className="text-sm">Tell your teacher why <strong>{reporting.nickname}</strong> may be inappropriate.</p><textarea autoFocus rows={3} className="w-full rounded-lg border px-3 py-2" value={reason} onChange={event => setReason(event.target.value)} maxLength={500} /><Button variant="danger" className="w-full" loading={busy} disabled={reason.trim().length < 3} onClick={() => void sendReport()}>Send report</Button></div></Modal>}
+  </section>;
 }
 
 function AssignTextsToClassModal({ open, classId, teacherId, onClose }: { open: boolean; classId: string; teacherId: string; onClose: () => void }) {

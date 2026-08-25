@@ -8,6 +8,8 @@ export interface User {
   deviceId: string;
   lastSyncAt: string;
   createdAt: string;
+  nicknameUpdatedAt?: string;
+  nicknameModerationStatus?: 'visible' | 'reset';
 }
 
 export interface Class {
@@ -511,8 +513,15 @@ export interface TextAnnotation {
   authorId: string;
   anonymousLabel: string;
   type: 'observation' | 'question';
+  kind?: 'annotation' | 'highlight' | 'page_note' | 'reply';
   content: string;
+  selectedText?: string;
+  tagsJson?: string;
+  parentId?: string | null;
+  visibility?: 'class' | 'private';
   moderationStatus: 'visible' | 'hidden';
+  flagged?: boolean;
+  flagReason?: string;
   createdAt: string;
   updatedAt: string;
   syncStatus: SyncStatus;

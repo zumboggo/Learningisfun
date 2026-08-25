@@ -439,6 +439,8 @@ async function cacheUserProfile(userId: string): Promise<void> {
       deviceId: doc.deviceId,
       lastSyncAt: doc.lastSyncAt,
       createdAt: doc.createdAt,
+      nicknameUpdatedAt: doc.nicknameUpdatedAt,
+      nicknameModerationStatus: doc.nicknameModerationStatus,
     });
   } catch {
     // Profile not readable (permissions or offline) — the roster falls back to

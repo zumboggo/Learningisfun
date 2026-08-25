@@ -49,6 +49,8 @@ const COLLECTIONS = [
       S('deviceId', { required: true }),
       DATE('lastSyncAt', { required: true }),
       DATE('createdAt', { required: true }),
+      DATE('nicknameUpdatedAt', { required: false }),
+      ENUM('nicknameModerationStatus', ['visible', 'reset'], { required: false }),
     ],
     indexes: [
       { key: 'idx_email', type: 'key', attributes: ['email'] },
@@ -549,8 +551,13 @@ const COLLECTIONS = [
   },
   {
     id: 'text_annotations', name: 'Text Annotations',
-    attributes: [S('textId', { required: true }), S('paragraphId', { required: true }), S('classId', { required: true }), S('authorId', { required: true }), S('anonymousLabel', { required: true }), ENUM('type', ['observation','question'], { required: true }), TXT('content', { required: true }), ENUM('moderationStatus', ['visible','hidden'], { required: true }), DATE('createdAt', { required: true }), DATE('updatedAt', { required: true })],
-    indexes: [{ key: 'idx_text_class', type: 'key', attributes: ['textId','classId'] }, { key: 'idx_paragraphId', type: 'key', attributes: ['paragraphId'] }, { key: 'idx_authorId', type: 'key', attributes: ['authorId'] }],
+    attributes: [S('textId', { required: true }), S('paragraphId', { required: true }), S('classId', { required: true }), S('authorId', { required: true }), S('anonymousLabel', { required: true }), ENUM('type', ['observation','question'], { required: true }), ENUM('kind', ['annotation','highlight','page_note','reply'], { required: false }), TXT('content', { required: true }), TXT('selectedText', { required: false }), TXT('tagsJson', { required: false }), S('parentId', { required: false }), ENUM('visibility', ['class','private'], { required: false }), ENUM('moderationStatus', ['visible','hidden'], { required: true }), BOOL('flagged', { required: false }), TXT('flagReason', { required: false }), DATE('createdAt', { required: true }), DATE('updatedAt', { required: true })],
+    indexes: [{ key: 'idx_text_class', type: 'key', attributes: ['textId','classId'] }, { key: 'idx_paragraphId', type: 'key', attributes: ['paragraphId'] }, { key: 'idx_authorId', type: 'key', attributes: ['authorId'] }, { key: 'idx_parentId', type: 'key', attributes: ['parentId'] }, { key: 'idx_flagged', type: 'key', attributes: ['flagged'] }],
+  },
+  {
+    id: 'nickname_reports', name: 'Nickname Reports',
+    attributes: [S('classId', { required: true }), S('reporterId', { required: true }), S('targetUserId', { required: true }), S('nickname', { required: true }), TXT('reason', { required: true }), ENUM('status', ['open','dismissed','resolved'], { required: true }), S('resolvedBy', { required: false }), DATE('createdAt', { required: true }), DATE('resolvedAt', { required: false })],
+    indexes: [{ key: 'idx_classId', type: 'key', attributes: ['classId'] }, { key: 'idx_targetUserId', type: 'key', attributes: ['targetUserId'] }, { key: 'idx_status', type: 'key', attributes: ['status'] }, { key: 'idx_reporter_target_class', type: 'key', attributes: ['reporterId','targetUserId','classId'] }],
   },
   {
     id: 'text_discussion_posts', name: 'Discussion Posts',
@@ -655,6 +662,18 @@ async function main() {
       await createIndex(col.id, idx);
     }
   }
+
+  // Profile names are changed only through the authenticated function, which
+  // enforces nickname filtering and the 24-hour cooldown. Registration still
+  // needs create access and class rosters still need read access.
+  await databases.updateCollection(
+    DATABASE_ID,
+    'users',
+    'Users',
+    [Permission.read(Role.users()), Permission.create(Role.users())],
+    false,
+  );
+  console.log('Hardened users collection: authenticated read/create only');
 
   console.log('\nDone. Database ID:', DATABASE_ID);
 }

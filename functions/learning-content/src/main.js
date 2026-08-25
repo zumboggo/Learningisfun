@@ -5,6 +5,17 @@ const studentCollections = new Set(['quiz_attempts', 'writing_submissions', 'pee
 const teacherCollections = new Set(['classes', 'deck_assignments', 'quizzes', 'quiz_assignments', 'quiz_questions', 'writing_prompts', 'writing_prompt_assignments', 'texts', 'text_assignments', 'text_paragraphs']);
 const clean = document => { const output = { ...document }; for (const key of Object.keys(output)) if (key.startsWith('$')) delete output[key]; output.$id = document.$id; return output; };
 const membershipId = (classId, userId) => `member_${createHash('sha256').update(`${classId}:${userId}`).digest('hex').slice(0, 29)}`;
+const nicknameTokens = value => String(value || '').normalize('NFKD').toLowerCase().replace(/[013457@$!]/g, character => ({ '0':'o','1':'i','3':'e','4':'a','5':'s','7':'t','@':'a','$':'s','!':'i' }[character] || character)).split(/[^a-z]+/).filter(Boolean);
+const nicknameError = value => {
+  const nickname = String(value || '').trim().replace(/\s+/g, ' ');
+  if (nickname.length < 2 || nickname.length > 24) return 'Use between 2 and 24 characters';
+  if (!/^[\p{L}\p{N} ._'’-]+$/u.test(nickname)) return 'Nickname contains unsupported characters';
+  const tokens = nicknameTokens(nickname), compact = tokens.join('');
+  const exact = new Set(['porn','sex','dick','penis','vagina','whore','slut','retard','nazi','hitler','kkk','teacher','admin','administrator']);
+  const strong = ['fuck','shit','bitch','cunt','nigger','nigga','faggot','asshole','pornhub'];
+  if (tokens.some(token=>exact.has(token)) || strong.some(term=>compact.includes(term))) return 'Please choose a school-appropriate nickname';
+  return null;
+};
 const ensureSingleMembership = async (db, databaseId, classId, memberUserId, role) => {
   const existing = await db.listDocuments(databaseId, 'class_members', [Query.equal('classId', classId), Query.equal('userId', memberUserId), Query.limit(500)]);
   if (existing.total) {
@@ -35,6 +46,58 @@ export default async ({ req, res, error }) => {
     const profile = await db.getDocument(databaseId, 'users', userId);
     const memberships = await db.listDocuments(databaseId, 'class_members', [Query.equal('userId', userId), Query.limit(500)]);
     const memberClassIds = new Set(memberships.documents.map(row => row.classId));
+
+    if (body.action === 'updateNickname') {
+      if (profile.role !== 'student') return res.json({ error: 'Only students can change nicknames' }, 403);
+      const nickname = String(body.nickname || '').trim().replace(/\s+/g, ' '), invalid = nicknameError(nickname);
+      if (invalid) return res.json({ error: invalid }, 400);
+      if (profile.nicknameUpdatedAt && Date.now() - new Date(profile.nicknameUpdatedAt).getTime() < 24 * 60 * 60 * 1000) return res.json({ error: 'You can change your nickname once every 24 hours' }, 429);
+      const updated = await db.updateDocument(databaseId, 'users', userId, { name: nickname, nicknameUpdatedAt: new Date().toISOString(), nicknameModerationStatus: 'visible' });
+      return res.json({ profile: clean(updated) });
+    }
+
+    if (body.action === 'readClassNicknames') {
+      const targetClass = await db.getDocument(databaseId, 'classes', body.classId);
+      const owns = profile.role === 'teacher' && targetClass.teacherId === userId;
+      if (!memberClassIds.has(body.classId) && !owns) return res.json({ error: 'Not enrolled' }, 403);
+      const roster = await db.listDocuments(databaseId, 'class_members', [Query.equal('classId', body.classId), Query.equal('role', 'student'), Query.limit(500)]);
+      const ids = [...new Set(roster.documents.map(row=>row.userId))];
+      const users = ids.length ? await db.listDocuments(databaseId, 'users', [Query.equal('$id', ids), Query.limit(500)]) : { documents: [] };
+      const nicknames = users.documents.map(row=>({userId:row.$id,nickname:row.name || 'Student'})).sort((a,b)=>a.nickname.localeCompare(b.nickname));
+      let reports = [];
+      if (owns) {
+        const result = await db.listDocuments(databaseId, 'nickname_reports', [Query.equal('classId', body.classId), Query.equal('status', 'open'), Query.limit(500)]);
+        const names = new Map(users.documents.map(row=>[row.$id,row.name || 'Student']));
+        reports = result.documents.map(row=>({...clean(row),targetName:names.get(row.targetUserId)||row.nickname,reporterName:names.get(row.reporterId)||'Student'}));
+      }
+      return res.json({ nicknames, reports, isTeacher: owns });
+    }
+
+    if (body.action === 'reportNickname') {
+      if (profile.role !== 'student' || !memberClassIds.has(body.classId)) return res.json({ error: 'Student class membership required' }, 403);
+      if (body.targetUserId === userId) return res.json({ error: 'You cannot report your own nickname' }, 400);
+      const targetMembership = await db.listDocuments(databaseId, 'class_members', [Query.equal('classId', body.classId), Query.equal('userId', body.targetUserId), Query.equal('role', 'student'), Query.limit(1)]);
+      if (!targetMembership.total) return res.json({ error: 'That student is not in this class' }, 404);
+      const reason = String(body.reason || '').trim().slice(0,500);
+      if (reason.length < 3) return res.json({ error: 'Please briefly explain the concern' }, 400);
+      const prior = await db.listDocuments(databaseId, 'nickname_reports', [Query.equal('classId', body.classId), Query.equal('reporterId', userId), Query.equal('targetUserId', body.targetUserId), Query.equal('status', 'open'), Query.limit(1)]);
+      if (prior.total) return res.json({ ok: true });
+      const target = await db.getDocument(databaseId, 'users', body.targetUserId);
+      await db.createDocument(databaseId, 'nickname_reports', ID.unique(), { classId:body.classId,reporterId:userId,targetUserId:target.$id,nickname:target.name || 'Student',reason,status:'open',createdAt:new Date().toISOString() });
+      return res.json({ ok: true });
+    }
+
+    if (body.action === 'moderateNicknameReport') {
+      if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
+      const report = await db.getDocument(databaseId, 'nickname_reports', body.reportId);
+      const targetClass = await db.getDocument(databaseId, 'classes', report.classId);
+      if (targetClass.teacherId !== userId) return res.json({ error: 'Not the class owner' }, 403);
+      if (!['dismiss','reset'].includes(body.command)) return res.json({ error: 'Invalid moderation command' }, 400);
+      const now = new Date().toISOString();
+      if (body.command === 'reset') await db.updateDocument(databaseId, 'users', report.targetUserId, { name:`Student ${report.targetUserId.slice(-4).toUpperCase()}`,nicknameModerationStatus:'reset',nicknameUpdatedAt:now });
+      await db.updateDocument(databaseId, 'nickname_reports', report.$id, { status:body.command==='reset'?'resolved':'dismissed',resolvedBy:userId,resolvedAt:now });
+      return res.json({ ok: true });
+    }
 
     if (body.action === 'joinClass') {
       const role = body.role === 'parent' ? 'parent' : 'student';
@@ -406,6 +469,38 @@ export default async ({ req, res, error }) => {
       return res.json({ activity: clean(activity), roster, reviews: [...ownWritten,...received], writtenCount: written.length, feedbackUnlocked, isTeacher: false });
     }
 
+    if (body.action === 'readAnnotationReport') {
+      if (profile.role !== 'teacher') return res.json({error:'Teacher role required'},403);
+      const targetClass=await db.getDocument(databaseId,'classes',body.classId);
+      if(targetClass.teacherId!==userId)return res.json({error:'Not the class owner'},403);
+      const result=await db.listDocuments(databaseId,'text_annotations',[Query.equal('classId',body.classId),Query.limit(5000)]),week=new Date();
+      week.setDate(week.getDate()-((week.getDay()+6)%7));week.setHours(0,0,0,0);
+      const counts=new Map();
+      for(const row of result.documents){if(row.moderationStatus!=='visible'||(row.visibility||'class')==='private')continue;const value=counts.get(row.authorId)||{userId:row.authorId,total:0,thisWeek:0};value.total++;if(new Date(row.createdAt)>=week)value.thisWeek++;counts.set(row.authorId,value)}
+      return res.json({counts:[...counts.values()]});
+    }
+
+    if (body.action === 'flagTextAnnotation') {
+      const annotation = await db.getDocument(databaseId, 'text_annotations', body.annotationId);
+      if (!memberClassIds.has(annotation.classId) || annotation.authorId === userId || (annotation.visibility || 'class') === 'private') return res.json({ error: 'This annotation cannot be reported' }, 403);
+      const reason = String(body.reason || '').trim().slice(0,500);
+      if (reason.length < 3) return res.json({ error: 'Please briefly explain the concern' }, 400);
+      await db.updateDocument(databaseId, 'text_annotations', annotation.$id, { flagged:true,flagReason:reason,updatedAt:new Date().toISOString() });
+      return res.json({ ok:true });
+    }
+
+    if (body.action === 'moderateTextAnnotation') {
+      if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
+      const annotation = await db.getDocument(databaseId, 'text_annotations', body.annotationId);
+      const targetClass = await db.getDocument(databaseId, 'classes', annotation.classId);
+      if (targetClass.teacherId !== userId) return res.json({ error: 'Not the class owner' }, 403);
+      if (body.command === 'delete') { const replies=await db.listDocuments(databaseId,'text_annotations',[Query.equal('parentId',annotation.$id),Query.limit(500)]);for(const reply of replies.documents)await db.deleteDocument(databaseId,'text_annotations',reply.$id);await db.deleteDocument(databaseId,'text_annotations',annotation.$id);return res.json({ok:true}); }
+      if (!['hide','show','dismissFlag'].includes(body.command)) return res.json({ error:'Invalid moderation command' },400);
+      const patch = body.command === 'hide' ? {moderationStatus:'hidden'} : body.command === 'show' ? {moderationStatus:'visible'} : {};
+      await db.updateDocument(databaseId,'text_annotations',annotation.$id,{...patch,flagged:false,flagReason:'',updatedAt:new Date().toISOString()});
+      return res.json({ok:true});
+    }
+
     if (body.action === 'readTexts') {
       const requested = Array.isArray(body.classIds) ? body.classIds : [];
       let allowedClassIds = requested.filter(classId => memberClassIds.has(classId));
@@ -427,8 +522,11 @@ export default async ({ req, res, error }) => {
         db.listDocuments(databaseId, 'text_annotations', [Query.equal('textId', textIds), Query.equal('classId', allowedClassIds), Query.limit(1000)]),
       ]);
       const ownCounts = new Map();
-      for (const row of annotationResult.documents) if (row.authorId === userId) ownCounts.set(`${row.textId}:${row.classId}`, (ownCounts.get(`${row.textId}:${row.classId}`) || 0) + 1);
-      const annotations = annotationResult.documents.filter(row => profile.role === 'teacher' || profile.role === 'parent' || row.authorId === userId || (ownCounts.get(`${row.textId}:${row.classId}`) || 0) >= 3).map(row => { const projected = clean(row); if (profile.role !== 'teacher' && row.authorId !== userId) delete projected.authorId; return projected; });
+      for (const row of annotationResult.documents) if (row.authorId === userId && (row.visibility || 'class') === 'class' && (row.kind || 'annotation') === 'annotation') ownCounts.set(`${row.textId}:${row.classId}`, (ownCounts.get(`${row.textId}:${row.classId}`) || 0) + 1);
+      const annotations = annotationResult.documents.filter(row => {
+        if ((row.visibility || 'class') === 'private') return row.authorId === userId;
+        return profile.role === 'teacher' || profile.role === 'parent' || row.authorId === userId || (ownCounts.get(`${row.textId}:${row.classId}`) || 0) >= 3;
+      }).map(row => { const projected = clean(row); if (profile.role !== 'teacher' && row.authorId !== userId) { delete projected.authorId; delete projected.flagReason; } return projected; });
       return res.json({ assignments: assignments.map(clean), texts: textResult.documents.map(clean), paragraphs: paragraphResult.documents.map(clean), annotations });
     }
 
@@ -498,7 +596,28 @@ export default async ({ req, res, error }) => {
       data.userId = userId; if (prior.total) await db.updateDocument(databaseId, collection, prior.documents[0].$id, data); else await db.createDocument(databaseId, collection, id || ID.unique(), data);
       await db.updateDocument(databaseId, 'text_discussion_posts', post.$id, { score: post.score - oldValue + data.value, updatedAt: new Date().toISOString() }); return res.json({ ok: true });
     }
-    if (operation === 'delete') { await db.deleteDocument(databaseId, collection, id); return res.json({ ok: true }); }
+    if (collection === 'text_annotations') {
+      const textId = data.textId || existing?.textId, annotationClassId = data.classId || existing?.classId;
+      const assignment = await db.listDocuments(databaseId,'text_assignments',[Query.equal('textId',textId),Query.equal('classId',annotationClassId),Query.limit(1)]);
+      if (!assignment.total) return res.json({error:'Text is not assigned to this class'},403);
+      if (operation === 'create') {
+        data.authorId=userId;data.anonymousLabel=`Reader ${userId.slice(-4).toUpperCase()}`;data.createdAt=new Date().toISOString();data.moderationStatus='visible';data.flagged=false;data.flagReason='';
+        if (!['annotation','highlight','page_note','reply'].includes(data.kind || 'annotation')) return res.json({error:'Invalid annotation kind'},400);
+        if (!['class','private'].includes(data.visibility || 'class')) return res.json({error:'Invalid annotation visibility'},400);
+        if (data.kind === 'highlight') data.visibility='private';
+        if (data.parentId) { const parent=await db.getDocument(databaseId,'text_annotations',data.parentId);if(parent.textId!==textId||parent.classId!==annotationClassId||parent.parentId)return res.json({error:'Invalid reply target'},400);data.kind='reply';data.paragraphId=parent.paragraphId;data.selectedText=''; }
+      } else if (existing && !isTeacher) {
+        data.textId=existing.textId;data.classId=existing.classId;data.paragraphId=existing.paragraphId;data.authorId=existing.authorId;data.anonymousLabel=existing.anonymousLabel;data.kind=existing.kind;data.parentId=existing.parentId;data.visibility=existing.visibility;data.moderationStatus=existing.moderationStatus;data.flagged=existing.flagged;data.flagReason=existing.flagReason;data.createdAt=existing.createdAt;
+      }
+      let tags=[];try{tags=JSON.parse(data.tagsJson||'[]')}catch{return res.json({error:'Invalid annotation tags'},400)}
+      if(!Array.isArray(tags)||tags.length>8||tags.some(tag=>typeof tag!=='string'||tag.length>40))return res.json({error:'Use up to 8 short tags'},400);
+      data.tagsJson=JSON.stringify([...new Set(tags.map(tag=>tag.trim().toLowerCase()).filter(Boolean))]);data.content=String(data.content||'').trim().slice(0,5000);data.selectedText=String(data.selectedText||'').trim().slice(0,2000);data.updatedAt=new Date().toISOString();
+      if(!data.content)return res.json({error:'Annotation text is required'},400);
+    }
+    if (operation === 'delete') {
+      if(collection==='text_annotations'){const replies=await db.listDocuments(databaseId,collection,[Query.equal('parentId',id),Query.limit(500)]);for(const reply of replies.documents)await db.deleteDocument(databaseId,collection,reply.$id);}
+      await db.deleteDocument(databaseId, collection, id); return res.json({ ok: true });
+    }
     try { await db.createDocument(databaseId, collection, id, data); } catch { await db.updateDocument(databaseId, collection, id, data); }
     return res.json({ ok: true });
   } catch (err) { error(err.message); return res.json({ error: 'Request failed' }, 500); }
