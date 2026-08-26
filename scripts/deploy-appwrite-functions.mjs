@@ -21,7 +21,7 @@ const client = new Client().setEndpoint(endpoint).setProject(projectId).setKey(a
 const functions = new Functions(client);
 const root = resolve(import.meta.dirname, '..');
 
-const definitions = [
+const allDefinitions = [
   {
     id: 'learning-content',
     name: 'Learning Content',
@@ -40,6 +40,9 @@ const definitions = [
     },
   },
 ];
+const requestedIds = new Set(process.argv.slice(2));
+const definitions = requestedIds.size ? allDefinitions.filter(definition => requestedIds.has(definition.id)) : allDefinitions;
+if (requestedIds.size && definitions.length !== requestedIds.size) throw new Error(`Unknown function ID. Available: ${allDefinitions.map(definition => definition.id).join(', ')}`);
 
 async function ensureFunction(definition) {
   try {

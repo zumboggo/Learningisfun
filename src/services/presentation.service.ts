@@ -3,6 +3,7 @@ import { executeLearningContent } from '@/services/learning-content.service';
 import type { ClassSession, PresentationLink } from '@/types';
 
 export type LiveQuestionType = 'mc' | 'short' | 'paragraph' | 'cloze';
+export type WritingPromptSize = 'standard' | 'large' | 'extra-large';
 export interface LiveQuestionDraft { type: LiveQuestionType; text: string; options: string[]; answer: string; }
 export interface LiveQuestion extends LiveQuestionDraft { id: string; sortOrder: number; }
 export interface LivePresentationState {
@@ -17,6 +18,8 @@ export interface LivePresentationState {
   responses: Array<{ id: string; answer: string; label: string }>;
   isTeacher: boolean;
   allowResubmission: boolean;
+  promptSize?: WritingPromptSize;
+  exampleResponse?: string;
 }
 
 export async function syncPresentationLinks(classIds: string[]): Promise<PresentationLink[]> {
@@ -47,8 +50,14 @@ export async function createLivePresentation(classId: string, title: string, que
   return result.sessionId;
 }
 
-export async function createWritingPrompt(classId: string, prompt: string, allowResubmission = false): Promise<string> {
-  return createLivePresentation(classId, 'Writing Prompt', [{ type: 'paragraph', text: prompt.trim(), options: [], answer: '' }], allowResubmission);
+export async function createWritingPrompt(classId: string, prompt: string, allowResubmission = false, promptSize: WritingPromptSize = 'large', exampleResponse = ''): Promise<string> {
+  const result = await executeLearningContent<{ sessionId: string }>({ action: 'createLivePresentation', classId, title: 'Writing Prompt', questions: [{ type: 'paragraph', text: prompt.trim(), options: [], answer: '' }], allowResubmission, promptSize, exampleResponse: exampleResponse.trim() });
+  return result.sessionId;
+}
+
+export async function updateWritingPrompt(sessionId: string, prompt: string, allowResubmission: boolean, promptSize: WritingPromptSize, exampleResponse: string): Promise<void> {
+  const result = await executeLearningContent<{ session: ClassSession }>({ action: 'updateWritingPrompt', sessionId, prompt: prompt.trim(), allowResubmission, promptSize, exampleResponse: exampleResponse.trim() });
+  await db.class_sessions.put({ ...result.session, syncStatus: 'synced' });
 }
 
 export async function readLivePresentation(sessionId: string): Promise<LivePresentationState> {

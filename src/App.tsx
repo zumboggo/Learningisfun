@@ -23,6 +23,7 @@ import { ClassDetailPage } from '@/pages/ClassDetailPage';
 import { ClassSessionPage } from '@/pages/ClassSessionPage';
 import { TodayNotesPage } from '@/pages/TodayNotesPage';
 import { TextPresentPage } from '@/pages/teacher/TextPresentPage';
+import { ClassTimerPage } from '@/pages/teacher/ClassTimerPage';
 
 import { ParticipationReportPage } from '@/pages/ParticipationReportPage';
 import { FlashcardAnalyticsPage } from '@/pages/FlashcardAnalyticsPage';
@@ -126,6 +127,7 @@ export default function App() {
           <Route path="/classes/:classId/decks/:deckId/progress" element={<ProtectedRoute><TeacherRoute><FlashcardAnalyticsPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/classes/:classId/students/:studentId/progress" element={<ProtectedRoute><TeacherRoute><StudentProgressPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/classes/:classId/notes/today" element={<FullscreenTeacherRoute><TodayNotesPage /></FullscreenTeacherRoute>} />
+          <Route path="/classes/:classId/timer" element={<FullscreenTeacherRoute><ClassTimerPage /></FullscreenTeacherRoute>} />
 
           <Route path="/settings" element={<ProtectedRoute><TeacherRoute><TeacherSettingsPage /></TeacherRoute></ProtectedRoute>} />
 

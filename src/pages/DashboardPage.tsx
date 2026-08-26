@@ -334,7 +334,7 @@ function StudentDashboard() {
   const doNow = useLiveQuery(async () => {
     if (!user || classIds.length === 0) return { sessions: [], decks: [] };
     const [sessions, deckAssignments] = await Promise.all([
-      db.class_sessions.where('classId').anyOf(classIds).and(s => s.status === 'active').toArray(),
+      db.class_sessions.where('classId').anyOf(classIds).and(s => s.status === 'active' && s.discussionType !== 'presentation').toArray(),
       db.deck_assignments.where('classId').anyOf(classIds).toArray(),
     ]);
     const decks: DeckAction[] = [];
