@@ -33,6 +33,8 @@ import type {
   LearningText,
   TextAssignment,
   TextParagraph,
+  TextVersion,
+  TextVersionParagraph,
   TextAnnotation,
   TextDiscussionPost,
   TextDiscussionVote,
@@ -71,6 +73,8 @@ const db = new Dexie('LearningIsFunDB') as Dexie & {
   texts: EntityTable<LearningText, '$id'>;
   text_assignments: EntityTable<TextAssignment, '$id'>;
   text_paragraphs: EntityTable<TextParagraph, '$id'>;
+  text_versions: EntityTable<TextVersion, '$id'>;
+  text_version_paragraphs: EntityTable<TextVersionParagraph, '$id'>;
   text_annotations: EntityTable<TextAnnotation, '$id'>;
   text_discussion_posts: EntityTable<TextDiscussionPost, '$id'>;
   text_discussion_votes: EntityTable<TextDiscussionVote, '$id'>;
@@ -327,6 +331,11 @@ db.version(11).stores({
 db.version(12).stores({
   users: '$id, email, role, nicknameUpdatedAt',
   text_annotations: '$id, textId, paragraphId, classId, authorId, parentId, flagged, createdAt, [textId+classId], syncStatus',
+});
+
+db.version(13).stores({
+  text_versions: '$id, textId, level, status, [textId+level]',
+  text_version_paragraphs: '$id, versionId, textId, originalParagraphId, [versionId+sortOrder]',
 });
 
 export { db };

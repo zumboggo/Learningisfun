@@ -505,6 +505,30 @@ export interface TextParagraph {
   content: string;
 }
 
+export type TextSupportLevel = 'supported' | 'highly_supported';
+
+export interface TextVersion {
+  $id: string;
+  textId: string;
+  level: TextSupportLevel;
+  status: 'generating' | 'ready' | 'failed';
+  requestedBy: string;
+  model: string;
+  promptVersion: string;
+  error?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TextVersionParagraph {
+  $id: string;
+  versionId: string;
+  textId: string;
+  originalParagraphId: string;
+  sortOrder: number;
+  content: string;
+}
+
 export interface TextAnnotation {
   $id: string;
   textId: string;

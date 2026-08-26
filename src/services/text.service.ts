@@ -5,7 +5,7 @@ import { addToQueue } from '@/services/sync.service';
 import { FUNCTION_IDS } from '@/lib/appwrite';
 import { executeLearningContent } from '@/services/learning-content.service';
 import { getTimestamp } from '@/utils/helpers';
-import type { LearningText, TextAnnotation, TextAssignment, TextParagraph } from '@/types';
+import type { LearningText, TextAnnotation, TextAssignment, TextParagraph, TextSupportLevel, TextVersion, TextVersionParagraph } from '@/types';
 
 export const ANNOTATIONS_TO_UNLOCK = 3;
 
@@ -110,15 +110,24 @@ export async function syncTextsFromServer(classIds: string[], _userId: string, i
   } catch { return false; }
 }
 
+export async function generateSharedTextVersion(textId: string, level: TextSupportLevel): Promise<TextVersion> {
+  const result = await executeLearningContent<{ version: TextVersion; paragraphs: TextVersionParagraph[] }>({ action: 'generateTextVersion', textId, level });
+  await db.text_versions.put(result.version);
+  if (result.paragraphs.length) await db.text_version_paragraphs.bulkPut(result.paragraphs);
+  return result.version;
+}
+
 export async function syncTextFromServer(textId: string, classId: string): Promise<boolean> {
   if (!FUNCTION_IDS.learningContent || !textId || !classId) return true;
   try {
-    const result = await executeLearningContent<{ assignments: TextAssignment[]; texts: LearningText[]; paragraphs: TextParagraph[]; annotations: TextAnnotation[] }>({
+    const result = await executeLearningContent<{ assignments: TextAssignment[]; texts: LearningText[]; paragraphs: TextParagraph[]; versions?: TextVersion[]; versionParagraphs?: TextVersionParagraph[]; annotations: TextAnnotation[] }>({
       action: 'readTexts', classIds: [classId], textId, includeContent: true,
     });
     if (result.assignments.length) await db.text_assignments.bulkPut(result.assignments);
     for (const text of result.texts) await db.texts.put({ ...text, syncStatus: 'synced' });
     for (const paragraph of result.paragraphs) await db.text_paragraphs.put(paragraph);
+    for (const version of result.versions || []) await db.text_versions.put(version);
+    for (const paragraph of result.versionParagraphs || []) await db.text_version_paragraphs.put(paragraph);
     for (const annotation of result.annotations) await db.text_annotations.put({ ...annotation, syncStatus: 'synced' });
     return true;
   } catch { return false; }

@@ -550,6 +550,16 @@ const COLLECTIONS = [
     indexes: [{ key: 'idx_textId', type: 'key', attributes: ['textId'] }, { key: 'idx_text_order', type: 'key', attributes: ['textId','sortOrder'] }],
   },
   {
+    id: 'text_versions', name: 'Text Support Versions',
+    attributes: [S('textId', { required: true }), ENUM('level', ['supported','highly_supported'], { required: true }), ENUM('status', ['generating','ready','failed'], { required: true }), S('requestedBy', { required: true }), S('model', { required: true }), S('promptVersion', { required: true }), TXT('error', { required: false }), DATE('createdAt', { required: true }), DATE('updatedAt', { required: true })],
+    indexes: [{ key: 'idx_textId', type: 'key', attributes: ['textId'] }, { key: 'idx_status', type: 'key', attributes: ['status'] }, { key: 'idx_text_level', type: 'unique', attributes: ['textId','level'] }],
+  },
+  {
+    id: 'text_version_paragraphs', name: 'Text Support Paragraphs',
+    attributes: [S('versionId', { required: true }), S('textId', { required: true }), S('originalParagraphId', { required: true }), INT('sortOrder', { required: true }), TXT('content', { required: true })],
+    indexes: [{ key: 'idx_versionId', type: 'key', attributes: ['versionId'] }, { key: 'idx_textId', type: 'key', attributes: ['textId'] }, { key: 'idx_originalParagraphId', type: 'key', attributes: ['originalParagraphId'] }, { key: 'idx_version_order', type: 'unique', attributes: ['versionId','sortOrder'] }],
+  },
+  {
     id: 'text_annotations', name: 'Text Annotations',
     attributes: [S('textId', { required: true }), S('paragraphId', { required: true }), S('classId', { required: true }), S('authorId', { required: true }), S('anonymousLabel', { required: true }), ENUM('type', ['observation','question'], { required: true }), ENUM('kind', ['annotation','highlight','page_note','reply'], { required: false }), TXT('content', { required: true }), TXT('selectedText', { required: false }), TXT('tagsJson', { required: false }), S('parentId', { required: false }), ENUM('visibility', ['class','private'], { required: false }), ENUM('moderationStatus', ['visible','hidden'], { required: true }), BOOL('flagged', { required: false }), TXT('flagReason', { required: false }), DATE('createdAt', { required: true }), DATE('updatedAt', { required: true })],
     indexes: [{ key: 'idx_text_class', type: 'key', attributes: ['textId','classId'] }, { key: 'idx_paragraphId', type: 'key', attributes: ['paragraphId'] }, { key: 'idx_authorId', type: 'key', attributes: ['authorId'] }, { key: 'idx_parentId', type: 'key', attributes: ['parentId'] }, { key: 'idx_flagged', type: 'key', attributes: ['flagged'] }],

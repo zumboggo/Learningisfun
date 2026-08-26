@@ -36,6 +36,57 @@ const deleteQuizCascade = async (db, databaseId, quizId) => {
   await db.deleteDocument(databaseId, 'quizzes', quizId);
 };
 
+const TEXT_SUPPORT_PROMPT_VERSION = '2026-08-26-v1';
+const textVersionId = (textId, level) => `tv_${createHash('sha256').update(`${textId}:${level}`).digest('hex').slice(0, 30)}`;
+const textVersionParagraphId = (versionId, paragraphId) => `tvp_${createHash('sha256').update(`${versionId}:${paragraphId}`).digest('hex').slice(0, 28)}`;
+const parseAiJson = value => {
+  const text = String(value || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+  return JSON.parse(text);
+};
+const paragraphBatches = paragraphs => {
+  const batches = []; let current = [], size = 0;
+  for (const paragraph of paragraphs) {
+    const nextSize = String(paragraph.content || '').length + 100;
+    if (current.length && size + nextSize > 12000) { batches.push(current); current = []; size = 0; }
+    current.push(paragraph); size += nextSize;
+  }
+  if (current.length) batches.push(current);
+  return batches;
+};
+async function adaptTextParagraphs(paragraphs, level) {
+  if (!process.env.OPENROUTER_API_KEY) throw new Error('AI text support is not configured');
+  const guidance = level === 'highly_supported'
+    ? 'Use very clear, direct English, mostly short sentences, and explicitly identify pronoun referents and implied relationships. Keep essential academic or literary terms and briefly explain them in context.'
+    : 'Use clearer sentence structure and moderately simpler English while retaining the original detail, tone, sequence, and important academic or literary vocabulary.';
+  const output = [];
+  for (const batch of paragraphBatches(paragraphs)) {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini',
+        temperature: 0.2,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: `You adapt grade-level classroom readings for multilingual secondary students. ${guidance} Preserve every fact, name, event, argument, theme, and paragraph boundary. Do not summarize, censor, add facts, add headings, or answer questions about the text. For literary writing, preserve meaningful imagery and explain difficult meaning through clearer wording rather than deleting it. Return only JSON: {"paragraphs":[{"id":"the supplied id","content":"adapted paragraph"}]}. Return exactly one item for every supplied paragraph in the same order.` },
+          { role: 'user', content: JSON.stringify({ paragraphs: batch.map(row => ({ id: row.$id, content: row.content })) }) },
+        ],
+      }),
+    });
+    if (!response.ok) throw new Error(`AI provider returned ${response.status}`);
+    const body = await response.json();
+    const result = parseAiJson(body.choices?.[0]?.message?.content || '{}');
+    if (!Array.isArray(result.paragraphs) || result.paragraphs.length !== batch.length) throw new Error('AI returned an incomplete text version');
+    const byId = new Map(result.paragraphs.map(row => [String(row.id), String(row.content || '').trim()]));
+    for (const paragraph of batch) {
+      const content = byId.get(paragraph.$id);
+      if (!content) throw new Error('AI omitted a paragraph');
+      output.push({ originalParagraphId: paragraph.$id, sortOrder: paragraph.sortOrder, content });
+    }
+  }
+  return output;
+}
+
 export default async ({ req, res, error }) => {
   try {
     const userId = req.headers['x-appwrite-user-id'];
@@ -530,6 +581,54 @@ export default async ({ req, res, error }) => {
       return res.json({ok:true});
     }
 
+    if (body.action === 'generateTextVersion') {
+      if (profile.role === 'parent') return res.json({ error: 'Students or teachers can request reading support' }, 403);
+      const level = String(body.level || '');
+      if (!['supported','highly_supported'].includes(level)) return res.json({ error: 'Invalid support level' }, 400);
+      const text = await db.getDocument(databaseId, 'texts', body.textId);
+      if (text.contentMode === 'link') return res.json({ error: 'Reading support requires text uploaded into the app' }, 400);
+      const owns = profile.role === 'teacher' && text.teacherId === userId;
+      if (!owns) {
+        const assignments = await db.listDocuments(databaseId, 'text_assignments', [Query.equal('textId', text.$id), Query.limit(500)]);
+        if (!assignments.documents.some(row => memberClassIds.has(row.classId))) return res.json({ error: 'This text is not assigned to your class' }, 403);
+      }
+      const versionId = textVersionId(text.$id, level), now = new Date().toISOString();
+      let version = null;
+      try { version = await db.getDocument(databaseId, 'text_versions', versionId); } catch (cause) { if (cause?.code !== 404) throw cause; }
+      const generationIsStale = version?.status === 'generating' && Date.now() - new Date(version.updatedAt).getTime() > 5 * 60 * 1000;
+      if (version?.status === 'ready' || (version?.status === 'generating' && !generationIsStale)) {
+        const rows = version.status === 'ready' ? await db.listDocuments(databaseId, 'text_version_paragraphs', [Query.equal('versionId', versionId), Query.limit(5000)]) : { documents: [] };
+        return res.json({ version: clean(version), paragraphs: rows.documents.map(clean) });
+      }
+      const model = process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini';
+      const versionData = { textId: text.$id, level, status: 'generating', requestedBy: userId, model, promptVersion: TEXT_SUPPORT_PROMPT_VERSION, error: '', createdAt: version?.createdAt || now, updatedAt: now };
+      if (version) version = await db.updateDocument(databaseId, 'text_versions', versionId, versionData);
+      else {
+        try { version = await db.createDocument(databaseId, 'text_versions', versionId, versionData); }
+        catch (cause) {
+          if (cause?.code !== 409) throw cause;
+          version = await db.getDocument(databaseId, 'text_versions', versionId);
+          return res.json({ version: clean(version), paragraphs: [] });
+        }
+      }
+      try {
+        const staleRows = await db.listDocuments(databaseId, 'text_version_paragraphs', [Query.equal('versionId', versionId), Query.limit(5000)]);
+        for (const row of staleRows.documents) await db.deleteDocument(databaseId, 'text_version_paragraphs', row.$id);
+        const paragraphResult = await db.listDocuments(databaseId, 'text_paragraphs', [Query.equal('textId', text.$id), Query.orderAsc('sortOrder'), Query.limit(5000)]);
+        if (!paragraphResult.total) throw new Error('This text has no paragraphs');
+        const totalCharacters = paragraphResult.documents.reduce((sum, row) => sum + String(row.content || '').length, 0);
+        if (totalCharacters > 100000) throw new Error('This text is too long to adapt in one request');
+        const adapted = await adaptTextParagraphs(paragraphResult.documents, level);
+        for (const row of adapted) await db.createDocument(databaseId, 'text_version_paragraphs', textVersionParagraphId(versionId, row.originalParagraphId), { versionId, textId: text.$id, originalParagraphId: row.originalParagraphId, sortOrder: row.sortOrder, content: row.content });
+        version = await db.updateDocument(databaseId, 'text_versions', versionId, { status: 'ready', error: '', updatedAt: new Date().toISOString() });
+        const rows = await db.listDocuments(databaseId, 'text_version_paragraphs', [Query.equal('versionId', versionId), Query.orderAsc('sortOrder'), Query.limit(5000)]);
+        return res.json({ version: clean(version), paragraphs: rows.documents.map(clean) });
+      } catch (cause) {
+        await db.updateDocument(databaseId, 'text_versions', versionId, { status: 'failed', error: String(cause.message || 'Could not create this version').slice(0, 1000), updatedAt: new Date().toISOString() });
+        throw cause;
+      }
+    }
+
     if (body.action === 'readTexts') {
       const requested = Array.isArray(body.classIds) ? body.classIds : [];
       let allowedClassIds = requested.filter(classId => memberClassIds.has(classId));
@@ -538,25 +637,28 @@ export default async ({ req, res, error }) => {
         const ownedClassIds = new Set(ownedClasses.documents.map(row => row.$id));
         allowedClassIds = requested.filter(classId => ownedClassIds.has(classId));
       }
-      if (!allowedClassIds.length) return res.json({ assignments: [], texts: [], paragraphs: [], annotations: [] });
+      if (!allowedClassIds.length) return res.json({ assignments: [], texts: [], paragraphs: [], versions: [], versionParagraphs: [], annotations: [] });
       const assignmentQueries = [Query.equal('classId', allowedClassIds), Query.limit(500)];
       if (body.textId) assignmentQueries.unshift(Query.equal('textId', body.textId));
       const assignmentResult = await db.listDocuments(databaseId, 'text_assignments', assignmentQueries);
       const assignments = assignmentResult.documents, textIds = [...new Set(assignments.map(row => row.textId))];
-      if (!textIds.length) return res.json({ assignments: [], texts: [], paragraphs: [], annotations: [] });
+      if (!textIds.length) return res.json({ assignments: [], texts: [], paragraphs: [], versions: [], versionParagraphs: [], annotations: [] });
       const textResult = await db.listDocuments(databaseId, 'texts', [Query.equal('$id', textIds), Query.limit(500)]);
-      if (!body.includeContent) return res.json({ assignments: assignments.map(clean), texts: textResult.documents.map(clean), paragraphs: [], annotations: [] });
-      const [paragraphResult, annotationResult] = await Promise.all([
+      if (!body.includeContent) return res.json({ assignments: assignments.map(clean), texts: textResult.documents.map(clean), paragraphs: [], versions: [], versionParagraphs: [], annotations: [] });
+      const [paragraphResult, annotationResult, versionResult] = await Promise.all([
         db.listDocuments(databaseId, 'text_paragraphs', [Query.equal('textId', textIds), Query.limit(1000)]),
         db.listDocuments(databaseId, 'text_annotations', [Query.equal('textId', textIds), Query.equal('classId', allowedClassIds), Query.limit(1000)]),
+        db.listDocuments(databaseId, 'text_versions', [Query.equal('textId', textIds), Query.limit(1000)]),
       ]);
+      const readyVersionIds = versionResult.documents.filter(row => row.status === 'ready').map(row => row.$id);
+      const versionParagraphResult = readyVersionIds.length ? await db.listDocuments(databaseId, 'text_version_paragraphs', [Query.equal('versionId', readyVersionIds), Query.limit(5000)]) : { documents: [] };
       const ownCounts = new Map();
       for (const row of annotationResult.documents) if (row.authorId === userId && (row.visibility || 'class') === 'class' && (row.kind || 'annotation') === 'annotation') ownCounts.set(`${row.textId}:${row.classId}`, (ownCounts.get(`${row.textId}:${row.classId}`) || 0) + 1);
       const annotations = annotationResult.documents.filter(row => {
         if ((row.visibility || 'class') === 'private') return row.authorId === userId;
         return profile.role === 'teacher' || profile.role === 'parent' || row.authorId === userId || (ownCounts.get(`${row.textId}:${row.classId}`) || 0) >= 3;
       }).map(row => { const projected = clean(row); if (profile.role !== 'teacher' && row.authorId !== userId) { delete projected.authorId; delete projected.flagReason; } return projected; });
-      return res.json({ assignments: assignments.map(clean), texts: textResult.documents.map(clean), paragraphs: paragraphResult.documents.map(clean), annotations });
+      return res.json({ assignments: assignments.map(clean), texts: textResult.documents.map(clean), paragraphs: paragraphResult.documents.map(clean), versions: versionResult.documents.map(clean), versionParagraphs: versionParagraphResult.documents.map(clean), annotations });
     }
 
     if (body.action === 'readDiscussion') {

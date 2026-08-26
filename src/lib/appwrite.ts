@@ -47,6 +47,8 @@ export const COLLECTIONS = {
   texts: 'texts',
   text_assignments: 'text_assignments',
   text_paragraphs: 'text_paragraphs',
+  text_versions: 'text_versions',
+  text_version_paragraphs: 'text_version_paragraphs',
   text_annotations: 'text_annotations',
   text_discussion_posts: 'text_discussion_posts',
   text_discussion_votes: 'text_discussion_votes',

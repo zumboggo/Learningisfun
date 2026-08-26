@@ -7,9 +7,9 @@ import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { Markdown } from '@/components/common/Markdown';
 import { Modal } from '@/components/common/Modal';
-import { addAnnotation, ANNOTATIONS_TO_UNLOCK, canSeePeerAnnotations, deleteAnnotation, flagAnnotation, moderateAnnotation, syncTextFromServer, updateAnnotation } from '@/services/text.service';
+import { addAnnotation, ANNOTATIONS_TO_UNLOCK, canSeePeerAnnotations, deleteAnnotation, flagAnnotation, generateSharedTextVersion, moderateAnnotation, syncTextFromServer, updateAnnotation } from '@/services/text.service';
 import { runCachedSync } from '@/services/sync-policy';
-import type { TextAnnotation, TextParagraph } from '@/types';
+import type { TextAnnotation, TextParagraph, TextSupportLevel } from '@/types';
 
 type ComposerState = { paragraphId: string; selectedText: string; parentId?: string; kind: 'annotation'|'page_note'|'reply' };
 
@@ -27,9 +27,15 @@ export function TextReaderPage() {
   const [editing, setEditing] = useState<TextAnnotation | null>(null);
   const [flagging, setFlagging] = useState<TextAnnotation | null>(null);
   const [flagReason, setFlagReason] = useState('');
+  const [readingVersion, setReadingVersion] = useState<'original'|TextSupportLevel>('original');
+  const [compare, setCompare] = useState(false);
+  const [generatingVersion, setGeneratingVersion] = useState<TextSupportLevel|null>(null);
+  const [supportError, setSupportError] = useState('');
 
   const text = useLiveQuery(() => textId ? db.texts.get(textId) : undefined, [textId]);
   const paragraphs = useLiveQuery(() => textId ? db.text_paragraphs.where('textId').equals(textId).sortBy('sortOrder') : [], [textId]);
+  const versions = useLiveQuery(() => textId ? db.text_versions.where('textId').equals(textId).toArray() : [], [textId]);
+  const versionParagraphs = useLiveQuery(() => textId ? db.text_version_paragraphs.where('textId').equals(textId).toArray() : [], [textId]);
   const classId = useLiveQuery(async () => {
     if (!textId || !user) return '';
     const assigned = await db.text_assignments.where('textId').equals(textId).toArray();
@@ -81,12 +87,23 @@ export function TextReaderPage() {
     if (!classId || !selectedText) return;
     await addAnnotation({ textId:text.$id,paragraphId,classId,authorId:user.$id,type:'observation',content:'Private highlight',kind:'highlight',selectedText,visibility:'private' });
   };
+  const activeVersion = readingVersion === 'original' ? undefined : versions?.find(version => version.level === readingVersion);
+  const adaptedByOriginal = new Map((versionParagraphs || []).filter(row => row.versionId === activeVersion?.$id).map(row => [row.originalParagraphId, row]));
+  const requestSupport = async (level: TextSupportLevel) => {
+    if (!textId) return;
+    setGeneratingVersion(level); setSupportError('');
+    try { await generateSharedTextVersion(textId, level); }
+    catch (cause) { setSupportError(cause instanceof Error ? cause.message : 'Could not create this reading-support version.'); }
+    finally { setGeneratingVersion(null); }
+  };
 
   return <div className="mx-auto max-w-6xl space-y-5 p-4">
     <header><Link to="/texts" className="text-sm text-blue-600">← Texts</Link><div className="mt-2 flex flex-wrap items-start justify-between gap-3"><div><h1 className="text-2xl font-bold">{text.title}</h1><p className="text-gray-500">{text.author}</p></div>{!isParent && text.contentMode !== 'link' && <Button size="sm" variant="secondary" onClick={() => startComposer({paragraphId:'page',selectedText:'',kind:'page_note'})}>+ Page note</Button>}</div>{text.contentMode !== 'link' && !isTeacher && !isParent && sharedMine < ANNOTATIONS_TO_UNLOCK && <p className="mt-2 rounded bg-blue-50 p-2 text-sm">Add {ANNOTATIONS_TO_UNLOCK-sharedMine} more shared observation{ANNOTATIONS_TO_UNLOCK-sharedMine===1?'':'s'} or question{ANNOTATIONS_TO_UNLOCK-sharedMine===1?'':'s'} to reveal classmates’ notes. Private highlights do not count.</p>}</header>
     {text.contentMode === 'link' && text.externalUrl && <Card className="space-y-3 text-center"><p className="text-gray-600">This reading is hosted on another website.</p><a href={text.externalUrl} target="_blank" rel="noreferrer"><Button>Open reading ↗</Button></a></Card>}
-    {text.contentMode !== 'link' && <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-      <main className="space-y-4">{paragraphs?.map((paragraph,index) => <ParagraphCard key={paragraph.$id} paragraph={paragraph} index={index} readOnly={Boolean(isParent)} onAnnotate={selection => startComposer({paragraphId:paragraph.$id,selectedText:selection,kind:'annotation'})} onHighlight={selection => void makeHighlight(paragraph.$id,selection)} />)}</main>
+    {text.contentMode !== 'link' && <ReadingSupportToolbar readingVersion={readingVersion} setReadingVersion={setReadingVersion} compare={compare} setCompare={setCompare} versions={versions||[]} />}
+    {text.contentMode !== 'link' && readingVersion !== 'original' && activeVersion?.status !== 'ready' && <Card className="space-y-3 border-blue-200 bg-blue-50"><h2 className="font-semibold text-blue-950">{supportLevelLabel(readingVersion)} version</h2><p className="text-sm text-blue-900">{activeVersion?.status==='generating'?'Someone has already requested this shared version. It is still being prepared.':activeVersion?.status==='failed'?'The previous attempt did not finish. You can try again.':'This shared reading-support version has not been created yet. The first request uses AI; afterward everyone assigned this text reuses the saved version.'}</p>{supportError&&<p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{supportError}</p>}{!isParent&&activeVersion?.status!=='generating'&&<Button loading={generatingVersion===readingVersion} onClick={()=>void requestSupport(readingVersion)}>{activeVersion?.status==='failed'?'Try again':'Create shared version'}</Button>}{activeVersion?.status==='generating'&&<Button variant="secondary" onClick={()=>classId&&void syncTextFromServer(text.$id,classId)}>Check again</Button>}</Card>}
+    {text.contentMode !== 'link' && (readingVersion === 'original' || activeVersion?.status === 'ready') && <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <main className="space-y-4">{paragraphs?.map((paragraph,index) => { const adapted=adaptedByOriginal.get(paragraph.$id); const annotate=(selection:string)=>startComposer({paragraphId:paragraph.$id,selectedText:selection,kind:'annotation'}); const highlight=(selection:string)=>void makeHighlight(paragraph.$id,selection); if(readingVersion!=='original'&&compare&&adapted)return <div key={paragraph.$id} className="grid gap-3 xl:grid-cols-2"><ParagraphCard paragraph={paragraph} index={index} label="Original" readOnly={Boolean(isParent)} onAnnotate={annotate} onHighlight={highlight}/><ParagraphCard paragraph={{...paragraph,content:adapted.content}} index={index} label={supportLevelLabel(readingVersion)} readOnly={Boolean(isParent)} onAnnotate={annotate} onHighlight={highlight}/></div>; const shown=readingVersion==='original'||!adapted?paragraph:{...paragraph,content:adapted.content}; return <ParagraphCard key={paragraph.$id} paragraph={shown} index={index} label={readingVersion==='original'?undefined:supportLevelLabel(readingVersion)} readOnly={Boolean(isParent)} onAnnotate={annotate} onHighlight={highlight}/>})}</main>
       <aside className="space-y-3 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto"><Card className="space-y-3"><div className="flex items-center justify-between"><h2 className="font-semibold">Annotations</h2><span className="text-xs text-gray-500">{visible.length} shown</span></div><input aria-label="Search annotations" className="w-full rounded-lg border px-3 py-2 text-sm" placeholder="Search notes or tags" value={query} onChange={event=>setQuery(event.target.value)} /><div className="grid grid-cols-2 gap-2"><select className="rounded-lg border px-2 py-2 text-sm" value={filter} onChange={event=>setFilter(event.target.value as typeof filter)}><option value="all">All types</option><option value="question">Questions</option><option value="observation">Observations</option><option value="page_note">Page notes</option><option value="mine">Mine</option></select><select className="rounded-lg border px-2 py-2 text-sm" value={sort} onChange={event=>setSort(event.target.value as typeof sort)}><option value="location">Text order</option><option value="newest">Newest</option><option value="oldest">Oldest</option></select></div></Card>
         {visible.map(annotation => <AnnotationCard key={annotation.$id} annotation={annotation} replies={(annotations || []).filter(reply=>reply.parentId===annotation.$id)} userId={user.$id} isTeacher={Boolean(isTeacher)} canWrite={!isParent} onReply={() => startComposer({paragraphId:annotation.paragraphId,selectedText:'',parentId:annotation.$id,kind:'reply'})} onEdit={setEditing} onFlag={item=>{setFlagging(item);setFlagReason('')}} />)}
         {!visible.length && <Card><p className="text-sm text-gray-500">No annotations match these filters.</p></Card>}
@@ -99,11 +116,17 @@ export function TextReaderPage() {
   </div>;
 }
 
-function ParagraphCard({ paragraph, index, readOnly, onAnnotate, onHighlight }: { paragraph:TextParagraph;index:number;readOnly:boolean;onAnnotate:(selection:string)=>void;onHighlight:(selection:string)=>void }) {
+function ParagraphCard({ paragraph, index, label, readOnly, onAnnotate, onHighlight }: { paragraph:TextParagraph;index:number;label?:string;readOnly:boolean;onAnnotate:(selection:string)=>void;onHighlight:(selection:string)=>void }) {
   const [selection,setSelection]=useState('');
   const capture=()=>setSelection(window.getSelection()?.toString().trim().slice(0,2000)||'');
-  return <Card className="space-y-3"><p className="text-xs text-gray-400">Paragraph {index+1}</p><p className="whitespace-pre-wrap text-lg leading-8" onMouseUp={capture} onTouchEnd={capture}>{paragraph.content}</p>{!readOnly && <div className="flex flex-wrap items-center gap-2"><Button size="sm" onClick={()=>onAnnotate(selection)}>{selection?'Annotate selection':'+ Note'}</Button>{selection&&<Button size="sm" variant="secondary" onClick={()=>onHighlight(selection)}>Private highlight</Button>}{selection&&<button className="text-xs text-gray-500" onClick={()=>{window.getSelection()?.removeAllRanges();setSelection('')}}>Clear selection</button>}</div>}</Card>;
+  return <Card className="space-y-3"><p className="text-xs font-medium text-gray-400">{label?`${label} · `:''}Paragraph {index+1}</p><p className="whitespace-pre-wrap text-lg leading-8" onMouseUp={capture} onTouchEnd={capture}>{paragraph.content}</p>{!readOnly && <div className="flex flex-wrap items-center gap-2"><Button size="sm" onClick={()=>onAnnotate(selection)}>{selection?'Annotate selection':'+ Note'}</Button>{selection&&<Button size="sm" variant="secondary" onClick={()=>onHighlight(selection)}>Private highlight</Button>}{selection&&<button className="text-xs text-gray-500" onClick={()=>{window.getSelection()?.removeAllRanges();setSelection('')}}>Clear selection</button>}</div>}</Card>;
 }
+
+function ReadingSupportToolbar({readingVersion,setReadingVersion,compare,setCompare,versions}:{readingVersion:'original'|TextSupportLevel;setReadingVersion:(value:'original'|TextSupportLevel)=>void;compare:boolean;setCompare:(value:boolean)=>void;versions:Array<{level:TextSupportLevel;status:string}>}) {
+  return <Card className="space-y-3"><div><h2 className="font-semibold">Reading support</h2><p className="text-sm text-gray-500">Choose the amount of language support you need. Everyone still annotates the same paragraphs.</p></div><div className="flex flex-wrap gap-2">{(['original','supported','highly_supported'] as const).map(value=><button key={value} type="button" onClick={()=>setReadingVersion(value)} className={`rounded-full px-4 py-2 text-sm font-semibold ${readingVersion===value?'bg-gray-950 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>{value==='original'?'Original':supportLevelLabel(value)}{value!=='original'&&versions.some(version=>version.level===value&&version.status==='ready')?' ✓':''}</button>)}</div>{readingVersion!=='original'&&<label className="flex items-center gap-2 text-sm font-medium text-gray-700"><input type="checkbox" className="h-4 w-4 rounded" checked={compare} onChange={event=>setCompare(event.target.checked)}/>Show original and supported text side by side</label>}<p className="text-xs text-gray-500">Supported versions are AI-generated. If meaning seems different, compare with the original and tell your teacher.</p></Card>;
+}
+
+function supportLevelLabel(level:TextSupportLevel):string{return level==='supported'?'Supported':'Highly supported'}
 
 function AnnotationCard({ annotation,replies,userId,isTeacher,canWrite,onReply,onEdit,onFlag }:{annotation:TextAnnotation;replies:TextAnnotation[];userId:string;isTeacher:boolean;canWrite:boolean;onReply:()=>void;onEdit:(item:TextAnnotation)=>void;onFlag:(item:TextAnnotation)=>void}) {
   const mine=annotation.authorId===userId,tags=parseAnnotationTags(annotation),kind=annotation.kind||'annotation';

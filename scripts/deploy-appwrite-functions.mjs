@@ -26,7 +26,13 @@ const allDefinitions = [
     id: 'learning-content',
     name: 'Learning Content',
     directory: 'functions/learning-content',
-    variables: {},
+    timeout: 120,
+    variables: {
+      ...(process.env.OPENROUTER_API_KEY
+        ? { OPENROUTER_API_KEY: { value: process.env.OPENROUTER_API_KEY, secret: true } }
+        : {}),
+      OPENROUTER_MODEL: { value: process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini', secret: false },
+    },
   },
   {
     id: 'writing-ai-feedback',
@@ -55,7 +61,7 @@ async function ensureFunction(definition) {
       name: definition.name,
       runtime: 'node-22',
       execute: ['users'],
-      timeout: 30,
+      timeout: definition.timeout || 30,
       enabled: true,
       logging: true,
       entrypoint: 'src/main.js',
@@ -63,6 +69,16 @@ async function ensureFunction(definition) {
     });
     console.log(`Created function ${definition.id}`);
   }
+
+  await functions.update({
+    functionId: definition.id,
+    name: definition.name,
+    timeout: definition.timeout || 30,
+    enabled: true,
+    logging: true,
+    entrypoint: 'src/main.js',
+    commands: 'npm install',
+  });
 
   const commonVariables = {
     APPWRITE_ENDPOINT: { value: endpoint, secret: false },
