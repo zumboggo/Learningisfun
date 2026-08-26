@@ -718,6 +718,22 @@ export async function syncDecksFromServer(classIds: string[], userId: string, is
       });
     }
 
+    // A pull must remove cards that were deleted on another device or by a
+    // server-side maintenance pass. Keep local cards that still have an
+    // unsent create/update operation so offline teacher work is never erased.
+    if (deckIds.length) {
+      const [localCards, queuedCardChanges] = await Promise.all([
+        db.flashcard_cards.where('deckId').anyOf(deckIds).toArray(),
+        db.sync_queue.where('entityType').equals('card').filter(op => op.syncStatus !== 'synced').toArray(),
+      ]);
+      const remoteCardIds = new Set(cardResult.documents.map(doc => doc.$id));
+      const protectedCardIds = new Set(queuedCardChanges.map(op => op.entityId));
+      const staleCardIds = localCards
+        .filter(card => !remoteCardIds.has(card.$id) && !protectedCardIds.has(card.$id))
+        .map(card => card.$id);
+      if (staleCardIds.length) await db.flashcard_cards.bulkDelete(staleCardIds);
+    }
+
     for (const doc of assignmentResult.documents) {
       await db.deck_assignments.put({
         $id: doc.$id,
@@ -727,6 +743,18 @@ export async function syncDecksFromServer(classIds: string[], userId: string, is
         dailyTarget: doc.dailyTarget ?? null,
         assignedAt: doc.assignedAt,
       });
+    }
+    if (classIds.length) {
+      const [localAssignments, queuedAssignmentChanges] = await Promise.all([
+        db.deck_assignments.where('classId').anyOf(classIds).toArray(),
+        db.sync_queue.where('entityType').equals('deck_assignment').filter(op => op.syncStatus !== 'synced').toArray(),
+      ]);
+      const remoteAssignmentIds = new Set(assignmentResult.documents.map(doc => doc.$id));
+      const protectedAssignmentIds = new Set(queuedAssignmentChanges.map(op => op.entityId));
+      const staleAssignmentIds = localAssignments
+        .filter(assignment => !remoteAssignmentIds.has(assignment.$id) && !protectedAssignmentIds.has(assignment.$id))
+        .map(assignment => assignment.$id);
+      if (staleAssignmentIds.length) await db.deck_assignments.bulkDelete(staleAssignmentIds);
     }
     return true;
   } catch { return false; }

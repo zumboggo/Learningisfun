@@ -6,7 +6,7 @@ const FAILED_RETRY_BACKOFF_MS = 60 * 1000;
 export const SYNC_WINDOWS = {
   account: 15 * 60 * 1000,
   catalog: 15 * 60 * 1000,
-  stableContent: 6 * 60 * 60 * 1000,
+  stableContent: 30 * 60 * 1000,
 } as const;
 
 /**

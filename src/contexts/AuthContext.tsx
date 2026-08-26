@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const isTeacher = cachedUser?.role === 'teacher' || cachedUser?.role === 'admin';
     const tasks: Promise<void>[] = [];
     if (domains.has('sessions')) tasks.push(runCachedSync(`sessions:${userId}`, SYNC_WINDOWS.catalog, () => classSessionService.syncClassSessionsFromServer(classIds), force));
-    if (domains.has('flashcards')) tasks.push(runCachedSync(`flashcards:${userId}`, SYNC_WINDOWS.stableContent, () => flashcardService.syncDecksFromServer(classIds, userId, isTeacher), force));
+    if (domains.has('flashcards')) tasks.push(runCachedSync(`flashcards:v2:${userId}`, SYNC_WINDOWS.stableContent, () => flashcardService.syncDecksFromServer(classIds, userId, isTeacher), force));
     if (domains.has('quizzes')) tasks.push(runCachedSync(`quizzes:${userId}`, SYNC_WINDOWS.catalog, () => quizService.syncQuizzesFromServer(classIds), force));
     if (domains.has('writing')) tasks.push(runCachedSync(`writing:${userId}`, SYNC_WINDOWS.catalog, () => writingService.syncWritingFromServer(classIds), force));
     if (domains.has('texts')) tasks.push(runCachedSync(`texts:${userId}`, SYNC_WINDOWS.catalog, () => textService.syncTextsFromServer(classIds, userId, isTeacher), force));
