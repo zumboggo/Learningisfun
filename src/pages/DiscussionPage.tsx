@@ -202,7 +202,7 @@ export function DiscussionPage() {
   const handleVote = async (questionId: string) => {
     if (!user || !sessionId || !session) return;
     const question = allQuestions?.find(q => q.$id === questionId);
-    if (!question || question.authorId === user.$id) return;
+    if (!question || (question.authorId === user.$id && !isTeacher)) return;
 
     const existingVote = voteByQuestion.get(questionId);
     const stacked = session.allowStackedVotes;
@@ -715,7 +715,8 @@ function QuestionRow({
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(question.questionText);
   const [editPassage, setEditPassage] = useState(question.selectedPassage);
-  const canAddVote = !isAuthor && usedVotes < voteBudget;
+  const canVoteForQuestion = !isAuthor || isTeacher;
+  const canAddVote = canVoteForQuestion && usedVotes < voteBudget;
   const hasVoted = voteWeight > 0;
   const noVotesLeft = usedVotes >= voteBudget;
 
@@ -762,7 +763,7 @@ function QuestionRow({
         </button>
 
         <div className="flex shrink-0 items-center gap-1">
-          {!isAuthor && (
+          {canVoteForQuestion && (
             allowStackedVotes ? (
               <>
                 <RowButton

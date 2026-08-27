@@ -114,7 +114,7 @@ export function ClassSessionPage() {
 
   const handleVote = async (questionId: string) => {
     if (!user) return;
-    await toggleSessionVote(user.$id, questionId);
+    await toggleSessionVote(user.$id, questionId, { allowOwnVote: Boolean(isTeacher) });
     setRefreshKey(key => key + 1);
   };
 
@@ -650,7 +650,8 @@ function QuestionSessionCard({
 }) {
   const notesRef = useRef<HTMLTextAreaElement>(null);
   const isAuthor = question.authorId === currentUserId;
-  const canAddVote = !isAuthor && usedVotes < voteBudget;
+  const canVoteForQuestion = !isAuthor || isTeacher;
+  const canAddVote = canVoteForQuestion && usedVotes < voteBudget;
   const canClickVote = voteWeight > 0 || canAddVote;
   const voteHelp = isAuthor
     ? 'You cannot vote on your own question.'
@@ -666,7 +667,7 @@ function QuestionSessionCard({
     <Card className={question.discussionStatus === 'selected' ? 'ring-2 ring-blue-500' : ''}>
       <div className="flex gap-3">
         <div className="flex w-14 flex-col items-center gap-1">
-          {!isAuthor && (
+          {canVoteForQuestion && (
             <button
               onClick={onVote}
               disabled={!canClickVote}

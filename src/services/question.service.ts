@@ -2,7 +2,6 @@ import { functions, databases, DATABASE_ID, COLLECTIONS, FUNCTION_IDS } from '@/
 import { db } from '@/db/schema';
 import { generateId, getTimestamp } from '@/utils/helpers';
 import { addToQueue } from './sync.service';
-import { Query } from 'appwrite';
 import type { DiscussionQuestion, QuestionVote } from '@/types';
 
 export async function submitQuestion(
@@ -205,10 +204,11 @@ export async function getQuestionVoteWeight(userId: string, questionId: string):
 export async function toggleSessionVote(
   userId: string,
   questionId: string,
+  options: { allowOwnVote?: boolean } = {},
 ): Promise<{ voted: boolean; usedVotes: number }> {
   const question = await db.discussion_questions.get(questionId);
   if (!question || !question.classSessionId) return { voted: false, usedVotes: 0 };
-  if (question.authorId === userId) return { voted: false, usedVotes: await getSessionVoteCount(userId, question.classSessionId) };
+  if (question.authorId === userId && !options.allowOwnVote) return { voted: false, usedVotes: await getSessionVoteCount(userId, question.classSessionId) };
 
   const session = await db.class_sessions.get(question.classSessionId);
   const voteBudget = session?.votesPerStudent ?? 4;
