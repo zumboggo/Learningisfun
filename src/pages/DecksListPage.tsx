@@ -142,7 +142,7 @@ export function DecksListPage() {
                 <Button size="sm">Present</Button>
               </Link>
               <Button size="sm" variant="secondary" onClick={() => setAssigningDeck(deck)}>
-                Add to Class/es
+                Assign
               </Button>
               <Button size="sm" variant="secondary" loading={exportingDeckId === deck.$id} onClick={() => void exportDeck(deck)}>Export CSV</Button>
               <Button size="sm" variant="secondary" loading={openingEditorId === deck.$id} onClick={() => void openDeckEditor(deck)}>Edit</Button>
