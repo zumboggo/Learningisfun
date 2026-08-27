@@ -25,6 +25,8 @@ export async function createQuiz(params: {
   flashcardWeight: number;
   questionCount: number;
   timeLimitMinutes: number | null;
+  allowedAttempts?: 1 | 2;
+  showAnswerFeedback?: boolean;
 }): Promise<Quiz> {
   const quiz: Quiz = {
     $id: ID.unique(),
@@ -37,6 +39,8 @@ export async function createQuiz(params: {
     flashcardWeight: params.flashcardWeight,
     questionCount: params.questionCount,
     timeLimitMinutes: params.timeLimitMinutes,
+    allowedAttempts: params.allowedAttempts ?? 1,
+    showAnswerFeedback: params.showAnswerFeedback ?? false,
     status: 'draft',
     publishedAt: null,
     createdAt: getTimestamp(),
@@ -159,6 +163,8 @@ export async function saveFlashcardQuiz(params: {
   title: string;
   timeLimitMinutes: number | null;
   recentWeight: number;
+  allowedAttempts?: 1 | 2;
+  showAnswerFeedback?: boolean;
   preview: FlashcardQuizPreview;
 }): Promise<Quiz> {
   const quiz = await createQuiz({
@@ -170,6 +176,8 @@ export async function saveFlashcardQuiz(params: {
     flashcardWeight: 100,
     questionCount: params.preview.result.questions.length,
     timeLimitMinutes: params.timeLimitMinutes,
+    allowedAttempts: params.allowedAttempts,
+    showAnswerFeedback: params.showAnswerFeedback,
   });
 
   const questions: QuizQuestion[] = params.preview.result.questions.map((q, i) => ({
@@ -208,6 +216,7 @@ export async function createPracticeQuiz(classId: string, userId: string, questi
     $id: ID.unique(), classId, sourceClassId: classId, createdBy: userId,
     title: 'Practice Quiz', sourceType: 'flashcards', notesWeight: 0, flashcardWeight: 100,
     questionCount: preview.result.questions.length, timeLimitMinutes: null,
+    allowedAttempts: 1, showAnswerFeedback: true,
     status: 'published', publishedAt: getTimestamp(), createdAt: getTimestamp(), syncStatus: 'synced',
   };
   const questions: QuizQuestion[] = preview.result.questions.map((question, index) => ({
@@ -271,7 +280,13 @@ export async function deleteQuiz(quizId: string): Promise<void> {
   });
 }
 
-export async function startQuizAttempt(quizId: string, userId: string): Promise<QuizAttempt> {
+export async function startQuizAttempt(quizId: string, userId: string, options: { sync?: boolean } = {}): Promise<QuizAttempt> {
+  if (options.sync !== false) {
+    const result = await executeLearningContent<{ attempt: QuizAttempt }>({ action: 'startQuizAttempt', quizId });
+    const attempt = { ...result.attempt, syncStatus: 'synced' as const };
+    await db.quiz_attempts.put(attempt);
+    return attempt;
+  }
   const attempt: QuizAttempt = {
     $id: ID.unique(),
     quizId,
@@ -291,9 +306,22 @@ export async function submitQuizAttempt(
   attemptId: string,
   answers: Array<{ questionId: string; answer: number | string }>,
   options: { sync?: boolean } = {},
-): Promise<{ score: number; total: number; results: Array<{ correct: boolean; explanation: string }> }> {
+): Promise<{ score: number; total: number; results: Array<{ correct: boolean; explanation: string }>; showAnswerFeedback: boolean; attemptsRemaining: number }> {
   const attempt = await db.quiz_attempts.get(attemptId);
   if (!attempt) throw new Error('Attempt not found');
+
+  if (options.sync !== false) {
+    const result = await executeLearningContent<{
+      attempt: QuizAttempt;
+      score: number;
+      total: number;
+      results: Array<{ correct: boolean; explanation: string }>;
+      showAnswerFeedback: boolean;
+      attemptsRemaining: number;
+    }>({ action: 'submitQuizAttempt', attemptId, answers });
+    await db.quiz_attempts.put({ ...result.attempt, syncStatus: 'synced' });
+    return result;
+  }
 
   const questions = await db.quiz_questions.where('quizId').equals(attempt.quizId).toArray();
   const questionsById = new Map(questions.map(q => [q.$id, q]));
@@ -305,7 +333,7 @@ export async function submitQuizAttempt(
     const question = questionsById.get(ans.questionId);
     if (!question) continue;
 
-    let correct = false;
+    let correct: boolean;
     if (question.type === 'mc') {
       correct = ans.answer === question.correctIndex;
     } else {
@@ -333,7 +361,7 @@ export async function submitQuizAttempt(
   const updated = await db.quiz_attempts.get(attemptId);
   if (updated && options.sync !== false) await addToQueue(updated.userId, 'quiz_attempt', attemptId, 'update', updated);
 
-  return { score, total: questions.length, results };
+  return { score, total: questions.length, results, showAnswerFeedback: true, attemptsRemaining: 0 };
 }
 
 export async function getQuizWithQuestions(quizId: string): Promise<{
@@ -394,6 +422,8 @@ export async function syncQuizzesFromServer(classIds: string[], options: { inclu
         createdBy: doc.createdBy as string, title: doc.title as string, sourceType: doc.sourceType as Quiz['sourceType'],
         notesWeight: doc.notesWeight as number, flashcardWeight: doc.flashcardWeight as number,
         questionCount: doc.questionCount as number, timeLimitMinutes: (doc.timeLimitMinutes as number) || null,
+        allowedAttempts: doc.allowedAttempts === 2 ? 2 : 1,
+        showAnswerFeedback: Boolean(doc.showAnswerFeedback),
         status: doc.status as Quiz['status'], publishedAt: (doc.publishedAt as string) || null,
         createdAt: doc.createdAt as string, syncStatus: 'synced',
       });

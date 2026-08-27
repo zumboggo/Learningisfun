@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
-import { deleteLocalPracticeQuiz, getQuizWithQuestions, startQuizAttempt, submitQuizAttempt, syncQuizFromServer } from '@/services/quiz.service';
+import { deleteLocalPracticeQuiz, getQuizWithQuestions, getStudentQuizAttempts, startQuizAttempt, submitQuizAttempt, syncQuizFromServer } from '@/services/quiz.service';
 import type { Quiz, QuizQuestion } from '@/types';
 import { Confetti } from '@/pages/FlashcardReviewPage';
 
@@ -21,10 +21,13 @@ export function QuizTakingPage() {
   const [attemptId, setAttemptId] = useState('');
   const [started, setStarted] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [results, setResults] = useState<{ score: number; total: number; results: Array<{ correct: boolean; explanation: string }> } | null>(null);
+  const [results, setResults] = useState<{ score: number; total: number; results: Array<{ correct: boolean; explanation: string }>; showAnswerFeedback: boolean; attemptsRemaining: number } | null>(null);
+  const [completedAttempts, setCompletedAttempts] = useState(0);
+  const [error, setError] = useState('');
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const submitRef = useRef<() => Promise<void>>(async () => {});
 
   useEffect(() => {
     if (!quizId) return;
@@ -34,6 +37,10 @@ export function QuizTakingPage() {
       if (data) {
         setQuiz(data.quiz);
         setQuestions(data.questions);
+        if (user) {
+          const prior = await getStudentQuizAttempts(user.$id, quizId);
+          setCompletedAttempts(prior.filter(attempt => attempt.completedAt).length);
+        }
         if (data.quiz.timeLimitMinutes) {
           setTimeLeft(data.quiz.timeLimitMinutes * 60);
         }
@@ -41,7 +48,7 @@ export function QuizTakingPage() {
       setLoading(false);
     };
     void load();
-  }, [quizId, isPractice]);
+  }, [quizId, isPractice, user]);
 
   useEffect(() => {
     if (!started || submitted || timeLeft === null) return;
@@ -49,20 +56,25 @@ export function QuizTakingPage() {
       setTimeLeft(prev => {
         if (prev === null || prev <= 1) {
           if (timerRef.current) clearInterval(timerRef.current);
-          void handleSubmit();
+          void submitRef.current();
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [started, submitted]);
+  }, [started, submitted, timeLeft]);
 
   const handleStart = async () => {
     if (!user || !quizId) return;
-    const attempt = await startQuizAttempt(quizId, user.$id);
-    setAttemptId(attempt.$id);
-    setStarted(true);
+    setError('');
+    try {
+      const attempt = await startQuizAttempt(quizId, user.$id, { sync: !isPractice });
+      setAttemptId(attempt.$id);
+      setStarted(true);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not start this quiz.');
+    }
   };
 
   const handleAnswer = (questionId: string, answer: number | string) => {
@@ -72,11 +84,30 @@ export function QuizTakingPage() {
   const handleSubmit = async () => {
     if (!attemptId) return;
     if (timerRef.current) clearInterval(timerRef.current);
-    const answerArray = Object.entries(answers).map(([questionId, answer]) => ({ questionId, answer }));
-    const result = await submitQuizAttempt(attemptId, answerArray, { sync: !isPractice });
-    setResults(result);
-    setSubmitted(true);
-    if (isPractice && quizId) await deleteLocalPracticeQuiz(quizId);
+    setError('');
+    try {
+      const answerArray = Object.entries(answers).map(([questionId, answer]) => ({ questionId, answer }));
+      const result = await submitQuizAttempt(attemptId, answerArray, { sync: !isPractice });
+      setResults(result);
+      setSubmitted(true);
+      setCompletedAttempts(current => current + 1);
+      if (isPractice && quizId) await deleteLocalPracticeQuiz(quizId);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not submit this quiz.');
+    }
+  };
+  useEffect(() => {
+    submitRef.current = handleSubmit;
+  });
+
+  const handleRetry = async () => {
+    setAnswers({});
+    setResults(null);
+    setSubmitted(false);
+    setStarted(false);
+    setAttemptId('');
+    setTimeLeft(quiz?.timeLimitMinutes ? quiz.timeLimitMinutes * 60 : null);
+    await handleStart();
   };
 
   const formatTime = (seconds: number) => {
@@ -112,7 +143,7 @@ export function QuizTakingPage() {
             <div className="text-4xl font-bold text-blue-600 mb-1">{results.score}/{results.total}</div>
             <p className="text-gray-500 mb-6">{pct}% correct</p>
 
-            <div className="space-y-3 text-left mb-6">
+            {results.showAnswerFeedback ? <div className="space-y-3 text-left mb-6">
               {results.results.map((r, i) => (
                 <div key={i} className={`rounded-lg p-3 ${r.correct ? 'bg-green-50' : 'bg-red-50'}`}>
                   <div className="flex items-center gap-2 mb-1">
@@ -123,9 +154,12 @@ export function QuizTakingPage() {
                   <p className="text-xs text-gray-600">{r.explanation}</p>
                 </div>
               ))}
-            </div>
+            </div> : <p className="mb-6 rounded-xl bg-gray-50 p-4 text-sm text-gray-600">Your teacher has chosen not to show which individual answers were right or wrong.</p>}
 
-            <Button onClick={() => navigate(isPractice ? returnTo : '/quizzes')} className="w-full">{isPractice ? 'Back to class' : 'Back to quizzes'}</Button>
+            <div className="space-y-2">
+              {!isPractice && results.attemptsRemaining > 0 && <Button onClick={() => void handleRetry()} className="w-full">Try second attempt</Button>}
+              <Button variant={results.attemptsRemaining > 0 && !isPractice ? 'secondary' : 'primary'} onClick={() => navigate(isPractice ? returnTo : '/classes')} className="w-full">Back to classes</Button>
+            </div>
           </div>
         </Card>
       </div>
@@ -142,7 +176,11 @@ export function QuizTakingPage() {
           {quiz.timeLimitMinutes && (
             <p className="text-sm text-orange-600 mb-4">Time limit: {quiz.timeLimitMinutes} minutes</p>
           )}
-          <Button onClick={handleStart} className="w-full" size="lg">Start quiz</Button>
+          {quiz.allowedAttempts === 2 && <p className="mb-4 text-sm text-gray-600">Two attempts allowed{completedAttempts ? ` · ${completedAttempts} used` : ''}</p>}
+          {error && <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+          {completedAttempts < (quiz.allowedAttempts === 2 ? 2 : 1) || isPractice
+            ? <Button onClick={handleStart} className="w-full" size="lg">{completedAttempts ? 'Start second attempt' : 'Start quiz'}</Button>
+            : <p className="rounded-lg bg-gray-50 p-3 text-center text-sm text-gray-600">You have used all attempts for this quiz.</p>}
         </Card>
       </div>
     );
@@ -182,6 +220,7 @@ export function QuizTakingPage() {
       </div>
 
       <div className="mt-6 sticky bottom-4">
+        {error && <p className="mb-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
         <Button
           onClick={handleSubmit}
           className="w-full"

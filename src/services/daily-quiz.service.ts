@@ -148,6 +148,8 @@ export async function commitDailyQuiz(
     flashcardWeight: 100,
     questionCount: preview.result.questions.length,
     timeLimitMinutes: config.timeLimitMinutes,
+    allowedAttempts: config.allowedAttempts === 2 ? 2 : 1,
+    showAnswerFeedback: false,
     status: 'draft',
     publishedAt: null,
     createdAt: getTimestamp(),

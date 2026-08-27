@@ -35,6 +35,12 @@ const deleteQuizCascade = async (db, databaseId, quizId) => {
   }
   await db.deleteDocument(databaseId, 'quizzes', quizId);
 };
+const quizAttemptLimit = quiz => quiz.allowedAttempts === 2 ? 2 : 1;
+const normalizeQuizAnswer = value => String(value ?? '').trim().toLowerCase();
+const quizIsAssignedToMember = async (db, databaseId, quizId, memberClassIds) => {
+  const assignments = await db.listDocuments(databaseId, 'quiz_assignments', [Query.equal('quizId', quizId), Query.limit(500)]);
+  return assignments.documents.some(row => memberClassIds.has(row.classId));
+};
 
 const TEXT_SUPPORT_PROMPT_VERSION = '2026-08-26-v1';
 const textVersionId = (textId, level) => `tv_${createHash('sha256').update(`${textId}:${level}`).digest('hex').slice(0, 30)}`;
@@ -376,6 +382,62 @@ export default async ({ req, res, error }) => {
       return res.json({ deletedQuizId: quiz.$id });
     }
 
+    if (body.action === 'startQuizAttempt') {
+      if (profile.role !== 'student') return res.json({ error: 'Student role required' }, 403);
+      const quiz = await db.getDocument(databaseId, 'quizzes', body.quizId);
+      if (quiz.status !== 'published') return res.json({ error: 'This quiz is not published' }, 403);
+      if (!await quizIsAssignedToMember(db, databaseId, quiz.$id, memberClassIds)) return res.json({ error: 'This quiz is not assigned to your class' }, 403);
+      const attemptResult = await db.listDocuments(databaseId, 'quiz_attempts', [Query.equal('quizId', quiz.$id), Query.equal('userId', userId), Query.limit(100)]);
+      const unfinished = attemptResult.documents.find(row => !row.completedAt);
+      if (unfinished) return res.json({ attempt: clean(unfinished) });
+      const completed = attemptResult.documents.filter(row => row.completedAt).length;
+      if (completed >= quizAttemptLimit(quiz)) return res.json({ error: 'You have used all attempts for this quiz' }, 409);
+      const attempt = await db.createDocument(databaseId, 'quiz_attempts', ID.unique(), {
+        quizId: quiz.$id, userId, startedAt: new Date().toISOString(), completedAt: null,
+        score: 0, totalQuestions: 0, answers: '[]',
+      });
+      return res.json({ attempt: clean(attempt) });
+    }
+
+    if (body.action === 'submitQuizAttempt') {
+      if (profile.role !== 'student') return res.json({ error: 'Student role required' }, 403);
+      const attempt = await db.getDocument(databaseId, 'quiz_attempts', body.attemptId);
+      if (attempt.userId !== userId) return res.json({ error: 'This is not your quiz attempt' }, 403);
+      if (attempt.completedAt) return res.json({ error: 'This attempt has already been submitted' }, 409);
+      const quiz = await db.getDocument(databaseId, 'quizzes', attempt.quizId);
+      if (quiz.status !== 'published' || !await quizIsAssignedToMember(db, databaseId, quiz.$id, memberClassIds)) return res.json({ error: 'This quiz is no longer available' }, 403);
+      const supplied = Array.isArray(body.answers) ? body.answers : [];
+      const questionResult = await db.listDocuments(databaseId, 'quiz_questions', [Query.equal('quizId', quiz.$id), Query.limit(5000)]);
+      const questions = [...questionResult.documents].sort((a, b) => a.sortOrder - b.sortOrder);
+      const suppliedById = new Map(supplied.filter(row => row && typeof row.questionId === 'string').map(row => [row.questionId, row.answer]));
+      let score = 0;
+      const results = questions.map(question => {
+        const answer = suppliedById.get(question.$id);
+        let correct = false;
+        if (question.type === 'mc') correct = Number(answer) === Number(question.correctIndex);
+        else {
+          let variants = [];
+          try { const parsed = JSON.parse(question.clozeVariants || '[]'); if (Array.isArray(parsed)) variants = parsed; } catch { /* use primary answer only */ }
+          const accepted = [question.clozeAnswer, ...variants].map(normalizeQuizAnswer).filter(Boolean);
+          correct = accepted.includes(normalizeQuizAnswer(answer));
+        }
+        if (correct) score += 1;
+        return { correct, explanation: String(question.explanation || '') };
+      });
+      const completedAt = new Date().toISOString();
+      const updated = await db.updateDocument(databaseId, 'quiz_attempts', attempt.$id, {
+        completedAt, score, totalQuestions: questions.length,
+        answers: JSON.stringify(supplied.map(row => ({ questionId: row.questionId, answer: row.answer }))),
+      });
+      const attemptResult = await db.listDocuments(databaseId, 'quiz_attempts', [Query.equal('quizId', quiz.$id), Query.equal('userId', userId), Query.limit(100)]);
+      const attemptsRemaining = Math.max(0, quizAttemptLimit(quiz) - attemptResult.documents.filter(row => row.completedAt).length);
+      const showAnswerFeedback = Boolean(quiz.showAnswerFeedback);
+      return res.json({
+        attempt: clean(updated), score, total: questions.length,
+        results: showAnswerFeedback ? results : [], showAnswerFeedback, attemptsRemaining,
+      });
+    }
+
     if (body.action === 'readQuizzes') {
       const requested = [...new Set(Array.isArray(body.classIds) ? body.classIds.filter(Boolean) : [])];
       let allowedClassIds = requested.filter(classId => memberClassIds.has(classId));
@@ -420,7 +482,16 @@ export default async ({ req, res, error }) => {
       return res.json({
         assignments: assignmentResult.documents.filter(row => visibleIds.has(row.quizId)).map(clean),
         quizzes: quizzes.map(clean),
-        questions: questionResult.documents.map(clean),
+        questions: questionResult.documents.map(row => {
+          const projected = clean(row);
+          if (profile.role !== 'teacher') {
+            delete projected.correctIndex;
+            delete projected.clozeAnswer;
+            delete projected.clozeVariants;
+            delete projected.explanation;
+          }
+          return projected;
+        }),
         attempts: attempts.map(clean),
         expiredQuizIds,
       });
@@ -697,6 +768,7 @@ export default async ({ req, res, error }) => {
     if (!studentCollections.has(collection) && !teacherCollections.has(collection)) return res.json({ error: 'Unsupported collection' }, 400);
     if (teacherCollections.has(collection) && profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
     if (studentCollections.has(collection) && profile.role === 'parent') return res.json({ error: 'Parent accounts are read-only' }, 403);
+    if (collection === 'quiz_attempts') return res.json({ error: 'Quiz attempts must use the secure quiz submission actions' }, 400);
     const data = { ...body.data }; delete data.$id; delete data.syncStatus;
     let existing = null; if (operation !== 'create') { try { existing = await db.getDocument(databaseId, collection, id); } catch { /* upsert */ } }
     if (collection === 'classes') {

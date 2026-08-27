@@ -41,6 +41,8 @@ export function CreateQuizModal({
   const [mcWeight, setMcWeight] = useState(60);
   const [questionCount, setQuestionCount] = useState(10);
   const [timeLimit, setTimeLimit] = useState(10);
+  const [allowSecondAttempt, setAllowSecondAttempt] = useState(false);
+  const [showAnswerFeedback, setShowAnswerFeedback] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [step, setStep] = useState<'config' | 'review'>('config');
@@ -77,6 +79,8 @@ export function CreateQuizModal({
         title: defaultQuizTitle(),
         timeLimitMinutes: timeLimit || null,
         recentWeight,
+        allowedAttempts: allowSecondAttempt ? 2 : 1,
+        showAnswerFeedback,
         preview,
       });
       onCreated();
@@ -230,6 +234,35 @@ export function CreateQuizModal({
           </div>
         </div>
 
+        <div className="space-y-2">
+          <label className="flex items-start gap-3 rounded-xl border border-gray-200 p-3 text-sm">
+            <input
+              type="checkbox"
+              className="mt-0.5 h-4 w-4"
+              checked={allowSecondAttempt}
+              onChange={event => setAllowSecondAttempt(event.target.checked)}
+            />
+            <span>
+              <strong className="block text-gray-800">Allow a second attempt</strong>
+              <span className="text-xs text-gray-500">Students may take this quiz up to two times.</span>
+            </span>
+          </label>
+          <label className="flex items-start gap-3 rounded-xl border border-gray-200 p-3 text-sm">
+            <input
+              type="checkbox"
+              className="mt-0.5 h-4 w-4"
+              checked={showAnswerFeedback}
+              onChange={event => setShowAnswerFeedback(event.target.checked)}
+            />
+            <span>
+              <strong className="block text-gray-800">Show students which answers were right or wrong</strong>
+              <span className="text-xs text-gray-500">
+                Leave this off when allowing a retry if you do not want the first attempt to reveal answers.
+              </span>
+            </span>
+          </label>
+        </div>
+
         <Button onClick={() => void handlePreview()} loading={busy} className="w-full">
           Preview quiz
         </Button>
@@ -258,7 +291,7 @@ function StudentQuizzes() {
   const quizzes = useLiveQuery(async () => {
     if (!memberships || memberships.length === 0) return [];
     const classIds = memberships.map(m => m.classId);
-    const result: Array<{ quiz: Quiz; className: string; myAttempt: QuizAttempt | null }> = [];
+    const result: Array<{ quiz: Quiz; className: string; myAttempt: QuizAttempt | null; completedAttempts: number }> = [];
     for (const classId of classIds) {
       const cls = await db.classes.get(classId);
       const assignments = await db.quiz_assignments.where('classId').equals(classId).toArray();
@@ -268,8 +301,8 @@ function StudentQuizzes() {
         : [];
       for (const quiz of classQuizzes) {
         const attempts = await db.quiz_attempts.where('quizId').equals(quiz.$id).and(a => a.userId === user!.$id).toArray();
-        const completed = attempts.find(a => a.completedAt);
-        result.push({ quiz, className: classLabel(cls), myAttempt: completed || null });
+        const completed = attempts.filter(a => a.completedAt).sort((a, b) => b.completedAt!.localeCompare(a.completedAt!));
+        result.push({ quiz, className: classLabel(cls), myAttempt: completed[0] || null, completedAttempts: completed.length });
       }
     }
     return result.sort((a, b) => b.quiz.createdAt.localeCompare(a.quiz.createdAt));
@@ -284,14 +317,14 @@ function StudentQuizzes() {
 
       {quizzes && quizzes.length > 0 ? (
         <div className="space-y-3">
-          {quizzes.map(({ quiz, className, myAttempt }) => (
+          {quizzes.map(({ quiz, className, myAttempt, completedAttempts }) => (
             <Card key={quiz.$id}>
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h3 className="font-semibold">{quiz.title}</h3>
                   <p className="text-sm text-gray-500">{className} · {quiz.questionCount} questions</p>
                 </div>
-                {myAttempt ? (
+                {myAttempt && completedAttempts >= allowedQuizAttempts(quiz) ? (
                   <div className="text-right">
                     <div className="text-lg font-bold text-green-600">
                       {myAttempt.score}/{myAttempt.totalQuestions}
@@ -302,13 +335,14 @@ function StudentQuizzes() {
                   </div>
                 ) : (
                   <Button size="sm" onClick={() => navigate(`/quizzes/${quiz.$id}/take`)}>
-                    Start
+                    {myAttempt ? 'Second attempt' : 'Start'}
                   </Button>
                 )}
               </div>
               {quiz.timeLimitMinutes && (
                 <p className="text-xs text-gray-400 mt-2">{quiz.timeLimitMinutes} min time limit</p>
               )}
+              {allowedQuizAttempts(quiz) === 2 && <p className="mt-1 text-xs text-gray-400">Up to 2 attempts</p>}
             </Card>
           ))}
         </div>
@@ -320,4 +354,8 @@ function StudentQuizzes() {
       )}
     </div>
   );
+}
+
+function allowedQuizAttempts(quiz: Quiz): 1 | 2 {
+  return quiz.allowedAttempts === 2 ? 2 : 1;
 }

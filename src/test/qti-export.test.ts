@@ -3,7 +3,7 @@ import JSZip from 'jszip';
 import { buildQtiAssessmentXml, buildQtiZip } from '@/services/qti-export';
 import type { Quiz, QuizQuestion } from '@/types';
 
-const quiz: Quiz = { $id:'quiz-1',classId:'a',sourceClassId:'a',createdBy:'teacher',title:'World Lit <Quiz>',sourceType:'flashcards',notesWeight:0,flashcardWeight:100,questionCount:2,timeLimitMinutes:10,status:'draft',publishedAt:null,createdAt:'2026-01-01T00:00:00Z',syncStatus:'synced' };
+const quiz: Quiz = { $id:'quiz-1',classId:'a',sourceClassId:'a',createdBy:'teacher',title:'World Lit <Quiz>',sourceType:'flashcards',notesWeight:0,flashcardWeight:100,questionCount:2,timeLimitMinutes:10,allowedAttempts:1,showAnswerFeedback:false,status:'draft',publishedAt:null,createdAt:'2026-01-01T00:00:00Z',syncStatus:'synced' };
 const questions: QuizQuestion[] = [
   {$id:'q1',quizId:'quiz-1',type:'mc',questionText:'Who speaks?',options:JSON.stringify(['Odysseus','<Cyclops>']),correctIndex:0,clozeAnswer:'',explanation:'',sortOrder:0},
   {$id:'q2',quizId:'quiz-1',type:'cloze',questionText:'The hero is ___.',options:'[]',correctIndex:0,clozeAnswer:'Odysseus',clozeVariants:JSON.stringify(['Ulysses']),explanation:'',sortOrder:1},

@@ -485,6 +485,8 @@ const COLLECTIONS = [
       FLOAT('flashcardWeight', { required: true }),
       INT('questionCount', { required: true }),
       INT('timeLimitMinutes', { required: false }),
+      INT('allowedAttempts', { required: false, min: 1, max: 2 }),
+      BOOL('showAnswerFeedback', { required: false }),
       ENUM('status', ['draft', 'published', 'archived'], { required: true }),
       DATE('publishedAt', { required: false }),
       DATE('createdAt', { required: true }),

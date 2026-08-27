@@ -336,6 +336,10 @@ export interface Quiz {
   flashcardWeight: number;
   questionCount: number;
   timeLimitMinutes: number | null;
+  /** One attempt by default; teachers may allow one retry. */
+  allowedAttempts: 1 | 2;
+  /** Whether students see per-question correctness and explanations after submitting. */
+  showAnswerFeedback: boolean;
   status: 'draft' | 'published' | 'archived';
   publishedAt: string | null;
   createdAt: string;
