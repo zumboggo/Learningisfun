@@ -73,6 +73,9 @@ async function ensureFunction(definition) {
   await functions.update({
     functionId: definition.id,
     name: definition.name,
+    // Appwrite may clear execute permissions when a function is updated. Keep
+    // authenticated-user access explicit on every deploy, not only creation.
+    execute: ['users'],
     timeout: definition.timeout || 30,
     enabled: true,
     logging: true,
