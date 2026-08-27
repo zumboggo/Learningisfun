@@ -394,13 +394,11 @@ function QuestionBoardPanel({
           </div>
         </div>
 
-        {!isTeacher && (
-          <VoteBudgetMeter
-            usedVotes={usedVotes}
-            voteBudget={session.votesPerStudent}
-            allowStackedVotes={session.allowStackedVotes}
-          />
-        )}
+        <VoteBudgetMeter
+          usedVotes={usedVotes}
+          voteBudget={session.votesPerStudent}
+          allowStackedVotes={session.allowStackedVotes}
+        />
 
         {questions.length > 0 ? (
           questions.map(question => (
@@ -668,7 +666,7 @@ function QuestionSessionCard({
     <Card className={question.discussionStatus === 'selected' ? 'ring-2 ring-blue-500' : ''}>
       <div className="flex gap-3">
         <div className="flex w-14 flex-col items-center gap-1">
-          {!isTeacher && (
+          {!isAuthor && (
             <button
               onClick={onVote}
               disabled={!canClickVote}

@@ -472,7 +472,7 @@ export function DiscussionPage() {
           </label>
           <label className="block"><span className="text-sm font-medium text-gray-700">Overall topic or focus</span><textarea rows={3} value={sessionPrompt ?? session?.promptMarkdown ?? ''} onChange={e => setSessionPrompt(e.target.value)} placeholder="Broad context for the many questions teachers and students will add" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" /></label>
           <label className="block">
-            <span className="text-sm font-medium text-gray-700">Votes per student</span>
+            <span className="text-sm font-medium text-gray-700">Votes per person</span>
             <input
               type="number"
               min={1}
@@ -510,13 +510,11 @@ export function DiscussionPage() {
         </div>
       </Modal>
 
-      {!isTeacher && (
-        <VoteBudgetMeter
-          usedVotes={usedVotes}
-          voteBudget={voteBudget}
-          allowStackedVotes={session.allowStackedVotes}
-        />
-      )}
+      <VoteBudgetMeter
+        usedVotes={usedVotes}
+        voteBudget={voteBudget}
+        allowStackedVotes={session.allowStackedVotes}
+      />
 
       <Card>
         <h2 className="mb-3 font-semibold">Ask a question</h2>
@@ -751,7 +749,7 @@ function QuestionRow({
           className="min-w-0 flex-1 py-0.5 text-left"
           aria-expanded={isExpanded}
         >
-          <span className={`block text-sm text-gray-900 ${isExpanded ? '' : 'truncate'}`}>
+          <span className={`block text-sm leading-5 text-gray-900 ${isExpanded ? 'whitespace-pre-wrap' : 'line-clamp-2'}`}>
             {question.questionText}
           </span>
           <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-gray-400">
@@ -764,7 +762,7 @@ function QuestionRow({
         </button>
 
         <div className="flex shrink-0 items-center gap-1">
-          {!isTeacher && !isAuthor && (
+          {!isAuthor && (
             allowStackedVotes ? (
               <>
                 <RowButton
