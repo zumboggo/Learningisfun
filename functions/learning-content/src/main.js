@@ -404,6 +404,66 @@ export default async ({ req, res, error }) => {
       return res.json({ deletedQuizId: quiz.$id });
     }
 
+    if (body.action === 'updateFlashcardDeck') {
+      if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
+      const deck = await db.getDocument(databaseId, 'flashcard_decks', body.deckId);
+      if (deck.creatorId !== userId) return res.json({ error: 'Only the deck creator can edit it' }, 403);
+      const title = String(body.title || '').trim().slice(0, 255);
+      const description = String(body.description || '').trim().slice(0, 10000);
+      const requestedCards = Array.isArray(body.cards) ? body.cards : [];
+      if (!title) return res.json({ error: 'Deck title is required' }, 400);
+      if (!requestedCards.length || requestedCards.length > 2000) return res.json({ error: 'Use between 1 and 2,000 cards' }, 400);
+
+      const normalizedCards = [];
+      for (const [index, card] of requestedCards.entries()) {
+        const front = String(card?.front || '').trim().slice(0, 10000);
+        const back = String(card?.back || '').trim().slice(0, 10000);
+        const hint = String(card?.hint || '').trim().slice(0, 255);
+        const tags = Array.isArray(card?.tags)
+          ? [...new Set(card.tags.map(tag => String(tag).trim().slice(0, 100)).filter(Boolean))].slice(0, 30)
+          : [];
+        if (!front || !back) return res.json({ error: `Card ${index + 1} needs both a front and a back` }, 400);
+        normalizedCards.push({ id: typeof card.id === 'string' ? card.id : '', front, back, hint, tags, sortOrder: index });
+      }
+
+      const existingResult = await db.listDocuments(databaseId, 'flashcard_cards', [Query.equal('deckId', deck.$id), Query.limit(5000)]);
+      const existingById = new Map(existingResult.documents.map(card => [card.$id, card]));
+      const keptIds = new Set();
+      const savedCards = [];
+      const now = new Date().toISOString();
+
+      // Create and update first. Deletions happen only after every requested row
+      // has saved successfully, reducing the chance of a partial edit losing cards.
+      for (const card of normalizedCards) {
+        const existing = existingById.get(card.id);
+        const data = {
+          deckId: deck.$id,
+          front: card.front,
+          back: card.back,
+          frontMarkdown: card.front,
+          backMarkdown: card.back,
+          hint: card.hint,
+          tags: card.tags,
+          sortOrder: card.sortOrder,
+          createdAt: existing?.createdAt || now,
+        };
+        if (existing) {
+          const updated = await db.updateDocument(databaseId, 'flashcard_cards', existing.$id, data);
+          keptIds.add(existing.$id);
+          savedCards.push(updated);
+        } else {
+          const created = await db.createDocument(databaseId, 'flashcard_cards', ID.unique(), data);
+          keptIds.add(created.$id);
+          savedCards.push(created);
+        }
+      }
+      for (const existing of existingResult.documents) {
+        if (!keptIds.has(existing.$id)) await db.deleteDocument(databaseId, 'flashcard_cards', existing.$id);
+      }
+      const updatedDeck = await db.updateDocument(databaseId, 'flashcard_decks', deck.$id, { title, description, updatedAt: now });
+      return res.json({ deck: clean(updatedDeck), cards: savedCards.map(clean) });
+    }
+
     if (body.action === 'startQuizAttempt') {
       if (profile.role !== 'student') return res.json({ error: 'Student role required' }, 403);
       const quiz = await db.getDocument(databaseId, 'quizzes', body.quizId);

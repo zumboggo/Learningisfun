@@ -1,5 +1,61 @@
 import type { CsvMapping, CsvPreview } from '@/types';
 
+/** Escape one value according to RFC 4180 so decks import cleanly into Anki and similar apps. */
+export function escapeCsvField(value: string): string {
+  const text = String(value ?? '');
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+export function buildFlashcardDeckCsv(cards: Array<{
+  front: string;
+  back: string;
+  frontMarkdown?: string;
+  backMarkdown?: string;
+  hint?: string;
+  tags?: string[];
+}>): string {
+  const rows = cards.map(card => [
+    card.frontMarkdown || card.front,
+    card.backMarkdown || card.back,
+    card.hint || '',
+    (card.tags || []).join(' '),
+  ]);
+  return [['Front', 'Back', 'Hint', 'Tags'], ...rows]
+    .map(row => row.map(escapeCsvField).join(','))
+    .join('\r\n');
+}
+
+/** Parse CSV records while preserving line breaks inside quoted card fields. */
+function parseCsvRows(content: string, delimiter = ','): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  const finishField = () => { row.push(current.trim()); current = ''; };
+  const finishRow = () => {
+    finishField();
+    if (row.length > 1 || row.some(value => value.length > 0)) rows.push(row);
+    row = [];
+  };
+
+  for (let i = 0; i < content.length; i++) {
+    const ch = content[i];
+    if (ch === '"') {
+      if (inQuotes && content[i + 1] === '"') { current += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if (ch === delimiter && !inQuotes) {
+      finishField();
+    } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
+      if (ch === '\r' && content[i + 1] === '\n') i++;
+      finishRow();
+    } else {
+      current += ch;
+    }
+  }
+  if (current.length || row.length) finishRow();
+  return rows;
+}
+
 export function parseCsvLine(line: string, delimiter = ','): string[] {
   const result: string[] = [];
   let current = '';
@@ -86,12 +142,12 @@ export function parseCsvContent(
   content: string,
   mapping: CsvMapping | null,
 ): CsvPreview {
-  const lines = content.split(/\r?\n/).filter(l => l.trim().length > 0);
-  if (lines.length === 0) {
+  const records = parseCsvRows(content.replace(/^\uFEFF/, ''));
+  if (records.length === 0) {
     return { headers: [], rows: [], totalRows: 0, invalidRows: 0, emptyRows: 0, duplicates: 0, longFields: 0 };
   }
 
-  const headers = parseCsvLine(lines[0]);
+  const headers = records[0];
   const autoMapping = mapping || detectMapping(headers);
   if (!autoMapping) {
     return { headers, rows: [], totalRows: 0, invalidRows: 0, emptyRows: 0, duplicates: 0, longFields: 0 };
@@ -107,8 +163,8 @@ export function parseCsvContent(
   let duplicates = 0;
   let longFields = 0;
 
-  for (let i = 1; i < lines.length; i++) {
-    const values = parseCsvLine(lines[i]);
+  for (let i = 1; i < records.length; i++) {
+    const values = records[i];
     const front = values[frontIdx]?.trim() || '';
     const back = backIdxs
       .map(idx => values[idx]?.trim() || '')
@@ -144,7 +200,7 @@ export function parseCsvContent(
   return {
     headers,
     rows,
-    totalRows: lines.length - 1,
+    totalRows: records.length - 1,
     invalidRows,
     emptyRows,
     duplicates,

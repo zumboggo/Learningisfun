@@ -5,9 +5,10 @@ interface ModalProps {
   onClose: () => void;
   title?: string;
   children: ReactNode;
+  panelClassName?: string;
 }
 
-export function Modal({ open, onClose, title, children }: ModalProps) {
+export function Modal({ open, onClose, title, children, panelClassName = 'sm:max-w-lg' }: ModalProps) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
@@ -52,7 +53,7 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
         tabIndex={-1}
-        className="relative bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto outline-none"
+        className={`relative bg-white rounded-t-2xl sm:rounded-2xl w-full max-h-[90vh] overflow-y-auto outline-none ${panelClassName}`}
       >
         {title && (
           <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between">

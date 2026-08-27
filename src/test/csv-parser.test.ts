@@ -1,7 +1,26 @@
 import { describe, it, expect } from 'vitest';
-import { parseCsvContent, detectMapping, parseCsvLine, joinBackValues } from '@/utils/csv-parser';
+import { buildFlashcardDeckCsv, parseCsvContent, detectMapping, parseCsvLine, joinBackValues } from '@/utils/csv-parser';
 
 describe('CSV Parser', () => {
+  describe('flashcard deck export', () => {
+    it('exports portable headers and safely quotes commas, quotes, and line breaks', () => {
+      const csv = buildFlashcardDeckCsv([{
+        front: 'Justice, fairness',
+        back: 'A "fair" outcome\n\nExample sentence',
+        frontMarkdown: '**Justice**, fairness',
+        backMarkdown: 'A "fair" outcome\n\n*Example sentence*',
+        hint: 'Think, broadly',
+        tags: ['ethics', 'unit-1'],
+      }]);
+
+      expect(csv).toBe('Front,Back,Hint,Tags\r\n"**Justice**, fairness","A ""fair"" outcome\n\n*Example sentence*","Think, broadly",ethics unit-1');
+      const parsed = parseCsvContent(csv, null);
+      expect(parsed.rows).toHaveLength(1);
+      expect(parsed.rows[0].Front).toBe('**Justice**, fairness');
+      expect(parsed.rows[0].Back).toBe('A "fair" outcome\n\n*Example sentence*');
+    });
+  });
+
   describe('joinBackValues', () => {
     const row = { term: 'ephemeral', definition: 'short-lived', example: 'an ephemeral trend' };
 

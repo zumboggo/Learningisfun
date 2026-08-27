@@ -26,6 +26,7 @@ import type {
   CsvMapping,
 } from '@/types';
 import { joinBackValues, parseCsvContent, readFileAsText } from '@/utils/csv-parser';
+import { executeLearningContent } from './learning-content.service';
 
 export async function createDeck(
   creatorId: string,
@@ -273,7 +274,36 @@ export async function getDeckCards(deckId: string): Promise<FlashcardCard[]> {
   return db.flashcard_cards.where('deckId').equals(deckId).sortBy('sortOrder');
 }
 
-export async function updateDeckMetadata(deckId:string,creatorId:string,updates:{title:string;description:string}):Promise<void>{const deck=await db.flashcard_decks.get(deckId);if(!deck||deck.creatorId!==creatorId)throw new Error('Only the deck creator can edit it');const patch={title:updates.title.trim(),description:updates.description.trim(),updatedAt:getTimestamp()};await db.flashcard_decks.update(deckId,patch);try{await databases.updateDocument(DATABASE_ID,COLLECTIONS.flashcard_decks,deckId,patch);}catch{const updated=await db.flashcard_decks.get(deckId);if(updated)await addToQueue(creatorId,'deck',deckId,'update',updated);}}
+export interface EditableDeckCard {
+  id?: string;
+  front: string;
+  back: string;
+  hint: string;
+  tags: string[];
+}
+
+export async function updateEntireDeck(
+  deckId: string,
+  creatorId: string,
+  updates: { title: string; description: string; cards: EditableDeckCard[] },
+): Promise<void> {
+  const localDeck = await db.flashcard_decks.get(deckId);
+  if (!localDeck || localDeck.creatorId !== creatorId) throw new Error('Only the deck creator can edit it');
+  const result = await executeLearningContent<{ deck: FlashcardDeck; cards: FlashcardCard[] }>({
+    action: 'updateFlashcardDeck',
+    deckId,
+    title: updates.title,
+    description: updates.description,
+    cards: updates.cards,
+  });
+
+  const oldIds = await db.flashcard_cards.where('deckId').equals(deckId).primaryKeys();
+  await db.transaction('rw', db.flashcard_decks, db.flashcard_cards, async () => {
+    await db.flashcard_decks.put(result.deck);
+    await db.flashcard_cards.bulkDelete(oldIds);
+    await db.flashcard_cards.bulkPut(result.cards);
+  });
+}
 
 export async function reviewCard(
   userId: string,
