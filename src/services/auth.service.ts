@@ -154,6 +154,33 @@ export async function login(email: string, password: string): Promise<User> {
   return user;
 }
 
+export function passwordRecoveryRedirectUrl(origin = window.location.origin, baseUrl = import.meta.env.BASE_URL): string {
+  const url = new URL(baseUrl, `${origin}/`);
+  // Keeping a real query parameter before the hash makes Appwrite append its
+  // recovery credentials in a location GitHub Pages preserves. The reset page
+  // also accepts credentials appended inside the hash for compatibility.
+  url.searchParams.set('recovery', '1');
+  url.hash = '/reset-password';
+  return url.toString();
+}
+
+export async function requestPasswordRecovery(email: string): Promise<void> {
+  await account.createRecovery({ email: email.trim().toLowerCase(), url: passwordRecoveryRedirectUrl() });
+}
+
+export function passwordRecoveryParams(href = window.location.href): { userId: string; secret: string } | null {
+  const url = new URL(href);
+  const outer = url.searchParams;
+  const hashQuery = url.hash.includes('?') ? new URLSearchParams(url.hash.slice(url.hash.indexOf('?') + 1)) : new URLSearchParams();
+  const userId = outer.get('userId') || hashQuery.get('userId') || '';
+  const secret = outer.get('secret') || hashQuery.get('secret') || '';
+  return userId && secret ? { userId, secret } : null;
+}
+
+export async function completePasswordRecovery(userId: string, secret: string, password: string): Promise<void> {
+  await account.updateRecovery({ userId, secret, password });
+}
+
 async function loginLocalDevelopmentTeacher(email: string, password: string): Promise<User | null> {
   if (!import.meta.env.DEV) return null;
   const localLogin = getLocalDevelopmentLogin(email, password);

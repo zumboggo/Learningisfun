@@ -3,6 +3,8 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { LoginPage } from '@/pages/LoginPage';
 import { RegisterPage } from '@/pages/RegisterPage';
+import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
+import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 import { JoinClassPage } from '@/pages/JoinClassPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 
@@ -94,6 +96,8 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+          <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
           {/* Public: works signed out (sign up + enrol) and signed in (enrol only) */}
           <Route path="/join" element={<JoinClassPage />} />
