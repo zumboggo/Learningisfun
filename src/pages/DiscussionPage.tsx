@@ -12,6 +12,7 @@ import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
 import { EmptyState } from '@/components/common/EmptyState';
 import { StatusBadge } from '@/components/common/StatusBadge';
+import { CopyButton } from '@/components/common/CopyButton';
 import type {
   DiscussionQuestion,
   DiscussionAnswer,
@@ -20,6 +21,7 @@ import type {
 } from '@/types';
 import { RedditDiscussionPage } from '@/pages/RedditDiscussionPage';
 import { client, COLLECTIONS, DATABASE_ID } from '@/lib/appwrite';
+import { formatQuestionsForClipboard } from '@/services/question.service';
 
 export function DiscussionPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -27,6 +29,9 @@ export function DiscussionPage() {
 
   const [questionText, setQuestionText] = useState('');
   const [selectedPassage, setSelectedPassage] = useState('');
+  const [questionSourceTitle, setQuestionSourceTitle] = useState('');
+  const [questionSourceUrl, setQuestionSourceUrl] = useState('');
+  const [questionLinkOpen, setQuestionLinkOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [expandedAnswers, setExpandedAnswers] = useState<Set<string>>(new Set());
@@ -203,7 +208,7 @@ export function DiscussionPage() {
   };
 
   const handleSubmitQuestion = async () => {
-    if (!user || !sessionId || !session || !questionText.trim()) return;
+    if (!user || !sessionId || !session || !questionText.trim() || !validOptionalSourceLink(questionSourceTitle, questionSourceUrl)) return;
     setBusy(true);
     try {
       const id = ID.unique();
@@ -214,6 +219,8 @@ export function DiscussionPage() {
         authorId: user.$id,
         questionText: questionText.trim(),
         selectedPassage: selectedPassage.trim(),
+        sourceTitle: questionSourceTitle.trim(),
+        sourceUrl: questionSourceUrl.trim(),
         voteCount: 0,
         moderationStatus: 'visible',
         discussionStatus: 'none',
@@ -228,6 +235,9 @@ export function DiscussionPage() {
       await addToQueue(user.$id, 'question', id, 'create', question);
       setQuestionText('');
       setSelectedPassage('');
+      setQuestionSourceTitle('');
+      setQuestionSourceUrl('');
+      setQuestionLinkOpen(false);
       setRefreshKey(k => k + 1);
     } finally {
       setBusy(false);
@@ -346,7 +356,7 @@ export function DiscussionPage() {
     setRefreshKey(k => k + 1);
   };
 
-  const handleSubmitAnswer = async (questionId: string) => {
+  const handleSubmitAnswer = async (questionId: string, sourceTitle = '', sourceUrl = '') => {
     if (!user || !session) return;
     const text = answerTexts[questionId]?.trim();
     if (!text) return;
@@ -360,6 +370,8 @@ export function DiscussionPage() {
         authorId: user.$id,
         authorName: user.name,
         answerText: text,
+        sourceTitle: sourceTitle.trim(),
+        sourceUrl: sourceUrl.trim(),
         createdAt: now,
         updatedAt: now,
         syncStatus: 'local',
@@ -381,11 +393,11 @@ export function DiscussionPage() {
     }
   };
 
-  const handleEditQuestion = async (questionId: string, text: string, passage: string) => {
+  const handleEditQuestion = async (questionId: string, text: string, passage: string, sourceTitle: string, sourceUrl: string) => {
     if (!user || !isTeacher) return;
     const question = await db.discussion_questions.get(questionId);
     if (!question || question.authorId !== user.$id || !question.isTeacherQuestion || !text.trim()) return;
-    await db.discussion_questions.update(questionId, { questionText: text.trim(), selectedPassage: passage.trim(), syncStatus: 'local' });
+    await db.discussion_questions.update(questionId, { questionText: text.trim(), selectedPassage: passage.trim(), sourceTitle: sourceTitle.trim(), sourceUrl: sourceUrl.trim(), syncStatus: 'local' });
     const updated = await db.discussion_questions.get(questionId);
     if (updated) await addToQueue(user.$id, 'question', questionId, 'update', updated);
     setRefreshKey(key => key + 1);
@@ -446,7 +458,7 @@ export function DiscussionPage() {
   }
 
   if (isParent) {
-    return <div className="p-4 max-w-2xl mx-auto space-y-4"><h1 className="text-2xl font-bold">{session.title}</h1><p className="text-sm text-gray-500">Parent read-only view</p>{sortedQuestions.map(question => <Card key={question.$id}><div className="flex justify-between gap-3"><p>{question.questionText}</p><b>{question.voteCount} votes</b></div>{(answersByQuestion?.get(question.$id)||[]).map(answer=><p key={answer.$id} className="mt-2 border-l-2 pl-3 text-sm">{answer.answerText}</p>)}</Card>)}</div>;
+    return <div className="p-4 max-w-2xl mx-auto space-y-4"><h1 className="text-2xl font-bold">{session.title}</h1><p className="text-sm text-gray-500">Parent read-only view</p>{sortedQuestions.map(question => <Card key={question.$id}><div className="flex justify-between gap-3"><p>{question.questionText}</p><b>{question.voteCount} votes</b></div><SourceLink title={question.sourceTitle} url={question.sourceUrl}/>{(answersByQuestion?.get(question.$id)||[]).map(answer=><div key={answer.$id} className="mt-2 border-l-2 pl-3 text-sm"><p>{answer.answerText}</p><SourceLink title={answer.sourceTitle} url={answer.sourceUrl}/></div>)}</Card>)}</div>;
   }
 
   return (
@@ -572,10 +584,14 @@ export function DiscussionPage() {
           className="mt-2 w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-sm"
           placeholder="Quoted passage (optional)"
         />
+        <div className="mt-2">
+          <LinkToggle open={questionLinkOpen} onClick={() => setQuestionLinkOpen(value => !value)} />
+          {questionLinkOpen && <SourceLinkFields title={questionSourceTitle} url={questionSourceUrl} onTitleChange={setQuestionSourceTitle} onUrlChange={setQuestionSourceUrl} />}
+        </div>
         <Button
           onClick={() => void handleSubmitQuestion()}
           loading={busy}
-          disabled={!questionText.trim()}
+          disabled={!questionText.trim() || !validOptionalSourceLink(questionSourceTitle, questionSourceUrl)}
           className="mt-3 w-full"
         >
           Submit question
@@ -583,12 +599,10 @@ export function DiscussionPage() {
       </Card>
 
       <div className="space-y-2">
-        <h2 className="text-lg font-semibold">
-          Questions{' '}
-          <span className="text-sm font-normal text-gray-500">
-            ({sortedQuestions.length} total, sorted by votes)
-          </span>
-        </h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold">Questions <span className="text-sm font-normal text-gray-500">({sortedQuestions.length} total, sorted by votes)</span></h2>
+          {isTeacher && <CopyButton text={formatQuestionsForClipboard(sortedQuestions)} label="Copy Questions" copiedLabel="Questions copied" />}
+        </div>
 
         {sortedQuestions.length > 0 ? (
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
@@ -627,12 +641,12 @@ export function DiscussionPage() {
                   onAnswerTextChange={text =>
                     setAnswerTexts(prev => ({ ...prev, [question.$id]: text }))
                   }
-                  onSubmitAnswer={() => void handleSubmitAnswer(question.$id)}
+                  onSubmitAnswer={(sourceTitle, sourceUrl) => handleSubmitAnswer(question.$id, sourceTitle, sourceUrl)}
                   onModerate={status => void handleModerate(question.$id, status)}
                   onDiscussionStatus={status =>
                     void handleDiscussionStatus(question.$id, status)
                   }
-                  onEdit={(text, passage) => void handleEditQuestion(question.$id, text, passage)}
+                  onEdit={(text, passage, sourceTitle, sourceUrl) => void handleEditQuestion(question.$id, text, passage, sourceTitle, sourceUrl)}
                 />
               ))}
             </ul>
@@ -746,15 +760,20 @@ function QuestionRow({
   onRemoveVote: () => void;
   onToggleAnswers: () => void;
   onAnswerTextChange: (text: string) => void;
-  onSubmitAnswer: () => void;
+  onSubmitAnswer: (sourceTitle: string, sourceUrl: string) => Promise<void>;
   onModerate: (status: 'visible' | 'hidden' | 'removed') => void;
   onDiscussionStatus: (status: 'none' | 'selected' | 'discussed' | 'archived') => void;
-  onEdit: (text: string, passage: string) => void;
+  onEdit: (text: string, passage: string, sourceTitle: string, sourceUrl: string) => void;
 }) {
   const isAuthor = question.authorId === currentUserId;
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(question.questionText);
   const [editPassage, setEditPassage] = useState(question.selectedPassage);
+  const [editSourceTitle, setEditSourceTitle] = useState(question.sourceTitle || '');
+  const [editSourceUrl, setEditSourceUrl] = useState(question.sourceUrl || '');
+  const [answerLinkOpen, setAnswerLinkOpen] = useState(false);
+  const [answerSourceTitle, setAnswerSourceTitle] = useState('');
+  const [answerSourceUrl, setAnswerSourceUrl] = useState('');
   const canVoteForQuestion = !isAuthor || isTeacher;
   const canAddVote = canVoteForQuestion && usedVotes < voteBudget;
   const hasVoted = voteWeight > 0;
@@ -773,7 +792,7 @@ function QuestionRow({
   // Opening a row with no passage and no teacher controls would otherwise draw
   // an empty grey box under a student's question.
   const hasPanelContent =
-    editing || isAnswersExpanded || (isExpanded && (isTeacher || Boolean(question.selectedPassage)));
+    editing || isAnswersExpanded || (isExpanded && (isTeacher || Boolean(question.selectedPassage) || Boolean(question.sourceUrl)));
 
   return (
     <li className={rowTint}>
@@ -856,6 +875,7 @@ function QuestionRow({
               &ldquo;{question.selectedPassage}&rdquo;
             </blockquote>
           )}
+          {isExpanded && <SourceLink title={question.sourceTitle} url={question.sourceUrl} />}
 
           {isExpanded && isTeacher && (
             <div className="flex flex-wrap gap-1.5">
@@ -883,7 +903,7 @@ function QuestionRow({
             </div>
           )}
 
-          {editing && isTeacher && isAuthor && question.isTeacherQuestion && <div className="space-y-2 rounded-lg border border-blue-100 bg-white p-3"><input className="w-full rounded-lg border px-3 py-2 text-sm" value={editText} onChange={e => setEditText(e.target.value)} /><textarea className="w-full rounded-lg border px-3 py-2 text-sm" rows={2} value={editPassage} onChange={e => setEditPassage(e.target.value)} placeholder="Quoted passage (optional)" /><div className="flex justify-end gap-2"><Button size="sm" variant="secondary" onClick={() => setEditing(false)}>Cancel</Button><Button size="sm" disabled={!editText.trim()} onClick={() => { onEdit(editText, editPassage); setEditing(false); }}>Save question</Button></div></div>}
+          {editing && isTeacher && isAuthor && question.isTeacherQuestion && <div className="space-y-2 rounded-lg border border-blue-100 bg-white p-3"><input className="w-full rounded-lg border px-3 py-2 text-sm" value={editText} onChange={e => setEditText(e.target.value)} /><textarea className="w-full rounded-lg border px-3 py-2 text-sm" rows={2} value={editPassage} onChange={e => setEditPassage(e.target.value)} placeholder="Quoted passage (optional)" /><SourceLinkFields title={editSourceTitle} url={editSourceUrl} onTitleChange={setEditSourceTitle} onUrlChange={setEditSourceUrl} /><div className="flex justify-end gap-2"><Button size="sm" variant="secondary" onClick={() => setEditing(false)}>Cancel</Button><Button size="sm" disabled={!editText.trim() || !validOptionalSourceLink(editSourceTitle, editSourceUrl)} onClick={() => { onEdit(editText, editPassage, editSourceTitle, editSourceUrl); setEditing(false); }}>Save question</Button></div></div>}
 
           {isAnswersExpanded && (
             <div className="space-y-2">
@@ -902,28 +922,23 @@ function QuestionRow({
                       </span>
                     </div>
                     <p className="whitespace-pre-wrap text-sm text-gray-800">{answer.answerText}</p>
+                    <SourceLink title={answer.sourceTitle} url={answer.sourceUrl} />
                   </div>
                 ))
               ) : (
                 <p className="text-sm text-gray-400">No replies yet.</p>
               )}
 
-              <div className="flex gap-2">
-                <textarea
-                  value={answerText}
-                  onChange={e => onAnswerTextChange(e.target.value)}
-                  rows={2}
-                  className="flex-1 resize-y rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                  placeholder="Write a reply…"
-                />
-                <Button
-                  size="sm"
-                  onClick={onSubmitAnswer}
-                  loading={isSubmittingAnswer}
-                  disabled={!answerText.trim()}
-                >
-                  Send
-                </Button>
+              <div className="rounded-lg border border-gray-200 bg-white p-2">
+                <textarea value={answerText} onChange={e => onAnswerTextChange(e.target.value)} rows={2} className="w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="Write a reply…" />
+                {answerLinkOpen && <SourceLinkFields title={answerSourceTitle} url={answerSourceUrl} onTitleChange={setAnswerSourceTitle} onUrlChange={setAnswerSourceUrl} />}
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                  <LinkToggle open={answerLinkOpen} onClick={() => setAnswerLinkOpen(value => !value)} />
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="ghost" onClick={onToggleAnswers}>Cancel</Button>
+                    <Button size="sm" onClick={() => void onSubmitAnswer(answerSourceTitle, answerSourceUrl).then(() => { setAnswerSourceTitle(''); setAnswerSourceUrl(''); setAnswerLinkOpen(false); })} loading={isSubmittingAnswer} disabled={!answerText.trim() || !validOptionalSourceLink(answerSourceTitle, answerSourceUrl)}>Send</Button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -931,6 +946,26 @@ function QuestionRow({
       )}
     </li>
   );
+}
+
+function validOptionalSourceLink(title: string, url: string): boolean {
+  if (!title.trim() && !url.trim()) return true;
+  if (!title.trim() || !url.trim()) return false;
+  try { return ['http:', 'https:'].includes(new URL(url).protocol); } catch { return false; }
+}
+
+function LinkToggle({ open, onClick }: { open: boolean; onClick: () => void }) {
+  return <button type="button" onClick={onClick} aria-expanded={open} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50" title="Add a supporting link"><span aria-hidden="true">🔗</span>{open ? 'Hide link' : 'Add link'}</button>;
+}
+
+function SourceLinkFields({ title, url, onTitleChange, onUrlChange }: { title: string; url: string; onTitleChange: (value: string) => void; onUrlChange: (value: string) => void }) {
+  const valid = validOptionalSourceLink(title, url);
+  return <div className="mt-2 grid gap-2 rounded-lg bg-blue-50 p-2 sm:grid-cols-2"><label className="text-[11px] font-medium text-gray-600">Page title<input value={title} onChange={event => onTitleChange(event.target.value)} maxLength={255} placeholder="Article or page title" className="mt-1 w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm" /></label><label className="text-[11px] font-medium text-gray-600">Link<input type="url" value={url} onChange={event => onUrlChange(event.target.value)} maxLength={2048} placeholder="https://…" className="mt-1 w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm" /></label>{!valid && <p className="text-xs text-red-600 sm:col-span-2">Add both a title and a complete http or https link.</p>}</div>;
+}
+
+function SourceLink({ title, url }: { title?: string; url?: string }) {
+  if (!title || !url || !validOptionalSourceLink(title, url)) return null;
+  return <a href={url} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex max-w-full items-center gap-1 text-xs font-medium text-blue-700 hover:underline"><span aria-hidden="true">🔗</span><span className="truncate">{title}</span></a>;
 }
 
 /** Compact action button sized to sit inside a one-line row. */

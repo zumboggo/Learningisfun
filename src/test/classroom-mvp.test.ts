@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { Markdown } from '@/components/common/Markdown';
 import { createElement } from 'react';
 import { masteryBucketForState } from '@/services/flashcard.service';
-import { sortQuestionsForDiscussion } from '@/services/question.service';
+import { formatQuestionsForClipboard, sortQuestionsForDiscussion } from '@/services/question.service';
 import { detectMapping, parseCsvContent } from '@/utils/csv-parser';
 import type { DiscussionQuestion, StudentCardState } from '@/types';
 
@@ -47,6 +47,13 @@ describe('Classroom MVP rules', () => {
       question('earlier', 4, '2026-01-01T00:00:00.000Z'),
     ];
     expect(sortQuestionsForDiscussion(questions).map(item => item.questionText)).toEqual(['top', 'earlier', 'later']);
+  });
+
+  it('copies numbered visible discussion questions and omits moderated ones', () => {
+    const visible = question('What makes this convincing?', 2, '2026-01-01T00:00:00.000Z');
+    const hidden = { ...question('Hidden question', 1, '2026-01-02T00:00:00.000Z'), moderationStatus: 'hidden' as const };
+    const second = question('Which evidence matters most?', 0, '2026-01-03T00:00:00.000Z');
+    expect(formatQuestionsForClipboard([visible, hidden, second])).toBe('1. What makes this convincing?\n\n2. Which evidence matters most?');
   });
 
   it('calculates New, Familiar, Known flashcard buckets from interval thresholds', () => {

@@ -42,6 +42,16 @@ const quizIsAssignedToMember = async (db, databaseId, quizId, memberClassIds) =>
   return assignments.documents.some(row => memberClassIds.has(row.classId));
 };
 const questionVoteWeight = vote => Math.max(1, Number(vote?.weight) || 1);
+const normalizeSourceLink = data => {
+  const sourceTitle = String(data.sourceTitle || '').trim().slice(0, 255);
+  const sourceUrl = String(data.sourceUrl || '').trim().slice(0, 2048);
+  if (!sourceTitle && !sourceUrl) return { sourceTitle: '', sourceUrl: '' };
+  if (!sourceTitle || !sourceUrl) throw new Error('A source link needs both a title and a URL');
+  let parsed;
+  try { parsed = new URL(sourceUrl); } catch { throw new Error('Enter a valid source URL'); }
+  if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('Source links must use http or https');
+  return { sourceTitle, sourceUrl: parsed.toString() };
+};
 const questionVoteTotals = votes => {
   const totals = new Map();
   for (const vote of votes) totals.set(vote.questionId, (totals.get(vote.questionId) || 0) + questionVoteWeight(vote));
@@ -804,8 +814,12 @@ export default async ({ req, res, error }) => {
     if (studentCollections.has(collection) && classId && !isMember && !isTeacher) return res.json({ error: 'Not enrolled' }, 403);
     if (teacherCollections.has(collection) && classId && !isTeacher) return res.json({ error: 'Not the class owner' }, 403);
     if (existing && !isTeacher) { const owner = existing.authorId || existing.userId || existing.reviewerId; if (owner && owner !== userId) return res.json({ error: 'Cannot change another student’s work' }, 403); }
-    if (existing && isTeacher) { const owner = existing.authorId || existing.userId || existing.reviewerId; if (owner && owner !== userId) { if (collection === 'discussion_questions') { data.questionText = existing.questionText; data.selectedPassage = existing.selectedPassage; } if (collection === 'discussion_answers') data.answerText = existing.answerText; if (collection === 'text_discussion_posts') data.content = existing.content; } }
+    if (existing && isTeacher) { const owner = existing.authorId || existing.userId || existing.reviewerId; if (owner && owner !== userId) { if (collection === 'discussion_questions') { data.questionText = existing.questionText; data.selectedPassage = existing.selectedPassage; data.sourceTitle = existing.sourceTitle || ''; data.sourceUrl = existing.sourceUrl || ''; } if (collection === 'discussion_answers') { data.answerText = existing.answerText; data.sourceTitle = existing.sourceTitle || ''; data.sourceUrl = existing.sourceUrl || ''; } if (collection === 'text_discussion_posts') data.content = existing.content; } }
     if ('authorId' in data && !isTeacher) data.authorId = userId; if ('userId' in data) data.userId = userId; if ('reviewerId' in data) data.reviewerId = userId;
+    if (collection === 'discussion_questions' || collection === 'discussion_answers') {
+      try { Object.assign(data, normalizeSourceLink(data)); }
+      catch (linkError) { return res.json({ error: linkError.message }, 400); }
+    }
     if (collection === 'text_discussion_posts' && data.parentId) { const parent = await db.getDocument(databaseId, collection, data.parentId); if (parent.locked || parent.depth >= 3 || parent.classId !== data.classId) return res.json({ error: 'Invalid or locked reply target' }, 400); data.depth = parent.depth + 1; }
     if (collection === 'question_votes') {
       const questionId = data.questionId || existing?.questionId;

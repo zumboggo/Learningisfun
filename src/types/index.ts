@@ -126,6 +126,8 @@ export interface DiscussionQuestion {
   authorId: string;
   questionText: string;
   selectedPassage: string;
+  sourceTitle?: string;
+  sourceUrl?: string;
   voteCount: number;
   moderationStatus: 'visible' | 'hidden' | 'removed';
   discussionStatus: 'none' | 'selected' | 'discussed' | 'archived';
@@ -306,6 +308,8 @@ export interface DiscussionAnswer {
   authorId: string;
   authorName: string;
   answerText: string;
+  sourceTitle?: string;
+  sourceUrl?: string;
   createdAt: string;
   updatedAt: string;
   syncStatus: SyncStatus;

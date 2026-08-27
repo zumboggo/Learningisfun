@@ -365,6 +365,13 @@ export function sortQuestionsForDiscussion(questions: DiscussionQuestion[]): Dis
   });
 }
 
+export function formatQuestionsForClipboard(questions: DiscussionQuestion[]): string {
+  return questions
+    .filter(question => question.moderationStatus === 'visible')
+    .map((question, index) => `${index + 1}. ${question.questionText.trim()}`)
+    .join('\n\n');
+}
+
 async function updateQuestionVoteCount(questionId: string): Promise<void> {
   const votes = await db.question_votes.where('questionId').equals(questionId).toArray();
   const voteCount = votes.reduce((sum, vote) => sum + Math.max(1, vote.weight || 1), 0);
