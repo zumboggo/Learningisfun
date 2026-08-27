@@ -595,13 +595,14 @@ export default async ({ req, res, error }) => {
       const versionId = textVersionId(text.$id, level), now = new Date().toISOString();
       let version = null;
       try { version = await db.getDocument(databaseId, 'text_versions', versionId); } catch (cause) { if (cause?.code !== 404) throw cause; }
+      const versionMatchesText = version && new Date(version.createdAt).getTime() >= new Date(text.updatedAt).getTime();
       const generationIsStale = version?.status === 'generating' && Date.now() - new Date(version.updatedAt).getTime() > 5 * 60 * 1000;
-      if (version?.status === 'ready' || (version?.status === 'generating' && !generationIsStale)) {
+      if ((version?.status === 'ready' && versionMatchesText) || (version?.status === 'generating' && versionMatchesText && !generationIsStale)) {
         const rows = version.status === 'ready' ? await db.listDocuments(databaseId, 'text_version_paragraphs', [Query.equal('versionId', versionId), Query.limit(5000)]) : { documents: [] };
         return res.json({ version: clean(version), paragraphs: rows.documents.map(clean) });
       }
       const model = process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini';
-      const versionData = { textId: text.$id, level, status: 'generating', requestedBy: userId, model, promptVersion: TEXT_SUPPORT_PROMPT_VERSION, error: '', createdAt: version?.createdAt || now, updatedAt: now };
+      const versionData = { textId: text.$id, level, status: 'generating', requestedBy: userId, model, promptVersion: TEXT_SUPPORT_PROMPT_VERSION, error: '', createdAt: versionMatchesText ? version.createdAt : now, updatedAt: now };
       if (version) version = await db.updateDocument(databaseId, 'text_versions', versionId, versionData);
       else {
         try { version = await db.createDocument(databaseId, 'text_versions', versionId, versionData); }
@@ -650,7 +651,9 @@ export default async ({ req, res, error }) => {
         db.listDocuments(databaseId, 'text_annotations', [Query.equal('textId', textIds), Query.equal('classId', allowedClassIds), Query.limit(1000)]),
         db.listDocuments(databaseId, 'text_versions', [Query.equal('textId', textIds), Query.limit(1000)]),
       ]);
-      const readyVersionIds = versionResult.documents.filter(row => row.status === 'ready').map(row => row.$id);
+      const textUpdatedAt = new Map(textResult.documents.map(row => [row.$id, new Date(row.updatedAt).getTime()]));
+      const currentVersions = versionResult.documents.filter(row => new Date(row.createdAt).getTime() >= (textUpdatedAt.get(row.textId) || 0));
+      const readyVersionIds = currentVersions.filter(row => row.status === 'ready').map(row => row.$id);
       const versionParagraphResult = readyVersionIds.length ? await db.listDocuments(databaseId, 'text_version_paragraphs', [Query.equal('versionId', readyVersionIds), Query.limit(5000)]) : { documents: [] };
       const ownCounts = new Map();
       for (const row of annotationResult.documents) if (row.authorId === userId && (row.visibility || 'class') === 'class' && (row.kind || 'annotation') === 'annotation') ownCounts.set(`${row.textId}:${row.classId}`, (ownCounts.get(`${row.textId}:${row.classId}`) || 0) + 1);
@@ -658,7 +661,7 @@ export default async ({ req, res, error }) => {
         if ((row.visibility || 'class') === 'private') return row.authorId === userId;
         return profile.role === 'teacher' || profile.role === 'parent' || row.authorId === userId || (ownCounts.get(`${row.textId}:${row.classId}`) || 0) >= 3;
       }).map(row => { const projected = clean(row); if (profile.role !== 'teacher' && row.authorId !== userId) { delete projected.authorId; delete projected.flagReason; } return projected; });
-      return res.json({ assignments: assignments.map(clean), texts: textResult.documents.map(clean), paragraphs: paragraphResult.documents.map(clean), versions: versionResult.documents.map(clean), versionParagraphs: versionParagraphResult.documents.map(clean), annotations });
+      return res.json({ assignments: assignments.map(clean), texts: textResult.documents.map(clean), paragraphs: paragraphResult.documents.map(clean), versions: currentVersions.map(clean), versionParagraphs: versionParagraphResult.documents.map(clean), annotations });
     }
 
     if (body.action === 'readDiscussion') {

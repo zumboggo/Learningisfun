@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
+import { Markdown } from '@/components/common/Markdown';
 
 export function TextPresentPage() {
   const { textId } = useParams<{ textId: string }>();
@@ -14,8 +15,8 @@ export function TextPresentPage() {
   );
 
   const total = paragraphs?.length || 0;
-  const previous = () => setSlide(value => Math.max(0, value - 1));
-  const next = () => setSlide(value => Math.min(Math.max(0, total - 1), value + 1));
+  const previous = useCallback(() => setSlide(value => Math.max(0, value - 1)), []);
+  const next = useCallback(() => setSlide(value => Math.min(Math.max(0, total - 1), value + 1)), [total]);
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
@@ -28,7 +29,7 @@ export function TextPresentPage() {
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [navigate, total]);
+  }, [navigate, next, previous]);
 
   if (!text || !paragraphs) return <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-300">Loading text…</div>;
 
@@ -41,8 +42,8 @@ export function TextPresentPage() {
 
       <section className="flex min-h-0 flex-1 items-center justify-center overflow-auto px-[clamp(1.5rem,8vw,8rem)] py-[clamp(2rem,6vh,5rem)]">
         {total > 0 ? (
-          <article className="mx-auto w-full max-w-6xl whitespace-pre-wrap text-left text-[clamp(1.5rem,3.2vw,3rem)] leading-[1.55] tracking-[-0.01em]">
-            {paragraphs[slide]?.content}
+          <article className="mx-auto w-full max-w-6xl text-left text-[clamp(1.5rem,3.2vw,3rem)] leading-[1.55] tracking-[-0.01em]">
+            <Markdown content={paragraphs[slide]?.content||''}/>
           </article>
         ) : (
           <p className="text-xl text-slate-400">This text has no paragraphs.</p>

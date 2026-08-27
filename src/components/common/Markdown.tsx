@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- this shared renderer also exposes its matching word counter */
 import type { ReactNode } from 'react';
 
 interface MarkdownProps {
@@ -20,7 +21,7 @@ export function countMarkdownWords(markdown: string): number {
     .replace(/```[\s\S]*?```/g, ' ')
     .replace(/`([^`]+)`/g, '$1')
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/[#>*_\-]/g, ' ')
+    .replace(/[#>*_-]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
   if (!plain) return 0;
@@ -78,6 +79,17 @@ function renderBlocks(content: string): ReactNode[] {
       continue;
     }
 
+    if (/^\d+\.\s+/.test(trimmed)) {
+      const items: string[] = [];
+      while (index < lines.length) {
+        const match = /^\d+\.\s+(.+)$/.exec(lines[index].trim());
+        if (!match) break;
+        items.push(match[1]); index += 1;
+      }
+      blocks.push(<ol key={`ol-${index}`} className="list-decimal space-y-1 pl-5">{items.map((item,itemIndex)=><li key={`${index}-${itemIndex}`}>{renderInline(item,`${index}-${itemIndex}`)}</li>)}</ol>);
+      continue;
+    }
+
     if (trimmed.startsWith('>')) {
       const quoteLines: string[] = [];
       while (index < lines.length && lines[index].trim().startsWith('>')) {
@@ -114,7 +126,7 @@ function renderBlocks(content: string): ReactNode[] {
     const paragraph: string[] = [];
     while (index < lines.length) {
       const next = lines[index].trim();
-      if (!next || next.startsWith('- ') || next.startsWith('* ') || next.startsWith('>') || /^#{1,3}\s+/.test(next)) break;
+      if (!next || next.startsWith('- ') || next.startsWith('* ') || next.startsWith('>') || /^\d+\.\s+/.test(next) || /^#{1,3}\s+/.test(next)) break;
       paragraph.push(next);
       index += 1;
     }
