@@ -5,6 +5,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
+import { CopyButton } from '@/components/common/CopyButton';
 import { Modal } from '@/components/common/Modal';
 import { updateClassDetails } from '@/services/class.service';
 import type { Class } from '@/types';
@@ -31,8 +32,8 @@ export function ClassesListPage() {
   const visibleClasses = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase();
     if (!normalized) return classes || [];
-    return (classes || []).filter(cls => `${cls.courseName} ${cls.name} ${cls.schoolYear}`.toLocaleLowerCase().includes(normalized));
-  }, [classes, query]);
+    return (classes || []).filter(cls => `${cls.courseName} ${cls.name} ${cls.schoolYear} ${isTeacher ? cls.joinCode : ''}`.toLocaleLowerCase().includes(normalized));
+  }, [classes, query, isTeacher]);
 
   const courseGroups = useMemo(() => {
     const groups = new Map<string, Class[]>();
@@ -85,8 +86,9 @@ export function ClassesListPage() {
                   <div key={cls.$id} className="group flex min-h-16 items-center gap-2 px-3 py-2 transition hover:bg-gray-50 sm:px-4">
                     <Link className="min-w-0 flex-1 rounded-lg px-1 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-950" to={`/classes/${cls.$id}`}>
                       <h3 className="truncate font-semibold text-gray-950">{cls.name}</h3>
-                      <p className="truncate text-xs text-gray-500">{cls.schoolYear}</p>
+                      <p className="truncate text-xs text-gray-500">{cls.schoolYear}{isTeacher && cls.joinCode ? ` · Code ${cls.joinCode}` : ''}</p>
                     </Link>
+                    {isTeacher && cls.joinCode && <CopyButton text={cls.joinCode} label="Copy" copiedLabel="Copied" size="sm" variant="ghost" className="shrink-0 px-2" />}
                     {isTeacher && <button type="button" onClick={() => setEditing(cls)} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-950" aria-label={`Edit ${cls.courseName}, ${cls.name}`}><EditIcon /></button>}
                     <Link to={`/classes/${cls.$id}`} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-gray-950 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-950" aria-label={`Open ${cls.courseName}, ${cls.name}`}><ArrowIcon /></Link>
                   </div>

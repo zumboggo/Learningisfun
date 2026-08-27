@@ -323,6 +323,7 @@ export function ClassDetailPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-950 sm:text-3xl">{cls.courseName}</h1>
           <p className="mt-0.5 text-sm text-gray-500">{cls.name} <span aria-hidden="true">·</span> {cls.schoolYear}</p>
+          {isOwner && cls.joinCode && <div className="mt-2 flex flex-wrap items-center gap-2"><span className="text-xs font-medium text-gray-500">Student class code</span><code className="rounded-lg bg-gray-100 px-3 py-1.5 font-mono text-base font-bold tracking-widest text-gray-950">{cls.joinCode}</code><CopyButton text={cls.joinCode} label="Copy code" copiedLabel="Code copied" /></div>}
         </div>
         {isOwner ? (
           <div className="flex flex-wrap gap-2 sm:justify-end">
