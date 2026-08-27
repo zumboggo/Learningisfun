@@ -460,6 +460,46 @@ export default async ({ req, res, error }) => {
       });
     }
 
+    if (body.action === 'readQuizResults') {
+      if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
+      const [quiz, targetClass] = await Promise.all([
+        db.getDocument(databaseId, 'quizzes', body.quizId),
+        db.getDocument(databaseId, 'classes', body.classId),
+      ]);
+      if (quiz.createdBy !== userId || targetClass.teacherId !== userId) return res.json({ error: 'Not the quiz or class owner' }, 403);
+      const assignment = await db.listDocuments(databaseId, 'quiz_assignments', [Query.equal('quizId', quiz.$id), Query.equal('classId', targetClass.$id), Query.limit(1)]);
+      if (!assignment.total) return res.json({ error: 'This quiz is not assigned to that class' }, 403);
+
+      const roster = await db.listDocuments(databaseId, 'class_members', [Query.equal('classId', targetClass.$id), Query.equal('role', 'student'), Query.limit(500)]);
+      const studentIds = [...new Set(roster.documents.map(row => row.userId))];
+      const [profiles, attemptResult] = await Promise.all([
+        studentIds.length ? db.listDocuments(databaseId, 'users', [Query.equal('$id', studentIds), Query.limit(500)]) : { documents: [] },
+        db.listDocuments(databaseId, 'quiz_attempts', [Query.equal('quizId', quiz.$id), Query.limit(5000)]),
+      ]);
+      const profilesById = new Map(profiles.documents.map(row => [row.$id, row]));
+      const rosterIds = new Set(studentIds);
+      const attemptsByStudent = new Map();
+      for (const attempt of attemptResult.documents) {
+        if (!rosterIds.has(attempt.userId)) continue;
+        const projected = {
+          id: attempt.$id,
+          startedAt: attempt.startedAt,
+          completedAt: attempt.completedAt || null,
+          score: Number(attempt.score) || 0,
+          totalQuestions: Number(attempt.totalQuestions) || quiz.questionCount || 0,
+        };
+        const current = attemptsByStudent.get(attempt.userId) || [];
+        current.push(projected);
+        attemptsByStudent.set(attempt.userId, current);
+      }
+      const students = studentIds.map(studentId => {
+        const student = profilesById.get(studentId);
+        const attempts = (attemptsByStudent.get(studentId) || []).sort((a, b) => String(a.startedAt).localeCompare(String(b.startedAt)));
+        return { userId: studentId, name: student?.name || 'Student', attempts };
+      }).sort((a, b) => a.name.localeCompare(b.name));
+      return res.json({ quiz: { id: quiz.$id, title: quiz.title, questionCount: quiz.questionCount, allowedAttempts: quizAttemptLimit(quiz) }, class: { id: targetClass.$id, name: targetClass.name, courseName: targetClass.courseName }, students });
+    }
+
     if (body.action === 'readQuizzes') {
       const requested = [...new Set(Array.isArray(body.classIds) ? body.classIds.filter(Boolean) : [])];
       let allowedClassIds = requested.filter(classId => memberClassIds.has(classId));

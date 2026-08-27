@@ -26,7 +26,7 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { Modal } from '@/components/common/Modal';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { CreateQuizModal } from '@/pages/QuizzesPage';
-import { createPracticeQuiz, deleteQuiz, getQuizWithQuestions, publishQuiz } from '@/services/quiz.service';
+import { createPracticeQuiz, deleteQuiz, getQuizWithQuestions, publishQuiz, readQuizResults, type TeacherQuizResults } from '@/services/quiz.service';
 import { buildQtiAssessmentXml, buildQtiZip, downloadBlob } from '@/services/qti-export';
 import { addPresentationLinks, createWritingPrompt, deletePresentationLink, setPresentationWatched, updateWritingPrompt, type WritingPromptSize } from '@/services/presentation.service';
 import { AddDecksToClassModal } from '@/components/common/AddDecksToClassModal';
@@ -82,6 +82,7 @@ export function ClassDetailPage() {
   const [showWritingPrompt, setShowWritingPrompt] = useState(false);
   const [showTimerSetup, setShowTimerSetup] = useState(false);
   const [timerMinutes, setTimerMinutes] = useState(5);
+  const [resultsQuiz, setResultsQuiz] = useState<Quiz | null>(null);
 
   const cls = useLiveQuery(() => (classId ? db.classes.get(classId) : undefined), [classId]);
   const members = useLiveQuery(
@@ -406,7 +407,7 @@ export function ClassDetailPage() {
       <section>
         <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-lg font-semibold">Quizzes ({classQuizzes?.length || 0})</h2>{isOwner ? <Button size="sm" onClick={() => setShowCreateQuiz(true)}>Create quiz</Button> : !isParent ? <Button size="sm" loading={generatingPracticeQuiz} onClick={() => void generatePracticeQuiz()}>Generate Practice Quiz</Button> : null}</div>
         {practiceQuizError && <p className="mb-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">{practiceQuizError}</p>}
-        {classQuizzes?.length ? <div className="space-y-2">{classQuizzes.map(quiz => <div key={quiz.$id} className="relative flex flex-col gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0 pr-8"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{quiz.title}</h3>{isOwner && <StatusBadge status={quiz.status}/>}</div><p className="text-sm text-gray-500">{quiz.questionCount} questions{quiz.timeLimitMinutes ? ` · ${quiz.timeLimitMinutes} min` : ''}{quiz.allowedAttempts === 2 ? ' · 2 attempts' : ''}{isOwner ? ` · ${quiz.showAnswerFeedback ? 'answers shown' : 'answers hidden'}` : ''}</p></div>{isOwner ? <div className="flex flex-wrap gap-2 pr-6"><Button size="sm" variant="secondary" onClick={() => void copyQuizText(quiz.$id)}>{copiedQuizId === quiz.$id ? 'Copied!' : 'Copy'}</Button><Button size="sm" variant="secondary" onClick={() => void exportQuizQti(quiz.$id)}>QTI</Button>{quiz.status === 'draft' && <Button size="sm" onClick={() => user && void publishQuiz(quiz.$id, user.$id)}>Publish</Button>}<button type="button" aria-label="Delete quiz" title="Delete quiz" onClick={() => void confirmDeleteQuiz(quiz.$id)} className="absolute right-3 top-3 text-lg leading-none text-red-500 hover:text-red-700">×</button></div> : <Link to={`/quizzes/${quiz.$id}/take`}><Button size="sm">Take quiz</Button></Link>}</div>)}</div> : <p className="rounded-xl border border-dashed p-5 text-center text-sm text-gray-400">{isOwner ? 'No quizzes for this class yet.' : 'No published quizzes for this class yet.'}</p>}
+        {classQuizzes?.length ? <div className="space-y-2">{classQuizzes.map(quiz => <div key={quiz.$id} className="relative flex flex-col gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0 pr-8"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{quiz.title}</h3>{isOwner && <StatusBadge status={quiz.status}/>}</div><p className="text-sm text-gray-500">{quiz.questionCount} questions{quiz.timeLimitMinutes ? ` · ${quiz.timeLimitMinutes} min` : ''}{quiz.allowedAttempts === 2 ? ' · 2 attempts' : ''}{isOwner ? ` · ${quiz.showAnswerFeedback ? 'answers shown' : 'answers hidden'}` : ''}</p></div>{isOwner ? <div className="flex flex-wrap gap-2 pr-6"><Button size="sm" variant="secondary" onClick={() => setResultsQuiz(quiz)}>Results</Button><Button size="sm" variant="secondary" onClick={() => void copyQuizText(quiz.$id)}>{copiedQuizId === quiz.$id ? 'Copied!' : 'Copy'}</Button><Button size="sm" variant="secondary" onClick={() => void exportQuizQti(quiz.$id)}>QTI</Button>{quiz.status === 'draft' && <Button size="sm" onClick={() => user && void publishQuiz(quiz.$id, user.$id)}>Publish</Button>}<button type="button" aria-label="Delete quiz" title="Delete quiz" onClick={() => void confirmDeleteQuiz(quiz.$id)} className="absolute right-3 top-3 text-lg leading-none text-red-500 hover:text-red-700">×</button></div> : <Link to={`/quizzes/${quiz.$id}/take`}><Button size="sm">Take quiz</Button></Link>}</div>)}</div> : <p className="rounded-xl border border-dashed p-5 text-center text-sm text-gray-400">{isOwner ? 'No quizzes for this class yet.' : 'No published quizzes for this class yet.'}</p>}
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -636,6 +637,8 @@ export function ClassDetailPage() {
         <div className="space-y-4"><p className="text-sm text-gray-600">Remove <strong>{pendingDeckRemoval?.title}</strong> from this class? The deck itself and student review history will not be deleted.</p><div className="flex gap-2"><Button variant="secondary" className="flex-1" onClick={() => setPendingDeckRemoval(null)}>Cancel</Button><Button variant="danger" className="flex-1" onClick={() => { if (!pendingDeckRemoval) return; void unassignDeck(pendingDeckRemoval.deckId, cls.$id).then(() => setPendingDeckRemoval(null)); }}>Remove deck</Button></div></div>
       </Modal>
 
+      {isOwner && resultsQuiz && classId && <QuizResultsModal quiz={resultsQuiz} classId={classId} onClose={() => setResultsQuiz(null)} />}
+
       <Modal open={showDiscussionModal} onClose={() => setShowDiscussionModal(false)} title="Start discussion">
         <div className="space-y-4">
           <div>
@@ -712,6 +715,49 @@ export function ClassDetailPage() {
       )}
     </div>
   );
+}
+
+function QuizResultsModal({ quiz, classId, onClose }: { quiz: Quiz; classId: string; onClose: () => void }) {
+  const [results, setResults] = useState<TeacherQuizResults | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const load = useCallback(async () => {
+    setLoading(true); setError('');
+    try { setResults(await readQuizResults(quiz.$id, classId)); }
+    catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not load quiz results.'); }
+    finally { setLoading(false); }
+  }, [quiz.$id, classId]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  const completed = results?.students.filter(student => student.attempts.some(attempt => attempt.completedAt)) || [];
+  const bestPercent = (student: TeacherQuizResults['students'][number]) => student.attempts
+    .filter(attempt => attempt.completedAt && attempt.totalQuestions > 0)
+    .reduce((best, attempt) => Math.max(best, Math.round(attempt.score / attempt.totalQuestions * 100)), -1);
+  const average = completed.length ? Math.round(completed.reduce((sum, student) => sum + Math.max(0, bestPercent(student)), 0) / completed.length) : null;
+
+  return <Modal open onClose={onClose} title={`Results · ${quiz.title}`}>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-gray-500">{results ? `${completed.length} of ${results.students.length} students completed` : 'Loading class results…'}{average !== null ? ` · ${average}% class average` : ''}</p>
+        <Button size="sm" variant="secondary" loading={loading} onClick={() => void load()}>Refresh</Button>
+      </div>
+      {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      {loading && !results ? <p className="py-8 text-center text-sm text-gray-400">Loading results…</p> : results?.students.length ? <div className="max-h-[65vh] overflow-auto rounded-xl border border-gray-200">
+        <table className="w-full min-w-[520px] text-left text-sm">
+          <thead className="sticky top-0 bg-gray-50 text-xs uppercase tracking-wide text-gray-500"><tr><th className="px-3 py-2">Student</th><th className="px-3 py-2">Best result</th><th className="px-3 py-2">Attempts</th></tr></thead>
+          <tbody className="divide-y divide-gray-100">{results.students.map(student => {
+            const finished = student.attempts.filter(attempt => attempt.completedAt);
+            const inProgress = student.attempts.some(attempt => !attempt.completedAt);
+            const best = bestPercent(student);
+            return <tr key={student.userId}><td className="px-3 py-3 font-medium text-gray-900">{student.name}</td><td className="px-3 py-3">{best >= 0 ? <span className="font-semibold text-gray-900">{best}%</span> : <span className="text-gray-400">{inProgress ? 'In progress' : 'Not attempted'}</span>}</td><td className="px-3 py-3 text-gray-600">{finished.length ? finished.map((attempt, index) => <div key={attempt.id}>Attempt {index + 1}: <strong>{attempt.score}/{attempt.totalQuestions}</strong> ({Math.round(attempt.score / Math.max(1, attempt.totalQuestions) * 100)}%)</div>) : <span className="text-gray-400">—</span>}{inProgress && <div className="text-amber-700">Current attempt in progress</div>}</td></tr>;
+          })}</tbody>
+        </table>
+      </div> : !loading && !error ? <p className="rounded-xl border border-dashed p-5 text-center text-sm text-gray-400">No students are currently enrolled in this class.</p> : null}
+      <p className="text-xs text-gray-400">The class average uses each student's best completed attempt. Individual answers remain private.</p>
+    </div>
+  </Modal>;
 }
 
 function PeerReviewClassPanel({classId,isOwner,isParent}:{classId:string;isOwner:boolean;isParent:boolean}){

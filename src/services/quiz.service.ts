@@ -462,3 +462,21 @@ export async function getStudentQuizAttempts(userId: string, quizId: string): Pr
 export async function getAllQuizAttemptsForQuiz(quizId: string): Promise<QuizAttempt[]> {
   return db.quiz_attempts.where('quizId').equals(quizId).toArray();
 }
+
+export interface TeacherQuizResultAttempt {
+  id: string;
+  startedAt: string;
+  completedAt: string | null;
+  score: number;
+  totalQuestions: number;
+}
+
+export interface TeacherQuizResults {
+  quiz: { id: string; title: string; questionCount: number; allowedAttempts: number };
+  class: { id: string; name: string; courseName: string };
+  students: Array<{ userId: string; name: string; attempts: TeacherQuizResultAttempt[] }>;
+}
+
+export function readQuizResults(quizId: string, classId: string): Promise<TeacherQuizResults> {
+  return executeLearningContent<TeacherQuizResults>({ action: 'readQuizResults', quizId, classId });
+}
