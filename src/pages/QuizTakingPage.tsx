@@ -28,6 +28,7 @@ export function QuizTakingPage() {
   const [loading, setLoading] = useState(true);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const submitRef = useRef<() => Promise<void>>(async () => {});
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     if (!quizId) return;
@@ -51,7 +52,7 @@ export function QuizTakingPage() {
   }, [quizId, isPractice, user]);
 
   useEffect(() => {
-    if (!started || submitted || timeLeft === null) return;
+    if (!started || submitted || !quiz?.timeLimitMinutes) return;
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev === null || prev <= 1) {
@@ -63,7 +64,7 @@ export function QuizTakingPage() {
       });
     }, 1000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [started, submitted, timeLeft]);
+  }, [started, submitted, quiz?.timeLimitMinutes]);
 
   const handleStart = async () => {
     if (!user || !quizId) return;
@@ -78,15 +79,30 @@ export function QuizTakingPage() {
   };
 
   const handleAnswer = (questionId: string, answer: number | string) => {
-    setAnswers(prev => ({ ...prev, [questionId]: answer }));
+    setAnswers(prev => {
+      if (typeof answer === 'string' && answer.trim().length === 0) {
+        const next = { ...prev };
+        delete next[questionId];
+        return next;
+      }
+      return { ...prev, [questionId]: answer };
+    });
   };
 
   const handleSubmit = async () => {
-    if (!attemptId) return;
+    if (!attemptId || submittingRef.current) return;
     if (timerRef.current) clearInterval(timerRef.current);
     setError('');
+    const answerArray = Object.entries(answers).map(([questionId, answer]) => ({ questionId, answer }));
+    if (answerArray.length === 0) {
+      setStarted(false);
+      setAttemptId('');
+      setTimeLeft(quiz?.timeLimitMinutes ? quiz.timeLimitMinutes * 60 : null);
+      setError('No answers were recorded, so this attempt was not submitted or counted. You can start again.');
+      return;
+    }
+    submittingRef.current = true;
     try {
-      const answerArray = Object.entries(answers).map(([questionId, answer]) => ({ questionId, answer }));
       const result = await submitQuizAttempt(attemptId, answerArray, { sync: !isPractice });
       setResults(result);
       setSubmitted(true);
@@ -94,6 +110,8 @@ export function QuizTakingPage() {
       if (isPractice && quizId) await deleteLocalPracticeQuiz(quizId);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not submit this quiz.');
+    } finally {
+      submittingRef.current = false;
     }
   };
   useEffect(() => {

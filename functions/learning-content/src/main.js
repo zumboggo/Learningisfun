@@ -429,9 +429,18 @@ export default async ({ req, res, error }) => {
       const quiz = await db.getDocument(databaseId, 'quizzes', attempt.quizId);
       if (quiz.status !== 'published' || !await quizIsAssignedToMember(db, databaseId, quiz.$id, memberClassIds)) return res.json({ error: 'This quiz is no longer available' }, 403);
       const supplied = Array.isArray(body.answers) ? body.answers : [];
+      const meaningfulAnswers = supplied.filter(row => row && typeof row.questionId === 'string'
+        && (typeof row.answer === 'number' || (typeof row.answer === 'string' && row.answer.trim().length > 0)));
+      if (!meaningfulAnswers.length) {
+        return res.json({ error: 'No answers were received. This attempt was not submitted or counted.' }, 400);
+      }
       const questionResult = await db.listDocuments(databaseId, 'quiz_questions', [Query.equal('quizId', quiz.$id), Query.limit(5000)]);
       const questions = [...questionResult.documents].sort((a, b) => a.sortOrder - b.sortOrder);
-      const suppliedById = new Map(supplied.filter(row => row && typeof row.questionId === 'string').map(row => [row.questionId, row.answer]));
+      const questionIds = new Set(questions.map(question => question.$id));
+      if (meaningfulAnswers.some(row => !questionIds.has(row.questionId))) {
+        return res.json({ error: 'This quiz changed while it was open. Refresh it and try again; this attempt was not counted.' }, 409);
+      }
+      const suppliedById = new Map(meaningfulAnswers.map(row => [row.questionId, row.answer]));
       let score = 0;
       const results = questions.map(question => {
         const answer = suppliedById.get(question.$id);
@@ -449,7 +458,7 @@ export default async ({ req, res, error }) => {
       const completedAt = new Date().toISOString();
       const updated = await db.updateDocument(databaseId, 'quiz_attempts', attempt.$id, {
         completedAt, score, totalQuestions: questions.length,
-        answers: JSON.stringify(supplied.map(row => ({ questionId: row.questionId, answer: row.answer }))),
+        answers: JSON.stringify(meaningfulAnswers.map(row => ({ questionId: row.questionId, answer: row.answer }))),
       });
       const attemptResult = await db.listDocuments(databaseId, 'quiz_attempts', [Query.equal('quizId', quiz.$id), Query.equal('userId', userId), Query.limit(100)]);
       const attemptsRemaining = Math.max(0, quizAttemptLimit(quiz) - attemptResult.documents.filter(row => row.completedAt).length);
