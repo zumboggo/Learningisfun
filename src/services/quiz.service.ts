@@ -480,3 +480,8 @@ export interface TeacherQuizResults {
 export function readQuizResults(quizId: string, classId: string): Promise<TeacherQuizResults> {
   return executeLearningContent<TeacherQuizResults>({ action: 'readQuizResults', quizId, classId });
 }
+
+export function convertQuizScore(score: number, totalQuestions: number, assignmentPoints: number): number | null {
+  if (!Number.isFinite(score) || !Number.isFinite(totalQuestions) || totalQuestions <= 0 || !Number.isFinite(assignmentPoints) || assignmentPoints <= 0) return null;
+  return Math.round((score / totalQuestions * assignmentPoints) * 100) / 100;
+}

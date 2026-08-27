@@ -26,7 +26,7 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { Modal } from '@/components/common/Modal';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { CreateQuizModal } from '@/pages/QuizzesPage';
-import { createPracticeQuiz, deleteQuiz, getQuizWithQuestions, publishQuiz, readQuizResults, type TeacherQuizResults } from '@/services/quiz.service';
+import { convertQuizScore, createPracticeQuiz, deleteQuiz, getQuizWithQuestions, publishQuiz, readQuizResults, type TeacherQuizResults } from '@/services/quiz.service';
 import { buildQtiAssessmentXml, buildQtiZip, downloadBlob } from '@/services/qti-export';
 import { addPresentationLinks, createWritingPrompt, deletePresentationLink, setPresentationWatched, updateWritingPrompt, type WritingPromptSize } from '@/services/presentation.service';
 import { AddDecksToClassModal } from '@/components/common/AddDecksToClassModal';
@@ -721,6 +721,7 @@ function QuizResultsModal({ quiz, classId, onClose }: { quiz: Quiz; classId: str
   const [results, setResults] = useState<TeacherQuizResults | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [assignmentPoints, setAssignmentPoints] = useState(20);
 
   const load = useCallback(async () => {
     setLoading(true); setError('');
@@ -736,6 +737,9 @@ function QuizResultsModal({ quiz, classId, onClose }: { quiz: Quiz; classId: str
     .filter(attempt => attempt.completedAt && attempt.totalQuestions > 0)
     .reduce((best, attempt) => Math.max(best, Math.round(attempt.score / attempt.totalQuestions * 100)), -1);
   const average = completed.length ? Math.round(completed.reduce((sum, student) => sum + Math.max(0, bestPercent(student)), 0) / completed.length) : null;
+  const bestAttempt = (student: TeacherQuizResults['students'][number]) => student.attempts
+    .filter(attempt => attempt.completedAt && attempt.totalQuestions > 0)
+    .reduce<(TeacherQuizResults['students'][number]['attempts'][number] | null)>((best, attempt) => !best || attempt.score / attempt.totalQuestions > best.score / best.totalQuestions ? attempt : best, null);
 
   return <Modal open onClose={onClose} title={`Results · ${quiz.title}`}>
     <div className="space-y-4">
@@ -743,15 +747,18 @@ function QuizResultsModal({ quiz, classId, onClose }: { quiz: Quiz; classId: str
         <p className="text-sm text-gray-500">{results ? `${completed.length} of ${results.students.length} students completed` : 'Loading class results…'}{average !== null ? ` · ${average}% class average` : ''}</p>
         <Button size="sm" variant="secondary" loading={loading} onClick={() => void load()}>Refresh</Button>
       </div>
+      <label className="flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-sm font-medium text-blue-950">Convert each best result to an assignment out of <input type="number" min={0.01} max={10000} step="any" value={assignmentPoints} onChange={event => setAssignmentPoints(Math.max(0, Number(event.target.value) || 0))} className="w-24 rounded-lg border border-blue-200 bg-white px-2 py-1.5 text-right font-semibold text-gray-950" aria-label="Assignment points" /> points</label>
       {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       {loading && !results ? <p className="py-8 text-center text-sm text-gray-400">Loading results…</p> : results?.students.length ? <div className="max-h-[65vh] overflow-auto rounded-xl border border-gray-200">
-        <table className="w-full min-w-[520px] text-left text-sm">
-          <thead className="sticky top-0 bg-gray-50 text-xs uppercase tracking-wide text-gray-500"><tr><th className="px-3 py-2">Student</th><th className="px-3 py-2">Best result</th><th className="px-3 py-2">Attempts</th></tr></thead>
+        <table className="w-full min-w-[680px] text-left text-sm">
+          <thead className="sticky top-0 bg-gray-50 text-xs uppercase tracking-wide text-gray-500"><tr><th className="px-3 py-2">Student</th><th className="px-3 py-2">Best result</th><th className="px-3 py-2">Converted (/{assignmentPoints || '—'})</th><th className="px-3 py-2">Attempts</th></tr></thead>
           <tbody className="divide-y divide-gray-100">{results.students.map(student => {
             const finished = student.attempts.filter(attempt => attempt.completedAt);
             const inProgress = student.attempts.some(attempt => !attempt.completedAt);
             const best = bestPercent(student);
-            return <tr key={student.userId}><td className="px-3 py-3 font-medium text-gray-900">{student.name}</td><td className="px-3 py-3">{best >= 0 ? <span className="font-semibold text-gray-900">{best}%</span> : <span className="text-gray-400">{inProgress ? 'In progress' : 'Not attempted'}</span>}</td><td className="px-3 py-3 text-gray-600">{finished.length ? finished.map((attempt, index) => <div key={attempt.id}>Attempt {index + 1}: <strong>{attempt.score}/{attempt.totalQuestions}</strong> ({Math.round(attempt.score / Math.max(1, attempt.totalQuestions) * 100)}%)</div>) : <span className="text-gray-400">—</span>}{inProgress && <div className="text-amber-700">Current attempt in progress</div>}</td></tr>;
+            const strongest = bestAttempt(student);
+            const converted = strongest ? convertQuizScore(strongest.score, strongest.totalQuestions, assignmentPoints) : null;
+            return <tr key={student.userId}><td className="px-3 py-3 font-medium text-gray-900">{student.name}</td><td className="px-3 py-3">{best >= 0 ? <span className="font-semibold text-gray-900">{best}%</span> : <span className="text-gray-400">{inProgress ? 'In progress' : 'Not attempted'}</span>}</td><td className="px-3 py-3">{converted !== null ? <strong className="text-blue-800">{converted.toLocaleString(undefined, { maximumFractionDigits: 2 })} / {assignmentPoints.toLocaleString()}</strong> : <span className="text-gray-400">—</span>}</td><td className="px-3 py-3 text-gray-600">{finished.length ? finished.map((attempt, index) => <div key={attempt.id}>Attempt {index + 1}: <strong>{attempt.score}/{attempt.totalQuestions}</strong> ({Math.round(attempt.score / Math.max(1, attempt.totalQuestions) * 100)}%)</div>) : <span className="text-gray-400">—</span>}{inProgress && <div className="text-amber-700">Current attempt in progress</div>}</td></tr>;
           })}</tbody>
         </table>
       </div> : !loading && !error ? <p className="rounded-xl border border-dashed p-5 text-center text-sm text-gray-400">No students are currently enrolled in this class.</p> : null}
