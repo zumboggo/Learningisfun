@@ -229,8 +229,17 @@ export async function syncDiscussionFromServer(classSessionId: string): Promise<
   if (FUNCTION_IDS.learningContent) {
     try {
       const result = await executeLearningContent<{ questions: DiscussionQuestion[]; votes: QuestionVote[]; answers: DiscussionAnswer[] }>({ action: 'readClassDiscussion', sessionId: classSessionId });
-      for (const question of result.questions) await db.discussion_questions.put({ ...question, syncStatus: 'synced' });
-      for (const vote of result.votes) await db.question_votes.put({ ...vote, syncStatus: 'synced' });
+      for (const question of result.questions) {
+        const local = await db.discussion_questions.get(question.$id);
+        await db.discussion_questions.put(local?.syncStatus === 'local'
+          ? { ...question, ...local, voteCount: question.voteCount, syncStatus: 'local' }
+          : { ...question, syncStatus: 'synced' });
+      }
+      for (const vote of result.votes) {
+        const local = await db.question_votes.get(vote.$id);
+        if (local?.syncStatus === 'local') continue;
+        await db.question_votes.put({ ...vote, syncStatus: 'synced' });
+      }
       for (const answer of result.answers) await db.discussion_answers.put({ ...answer, syncStatus: 'synced' });
       return;
     } catch { /* Fall back for older deployments and offline use. */ }

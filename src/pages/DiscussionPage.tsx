@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ID } from 'appwrite';
@@ -19,6 +19,7 @@ import type {
   ClassSession,
 } from '@/types';
 import { RedditDiscussionPage } from '@/pages/RedditDiscussionPage';
+import { client, COLLECTIONS, DATABASE_ID } from '@/lib/appwrite';
 
 export function DiscussionPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -39,18 +40,52 @@ export function DiscussionPage() {
   const [sessionPrompt, setSessionPrompt] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set());
+  const [refreshing, setRefreshing] = useState(false);
 
   const session = useLiveQuery(
     () => (sessionId ? db.class_sessions.get(sessionId) : undefined),
     [sessionId, refreshKey],
   );
 
-  // Questions, votes and replies all live on other people's devices until they
-  // are pulled down; without this a student only ever sees their own.
+  const refreshDiscussion = useCallback(async () => {
+    if (!sessionId) return;
+    setRefreshing(true);
+    try {
+      await syncDiscussionFromServer(sessionId);
+      setRefreshKey(k => k + 1);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [sessionId]);
+
+  // Refresh immediately and when returning to the page. The question document
+  // is also updated by the server whenever a vote changes, so Realtime can
+  // refresh totals without polling (and without consuming reads every few
+  // seconds for an entire class).
   useEffect(() => {
     if (!sessionId) return;
-    void syncDiscussionFromServer(sessionId).then(() => setRefreshKey(k => k + 1));
-  }, [sessionId]);
+    void refreshDiscussion();
+    let timer: number | undefined;
+    const refreshVisible = () => {
+      if (document.visibilityState === 'visible') void refreshDiscussion();
+    };
+    window.addEventListener('focus', refreshVisible);
+    document.addEventListener('visibilitychange', refreshVisible);
+    const unsubscribe = DATABASE_ID
+      ? client.subscribe(`databases.${DATABASE_ID}.collections.${COLLECTIONS.discussion_questions}.documents`, event => {
+          const payload = event.payload as { classSessionId?: string };
+          if (payload.classSessionId !== sessionId) return;
+          if (timer !== undefined) window.clearTimeout(timer);
+          timer = window.setTimeout(() => void refreshDiscussion(), 500);
+        })
+      : () => undefined;
+    return () => {
+      if (timer !== undefined) window.clearTimeout(timer);
+      window.removeEventListener('focus', refreshVisible);
+      document.removeEventListener('visibilitychange', refreshVisible);
+      unsubscribe();
+    };
+  }, [sessionId, refreshDiscussion]);
 
   const cls = useLiveQuery(
     () => (session ? db.classes.get(session.classId) : undefined),
@@ -451,9 +486,14 @@ export function DiscussionPage() {
                 <StatusBadge status={session.status} />
               </p>
             </div>
-            <Button size="sm" variant="secondary" onClick={openSettings}>
-              Settings
-            </Button>
+            <div className="flex gap-2">
+              <Button size="sm" variant="secondary" loading={refreshing} onClick={() => void refreshDiscussion()}>
+                Refresh totals
+              </Button>
+              <Button size="sm" variant="secondary" onClick={openSettings}>
+                Settings
+              </Button>
+            </div>
           </div>
         </Card>
       )}

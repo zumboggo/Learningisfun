@@ -41,6 +41,18 @@ const quizIsAssignedToMember = async (db, databaseId, quizId, memberClassIds) =>
   const assignments = await db.listDocuments(databaseId, 'quiz_assignments', [Query.equal('quizId', quizId), Query.limit(500)]);
   return assignments.documents.some(row => memberClassIds.has(row.classId));
 };
+const questionVoteWeight = vote => Math.max(1, Number(vote?.weight) || 1);
+const questionVoteTotals = votes => {
+  const totals = new Map();
+  for (const vote of votes) totals.set(vote.questionId, (totals.get(vote.questionId) || 0) + questionVoteWeight(vote));
+  return totals;
+};
+const updateQuestionVoteTotal = async (db, databaseId, questionId) => {
+  const result = await db.listDocuments(databaseId, 'question_votes', [Query.equal('questionId', questionId), Query.limit(5000)]);
+  const voteCount = result.documents.reduce((sum, vote) => sum + questionVoteWeight(vote), 0);
+  await db.updateDocument(databaseId, 'discussion_questions', questionId, { voteCount });
+  return voteCount;
+};
 
 const TEXT_SUPPORT_PROMPT_VERSION = '2026-08-26-v1';
 const textVersionId = (textId, level) => `tv_${createHash('sha256').update(`${textId}:${level}`).digest('hex').slice(0, 30)}`;
@@ -759,8 +771,10 @@ export default async ({ req, res, error }) => {
         db.listDocuments(databaseId, 'question_votes', [Query.equal('classSessionId', body.sessionId), Query.limit(5000)]),
         db.listDocuments(databaseId, 'discussion_answers', [Query.equal('questionId', questionIds), Query.limit(5000)]),
       ]);
+      const totals = questionVoteTotals(voteResult.documents);
+      const projectedQuestions = questions.map(row => ({ ...clean(row), voteCount: totals.get(row.$id) || 0 }));
       const visibleVotes = voteResult.documents.filter(row => ownsClass || row.userId === userId).map(clean);
-      return res.json({ questions: questions.map(clean), votes: visibleVotes, answers: answerResult.documents.map(clean) });
+      return res.json({ questions: projectedQuestions, votes: visibleVotes, answers: answerResult.documents.map(clean) });
     }
 
     if (body.action !== 'mutate') return res.json({ error: 'Unsupported action' }, 400);
@@ -793,6 +807,47 @@ export default async ({ req, res, error }) => {
     if (existing && isTeacher) { const owner = existing.authorId || existing.userId || existing.reviewerId; if (owner && owner !== userId) { if (collection === 'discussion_questions') { data.questionText = existing.questionText; data.selectedPassage = existing.selectedPassage; } if (collection === 'discussion_answers') data.answerText = existing.answerText; if (collection === 'text_discussion_posts') data.content = existing.content; } }
     if ('authorId' in data && !isTeacher) data.authorId = userId; if ('userId' in data) data.userId = userId; if ('reviewerId' in data) data.reviewerId = userId;
     if (collection === 'text_discussion_posts' && data.parentId) { const parent = await db.getDocument(databaseId, collection, data.parentId); if (parent.locked || parent.depth >= 3 || parent.classId !== data.classId) return res.json({ error: 'Invalid or locked reply target' }, 400); data.depth = parent.depth + 1; }
+    if (collection === 'question_votes') {
+      const questionId = data.questionId || existing?.questionId;
+      if (!questionId) return res.json({ error: 'Question is required' }, 400);
+      const question = await db.getDocument(databaseId, 'discussion_questions', questionId);
+      const session = await db.getDocument(databaseId, 'class_sessions', question.classSessionId);
+      const ownsSessionClass = profile.role === 'teacher' && (await db.listDocuments(databaseId, 'classes', [Query.equal('$id', session.classId), Query.equal('teacherId', userId), Query.limit(1)])).total > 0;
+      if (!memberClassIds.has(session.classId) && !ownsSessionClass) return res.json({ error: 'Not enrolled' }, 403);
+      if (question.authorId === userId && !ownsSessionClass) return res.json({ error: 'You cannot vote for your own question' }, 400);
+
+      const ownVotes = await db.listDocuments(databaseId, collection, [Query.equal('classSessionId', session.$id), Query.equal('userId', userId), Query.limit(5000)]);
+      const sameQuestion = ownVotes.documents.filter(vote => vote.questionId === questionId);
+      if (operation === 'delete') {
+        for (const vote of sameQuestion) await db.deleteDocument(databaseId, collection, vote.$id);
+        const voteCount = await updateQuestionVoteTotal(db, databaseId, questionId);
+        return res.json({ ok: true, voteCount });
+      }
+
+      const requestedWeight = Math.max(1, Math.floor(Number(data.weight) || 1));
+      const weight = session.allowStackedVotes ? requestedWeight : 1;
+      const voteBudget = Math.max(1, Number(session.votesPerStudent) || 4);
+      const otherWeight = ownVotes.documents.filter(vote => vote.questionId !== questionId).reduce((sum, vote) => sum + questionVoteWeight(vote), 0);
+      if (otherWeight + weight > voteBudget) return res.json({ error: 'Vote limit reached' }, 400);
+
+      const now = new Date().toISOString();
+      const voteData = {
+        questionId,
+        classSessionId: session.$id,
+        userId,
+        weight,
+        createdAt: sameQuestion[0]?.createdAt || data.createdAt || now,
+        updatedAt: now,
+      };
+      if (sameQuestion.length) {
+        await db.updateDocument(databaseId, collection, sameQuestion[0].$id, voteData);
+        for (const duplicate of sameQuestion.slice(1)) await db.deleteDocument(databaseId, collection, duplicate.$id);
+      } else {
+        await db.createDocument(databaseId, collection, id || ID.unique(), voteData);
+      }
+      const voteCount = await updateQuestionVoteTotal(db, databaseId, questionId);
+      return res.json({ ok: true, voteCount });
+    }
     if (collection === 'text_discussion_votes') {
       const post = await db.getDocument(databaseId, 'text_discussion_posts', data.postId || existing?.postId);
       if (!memberClassIds.has(post.classId) && !isTeacher) return res.json({ error: 'Not enrolled' }, 403);
