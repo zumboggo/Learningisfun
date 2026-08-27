@@ -42,6 +42,7 @@ import { TextEditorModal } from '@/components/texts/TextEditorModal';
 import { createPeerReviewActivity, listPeerReviewActivities } from '@/services/presentation-peer-review.service';
 import type { PeerReviewActivity } from '@/types';
 import { moderateNicknameReport, readClassNicknames, reportNickname, type ClassNickname, type NicknameReport } from '@/services/nickname.service';
+import { refreshClassMaterials } from '@/services/class-material-refresh.service';
 
 const PRESENTATION_FOLDER_URL = 'https://lifeplusworldwide-my.sharepoint.com/:f:/g/personal/david_hepting_cdischina_com/IgCKVDp4qOqzR5itb7Q70yDbAb7A95ZN6fG4XHD74ghu3lU?e=1W9www';
 
@@ -83,6 +84,9 @@ export function ClassDetailPage() {
   const [showTimerSetup, setShowTimerSetup] = useState(false);
   const [timerMinutes, setTimerMinutes] = useState(5);
   const [resultsQuiz, setResultsQuiz] = useState<Quiz | null>(null);
+  const [refreshingMaterials, setRefreshingMaterials] = useState(false);
+  const [materialRefreshMessage, setMaterialRefreshMessage] = useState('');
+  const [materialRefreshFailed, setMaterialRefreshFailed] = useState(false);
 
   const cls = useLiveQuery(() => (classId ? db.classes.get(classId) : undefined), [classId]);
   const members = useLiveQuery(
@@ -292,6 +296,22 @@ export function ClassDetailPage() {
     }
   };
 
+  const refreshMaterials = async () => {
+    if (!classId || !user) return;
+    setRefreshingMaterials(true); setMaterialRefreshMessage(''); setMaterialRefreshFailed(false);
+    try {
+      const result = await refreshClassMaterials(classId, user.$id, user.role === 'teacher' || user.role === 'admin');
+      if (result.failed.length) {
+        setMaterialRefreshFailed(true);
+        setMaterialRefreshMessage(`Most class material refreshed, but ${result.failed.join(', ')} could not update. Check your connection and try again.`);
+      } else {
+        setMaterialRefreshMessage(`Class is up to date · ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`);
+      }
+    } catch {
+      setMaterialRefreshFailed(true); setMaterialRefreshMessage('Could not reach the class server. Check your connection and try again.');
+    } finally { setRefreshingMaterials(false); }
+  };
+
   if (!cls) {
     return <div className="p-4 text-gray-400">Loading class...</div>;
   }
@@ -304,7 +324,7 @@ export function ClassDetailPage() {
           <h1 className="text-2xl font-bold tracking-tight text-gray-950 sm:text-3xl">{cls.courseName}</h1>
           <p className="mt-0.5 text-sm text-gray-500">{cls.name} <span aria-hidden="true">·</span> {cls.schoolYear}</p>
         </div>
-        {isOwner && (
+        {isOwner ? (
           <div className="flex flex-wrap gap-2 sm:justify-end">
             <Link to={`/classes/${cls.$id}/notes/today`}><Button size="sm">Today&apos;s Notes</Button></Link>
             <Button onClick={() => setShowWritingPrompt(true)} size="sm">Writing Prompt</Button>
@@ -321,8 +341,10 @@ export function ClassDetailPage() {
               </div>
             </details>
           </div>
-        )}
+        ) : <Button size="sm" variant="secondary" loading={refreshingMaterials} onClick={() => void refreshMaterials()}>↻ Refresh class</Button>}
       </div>
+
+      {materialRefreshMessage && !isOwner && <p role="status" className={`rounded-lg px-3 py-2 text-sm ${materialRefreshFailed ? 'bg-amber-50 text-amber-800' : 'bg-green-50 text-green-800'}`}>{materialRefreshMessage}</p>}
 
       {livePresentations?.length ? <section aria-label="Active writing prompt" className="space-y-2">{livePresentations.map(session => <Link key={session.$id} to={`/presentations/${session.$id}/live`} className="flex items-center justify-between rounded-xl border border-blue-700 bg-blue-600 p-4 !text-white shadow-sm hover:bg-blue-700"><span><span className="block text-xs font-semibold uppercase tracking-wide text-blue-100">Writing now</span><strong className="mt-1 block text-lg !text-white">Writing Prompt</strong><span className="text-sm text-blue-100">{isOwner ? 'View and present anonymous responses' : 'Open prompt and write your response'}</span></span><span className="text-2xl text-white" aria-hidden="true">→</span></Link>)}</section> : null}
 
