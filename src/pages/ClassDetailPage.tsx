@@ -34,7 +34,7 @@ import { unassignDeck } from '@/services/flashcard.service';
 import { createText, setTextAssignmentDueDate, setTextClasses, splitParagraphs } from '@/services/text.service';
 import { RandomStudentModal } from '@/components/teacher/RandomStudentModal';
 import { CreateGroupsModal } from '@/components/teacher/CreateGroupsModal';
-import type { Class, ClassLink, ClassSession, LearningText, PresentationLink, Quiz, TextAssignment } from '@/types';
+import type { Class, ClassLink, ClassSession, LearningText, PresentationLink, Quiz, QuizAttempt, TextAssignment } from '@/types';
 import { classLabel } from '@/utils/helpers';
 import { Markdown } from '@/components/common/Markdown';
 import { MarkdownPasteEditor } from '@/components/common/MarkdownPasteEditor';
@@ -195,7 +195,10 @@ export function ClassDetailPage() {
       const text = texts[index];
       return text?.status === 'published' ? [{ kind: 'text' as const, date: assignment.assignedAt, text, assignment }] : [];
     });
-    const quizMaterials: WeeklyMaterial[] = (await Promise.all((await db.quiz_assignments.where('classId').equals(classId).toArray()).map(item => db.quizzes.get(item.quizId)))).filter((quiz): quiz is Quiz => Boolean(quiz && (isOwner || quiz.status === 'published'))).map(quiz => ({ kind: 'quiz', date: quiz.createdAt, quiz }));
+    const quizAssignments = await db.quiz_assignments.where('classId').equals(classId).toArray();
+    const quizMaterials: WeeklyMaterial[] = (await Promise.all(quizAssignments.map(async assignment => ({ assignment, quiz: await db.quizzes.get(assignment.quizId) }))))
+      .filter((item): item is { assignment: typeof quizAssignments[number]; quiz: Quiz } => Boolean(item.quiz && (isOwner || item.quiz.status === 'published')))
+      .map(({ assignment, quiz }) => ({ kind: 'quiz', date: assignment.assignedAt || quiz.createdAt, quiz }));
     const presentationMaterials: WeeklyMaterial[] = (await db.presentation_links.where('classId').equals(classId).toArray()).map(presentation => ({ kind: 'presentation', date: presentation.assignedAt, presentation }));
     return [...sessionMaterials, ...textMaterials, ...quizMaterials, ...presentationMaterials].sort((a, b) => b.date.localeCompare(a.date));
   }, [classId, isOwner, presentationLinks?.length]);
@@ -349,7 +352,7 @@ export function ClassDetailPage() {
 
       {livePresentations?.length ? <section aria-label="Active writing prompt" className="space-y-2">{livePresentations.map(session => <Link key={session.$id} to={`/presentations/${session.$id}/live`} className="flex items-center justify-between rounded-xl border border-blue-700 bg-blue-600 p-4 !text-white shadow-sm hover:bg-blue-700"><span><span className="block text-xs font-semibold uppercase tracking-wide text-blue-100">Writing now</span><strong className="mt-1 block text-lg !text-white">Writing Prompt</strong><span className="text-sm text-blue-100">{isOwner ? 'View and present anonymous responses' : 'Open prompt and write your response'}</span></span><span className="text-2xl text-white" aria-hidden="true">→</span></Link>)}</section> : null}
 
-      <WeeklyClassMaterials classId={cls.$id} materials={weeklyMaterials || []} isOwner={Boolean(isOwner)} />
+      <WeeklyClassMaterials classId={cls.$id} materials={weeklyMaterials || []} isOwner={Boolean(isOwner)} onOpenQuizResults={quiz => setResultsQuiz(quiz)} />
 
       {isOwner && (
         <details className="overflow-hidden rounded-xl border border-gray-200 bg-white">
@@ -745,6 +748,7 @@ function QuizResultsModal({ quiz, classId, onClose }: { quiz: Quiz; classId: str
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [assignmentPoints, setAssignmentPoints] = useState(20);
+  const [columnWidths, setColumnWidths] = useState({ username: 170, email: 250, best: 130, converted: 180, attempts: 300 });
 
   const load = useCallback(async () => {
     setLoading(true); setError('');
@@ -753,7 +757,10 @@ function QuizResultsModal({ quiz, classId, onClose }: { quiz: Quiz; classId: str
     finally { setLoading(false); }
   }, [quiz.$id, classId]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    const initialLoad = window.setTimeout(() => void load(), 0);
+    return () => window.clearTimeout(initialLoad);
+  }, [load]);
 
   const completed = results?.students.filter(student => student.attempts.some(attempt => attempt.completedAt)) || [];
   const bestPercent = (student: TeacherQuizResults['students'][number]) => student.attempts
@@ -763,31 +770,39 @@ function QuizResultsModal({ quiz, classId, onClose }: { quiz: Quiz; classId: str
   const bestAttempt = (student: TeacherQuizResults['students'][number]) => student.attempts
     .filter(attempt => attempt.completedAt && attempt.totalQuestions > 0)
     .reduce<(TeacherQuizResults['students'][number]['attempts'][number] | null)>((best, attempt) => !best || attempt.score / attempt.totalQuestions > best.score / best.totalQuestions ? attempt : best, null);
+  const resizeColumn = (column: keyof typeof columnWidths, difference: number) => setColumnWidths(current => ({ ...current, [column]: Math.min(600, Math.max(90, current[column] + difference)) }));
+  const tableWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
 
-  return <Modal open onClose={onClose} title={`Results · ${quiz.title}`}>
+  return <Modal open onClose={onClose} title={`Results · ${quiz.title}`} panelClassName="sm:max-w-7xl">
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-gray-500">{results ? `${completed.length} of ${results.students.length} students completed` : 'Loading class results…'}{average !== null ? ` · ${average}% class average` : ''}</p>
         <Button size="sm" variant="secondary" loading={loading} onClick={() => void load()}>Refresh</Button>
       </div>
       <label className="flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-sm font-medium text-blue-950">Convert each best result to an assignment out of <input type="number" min={0.01} max={10000} step="any" value={assignmentPoints} onChange={event => setAssignmentPoints(Math.max(0, Number(event.target.value) || 0))} className="w-24 rounded-lg border border-blue-200 bg-white px-2 py-1.5 text-right font-semibold text-gray-950" aria-label="Assignment points" /> points</label>
+      <p className="text-xs text-gray-500">Use the − and + controls in a column heading to make that column narrower or wider.</p>
       {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       {loading && !results ? <p className="py-8 text-center text-sm text-gray-400">Loading results…</p> : results?.students.length ? <div className="max-h-[65vh] overflow-auto rounded-xl border border-gray-200">
-        <table className="w-full min-w-[680px] text-left text-sm">
-          <thead className="sticky top-0 bg-gray-50 text-xs uppercase tracking-wide text-gray-500"><tr><th className="px-3 py-2">Student</th><th className="px-3 py-2">Best result</th><th className="px-3 py-2">Converted (/{assignmentPoints || '—'})</th><th className="px-3 py-2">Attempts</th></tr></thead>
+        <table className="table-fixed text-left text-sm" style={{ width: tableWidth, minWidth: '100%' }}>
+          <colgroup><col style={{ width: columnWidths.username }} /><col style={{ width: columnWidths.email }} /><col style={{ width: columnWidths.best }} /><col style={{ width: columnWidths.converted }} /><col style={{ width: columnWidths.attempts }} /></colgroup>
+          <thead className="sticky top-0 z-10 bg-gray-50 text-xs uppercase tracking-wide text-gray-500"><tr><QuizResultHeader label="Username" width={columnWidths.username} onResize={difference => resizeColumn('username', difference)} /><QuizResultHeader label="Email" width={columnWidths.email} onResize={difference => resizeColumn('email', difference)} /><QuizResultHeader label="Best result" width={columnWidths.best} onResize={difference => resizeColumn('best', difference)} /><QuizResultHeader label={`Converted (/${assignmentPoints || '—'})`} width={columnWidths.converted} onResize={difference => resizeColumn('converted', difference)} /><QuizResultHeader label="Attempts" width={columnWidths.attempts} onResize={difference => resizeColumn('attempts', difference)} /></tr></thead>
           <tbody className="divide-y divide-gray-100">{results.students.map(student => {
             const finished = student.attempts.filter(attempt => attempt.completedAt);
             const inProgress = student.attempts.some(attempt => !attempt.completedAt);
             const best = bestPercent(student);
             const strongest = bestAttempt(student);
             const converted = strongest ? convertQuizScore(strongest.score, strongest.totalQuestions, assignmentPoints) : null;
-            return <tr key={student.userId}><td className="px-3 py-3 font-medium text-gray-900">{student.name}</td><td className="px-3 py-3">{best >= 0 ? <span className="font-semibold text-gray-900">{best}%</span> : <span className="text-gray-400">{inProgress ? 'In progress' : 'Not attempted'}</span>}</td><td className="px-3 py-3">{converted !== null ? <strong className="text-blue-800">{converted.toLocaleString(undefined, { maximumFractionDigits: 2 })} / {assignmentPoints.toLocaleString()}</strong> : <span className="text-gray-400">—</span>}</td><td className="px-3 py-3 text-gray-600">{finished.length ? finished.map((attempt, index) => <div key={attempt.id}>Attempt {index + 1}: <strong>{attempt.score}/{attempt.totalQuestions}</strong> ({Math.round(attempt.score / Math.max(1, attempt.totalQuestions) * 100)}%)</div>) : <span className="text-gray-400">—</span>}{inProgress && <div className="text-amber-700">Current attempt in progress</div>}</td></tr>;
+            return <tr key={student.userId} className="align-top"><td className="break-words px-3 py-3 font-medium text-gray-900">{student.username}</td><td className="break-all px-3 py-3 text-gray-700">{student.email || <span className="text-gray-400">Email unavailable</span>}</td><td className="px-3 py-3">{best >= 0 ? <span className="font-semibold text-gray-900">{best}%</span> : <span className="text-gray-400">{inProgress ? 'In progress' : 'Not attempted'}</span>}</td><td className="px-3 py-3">{converted !== null ? <strong className="text-blue-800">{converted.toLocaleString(undefined, { maximumFractionDigits: 2 })} / {assignmentPoints.toLocaleString()}</strong> : <span className="text-gray-400">—</span>}</td><td className="px-3 py-3 text-gray-600">{finished.length ? finished.map((attempt, index) => <div key={attempt.id}>Attempt {index + 1}: <strong>{attempt.score}/{attempt.totalQuestions}</strong> ({Math.round(attempt.score / Math.max(1, attempt.totalQuestions) * 100)}%)</div>) : <span className="text-gray-400">—</span>}{inProgress && <div className="text-amber-700">Current attempt in progress</div>}</td></tr>;
           })}</tbody>
         </table>
       </div> : !loading && !error ? <p className="rounded-xl border border-dashed p-5 text-center text-sm text-gray-400">No students are currently enrolled in this class.</p> : null}
       <p className="text-xs text-gray-400">The class average uses each student's best completed attempt. Individual answers remain private.</p>
     </div>
   </Modal>;
+}
+
+function QuizResultHeader({ label, width, onResize }: { label: string; width: number; onResize: (difference: number) => void }) {
+  return <th className="border-r border-gray-200 px-3 py-2 last:border-r-0"><div className="flex items-center justify-between gap-2"><span className="min-w-0 truncate" title={label}>{label}</span><span className="flex shrink-0 items-center gap-1 normal-case tracking-normal"><button type="button" aria-label={`Make ${label} column narrower`} title="Narrower" className="flex h-6 w-6 items-center justify-center rounded border bg-white text-base font-semibold text-gray-700 hover:bg-gray-100" disabled={width <= 90} onClick={() => onResize(-40)}>−</button><button type="button" aria-label={`Make ${label} column wider`} title="Wider" className="flex h-6 w-6 items-center justify-center rounded border bg-white text-base font-semibold text-gray-700 hover:bg-gray-100" disabled={width >= 600} onClick={() => onResize(40)}>+</button></span></div></th>;
 }
 
 function PeerReviewClassPanel({classId,isOwner,isParent}:{classId:string;isOwner:boolean;isParent:boolean}){
@@ -903,8 +918,8 @@ function SimplePresentationLinksPanel({ links, isOwner }: { links: PresentationL
   );
 }
 
-function WeeklyClassMaterials({ classId, materials, isOwner }: { classId: string; materials: WeeklyMaterial[]; isOwner: boolean }) {
-  const { user } = useAuth();
+function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }: { classId: string; materials: WeeklyMaterial[]; isOwner: boolean; onOpenQuizResults: (quiz: Quiz) => void }) {
+  const { user, isParent } = useAuth();
   const teacherClasses=useLiveQuery(()=>user?db.classes.where('teacherId').equals(user.$id).toArray():[],[user?.$id]);
   const groups = new Map<string, WeeklyMaterial[]>();
   for (const material of materials) {
@@ -922,7 +937,7 @@ function WeeklyClassMaterials({ classId, materials, isOwner }: { classId: string
     return rank(a[0]) - rank(b[0]) || b[0].localeCompare(a[0]);
   });
   const [openWeeks, setOpenWeeks] = useState<Set<string>>(new Set([currentWeek]));
-  const [openSections, setOpenSections] = useState<Set<string>>(new Set());
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set([`${currentWeek}-quizzes`]));
   const [quickAdd, setQuickAdd] = useState<{ kind: 'text' | 'presentation'; week: string } | null>(null);
   const [title, setTitle] = useState('');
   const [url, setUrl] = useState('');
@@ -931,6 +946,16 @@ function WeeklyClassMaterials({ classId, materials, isOwner }: { classId: string
   const [addError, setAddError] = useState('');
   const [editingText, setEditingText] = useState<LearningText | null>(null);
   const [editingWritingPrompt, setEditingWritingPrompt] = useState<ClassSession | null>(null);
+  const weeklyQuizIds = useMemo(() => [...new Set(materials.filter((material): material is Extract<WeeklyMaterial, { kind: 'quiz' }> => material.kind === 'quiz').map(material => material.quiz.$id))], [materials]);
+  const weeklyQuizIdsKey = weeklyQuizIds.join('|');
+  const attemptsByQuiz = useLiveQuery(async () => {
+    if (!user || isOwner || isParent || !weeklyQuizIds.length) return {} as Record<string, QuizAttempt[]>;
+    const attempts = await db.quiz_attempts.where('quizId').anyOf(weeklyQuizIds).and(attempt => attempt.userId === user.$id).toArray();
+    return attempts.reduce<Record<string, QuizAttempt[]>>((map, attempt) => {
+      (map[attempt.quizId] ||= []).push(attempt);
+      return map;
+    }, {});
+  }, [user?.$id, isOwner, isParent, weeklyQuizIdsKey]);
 
   const openQuickAdd = (kind: 'text' | 'presentation', week: string) => {
     setTitle(''); setUrl(''); setItemDate(''); setAddError(''); setQuickAdd({ kind, week });
@@ -976,7 +1001,17 @@ function WeeklyClassMaterials({ classId, materials, isOwner }: { classId: string
               {notes.length > 0 && <CompactWeekSection title="Class notes" count={notes.length} color="blue" open={openSections.has(`${week}-notes`)} onToggle={() => setOpenSections(current => toggleSetValue(current, `${week}-notes`))}>{notes.map(item => <article key={item.session.$id} className="border-t border-blue-100 px-4 py-3"><p className="mb-2 text-xs font-semibold text-blue-700">{formatDate(item.date)}</p><Markdown content={item.session.publishedNotesMarkdown} className="text-base leading-7 text-gray-800" /></article>)}</CompactWeekSection>}
               {writingPrompts.length > 0 && <CompactWeekSection title="Writing prompts" count={writingPrompts.length} color="cyan" open={openSections.has(`${week}-writing`)} onToggle={() => setOpenSections(current => toggleSetValue(current, `${week}-writing`))}>{writingPrompts.map(item => <article key={item.session.$id} className="border-t border-cyan-100 px-4 py-3"><div className="mb-2 flex items-center justify-between gap-3"><p className="text-xs font-semibold text-cyan-800">{formatDate(item.date)}</p>{isOwner&&<button className="text-xs font-semibold text-cyan-900 underline" onClick={()=>setEditingWritingPrompt(item.session)}>Edit prompt</button>}</div><Markdown content={item.session.publishedNotesMarkdown} className="text-sm text-gray-800" /></article>)}</CompactWeekSection>}
               {discussions.length > 0 && <CompactWeekSection title="Discussions" count={discussions.length} color="violet" open={openSections.has(`${week}-discussions`)} onToggle={() => setOpenSections(current => toggleSetValue(current, `${week}-discussions`))}>{discussions.map(item => <Link key={item.session.$id} to={`/discussions/${item.session.$id}`} className="block border-t border-violet-100 px-4 py-3 hover:bg-violet-100/50"><span className="block text-sm font-semibold text-violet-950">{item.session.title}</span><span className="text-xs text-violet-800">{formatDate(item.date)}</span></Link>)}</CompactWeekSection>}
-              {quizzes.length > 0 && <CompactWeekSection title="Quizzes" count={quizzes.length} color="amber" open={openSections.has(`${week}-quizzes`)} onToggle={() => setOpenSections(current => toggleSetValue(current, `${week}-quizzes`))}>{quizzes.map(item => <Link key={item.quiz.$id} to={`/quizzes/${item.quiz.$id}/take`} className="block border-t border-amber-100 px-4 py-3 hover:bg-amber-100/50"><span className="block text-sm font-semibold text-amber-950">{item.quiz.title}</span><span className="text-xs text-amber-800">{formatDate(item.date)}</span></Link>)}</CompactWeekSection>}
+              {quizzes.length > 0 && <CompactWeekSection title="Quizzes" count={quizzes.length} color="amber" open={openSections.has(`${week}-quizzes`)} onToggle={() => setOpenSections(current => toggleSetValue(current, `${week}-quizzes`))}>{quizzes.map(item => {
+                const attempts = attemptsByQuiz?.[item.quiz.$id] || [];
+                const completed = attempts.filter(attempt => attempt.completedAt && attempt.totalQuestions > 0);
+                const best = completed.reduce<QuizAttempt | null>((strongest, attempt) => !strongest || attempt.score / attempt.totalQuestions > strongest.score / strongest.totalQuestions ? attempt : strongest, null);
+                const inProgress = attempts.some(attempt => !attempt.completedAt);
+                const status = best ? `Completed · best ${best.score}/${best.totalQuestions}` : inProgress ? 'In progress' : 'Ready to take';
+                const details = <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-amber-950">{item.quiz.title}</span><span className="text-xs text-amber-800">{formatDate(item.date)}{!isOwner && !isParent ? ` · ${status}` : ''}{isOwner ? ` · ${item.quiz.questionCount} questions · ${item.quiz.status}` : ''}</span></span>;
+                if (isOwner) return <div key={item.quiz.$id} className="flex items-center gap-3 border-t border-amber-100 px-4 py-3 hover:bg-amber-100/50">{details}<Button size="sm" variant="secondary" onClick={() => onOpenQuizResults(item.quiz)}>Results</Button></div>;
+                if (isParent) return <div key={item.quiz.$id} className="flex items-center border-t border-amber-100 px-4 py-3">{details}</div>;
+                return <Link key={item.quiz.$id} to={`/quizzes/${item.quiz.$id}/take`} className="flex items-center gap-3 border-t border-amber-100 px-4 py-3 hover:bg-amber-100/50">{details}<span className="shrink-0 text-xs font-semibold text-amber-900">{best ? 'Review result' : 'Open quiz'} →</span></Link>;
+              })}</CompactWeekSection>}
               {!items.length && <p className="rounded-lg border border-dashed p-4 text-sm text-gray-500">Nothing has been added to this week yet.</p>}
             </div>}
           </div>;

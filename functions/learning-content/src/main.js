@@ -564,8 +564,8 @@ export default async ({ req, res, error }) => {
       const students = studentIds.map(studentId => {
         const student = profilesById.get(studentId);
         const attempts = (attemptsByStudent.get(studentId) || []).sort((a, b) => String(a.startedAt).localeCompare(String(b.startedAt)));
-        return { userId: studentId, name: student?.name || 'Student', attempts };
-      }).sort((a, b) => a.name.localeCompare(b.name));
+        return { userId: studentId, username: student?.name || 'Student', email: student?.email || '', attempts };
+      }).sort((a, b) => a.username.localeCompare(b.username));
       return res.json({ quiz: { id: quiz.$id, title: quiz.title, questionCount: quiz.questionCount, allowedAttempts: quizAttemptLimit(quiz) }, class: { id: targetClass.$id, name: targetClass.name, courseName: targetClass.courseName }, students });
     }
 
@@ -600,7 +600,16 @@ export default async ({ req, res, error }) => {
       if (body.quizId) quizzes = quizzes.filter(row => row.$id === body.quizId);
       const quizIds = quizzes.map(row => row.$id);
       if (!quizIds.length) return res.json({ assignments: assignmentResult.documents.map(clean), quizzes: [], questions: [], attempts: [], expiredQuizIds });
-      if (!body.includeDetails) return res.json({ assignments: assignmentResult.documents.filter(row => quizIds.includes(row.quizId)).map(clean), quizzes: quizzes.map(clean), questions: [], attempts: [], expiredQuizIds });
+      if (!body.includeDetails) {
+        let attempts = [];
+        // A student's own attempt summaries are small and useful in the weekly
+        // class view. Teachers still fetch class-wide results only on demand.
+        if (profile.role === 'student') {
+          const attemptResult = await db.listDocuments(databaseId, 'quiz_attempts', [Query.equal('quizId', quizIds), Query.equal('userId', userId), Query.limit(5000)]);
+          attempts = attemptResult.documents;
+        }
+        return res.json({ assignments: assignmentResult.documents.filter(row => quizIds.includes(row.quizId)).map(clean), quizzes: quizzes.map(clean), questions: [], attempts: attempts.map(clean), expiredQuizIds });
+      }
       const questionResult = await db.listDocuments(databaseId, 'quiz_questions', [Query.equal('quizId', quizIds), Query.limit(5000)]);
       let attempts = [];
       if (profile.role !== 'parent') {

@@ -474,7 +474,7 @@ export interface TeacherQuizResultAttempt {
 export interface TeacherQuizResults {
   quiz: { id: string; title: string; questionCount: number; allowedAttempts: number };
   class: { id: string; name: string; courseName: string };
-  students: Array<{ userId: string; name: string; attempts: TeacherQuizResultAttempt[] }>;
+  students: Array<{ userId: string; username: string; email: string; attempts: TeacherQuizResultAttempt[] }>;
 }
 
 export function readQuizResults(quizId: string, classId: string): Promise<TeacherQuizResults> {

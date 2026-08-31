@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { deleteLocalPracticeQuiz, getQuizWithQuestions, getStudentQuizAttempts, startQuizAttempt, submitQuizAttempt, syncQuizFromServer } from '@/services/quiz.service';
-import type { Quiz, QuizQuestion } from '@/types';
+import type { Quiz, QuizAttempt, QuizQuestion } from '@/types';
 import { Confetti } from '@/pages/FlashcardReviewPage';
 
 export function QuizTakingPage() {
@@ -23,6 +23,7 @@ export function QuizTakingPage() {
   const [submitted, setSubmitted] = useState(false);
   const [results, setResults] = useState<{ score: number; total: number; results: Array<{ correct: boolean; explanation: string }>; showAnswerFeedback: boolean; attemptsRemaining: number } | null>(null);
   const [completedAttempts, setCompletedAttempts] = useState(0);
+  const [priorAttempts, setPriorAttempts] = useState<QuizAttempt[]>([]);
   const [error, setError] = useState('');
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,6 +41,7 @@ export function QuizTakingPage() {
         setQuestions(data.questions);
         if (user) {
           const prior = await getStudentQuizAttempts(user.$id, quizId);
+          setPriorAttempts(prior);
           setCompletedAttempts(prior.filter(attempt => attempt.completedAt).length);
         }
         if (data.quiz.timeLimitMinutes) {
@@ -133,6 +135,7 @@ export function QuizTakingPage() {
     const s = seconds % 60;
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
+  const completedHistory = priorAttempts.filter(attempt => attempt.completedAt && attempt.totalQuestions > 0).sort((a, b) => String(b.completedAt).localeCompare(String(a.completedAt)));
 
   if (loading) {
     return <div className="p-4 text-gray-400">Loading quiz...</div>;
@@ -195,6 +198,7 @@ export function QuizTakingPage() {
             <p className="text-sm text-orange-600 mb-4">Time limit: {quiz.timeLimitMinutes} minutes</p>
           )}
           {quiz.allowedAttempts === 2 && <p className="mb-4 text-sm text-gray-600">Two attempts allowed{completedAttempts ? ` · ${completedAttempts} used` : ''}</p>}
+          {completedHistory.length > 0 && <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50 p-3"><h2 className="text-sm font-semibold text-blue-950">Your previous results</h2><div className="mt-2 space-y-1">{completedHistory.map((attempt, index) => <p key={attempt.$id} className="flex items-center justify-between gap-3 text-sm text-blue-900"><span>Attempt {completedHistory.length - index}{attempt.completedAt ? ` · ${new Date(attempt.completedAt).toLocaleDateString()}` : ''}</span><strong>{attempt.score}/{attempt.totalQuestions} · {Math.round(attempt.score / attempt.totalQuestions * 100)}%</strong></p>)}</div></div>}
           {error && <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
           {completedAttempts < (quiz.allowedAttempts === 2 ? 2 : 1) || isPractice
             ? <Button onClick={handleStart} className="w-full" size="lg">{completedAttempts ? 'Start second attempt' : 'Start quiz'}</Button>
