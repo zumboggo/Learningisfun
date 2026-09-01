@@ -336,6 +336,18 @@ export default async ({ req, res, error }) => {
       return res.json({ session: clean(updated) });
     }
 
+    if (body.action === 'setClassSessionStatus') {
+      if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
+      const session = await db.getDocument(databaseId, 'class_sessions', body.sessionId);
+      const targetClass = await db.getDocument(databaseId, 'classes', session.classId);
+      if (targetClass.teacherId !== userId) return res.json({ error: 'Not the class owner' }, 403);
+      if (session.discussionType === 'notes' || session.discussionType === 'presentation') return res.json({ error: 'Use the dedicated finish action for this item' }, 400);
+      if (!['active', 'published'].includes(body.status)) return res.json({ error: 'Invalid discussion status' }, 400);
+      const now = new Date().toISOString();
+      const updated = await db.updateDocument(databaseId, 'class_sessions', session.$id, { status: body.status, updatedAt: now, publishedAt: body.status === 'published' ? now : null });
+      return res.json({ session: clean(updated) });
+    }
+
     if (['readLivePresentation', 'controlLivePresentation', 'submitLiveAnswer'].includes(body.action)) {
       const session = await db.getDocument(databaseId, 'class_sessions', body.sessionId);
       if (session.discussionType !== 'presentation') return res.json({ error: 'Not a live presentation' }, 400);
@@ -682,7 +694,7 @@ export default async ({ req, res, error }) => {
       const owns = profile.role === 'teacher' && targetClass.teacherId === userId;
       if (!owns && !memberClassIds.has(targetClass.$id)) return res.json({ error: 'Not enrolled' }, 403);
       const result = await db.listDocuments(databaseId, 'peer_review_activities', [Query.equal('classId', targetClass.$id), Query.limit(500)]);
-      const visible = result.documents.filter(row => owns || row.status === 'active').sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+      const visible = result.documents.filter(row => owns || row.status === 'active' || row.status === 'closed').sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
       let flagCounts = new Map();
       if (owns && visible.length) {
         const flagged = await db.listDocuments(databaseId, 'presentation_peer_reviews', [Query.equal('activityId', visible.map(row=>row.$id)), Query.equal('flagged', true), Query.limit(5000)]);
@@ -931,6 +943,13 @@ export default async ({ req, res, error }) => {
     const isTeacher = profile.role === 'teacher' && ownedClass.total > 0;
     if (studentCollections.has(collection) && classId && !isMember && !isTeacher) return res.json({ error: 'Not enrolled' }, 403);
     if (teacherCollections.has(collection) && classId && !isTeacher) return res.json({ error: 'Not the class owner' }, 403);
+    if (!isTeacher && ['discussion_questions', 'discussion_answers', 'question_votes', 'text_discussion_posts', 'text_discussion_votes'].includes(collection)) {
+      let discussionSession = null;
+      if (data.classSessionId || existing?.classSessionId) discussionSession = await db.getDocument(databaseId, 'class_sessions', data.classSessionId || existing.classSessionId);
+      else if (collection === 'discussion_answers' || collection === 'question_votes') { const question = await db.getDocument(databaseId, 'discussion_questions', data.questionId || existing?.questionId); discussionSession = await db.getDocument(databaseId, 'class_sessions', question.classSessionId); }
+      else if (collection === 'text_discussion_votes') { const post = await db.getDocument(databaseId, 'text_discussion_posts', data.postId || existing?.postId); discussionSession = await db.getDocument(databaseId, 'class_sessions', post.classSessionId); }
+      if (discussionSession && discussionSession.status !== 'active') return res.json({ error: 'This discussion is finished and read-only' }, 403);
+    }
     if (existing && !isTeacher) { const owner = existing.authorId || existing.userId || existing.reviewerId; if (owner && owner !== userId) return res.json({ error: 'Cannot change another student’s work' }, 403); }
     if (existing && isTeacher) { const owner = existing.authorId || existing.userId || existing.reviewerId; if (owner && owner !== userId) { if (collection === 'discussion_questions') { data.questionText = existing.questionText; data.selectedPassage = existing.selectedPassage; data.sourceTitle = existing.sourceTitle || ''; data.sourceUrl = existing.sourceUrl || ''; } if (collection === 'discussion_answers') { data.answerText = existing.answerText; data.sourceTitle = existing.sourceTitle || ''; data.sourceUrl = existing.sourceUrl || ''; } if (collection === 'text_discussion_posts') data.content = existing.content; } }
     if ('authorId' in data && !isTeacher) data.authorId = userId; if ('userId' in data) data.userId = userId; if ('reviewerId' in data) data.reviewerId = userId;

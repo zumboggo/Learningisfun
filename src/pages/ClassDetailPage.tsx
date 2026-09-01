@@ -17,7 +17,7 @@ import {
   syncClassRosterFromServer,
   type RosterImportResult,
 } from '@/services/class.service';
-import { createClassSession, todayKey } from '@/services/class-session.service';
+import { createClassSession, finishClassDiscussion, todayKey } from '@/services/class-session.service';
 import { downloadCsv } from '@/services/report.service';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
@@ -28,7 +28,7 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { CreateQuizModal } from '@/pages/QuizzesPage';
 import { convertQuizScore, createPracticeQuiz, deleteQuiz, getQuizWithQuestions, publishQuiz, readQuizResults, type TeacherQuizResults } from '@/services/quiz.service';
 import { buildQtiAssessmentXml, buildQtiZip, downloadBlob } from '@/services/qti-export';
-import { addPresentationLinks, createWritingPrompt, deletePresentationLink, setPresentationWatched, updateWritingPrompt, type WritingPromptSize } from '@/services/presentation.service';
+import { addPresentationLinks, createWritingPrompt, deletePresentationLink, finishWritingPrompt, setPresentationWatched, updateWritingPrompt, type WritingPromptSize } from '@/services/presentation.service';
 import { AddDecksToClassModal } from '@/components/common/AddDecksToClassModal';
 import { unassignDeck } from '@/services/flashcard.service';
 import { createText, setTextAssignmentDueDate, setTextClasses, splitParagraphs } from '@/services/text.service';
@@ -39,7 +39,7 @@ import { classLabel } from '@/utils/helpers';
 import { Markdown } from '@/components/common/Markdown';
 import { MarkdownPasteEditor } from '@/components/common/MarkdownPasteEditor';
 import { TextEditorModal } from '@/components/texts/TextEditorModal';
-import { createPeerReviewActivity, listPeerReviewActivities } from '@/services/presentation-peer-review.service';
+import { createPeerReviewActivity, listPeerReviewActivities, setPeerReviewActivityStatus } from '@/services/presentation-peer-review.service';
 import type { PeerReviewActivity } from '@/types';
 import { moderateNicknameReport, readClassNicknames, reportNickname, type ClassNickname, type NicknameReport } from '@/services/nickname.service';
 import { refreshClassMaterials } from '@/services/class-material-refresh.service';
@@ -351,6 +351,8 @@ export function ClassDetailPage() {
       {materialRefreshMessage && !isOwner && <p role="status" className={`rounded-lg px-3 py-2 text-sm ${materialRefreshFailed ? 'bg-amber-50 text-amber-800' : 'bg-green-50 text-green-800'}`}>{materialRefreshMessage}</p>}
 
       {livePresentations?.length ? <section aria-label="Active writing prompt" className="space-y-2">{livePresentations.map(session => <Link key={session.$id} to={`/presentations/${session.$id}/live`} className="flex items-center justify-between rounded-xl border border-blue-700 bg-blue-600 p-4 !text-white shadow-sm hover:bg-blue-700"><span><span className="block text-xs font-semibold uppercase tracking-wide text-blue-100">Writing now</span><strong className="mt-1 block text-lg !text-white">Writing Prompt</strong><span className="text-sm text-blue-100">{isOwner ? 'View and present anonymous responses' : 'Open prompt and write your response'}</span></span><span className="text-2xl text-white" aria-hidden="true">→</span></Link>)}</section> : null}
+
+      {isOwner && <ActiveClassItemsPanel classId={cls.$id} discussions={(discussions || []).map(row => row.session)} writingPrompts={livePresentations || []} />}
 
       <WeeklyClassMaterials classId={cls.$id} materials={weeklyMaterials || []} isOwner={Boolean(isOwner)} onOpenQuizResults={quiz => setResultsQuiz(quiz)} />
 
@@ -805,6 +807,32 @@ function QuizResultsModal({ quiz, classId, onClose }: { quiz: Quiz; classId: str
 
 function QuizResultHeader({ label, width, onResize }: { label: string; width: number; onResize: (difference: number) => void }) {
   return <th className="border-r border-gray-200 px-3 py-2 last:border-r-0"><div className="flex items-center justify-between gap-2"><span className="min-w-0 truncate" title={label}>{label}</span><span className="flex shrink-0 items-center gap-1 normal-case tracking-normal"><button type="button" aria-label={`Make ${label} column narrower`} title="Narrower" className="flex h-6 w-6 items-center justify-center rounded border bg-white text-base font-semibold text-gray-700 hover:bg-gray-100" disabled={width <= 90} onClick={() => onResize(-40)}>−</button><button type="button" aria-label={`Make ${label} column wider`} title="Wider" className="flex h-6 w-6 items-center justify-center rounded border bg-white text-base font-semibold text-gray-700 hover:bg-gray-100" disabled={width >= 600} onClick={() => onResize(40)}>+</button></span></div></th>;
+}
+
+function ActiveClassItemsPanel({ classId, discussions, writingPrompts }: { classId: string; discussions: ClassSession[]; writingPrompts: ClassSession[] }) {
+  const [peerReviews, setPeerReviews] = useState<PeerReviewActivity[]>([]);
+  const [busyId, setBusyId] = useState('');
+  const [message, setMessage] = useState('');
+  const loadPeerReviews = useCallback(async () => {
+    try { setPeerReviews((await listPeerReviewActivities(classId)).activities); } catch { /* Keep the local class usable offline. */ }
+  }, [classId]);
+  useEffect(() => { void loadPeerReviews(); }, [loadPeerReviews]);
+  const items = [
+    ...discussions.filter(item => item.status === 'active').map(item => ({ id: item.$id, title: item.title, kind: 'Discussion', href: `/discussions/${item.$id}`, finish: () => finishClassDiscussion(item.$id) })),
+    ...writingPrompts.filter(item => item.status === 'active').map(item => ({ id: item.$id, title: item.promptMarkdown || item.title, kind: 'Writing Prompt', href: `/presentations/${item.$id}/live`, finish: () => finishWritingPrompt(item.$id) })),
+    ...peerReviews.filter(item => item.status === 'active').map(item => ({ id: item.$id, title: item.title, kind: 'Peer Review', href: `/peer-reviews/${item.$id}`, finish: async () => { await setPeerReviewActivityStatus(item.$id, 'closed'); await loadPeerReviews(); } })),
+  ].sort((a, b) => a.kind.localeCompare(b.kind) || a.title.localeCompare(b.title));
+  const finish = async (item: typeof items[number]) => {
+    setBusyId(item.id); setMessage('');
+    try { await item.finish(); setMessage(`${item.kind} moved to the archive.`); }
+    catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Could not finish this item.'); }
+    finally { setBusyId(''); }
+  };
+  return <section className="overflow-hidden rounded-xl border border-emerald-200 bg-white" aria-labelledby="active-class-items-heading">
+    <div className="flex items-center justify-between bg-emerald-50 px-4 py-3"><div><h2 id="active-class-items-heading" className="font-semibold text-emerald-950">Active now</h2><p className="text-sm text-emerald-800">Open activities students can still contribute to</p></div><span className="rounded-full bg-white px-2.5 py-1 text-sm font-semibold text-emerald-800">{items.length}</span></div>
+    {message && <p role="status" className="border-t border-emerald-100 px-4 py-2 text-sm text-gray-600">{message}</p>}
+    {items.length ? <div className="divide-y divide-gray-100">{items.map(item => <div key={`${item.kind}-${item.id}`} className="flex items-center gap-3 px-4 py-3"><Link to={item.href} className="min-w-0 flex-1"><span className="block text-xs font-semibold uppercase tracking-wide text-gray-500">{item.kind}</span><strong className="block truncate text-sm text-gray-950">{item.title}</strong></Link><Button size="sm" variant="secondary" loading={busyId === item.id} onClick={() => void finish(item)}>Finished</Button></div>)}</div> : <p className="border-t border-emerald-100 px-4 py-3 text-sm text-gray-500">Nothing is currently open. Finished work remains available in its week and archive.</p>}
+  </section>;
 }
 
 function PeerReviewClassPanel({classId,isOwner,isParent}:{classId:string;isOwner:boolean;isParent:boolean}){

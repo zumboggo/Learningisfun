@@ -21,6 +21,7 @@ export function RedditDiscussionPage({ session }: { session: ClassSession }) {
   const posts = useLiveQuery(() => db.text_discussion_posts.where('classSessionId').equals(session.$id).toArray(), [session.$id]);
   const votes = useLiveQuery(() => user ? db.text_discussion_votes.where('userId').equals(user.$id).toArray() : [], [user?.$id]);
   const roots = useMemo(() => sortPosts((posts || []).filter(post => !post.parentId), sort), [posts, sort]);
+  const readOnly = isParent || session.status !== 'active';
   if (!user) return null;
 
   const submitPost = async () => {
@@ -35,7 +36,8 @@ export function RedditDiscussionPage({ session }: { session: ClassSession }) {
       <div className="min-w-0 flex-1"><h1>{session.title}</h1><p>{cls ? `${cls.courseName} · ` : ''}{discussionTypeLabel(session)}{isParent ? ' · Parent read-only' : ''}</p></div>{isTeacher&&<Button size="sm" variant="secondary" onClick={()=>setEditingSession(true)}>Edit</Button>}
     </header>
     {session.promptMarkdown && <section className="reddit-pinned-prompt"><span className="reddit-pin" aria-hidden="true">◆</span><p>{session.promptMarkdown}</p></section>}
-    {!isParent && <section className={`reddit-composer ${composerOpen ? 'reddit-composer-open' : ''}`}>
+    {readOnly && <p className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">This discussion is finished. You can still read the complete conversation.</p>}
+    {!readOnly && <section className={`reddit-composer ${composerOpen ? 'reddit-composer-open' : ''}`}>
       {!composerOpen ? <button onClick={() => setComposerOpen(true)}><ChatIcon/><span>Share your thought or question…</span><span aria-hidden="true">⌄</span></button> : <><textarea autoFocus rows={4} placeholder="Share your thought or question…" value={draft} onChange={event => setDraft(event.target.value)}/><div className="reddit-composer-actions"><button onClick={() => { setDraft(''); setComposerOpen(false); }}>Cancel</button><Button size="sm" disabled={!draft.trim()} onClick={() => void submitPost()}>Post</Button></div></>}
     </section>}
     <div className="reddit-feed-toolbar"><div className="reddit-sort-control" aria-label="Sort discussion posts"><button className={sort === 'top' ? 'active' : ''} onClick={() => setSort('top')}>Top</button><button className={sort === 'new' ? 'active' : ''} onClick={() => setSort('new')}>New</button></div><span>{roots.length} {roots.length === 1 ? 'thread' : 'threads'}</span></div>

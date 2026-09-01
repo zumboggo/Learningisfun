@@ -68,6 +68,12 @@ export async function controlLivePresentation(sessionId: string, command: 'next'
   await executeLearningContent({ action: 'controlLivePresentation', sessionId, command });
 }
 
+export async function finishWritingPrompt(sessionId: string): Promise<void> {
+  await controlLivePresentation(sessionId, 'end');
+  const state = await readLivePresentation(sessionId);
+  await db.class_sessions.put({ ...state.session, syncStatus: 'synced' });
+}
+
 export async function submitLiveAnswer(sessionId: string, answer: string): Promise<void> {
   await executeLearningContent({ action: 'submitLiveAnswer', sessionId, answer });
 }

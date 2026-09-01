@@ -118,6 +118,11 @@ export async function updateClassSession(
   if (session) await addToQueue(userId, 'class_session', sessionId, 'update', session);
 }
 
+export async function finishClassDiscussion(sessionId: string): Promise<void> {
+  const result = await executeLearningContent<{ session: ClassSession }>({ action: 'setClassSessionStatus', sessionId, status: 'published' });
+  await db.class_sessions.put({ ...result.session, syncStatus: 'synced' });
+}
+
 export async function publishClassNotes(sessionId: string, userId: string): Promise<void> {
   const publishedNotesMarkdown = await buildClassNotesPreview(sessionId);
   if (!publishedNotesMarkdown) return;
