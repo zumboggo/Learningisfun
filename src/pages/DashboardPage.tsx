@@ -6,7 +6,6 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
 import { Card } from '@/components/common/Card';
 import { EmptyState } from '@/components/common/EmptyState';
-import { GoalRing } from '@/components/common/GoalRing';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { joinClass } from '@/services/class.service';
 import { Button } from '@/components/common/Button';
@@ -25,6 +24,7 @@ import { KnownGrowthChart } from '@/components/student/KnownGrowthChart';
 import { DeckMakeup } from '@/components/student/DeckMakeup';
 import type { Class, ClassSession, DeckAssignment, FlashcardDeck, FlashcardReviewEvent, FlashcardStudySession } from '@/types';
 import { nextNicknameChangeAt, nicknameValidationError, updateNickname } from '@/services/nickname.service';
+import { ErrorLogPanel } from '@/components/student/ErrorLogPanel';
 
 interface DeckAction {
   assignment: DeckAssignment;
@@ -89,19 +89,19 @@ function friendlyDate(dateStr: string): string {
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
-function MilestoneJourney({ wordsKnown, leveledUpThisWeek }: { wordsKnown: number; leveledUpThisWeek: number }) {
-  const nextMilestone = WORD_MILESTONES.find(m => m > wordsKnown) ?? WORD_MILESTONES[WORD_MILESTONES.length - 1];
-  const previousMilestone = [...WORD_MILESTONES].reverse().find(m => m <= wordsKnown) ?? 0;
+function MilestoneJourney({ learningCards, longTermCards, leveledUpThisWeek }: { learningCards: number; longTermCards: number; leveledUpThisWeek: number }) {
+  const nextMilestone = WORD_MILESTONES.find(m => m > learningCards) ?? WORD_MILESTONES[WORD_MILESTONES.length - 1];
+  const previousMilestone = [...WORD_MILESTONES].reverse().find(m => m <= learningCards) ?? 0;
   const span = Math.max(1, nextMilestone - previousMilestone);
-  const fillFraction = Math.min(1, Math.max(0, (wordsKnown - previousMilestone) / span));
-  const remaining = Math.max(0, nextMilestone - wordsKnown);
-  const displayedKnown = useCountUp(wordsKnown);
+  const fillFraction = Math.min(1, Math.max(0, (learningCards - previousMilestone) / span));
+  const remaining = Math.max(0, nextMilestone - learningCards);
+  const displayedLearning = useCountUp(learningCards);
 
   return (
     <div className="milestone-journey">
       <div className="milestone-journey-headline">
-        <strong className="milestone-journey-count">{displayedKnown}</strong>
-        <span className="milestone-journey-label">words known</span>
+        <strong className="milestone-journey-count">{displayedLearning}</strong>
+        <span className="milestone-journey-label">cards growing</span>
         {leveledUpThisWeek > 0 && (
           <span className="milestone-journey-delta">▲ {leveledUpThisWeek} moved up this week</span>
         )}
@@ -112,12 +112,22 @@ function MilestoneJourney({ wordsKnown, leveledUpThisWeek }: { wordsKnown: numbe
       <div className="milestone-journey-legend">
         <span>{previousMilestone}</span>
         <span className="milestone-journey-next">
-          {remaining > 0 ? `${remaining} to go` : 'Milestone reached!'}
+          {remaining > 0 ? `${remaining} to next milestone` : 'Milestone reached!'}
         </span>
         <span>{nextMilestone}</span>
       </div>
+      {longTermCards > 0 && <p className="mt-2 text-xs font-semibold text-emerald-700">{longTermCards} in long-term memory</p>}
     </div>
   );
+}
+
+function TodayStat({ value, label, tone }: { value: number; label: string; tone: 'blue' | 'violet' | 'green' }) {
+  const styles = {
+    blue: 'bg-blue-50 text-blue-800',
+    violet: 'bg-violet-50 text-violet-800',
+    green: 'bg-emerald-50 text-emerald-800',
+  };
+  return <div className={`rounded-xl px-3 py-3 text-center ${styles[tone]}`}><strong className="block text-2xl leading-none">{value}</strong><span className="mt-1 block text-xs font-semibold">{label}</span></div>;
 }
 
 function ProgressHeatmap({ days, longestStreak }: {
@@ -189,13 +199,14 @@ function StudentDashboard() {
 
   useEffect(() => {
     if (!user) return;
-    db.app_metadata.get(`selectedDecks_${user.$id}`).then(entry => {
-      if (entry) {
-        try { setSelectedDeckIds(JSON.parse(entry.value)); }
-        catch { setSelectedDeckIds(null); }
-      } else {
-        setSelectedDeckIds(null);
-      }
+    Promise.all([
+      db.app_metadata.get(`studyDecks_${user.$id}`),
+      db.app_metadata.get(`selectedDecks_${user.$id}`),
+    ]).then(([current, legacy]) => {
+      const entry = current || legacy;
+      if (!entry) { setSelectedDeckIds(null); return; }
+      try { setSelectedDeckIds(JSON.parse(entry.value)); }
+      catch { setSelectedDeckIds(null); }
     });
   }, [user?.$id]);
 
@@ -210,7 +221,7 @@ function StudentDashboard() {
   const saveSelectedDecks = async (ids: string[]) => {
     if (!user) return;
     setSelectedDeckIds(ids);
-    await db.app_metadata.put({ key: `selectedDecks_${user.$id}`, value: JSON.stringify(ids) });
+    await db.app_metadata.put({ key: `studyDecks_${user.$id}`, value: JSON.stringify(ids) });
   };
 
   const toggleDeckSelection = (deckId: string) => {
@@ -233,6 +244,7 @@ function StudentDashboard() {
     if (!user || classIds.length === 0) {
       return {
         totalCards: 0, knownCards: 0, familiarCards: 0, newCards: 0,
+        dueCards: 0, learningCards: 0, finishedToday: 0,
         movedThisWeek: 0, nextGoal: 50, flashcardsToday: 0,
         studySecondsToday: 0, studySecondsWeek: 0, studySecondsAll: 0,
         cardsWeek: 0, cardsAll: 0,
@@ -266,6 +278,14 @@ function StudentDashboard() {
       if ((state.intervalDays || 0) >= 14) knownCards++;
       else familiarCards++;
     }
+
+    const nowIso = new Date().toISOString();
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayStartIso = todayStart.toISOString();
+    const dueCards = states.filter(state => state.dueDate <= nowIso).length;
+    const learningCards = states.filter(state => state.status === 'learning' || state.status === 'relearning').length;
+    const finishedToday = states.filter(state => state.lastReviewAt >= todayStartIso && (state.intervalDays || 0) >= 1).length;
 
     const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
     const movedThisWeek = states.filter(s => s.lastReviewAt >= weekAgo.toISOString() && (s.intervalDays || 0) >= 1).length;
@@ -317,6 +337,9 @@ function StudentDashboard() {
       knownCards,
       familiarCards,
       newCards: Math.max(0, cards.length - knownCards - familiarCards),
+      dueCards,
+      learningCards,
+      finishedToday,
       movedThisWeek,
       nextGoal,
       flashcardsToday,
@@ -329,7 +352,7 @@ function StudentDashboard() {
       longestStreak: longest,
       studyHeatmap: heatmap,
     };
-  }, [user?.$id, classIds]);
+  }, [user?.$id, classIds, selectedDeckIds]);
 
   const doNow = useLiveQuery(async () => {
     if (!user || classIds.length === 0) return { sessions: [], decks: [] };
@@ -345,19 +368,6 @@ function StudentDashboard() {
       sessions: sessions.sort((a, b) => b.sessionDate.localeCompare(a.sessionDate)),
       decks: decks.sort((a, b) => b.assignment.assignedAt.localeCompare(a.assignment.assignedAt)),
     };
-  }, [user?.$id, classIds]);
-
-  const questionsToday = useLiveQuery(async () => {
-    if (!user || classIds.length === 0) return 0;
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const sessions = await db.class_sessions.where('classId').anyOf(classIds).toArray();
-    const sessionIds = sessions.map(s => s.$id);
-    if (sessionIds.length === 0) return 0;
-    const questions = await db.discussion_questions
-      .where('classSessionId').anyOf(sessionIds)
-      .and(q => q.authorId === user.$id && q.createdAt.slice(0, 10) === todayStr)
-      .toArray();
-    return questions.length;
   }, [user?.$id, classIds]);
 
   useEffect(() => {
@@ -396,6 +406,7 @@ function StudentDashboard() {
 
   const stats = progress || {
     totalCards: 0, knownCards: 0, familiarCards: 0, newCards: 0,
+    dueCards: 0, learningCards: 0, finishedToday: 0,
     movedThisWeek: 0, nextGoal: 50, flashcardsToday: 0,
     studySecondsToday: 0, studySecondsWeek: 0, studySecondsAll: 0,
     cardsWeek: 0, cardsAll: 0,
@@ -404,6 +415,13 @@ function StudentDashboard() {
     pace: EMPTY_PACE,
     knownGrowth: [],
     deckMakeup: [],
+  };
+  const activeDeckIds = (allAssignedDeckIds || []).filter(id => selectedDeckIds === null || selectedDeckIds.includes(id));
+  const readyCardCount = Math.min(studySessionSize, stats.dueCards + stats.newCards);
+  const estimatedMinutes = Math.max(1, Math.ceil(readyCardCount / 4));
+  const startToday = () => {
+    if (!activeDeckIds.length || readyCardCount === 0) { navigate('/decks'); return; }
+    navigate(`/decks/combined/review?decks=${encodeURIComponent(activeDeckIds.join(','))}&limit=${studySessionSize}&autostart=1`);
   };
 
   return (
@@ -414,7 +432,7 @@ function StudentDashboard() {
             Learning <span>is fun</span>
           </h1>
           <p className="student-home-hero-tagline">Let's grow a little stronger everyday.</p>
-          <MilestoneJourney wordsKnown={stats.knownCards} leveledUpThisWeek={stats.movedThisWeek} />
+          <MilestoneJourney learningCards={stats.familiarCards + stats.knownCards} longTermCards={stats.knownCards} leveledUpThisWeek={stats.movedThisWeek} />
         </div>
         <img
           className="student-home-hero-illustration"
@@ -444,78 +462,26 @@ function StudentDashboard() {
         </div>
       </Modal>
 
-      <section className="student-study-card">
-        <div className="student-section-head">
-          <h2 className="student-title">Today's goals</h2>
-          <Button onClick={() => setShowJoin(true)} size="sm" variant="secondary" className="bg-white/80">
-            Join class
-          </Button>
-        </div>
-
-        <div className="student-goal-grid">
-          <GoalRing
-            title="Questions asked"
-            value={questionsToday ?? 0}
-            goal={2}
-            unit="questions"
-            color="#5b7cff"
-            bonusGoal={3}
-            bonusLabel="all 3!"
-            onStart={() => navigate('/discussions')}
-          />
-          <GoalRing
-            title="Flashcards studied"
-            value={stats.flashcardsToday}
-            goal={30}
-            unit="cards"
-            color="#e94c9d"
-            onStart={() => navigate('/decks')}
-          />
-        </div>
-
-      </section>
-
-      <section className="student-study-card">
-        <div className="student-section-head">
+      <section className="student-ready-card" aria-labelledby="ready-heading">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="student-title">Reviewing pace</h2>
-            <p className="student-subtitle">
-              Recalls per 10 minutes, against your own normal range.
-            </p>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">Ready for today</p>
+            <h2 id="ready-heading" className="mt-1 text-2xl font-bold text-slate-950">
+              {readyCardCount > 0 ? `${readyCardCount} cards · about ${estimatedMinutes} min` : 'You are caught up'}
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">{activeDeckIds.length} selected {activeDeckIds.length === 1 ? 'deck' : 'decks'}</p>
           </div>
+          <Button onClick={() => setShowJoin(true)} size="sm" variant="secondary" className="bg-white/80">Join class</Button>
         </div>
-        <ReviewPaceChart series={stats.pace} />
-      </section>
-
-      <section className="student-study-card">
-        <div className="student-section-head">
-          <h2 className="student-title">Study streak</h2>
-          <span className="text-sm font-bold text-slate-700">
-            {stats.currentStreak > 0 ? `${stats.currentStreak} days` : 'Not started'}
-          </span>
+        <div className="mt-5 grid grid-cols-3 gap-2" aria-label="Today's flashcard queue">
+          <TodayStat value={stats.dueCards} label="Due" tone="blue" />
+          <TodayStat value={stats.newCards} label="New" tone="violet" />
+          <TodayStat value={stats.finishedToday} label="Done today" tone="green" />
         </div>
-        {stats.studyHeatmap.some(d => d.activityCount > 0) ? (
-          <ProgressHeatmap days={stats.studyHeatmap} longestStreak={stats.longestStreak} />
-        ) : (
-          <p className="py-4 text-center text-sm text-slate-400">
-            Review your first card to light up the calendar.
-          </p>
-        )}
-      </section>
-
-      <section className="student-study-card">
-        <div className="student-section-head">
-          <div>
-            <h2 className="student-title">Words you know</h2>
-            <p className="student-subtitle">Words held for two weeks or longer.</p>
-          </div>
-        </div>
-        <KnownGrowthChart points={stats.knownGrowth} />
-
-        <div className="student-progress-divider">
-          <h3 className="student-subheading">What's in your decks</h3>
-          <DeckMakeup decks={stats.deckMakeup} />
-        </div>
+        <Button size="lg" className="mt-5 w-full bg-blue-600" onClick={startToday}>
+          {readyCardCount > 0 ? `Study ${readyCardCount} cards` : 'Choose decks or practise more'}
+        </Button>
+        {stats.flashcardsToday > 0 && <p className="mt-3 text-center text-sm font-medium text-emerald-700">You reviewed {stats.flashcardsToday} cards today. Keep building the memory.</p>}
       </section>
 
       <section className="student-section">
@@ -556,6 +522,35 @@ function StudentDashboard() {
           />
         )}
       </section>
+
+      <ErrorLogPanel userId={user!.$id} />
+
+      <details className="student-progress-details">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
+          <span><strong className="block text-slate-950">Your progress</strong><span className="text-sm text-slate-500">Learning stages, study days, and detailed patterns</span></span>
+          <span className="text-sm font-semibold text-slate-500" aria-hidden="true">View ▾</span>
+        </summary>
+        <div className="space-y-4 border-t border-slate-200 p-4">
+          <section>
+            <div className="student-section-head"><h2 className="student-title">Learning stages</h2><span className="text-sm font-bold text-emerald-700">{stats.knownCards} long-term</span></div>
+            <DeckMakeup decks={stats.deckMakeup} />
+          </section>
+          <section className="student-progress-divider">
+            <div className="student-section-head"><h2 className="student-title">Study days</h2><span className="text-sm font-bold text-slate-700">{stats.currentStreak > 0 ? `${stats.currentStreak} in a row` : `${stats.studyHeatmap.filter(day => day.activityCount > 0).length} days so far`}</span></div>
+            {stats.studyHeatmap.some(d => d.activityCount > 0) ? <ProgressHeatmap days={stats.studyHeatmap} longestStreak={stats.longestStreak} /> : <p className="py-4 text-center text-sm text-slate-400">Review your first card to begin your study history.</p>}
+          </section>
+          <section className="student-progress-divider">
+            <h2 className="student-title">Long-term memory</h2>
+            <p className="student-subtitle">Cards remembered on schedules of two weeks or longer.</p>
+            <KnownGrowthChart points={stats.knownGrowth} />
+          </section>
+          <section className="student-progress-divider">
+            <h2 className="student-title">Reviewing pattern</h2>
+            <p className="student-subtitle">Optional detail about your recall pace—not a score or a race.</p>
+            <ReviewPaceChart series={stats.pace} />
+          </section>
+        </div>
+      </details>
 
       <div className="student-section">
         <div className="student-section-head">
@@ -613,9 +608,9 @@ function StudentDashboard() {
             <StatRow label="Time this week" value={formatMinutes(stats.studySecondsWeek)} />
             <StatRow label="Cards all time" value={stats.cardsAll} />
             <StatRow label="Time all time" value={formatMinutes(stats.studySecondsAll)} />
-            <StatRow label="Words known" value={stats.knownCards} />
-            <StatRow label="Words familiar" value={stats.familiarCards} />
-            <StatRow label="Words new" value={stats.newCards} />
+            <StatRow label="Cards in long-term memory" value={stats.knownCards} />
+            <StatRow label="Cards learning" value={stats.familiarCards} />
+            <StatRow label="Cards new" value={stats.newCards} />
             <StatRow label="Current streak" value={`${stats.currentStreak} days`} />
             <StatRow label="Longest streak" value={`${stats.longestStreak} days`} />
           </StatList>

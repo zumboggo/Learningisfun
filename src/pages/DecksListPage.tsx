@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
-import { getDeckCards, getStudentDecks, updateEntireDeck, type EditableDeckCard } from '@/services/flashcard.service';
+import { getDeckCards, getDeckProgress, getStudentDecks, updateEntireDeck, type EditableDeckCard } from '@/services/flashcard.service';
 import { buildFlashcardDeckCsv } from '@/utils/csv-parser';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
@@ -15,6 +15,14 @@ import type { FlashcardCard, FlashcardDeck } from '@/types';
 interface DeckEditorState {
   deck: FlashcardDeck;
   cards: FlashcardCard[];
+}
+
+interface StudentDeckInsight {
+  classNames: string[];
+  due: number;
+  learning: number;
+  newCount: number;
+  longTerm: number;
 }
 
 export function DecksListPage() {
@@ -35,6 +43,38 @@ export function DecksListPage() {
     }
     return getStudentDecks(user.$id);
   }, [user?.$id, isTeacher]);
+
+  const studentDeckInsights = useLiveQuery(async () => {
+    if (!user || isTeacher || !decks) return {} as Record<string, StudentDeckInsight>;
+    const memberships = await db.class_members.where('userId').equals(user.$id).toArray();
+    const classIds = [...new Set(memberships.map(membership => membership.classId))];
+    const [assignments, classes] = await Promise.all([
+      classIds.length ? db.deck_assignments.where('classId').anyOf(classIds).toArray() : [],
+      Promise.all(classIds.map(id => db.classes.get(id))),
+    ]);
+    const classNameById = new Map(classes.filter(Boolean).map(cls => [cls!.$id, classLabel(cls!)]));
+    const classNamesByDeck = assignments.reduce<Record<string, string[]>>((map, assignment) => {
+      const name = classNameById.get(assignment.classId);
+      if (name && !(map[assignment.deckId] || []).includes(name)) (map[assignment.deckId] ||= []).push(name);
+      return map;
+    }, {});
+    const rows = await Promise.all(decks.map(async deck => {
+      const progress = await getDeckProgress(user.$id, deck.$id);
+      return [deck.$id, { classNames: classNamesByDeck[deck.$id] || [], due: progress.due, learning: progress.learning, newCount: progress.newCount, longTerm: progress.known }] as const;
+    }));
+    return Object.fromEntries(rows) as Record<string, StudentDeckInsight>;
+  }, [user?.$id, isTeacher, decks]);
+
+  const recommendedDeckIds = useMemo(() => {
+    if (!decks?.length || !studentDeckInsights) return [];
+    const due = decks.filter(deck => {
+      const insight = studentDeckInsights[deck.$id];
+      return insight && (insight.due > 0 || insight.learning > 0);
+    }).map(deck => deck.$id);
+    if (due.length) return due;
+    const nextNew = decks.find(deck => (studentDeckInsights[deck.$id]?.newCount || 0) > 0);
+    return nextNew ? [nextNew.$id] : decks.slice(0, 1).map(deck => deck.$id);
+  }, [decks, studentDeckInsights]);
 
   // Class names per deck, so a teacher can see where a deck is already assigned
   // without opening the dialog.
@@ -58,13 +98,13 @@ export function DecksListPage() {
   const personalDecks = decks?.filter(d => d.type === 'personal') || [];
 
   useEffect(() => {
-    if (!user || isTeacher || !decks) return;
+    if (!user || isTeacher || !decks || !studentDeckInsights) return;
     void Promise.all([
       db.app_metadata.get(`studyDecks_${user.$id}`),
       db.app_metadata.get(`studySessionSize_${user.$id}`),
     ]).then(([savedDecks, savedSize]) => {
       const available = new Set(decks.map(deck => deck.$id));
-      let ids = decks.map(deck => deck.$id);
+      let ids = recommendedDeckIds;
       if (savedDecks) {
         try { ids = (JSON.parse(savedDecks.value) as string[]).filter(id => available.has(id)); } catch { /* use every deck */ }
       }
@@ -72,14 +112,20 @@ export function DecksListPage() {
       const parsedSize = Number(savedSize?.value || 30);
       setSessionSize(Math.min(100, Math.max(5, Number.isFinite(parsedSize) ? parsedSize : 30)));
     });
-  }, [decks, isTeacher, user]);
+  }, [decks, isTeacher, recommendedDeckIds, studentDeckInsights, user]);
+
+  const saveStudyDecks = (ids: string[]) => {
+    if (!user) return;
+    const next = new Set(ids);
+    setSelectedDeckIds(next);
+    void db.app_metadata.put({ key: `studyDecks_${user.$id}`, value: JSON.stringify(ids) });
+  };
 
   const toggleStudyDeck = (deckId: string) => {
     if (!user) return;
     const next = new Set(selectedDeckIds || []);
     if (next.has(deckId)) next.delete(deckId); else next.add(deckId);
-    setSelectedDeckIds(next);
-    void db.app_metadata.put({ key: `studyDecks_${user.$id}`, value: JSON.stringify([...next]) });
+    saveStudyDecks([...next]);
   };
 
   const beginCombinedStudy = () => {
@@ -171,22 +217,32 @@ export function DecksListPage() {
       {actionError && <p className="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{actionError}</p>}
 
       {!isTeacher && decks && decks.length > 0 && (
-        <section className="mb-6 rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
-          <h2 className="text-lg font-semibold text-slate-900">Build today&apos;s session</h2>
-          <p className="mt-1 text-sm text-slate-500">Choose decks and study them together in one mixed session.</p>
+        <section className="mb-6 rounded-2xl border border-blue-100 bg-blue-50/70 p-4 pb-24 sm:pb-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div><p className="text-xs font-bold uppercase tracking-wider text-blue-700">Recommended session</p><h2 className="mt-1 text-xl font-semibold text-slate-900">Choose what to study</h2><p className="mt-1 text-sm text-slate-500">Due decks are selected first. Your choices are remembered.</p></div>
+            <div className="flex flex-wrap gap-2 text-xs font-semibold">
+              <button className="rounded-lg bg-white px-3 py-2 text-blue-700 shadow-sm" onClick={() => saveStudyDecks(recommendedDeckIds)}>Recommended</button>
+              <button className="rounded-lg bg-white px-3 py-2 text-slate-600 shadow-sm" onClick={() => saveStudyDecks(decks.map(deck => deck.$id))}>All</button>
+              <button className="rounded-lg bg-white px-3 py-2 text-slate-600 shadow-sm" onClick={() => saveStudyDecks([])}>Clear</button>
+            </div>
+          </div>
           <div className="mt-4 space-y-2">
-            {decks.map(deck => (
+            {decks.map(deck => {
+              const insight = studentDeckInsights?.[deck.$id];
+              return (
               <div key={deck.$id} className="flex items-center gap-2 rounded-xl border bg-white p-3">
                 <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
-                  <input type="checkbox" className="h-5 w-5 rounded" checked={selectedDeckIds?.has(deck.$id) ?? true} onChange={() => toggleStudyDeck(deck.$id)} />
-                  <span className="min-w-0"><strong className="block truncate text-sm">{deck.title}</strong>{deck.description && <span className="block truncate text-xs text-slate-500">{deck.description}</span>}</span>
+                  <input type="checkbox" className="h-5 w-5 rounded" checked={selectedDeckIds?.has(deck.$id) ?? false} onChange={() => toggleStudyDeck(deck.$id)} />
+                  <span className="min-w-0 flex-1"><strong className="block truncate text-sm">{deck.title}</strong>{insight?.classNames.length ? <span className="block truncate text-xs font-medium text-blue-600">{insight.classNames.join(' · ')}</span> : deck.description && <span className="block truncate text-xs text-slate-500">{deck.description}</span>}<span className="mt-1 flex flex-wrap gap-1.5 text-[11px] font-semibold"><span className="rounded bg-blue-50 px-1.5 py-0.5 text-blue-700">{insight?.due || 0} due</span><span className="rounded bg-amber-50 px-1.5 py-0.5 text-amber-700">{insight?.learning || 0} learning</span><span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-600">{insight?.newCount || 0} new</span>{Boolean(insight?.longTerm) && <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-700">{insight?.longTerm} long-term</span>}</span></span>
                 </label>
-                <Button size="sm" variant="secondary" loading={exportingDeckId === deck.$id} onClick={() => void exportDeck(deck)}>Export CSV</Button>
+                <details className="relative shrink-0"><summary className="cursor-pointer list-none rounded-lg px-2 py-1 text-xl text-slate-500 hover:bg-slate-100" aria-label={`More options for ${deck.title}`}>•••</summary><div className="absolute right-0 z-20 mt-1 rounded-xl border bg-white p-2 shadow-lg"><button className="whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-100" disabled={exportingDeckId === deck.$id} onClick={() => void exportDeck(deck)}>{exportingDeckId === deck.$id ? 'Exporting…' : 'Export CSV'}</button></div></details>
               </div>
-            ))}
+            );})}
           </div>
-          <div className="mt-4 flex items-center justify-between gap-4 text-sm text-slate-600"><span>{selectedDeckIds?.size ?? decks.length} decks selected</span><span>{sessionSize} cards</span></div>
-          <Button size="lg" className="mt-3 w-full bg-blue-600" disabled={(selectedDeckIds?.size ?? decks.length) === 0} onClick={beginCombinedStudy}>Study</Button>
+          <div className="sticky bottom-20 z-10 mt-4 rounded-2xl border border-blue-200 bg-white/95 p-3 shadow-xl backdrop-blur sm:bottom-3">
+            <div className="mb-2 flex items-center justify-between gap-4 text-sm text-slate-600"><span>{selectedDeckIds?.size ?? 0} {selectedDeckIds?.size === 1 ? 'deck' : 'decks'} selected</span><span>{sessionSize} cards</span></div>
+            <Button size="lg" className="w-full bg-blue-600" disabled={(selectedDeckIds?.size ?? 0) === 0} onClick={beginCombinedStudy}>Study {sessionSize} cards</Button>
+          </div>
         </section>
       )}
 

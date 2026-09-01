@@ -422,19 +422,21 @@ export function ClassDetailPage() {
 
       <details className="overflow-hidden rounded-xl border border-gray-200 bg-white">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 hover:bg-gray-50">
-          <span><strong className="block text-gray-950">Class resources</strong><span className="text-sm text-gray-500">Links, presentations, quizzes, discussions, and card decks</span></span>
+          <span><strong className="block text-gray-950">{isOwner ? 'Class resources' : 'More class resources'}</strong><span className="text-sm text-gray-500">{isOwner ? 'Links, presentations, quizzes, discussions, and card decks' : 'Reference links, discussion history, and card decks'}</span></span>
           <span className="shrink-0 text-sm font-medium text-gray-500" aria-hidden="true">Show ▾</span>
         </summary>
         <div className="space-y-5 border-t bg-gray-50/60 p-3 sm:p-4">
       <ClassLinksPanel cls={cls} isOwner={Boolean(isOwner)} teacherId={user?.$id || ''} />
       {!isParent && <ClassNicknamesPanel classId={cls.$id} userId={user?.$id || ''} isOwner={Boolean(isOwner)} />}
-      <SimplePresentationLinksPanel links={presentationLinks || []} isOwner={Boolean(isOwner)} />
+      {isOwner && <SimplePresentationLinksPanel links={presentationLinks || []} isOwner />}
 
-      <section>
+      {!isOwner && !isParent && <section className="rounded-xl border border-blue-100 bg-blue-50 p-4"><h2 className="font-semibold text-blue-950">Practice this class</h2><p className="mt-1 text-sm text-blue-800">Create a temporary practice quiz from this class&apos;s flashcards.</p><Button className="mt-3" size="sm" loading={generatingPracticeQuiz} onClick={() => void generatePracticeQuiz()}>Generate Practice Quiz</Button>{practiceQuizError && <p className="mt-3 text-sm text-amber-800">{practiceQuizError}</p>}</section>}
+
+      {isOwner && <section>
         <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-lg font-semibold">Quizzes ({classQuizzes?.length || 0})</h2>{isOwner ? <Button size="sm" onClick={() => setShowCreateQuiz(true)}>Create quiz</Button> : !isParent ? <Button size="sm" loading={generatingPracticeQuiz} onClick={() => void generatePracticeQuiz()}>Generate Practice Quiz</Button> : null}</div>
         {practiceQuizError && <p className="mb-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">{practiceQuizError}</p>}
         {classQuizzes?.length ? <div className="space-y-2">{classQuizzes.map(quiz => <div key={quiz.$id} className="relative flex flex-col gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0 pr-8"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{quiz.title}</h3>{isOwner && <StatusBadge status={quiz.status}/>}</div><p className="text-sm text-gray-500">{quiz.questionCount} questions{quiz.timeLimitMinutes ? ` · ${quiz.timeLimitMinutes} min` : ''}{quiz.allowedAttempts === 2 ? ' · 2 attempts' : ''}{isOwner ? ` · ${quiz.showAnswerFeedback ? 'answers shown' : 'answers hidden'}` : ''}</p></div>{isOwner ? <div className="flex flex-wrap gap-2 pr-6"><Button size="sm" variant="secondary" onClick={() => setResultsQuiz(quiz)}>Results</Button><Button size="sm" variant="secondary" onClick={() => void copyQuizText(quiz.$id)}>{copiedQuizId === quiz.$id ? 'Copied!' : 'Copy'}</Button><Button size="sm" variant="secondary" onClick={() => void exportQuizQti(quiz.$id)}>QTI</Button>{quiz.status === 'draft' && <Button size="sm" onClick={() => user && void publishQuiz(quiz.$id, user.$id)}>Publish</Button>}<button type="button" aria-label="Delete quiz" title="Delete quiz" onClick={() => void confirmDeleteQuiz(quiz.$id)} className="absolute right-3 top-3 text-lg leading-none text-red-500 hover:text-red-700">×</button></div> : <Link to={`/quizzes/${quiz.$id}/take`}><Button size="sm">Take quiz</Button></Link>}</div>)}</div> : <p className="rounded-xl border border-dashed p-5 text-center text-sm text-gray-400">{isOwner ? 'No quizzes for this class yet.' : 'No published quizzes for this class yet.'}</p>}
-      </section>
+      </section>}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section>

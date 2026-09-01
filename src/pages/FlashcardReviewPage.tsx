@@ -32,8 +32,6 @@ const RATING_BY_SWIPE: Record<SwipeDir, ReviewRating> = {
 };
 
 const CARD_TIME_CAP_SECONDS = 60;
-const HEALTHY_TIME_MIN = 3;
-const HEALTHY_TIME_MAX = 8;
 
 interface CardTimeRecord {
   cardId: string;
@@ -84,6 +82,7 @@ export function FlashcardReviewPage() {
   const [sessionNewRemaining, setSessionNewRemaining] = useState(0);
   const [sessionReviewRemaining, setSessionReviewRemaining] = useState(0);
   const [sessionFinished, setSessionFinished] = useState(0);
+  const [sessionCardCount, setSessionCardCount] = useState(0);
   const cardStartedAt = useRef(Date.now());
   const activeSecondsRef = useRef(0);
   const studySessionIdRef = useRef('');
@@ -133,6 +132,7 @@ export function FlashcardReviewPage() {
     setSessionNewRemaining([...categoryByCard.values()].filter(category => category === 'new').length);
     setSessionReviewRemaining([...categoryByCard.values()].filter(category => category === 'review').length);
     setSessionFinished(0);
+    setSessionCardCount(sessionCards.length);
 
     const studySession = isParent ? null : await startFlashcardStudySession(user.$id, combinedDeckIds[0], classByDeck?.[combinedDeckIds[0]] || null);
     activeSecondsRef.current = 0;
@@ -365,42 +365,35 @@ export function FlashcardReviewPage() {
 
   if (sessionComplete) {
     const totalTime = cardTimes.reduce((sum, t) => sum + t.elapsedSeconds, 0);
-    const avgTime = reviewedCount > 0 ? totalTime / reviewedCount : 0;
     const againCount = cardTimes.filter(t => t.rating === 'again').length;
     const hardCount = cardTimes.filter(t => t.rating === 'hard').length;
     const goodCount = cardTimes.filter(t => t.rating === 'good').length;
     const easyCount = cardTimes.filter(t => t.rating === 'easy').length;
-    const timeHealthy = avgTime >= HEALTHY_TIME_MIN && avgTime <= HEALTHY_TIME_MAX;
+    const strengtheningPasses = Math.max(0, reviewedCount - sessionCardCount);
+    const uniqueReviewed = new Set(cardTimes.map(record => record.cardId)).size;
+    const completedCards = sessionFinished || sessionCardCount;
 
     return (
       <div className="p-4 max-w-lg mx-auto text-center relative">
         <Confetti />
         <div className="text-5xl mb-4">🎉</div>
-        <h2 className="text-2xl font-bold mb-2">Session complete!</h2>
-        <p className="text-gray-500 mb-6">
-          You reviewed {reviewedCount} cards in {Math.round(totalTime / 60)} minutes.
-        </p>
+        <h2 className="text-2xl font-bold mb-2">{queueMode === 'unlimited' ? `You practised ${uniqueReviewed} cards` : `You moved ${completedCards} cards forward`}</h2>
+        <p className="text-gray-500 mb-6">{queueMode === 'unlimited' ? 'Practice mode left your review schedule unchanged.' : 'They are finished for today and scheduled to return when practice will help most.'}</p>
 
         <div className="grid grid-cols-2 gap-3 mb-6">
-          <div className="rounded-xl bg-blue-50 p-4">
-            <div className="text-2xl font-bold text-blue-700">{avgTime.toFixed(1)}s</div>
-            <div className="text-xs text-blue-600">avg per card</div>
-            <div className={`text-xs mt-1 font-medium ${timeHealthy ? 'text-green-600' : 'text-orange-500'}`}>
-              {timeHealthy ? '✓ Good pace' : avgTime < HEALTHY_TIME_MIN ? '⚡ A bit fast' : '🐢 Take your time'}
-            </div>
+          <div className="rounded-xl bg-emerald-50 p-4">
+            <div className="text-2xl font-bold text-emerald-700">{queueMode === 'unlimited' ? uniqueReviewed : completedCards}</div>
+            <div className="text-xs font-medium text-emerald-700">{queueMode === 'unlimited' ? 'cards practised' : 'done for today'}</div>
           </div>
-          <div className="rounded-xl bg-purple-50 p-4">
-            <div className="text-2xl font-bold text-purple-700">{Math.round(totalTime / 60)}m</div>
-            <div className="text-xs text-purple-600">total time</div>
+          <div className="rounded-xl bg-blue-50 p-4">
+            <div className="text-2xl font-bold text-blue-700">{Math.max(1, Math.round(totalTime / 60))}m</div>
+            <div className="text-xs font-medium text-blue-700">focused practice</div>
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-2 mb-6">
-          <RatingBreakdown label="Again" count={againCount} total={reviewedCount} color="red" />
-          <RatingBreakdown label="Hard" count={hardCount} total={reviewedCount} color="orange" />
-          <RatingBreakdown label="Good" count={goodCount} total={reviewedCount} color="green" />
-          <RatingBreakdown label="Easy" count={easyCount} total={reviewedCount} color="blue" />
-        </div>
+        {queueMode !== 'unlimited' && strengtheningPasses > 0 && <p className="mb-5 rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">You gave difficult cards {strengtheningPasses} extra {strengtheningPasses === 1 ? 'pass' : 'passes'}. That repetition is part of learning.</p>}
+
+        <details className="mb-6 rounded-xl border text-left"><summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-600">Review details</summary><div className="grid grid-cols-4 gap-2 border-t p-3"><RatingBreakdown label="Again" count={againCount} total={reviewedCount} color="red" /><RatingBreakdown label="Hard" count={hardCount} total={reviewedCount} color="orange" /><RatingBreakdown label="Good" count={goodCount} total={reviewedCount} color="green" /><RatingBreakdown label="Easy" count={easyCount} total={reviewedCount} color="blue" /></div></details>
 
         <div className="space-y-3">
           <Button onClick={() => isCombined ? navigate('/decks') : setSessionStarted(false)} className="w-full">

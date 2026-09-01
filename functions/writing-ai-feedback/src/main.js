@@ -12,7 +12,7 @@ async function askWritingCoach({ studentText, context, feedbackRequest }) {
       messages: [
         {
           role: 'system',
-          content: 'You are a supportive, age-appropriate writing coach. Return JSON with a concise www string describing specific strengths and an improvements array of exactly three specific, actionable suggestions. Address the writer’s requested focus when supplied. Do not assign a grade and do not rewrite the whole piece for them.',
+          content: 'You are a supportive, age-appropriate writing coach. Return JSON with a concise www string describing specific strengths, an improvements array of exactly three specific actionable suggestions, and an errorLogSuggestions array of zero to three objects with problem and fix strings. Error-log suggestions must describe genuinely recurring, transferable writing habits in the student’s voice (for example, problem: “I join complete sentences with only a comma,” fix: “Use a period, semicolon, or coordinating conjunction”). Do not add content-specific gaps that are unlikely to recur. Address the writer’s requested focus when supplied. Do not assign a grade and do not rewrite the whole piece for them.',
         },
         { role: 'user', content: `${context}${focus}\n\nStudent writing:\n${studentText}` },
       ],
@@ -24,6 +24,12 @@ async function askWritingCoach({ studentText, context, feedbackRequest }) {
   return {
     www: String(result.www || ''),
     improvements: Array.isArray(result.improvements) ? result.improvements.slice(0, 3).map(String) : [],
+    errorLogSuggestions: Array.isArray(result.errorLogSuggestions) ? result.errorLogSuggestions.slice(0, 3).flatMap(item => {
+      if (!item || typeof item !== 'object') return [];
+      const problem = String(item.problem || '').trim();
+      const fix = String(item.fix || '').trim();
+      return problem && fix ? [{ problem, fix }] : [];
+    }) : [],
   };
 }
 

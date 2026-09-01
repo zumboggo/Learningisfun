@@ -4,10 +4,11 @@ interface SyncIndicatorProps {
   lastSyncAt: string | null;
   isSyncing: boolean;
   online: boolean;
+  friendly?: boolean;
   syncNow?: () => Promise<void>;
 }
 
-export function SyncIndicator({ pending, failed, isSyncing, online, syncNow }: SyncIndicatorProps) {
+export function SyncIndicator({ pending, failed, isSyncing, online, friendly = false, syncNow }: SyncIndicatorProps) {
   const getStatusColor = () => {
     if (!online) return 'bg-gray-400';
     if (failed > 0) return 'bg-red-500';
@@ -18,8 +19,8 @@ export function SyncIndicator({ pending, failed, isSyncing, online, syncNow }: S
   const getStatusText = () => {
     if (!online) return 'Offline';
     if (isSyncing) return 'Syncing…';
-    if (failed > 0) return `${failed} failed`;
-    if (pending > 0) return `${pending} pending`;
+    if (failed > 0) return friendly ? 'Updates waiting' : `${failed} failed`;
+    if (pending > 0) return friendly ? 'Updating…' : `${pending} pending`;
     return 'Synced';
   };
 
@@ -27,7 +28,7 @@ export function SyncIndicator({ pending, failed, isSyncing, online, syncNow }: S
     <button
       onClick={syncNow ? () => void syncNow() : undefined}
       className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700"
-      title={getStatusText()}
+      title={failed > 0 && friendly ? 'Some changes are waiting to sync. Tap to try again.' : getStatusText()}
     >
       <span className={`w-2 h-2 rounded-full ${getStatusColor()} ${isSyncing ? 'animate-pulse' : ''}`} />
       <span className="hidden sm:inline">{getStatusText()}</span>

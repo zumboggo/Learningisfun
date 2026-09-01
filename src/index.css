@@ -731,6 +731,22 @@ input, textarea, select, button {
   backdrop-filter: blur(12px);
 }
 
+.student-ready-card {
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border: 1px solid rgba(147, 197, 253, 0.85);
+  border-radius: var(--s-radius);
+  background: linear-gradient(145deg, rgba(255,255,255,.96), rgba(239,246,255,.94));
+  box-shadow: 0 14px 34px rgba(37, 99, 235, 0.12);
+}
+
+.student-progress-details {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: var(--s-radius);
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: var(--s-shadow);
+}
+
 /* ---------------------------------------------------------------------------
    Hero
 --------------------------------------------------------------------------- */

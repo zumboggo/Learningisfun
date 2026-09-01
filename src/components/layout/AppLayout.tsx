@@ -64,7 +64,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               {viewAsStudent ? 'Student' : 'Teacher'}
             </button>
           )}
-          <SyncIndicator {...syncState} online={online} />
+          <SyncIndicator {...syncState} online={online} friendly />
           <button
             onClick={() => void logout()}
             className="text-xs font-semibold text-slate-500 hover:text-slate-800"
