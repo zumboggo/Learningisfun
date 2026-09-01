@@ -353,6 +353,7 @@ export function ClassDetailPage() {
       {livePresentations?.length ? <section aria-label="Active writing prompt" className="space-y-2">{livePresentations.map(session => <Link key={session.$id} to={`/presentations/${session.$id}/live`} className="flex items-center justify-between rounded-xl border border-blue-700 bg-blue-600 p-4 !text-white shadow-sm hover:bg-blue-700"><span><span className="block text-xs font-semibold uppercase tracking-wide text-blue-100">Writing now</span><strong className="mt-1 block text-lg !text-white">Writing Prompt</strong><span className="text-sm text-blue-100">{isOwner ? 'View and present anonymous responses' : 'Open prompt and write your response'}</span></span><span className="text-2xl text-white" aria-hidden="true">→</span></Link>)}</section> : null}
 
       {isOwner && <ActiveClassItemsPanel classId={cls.$id} discussions={(discussions || []).map(row => row.session)} writingPrompts={livePresentations || []} />}
+      {!isOwner && !isParent && (discussions || []).some(row => row.session.status === 'active') && <section className="overflow-hidden rounded-xl border border-emerald-200 bg-white"><div className="bg-emerald-50 px-4 py-3"><h2 className="font-semibold text-emerald-950">Now</h2><p className="text-sm text-emerald-800">Open class conversations</p></div><div className="divide-y divide-gray-100">{(discussions || []).filter(row => row.session.status === 'active').slice(0, 3).map(row => <Link key={row.session.$id} to={`/discussions/${row.session.$id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-gray-50"><span className="min-w-0"><span className="block text-xs font-semibold uppercase tracking-wide text-emerald-700">Discussion</span><strong className="block truncate text-sm text-gray-950">{row.session.title}</strong></span><span className="shrink-0 text-sm font-semibold text-emerald-800">Open →</span></Link>)}</div></section>}
 
       <WeeklyClassMaterials classId={cls.$id} materials={weeklyMaterials || []} isOwner={Boolean(isOwner)} onOpenQuizResults={quiz => setResultsQuiz(quiz)} />
 
@@ -966,8 +967,21 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
     const rank = (week: string) => week === currentWeek ? 0 : week === upcomingWeek ? 1 : week > currentWeek ? 2 : 3;
     return rank(a[0]) - rank(b[0]) || b[0].localeCompare(a[0]);
   });
-  const [openWeeks, setOpenWeeks] = useState<Set<string>>(new Set([currentWeek]));
-  const [openSections, setOpenSections] = useState<Set<string>>(new Set([`${currentWeek}-quizzes`]));
+  const [openWeeks, setOpenWeeks] = useState<Set<string>>(() => {
+    if (isOwner) return new Set([currentWeek]);
+    try { const saved = JSON.parse(localStorage.getItem(`class-open-weeks:${classId}`) || '[]') as string[]; return new Set(saved.length ? saved : [currentWeek]); }
+    catch { return new Set([currentWeek]); }
+  });
+  const [openSections, setOpenSections] = useState<Set<string>>(() => {
+    if (isOwner) return new Set([`${currentWeek}-quizzes`]);
+    try { return new Set(JSON.parse(localStorage.getItem(`class-open-sections:${classId}`) || '[]') as string[]); }
+    catch { return new Set(); }
+  });
+  useEffect(() => {
+    if (isOwner) return;
+    localStorage.setItem(`class-open-weeks:${classId}`, JSON.stringify([...openWeeks]));
+    localStorage.setItem(`class-open-sections:${classId}`, JSON.stringify([...openSections]));
+  }, [classId, isOwner, openWeeks, openSections]);
   const [quickAdd, setQuickAdd] = useState<{ kind: 'text' | 'presentation'; week: string } | null>(null);
   const [title, setTitle] = useState('');
   const [url, setUrl] = useState('');
@@ -1010,7 +1024,8 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
 
   return <>
     <section>
-      <h2 className="mb-3 text-lg font-semibold">Weekly class materials</h2>
+      <h2 className="mb-1 text-lg font-semibold">{isOwner ? 'Weekly class materials' : 'This week and earlier'}</h2>
+      {!isOwner && <p className="mb-3 text-sm text-gray-500">Current work stays easy to reach. Previous weeks remain quietly archived below.</p>}
       {!weeks.length ? <Card><p className="text-sm text-gray-500">Notes, writing prompts, quizzes, discussions, texts, and presentations will appear here by week.</p></Card> : <div className="space-y-3">
         {weeks.map(([week, unsortedItems]) => {
           const priority: Record<WeeklyMaterial['kind'], number> = { text: 0, presentation: 1, notes: 2, writingPrompt: 3, discussion: 4, quiz: 5 };
@@ -1018,7 +1033,7 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
           const isOpen = openWeeks.has(week);
           const byKind = <K extends WeeklyMaterial['kind']>(kind: K) => items.filter((item): item is Extract<WeeklyMaterial, { kind: K }> => item.kind === kind);
           const texts = byKind('text'), presentations = byKind('presentation'), notes = byKind('notes'), writingPrompts = byKind('writingPrompt'), discussions = byKind('discussion'), quizzes = byKind('quiz');
-          const weekLabel = week === currentWeek ? `This week · ${formatWeek(week)}` : week === upcomingWeek ? `Upcoming week · ${formatWeek(week)}` : `Week of ${formatWeek(week)}`;
+          const weekLabel = week === currentWeek ? `This week · ${formatWeek(week)}` : week === upcomingWeek ? `Coming up · ${formatWeek(week)}` : week < currentWeek ? `Earlier · ${formatWeek(week)}` : `Later · ${formatWeek(week)}`;
           return <div key={week} className="overflow-hidden rounded-xl border border-gray-200 bg-white">
             <button className="flex w-full items-center justify-between gap-3 p-4 text-left hover:bg-gray-50" onClick={() => setOpenWeeks(current => toggleSetValue(current, week))}>
               <span className="font-semibold">{isOpen ? '▾' : '▸'} {weekLabel}</span>

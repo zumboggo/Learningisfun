@@ -357,7 +357,7 @@ function StudentDashboard() {
   const doNow = useLiveQuery(async () => {
     if (!user || classIds.length === 0) return { sessions: [], decks: [] };
     const [sessions, deckAssignments] = await Promise.all([
-      db.class_sessions.where('classId').anyOf(classIds).and(s => s.status === 'active' && s.discussionType !== 'presentation').toArray(),
+      db.class_sessions.where('classId').anyOf(classIds).and(s => s.status === 'active').toArray(),
       db.deck_assignments.where('classId').anyOf(classIds).toArray(),
     ]);
     const decks: DeckAction[] = [];
@@ -423,6 +423,24 @@ function StudentDashboard() {
     if (!activeDeckIds.length || readyCardCount === 0) { navigate('/decks'); return; }
     navigate(`/decks/combined/review?decks=${encodeURIComponent(activeDeckIds.join(','))}&limit=${studySessionSize}&autostart=1`);
   };
+  const continueItems = [
+    ...(doNow?.sessions || []).map(session => ({
+      id: session.$id,
+      title: session.discussionType === 'presentation' ? (session.promptMarkdown || 'Writing Prompt') : session.title,
+      detail: session.discussionType === 'presentation' ? 'Write and submit your response' : 'Join the class conversation',
+      to: session.discussionType === 'presentation' ? `/presentations/${session.$id}/live` : `/discussions/${session.$id}`,
+      action: session.discussionType === 'presentation' ? 'Continue writing' : 'Open discussion',
+      status: session.discussionType === 'presentation' ? 'writing' : 'discussion',
+    })),
+    ...(doNow?.decks || []).map(({ assignment, deck }) => ({
+      id: assignment.$id,
+      title: deck?.title || 'Flashcard deck',
+      detail: assignment.dailyTarget ? `${assignment.dailyTarget} cards suggested` : 'Build long-term memory',
+      to: `/decks/${assignment.deckId}/review`,
+      action: 'Study cards',
+      status: 'cards',
+    })),
+  ].slice(0, 3);
 
   return (
     <div className="student-home">
@@ -465,7 +483,7 @@ function StudentDashboard() {
       <section className="student-ready-card" aria-labelledby="ready-heading">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">Ready for today</p>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-600">Today</p>
             <h2 id="ready-heading" className="mt-1 text-2xl font-bold text-slate-950">
               {readyCardCount > 0 ? `${readyCardCount} cards · about ${estimatedMinutes} min` : 'You are caught up'}
             </h2>
@@ -474,9 +492,9 @@ function StudentDashboard() {
           <Button onClick={() => setShowJoin(true)} size="sm" variant="secondary" className="bg-white/80">Join class</Button>
         </div>
         <div className="mt-5 grid grid-cols-3 gap-2" aria-label="Today's flashcard queue">
-          <TodayStat value={stats.dueCards} label="Due" tone="blue" />
+          <TodayStat value={stats.dueCards} label="Ready" tone="blue" />
           <TodayStat value={stats.newCards} label="New" tone="violet" />
-          <TodayStat value={stats.finishedToday} label="Done today" tone="green" />
+          <TodayStat value={stats.finishedToday} label="Finished" tone="green" />
         </div>
         <Button size="lg" className="mt-5 w-full bg-blue-600" onClick={startToday}>
           {readyCardCount > 0 ? `Study ${readyCardCount} cards` : 'Choose decks or practise more'}
@@ -487,31 +505,14 @@ function StudentDashboard() {
       <section className="student-section">
         <div className="student-section-head">
           <div>
-            <h2 className="student-title">Do now</h2>
-            <p className="student-subtitle">Start with the next thing your class needs.</p>
+            <h2 className="student-title">Continue learning</h2>
+            <p className="student-subtitle">A short list of useful next steps. Choose one when you’re ready.</p>
           </div>
         </div>
-        {doNow && (doNow.sessions.length > 0 || doNow.decks.length > 0) ? (
-          <div className="student-grid student-grid-2">
-            {doNow.sessions.slice(0, 2).map(session => (
-              <ActionCard
-                key={session.$id}
-                title={session.title}
-                detail={`${session.votesPerStudent} votes available`}
-                to={`/discussions/${session.$id}`}
-                action="Open questions"
-                status={session.status}
-              />
-            ))}
-            {doNow.decks.slice(0, 2).map(({ assignment, deck }) => (
-              <ActionCard
-                key={assignment.$id}
-                title={deck?.title || 'Flashcard deck'}
-                detail={assignment.dailyTarget ? `${assignment.dailyTarget} card target` : 'Study vocabulary'}
-                to={`/decks/${assignment.deckId}/review`}
-                action="Study cards"
-                status={assignment.isRequired ? 'required' : 'practice'}
-              />
+        {continueItems.length ? (
+          <div className="student-continue-list">
+            {continueItems.map(item => (
+              <ActionCard key={item.id} title={item.title} detail={item.detail} to={item.to} action={item.action} status={item.status} />
             ))}
           </div>
         ) : (
@@ -869,17 +870,10 @@ function ActionCard({ title, detail, to, action, status }: {
   title: string; detail: string; to: string; action: string; status: string;
 }) {
   return (
-    <Link to={to}>
-      <Card className="h-full">
-        <div className="flex h-full flex-col justify-between gap-4">
-          <div>
-            <div className="mb-2"><StatusBadge status={status} /></div>
-            <h3 className="font-semibold">{title}</h3>
-            <p className="mt-1 text-sm text-gray-500">{detail}</p>
-          </div>
-          <span className="text-sm font-medium text-blue-700">{action}</span>
-        </div>
-      </Card>
+    <Link to={to} className="student-continue-card">
+      <span className="student-continue-type">{status}</span>
+      <span className="min-w-0 flex-1"><strong className="block truncate text-sm text-slate-900">{title}</strong><span className="mt-0.5 block text-xs text-slate-500">{detail}</span></span>
+      <span className="shrink-0 text-sm font-semibold text-slate-700">{action} →</span>
     </Link>
   );
 }
