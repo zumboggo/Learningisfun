@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/common/Button';
 import { requestPasswordRecovery } from '@/services/auth.service';
 
 export function ForgotPasswordPage() {
-  const [email, setEmail] = useState('');
+  const [searchParams] = useSearchParams();
+  const [email, setEmail] = useState(() => searchParams.get('email') || '');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
@@ -12,7 +13,12 @@ export function ForgotPasswordPage() {
   const submit = async (event: React.FormEvent) => {
     event.preventDefault(); setLoading(true); setError('');
     try { await requestPasswordRecovery(email); setSent(true); }
-    catch { setError('The recovery email could not be sent. Check the address and your internet connection, then try again.'); }
+    catch (cause) {
+      const message = cause instanceof Error ? cause.message : '';
+      setError(/could not load|failed to fetch|network/i.test(message)
+        ? 'The password service could not be reached. Check your connection, wait a moment, and try again.'
+        : 'The recovery email could not be sent. Check the address and try again.');
+    }
     finally { setLoading(false); }
   };
 
