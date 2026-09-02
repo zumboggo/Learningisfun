@@ -1,5 +1,6 @@
 import { describe,expect,it } from 'vitest';
 import { parsePlannerSource,plannerDiff } from '@/services/planner-parser';
+import { createWeeklyPlan } from '@/services/planner.service';
 
 const source=`§6 READING QUEUES
 --- WL ---
@@ -32,4 +33,5 @@ C: Exit ticket.`;
 describe('planner source parser',()=>{
  it('extracts week, blocks, dates, activities, due work, presentations, and unit-number text queues',()=>{const parsed=parsePlannerSource(source);expect(parsed.weeks).toHaveLength(1);const week=parsed.weeks[0];expect(week.startDate).toBe('2026-09-07');expect(week.calendar).toBe('Assembly Wednesday');expect(week.blocks).toHaveLength(2);expect(week.blocks[0].days[0]).toMatchObject({iso:'2026-09-08',daytype:'OPEN',due:['Analysis 1','Vocabulary']});expect(week.blocks[0].presentationCandidates).toEqual(['Kennings']);expect(week.blocks[0].textQueue).toEqual(['Beowulf opening']);});
  it('reports only changed weeks during a re-import',()=>{const before=parsePlannerSource(source),after=parsePlannerSource(source.replace('Close reading','QFT'));expect(plannerDiff(before,after)).toEqual(['Sep 7-11']);expect(plannerDiff(before,before)).toEqual([]);});
+ it('uses one flashcard readiness task per class and places due reminders in lessons',()=>{const week=parsePlannerSource(source).weeks[0],plan=createWeeklyPlan(week,{});expect(plan.preparation.filter(task=>task.kind==='quiz').map(task=>task.label)).toEqual(['Flashcards updated · World Literature · Blue','Flashcards updated · World Literature · Red']);expect(plan.preparation.some(task=>task.label.startsWith('Remind students'))).toBe(false);});
 });
