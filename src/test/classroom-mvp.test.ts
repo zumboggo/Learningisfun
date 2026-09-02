@@ -21,6 +21,12 @@ describe('Classroom MVP rules', () => {
     expect(html).toContain('<em>Quote</em>');
   });
 
+  it('renders linked class-note words with their inline formatting', () => {
+    const html = renderToStaticMarkup(createElement(Markdown, { content: 'Read [**the article**](https://example.com).' }));
+    expect(html).toContain('<a href="https://example.com"');
+    expect(html).toContain('<strong>the article</strong>');
+  });
+
 
   it('detects optional flashcard CSV columns', () => {
     const mapping = detectMapping(['term', 'definition', 'hint', 'tags', 'source']);

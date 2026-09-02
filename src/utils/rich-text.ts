@@ -23,7 +23,7 @@ export function markdownToEditorHtml(markdown:string):string{
 }
 
 function escapeHtml(value:string):string{return value.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-function inlineMarkdownToHtml(value:string):string{return escapeHtml(value).replace(/\[([^\]]+)\]\((https?:\/\/[^)]+|mailto:[^)]+)\)/g,'<a href="$2">$1</a>').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\*([^*]+)\*/g,'<em>$1</em>')}
+function inlineMarkdownToHtml(value:string):string{return escapeHtml(value).replace(/\[([^\]]+)\]\((https?:\/\/[^)]+|mailto:[^)]+|\/[^)]+)\)/g,'<a href="$2">$1</a>').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\*([^*]+)\*/g,'<em>$1</em>')}
 function markdownTableCells(line:string):string[]{return line.trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(cell=>cell.trim().replace(/\\\|/g,'|'))}
 
 function nodeToMarkdown(node: Node): string {
@@ -38,8 +38,8 @@ function nodeToMarkdown(node: Node): string {
   if (node.tagName === 'CODE' && node.parentElement?.tagName !== 'PRE') return trimmed ? `\`${trimmed}\`` : '';
   if (node.tagName === 'PRE') return trimmed ? `\n\n\`\`\`\n${node.textContent?.trim() || ''}\n\`\`\`\n\n` : '';
   if (node.tagName === 'A') {
-    const href = node.getAttribute('href') || '';
-    return trimmed && /^(https?:|mailto:)/i.test(href) ? `[${trimmed}](${href})` : trimmed;
+    const href = safeLinkTarget(node.getAttribute('href') || '');
+    return trimmed && href ? `[${trimmed}](${href})` : trimmed;
   }
   if (/^H[1-6]$/.test(node.tagName)) {
     const level = Math.min(3, Number(node.tagName.slice(1)) || 1);
@@ -54,6 +54,15 @@ function nodeToMarkdown(node: Node): string {
   if (node.tagName === 'IMG') return '';
   if (BLOCK_TAGS.has(node.tagName)) return trimmed ? `\n\n${trimmed}\n\n` : '';
   return content;
+}
+
+function safeLinkTarget(value: string): string | null {
+  const href = value.trim();
+  if (/^(https?:|mailto:)/i.test(href) || href.startsWith('/')) {
+    return href.replace(/ /g, '%20').replace(/\(/g, '%28').replace(/\)/g, '%29');
+  }
+  if (href.startsWith('//')) return `https:${href}`.replace(/ /g, '%20').replace(/\(/g, '%28').replace(/\)/g, '%29');
+  return null;
 }
 
 function listToMarkdown(list: HTMLElement): string {

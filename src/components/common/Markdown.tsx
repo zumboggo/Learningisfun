@@ -163,7 +163,7 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
       nodes.push(
         href ? (
           <a key={`${keyPrefix}-${index}`} href={href} className="text-blue-600 underline" target="_blank" rel="noreferrer">
-            {link?.[1]}
+            {renderInline(link?.[1] || '', `${keyPrefix}-${index}-link`)}
           </a>
         ) : token,
       );

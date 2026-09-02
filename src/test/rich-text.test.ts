@@ -7,6 +7,20 @@ describe('rich class notes conversion', () => {
       .toBe('**Important** and *emphasized*.\n\nSecond paragraph.');
   });
 
+  it('keeps safe links attached to their linked words through paste and reopen', () => {
+    const markdown = clipboardToMarkdown(
+      '<p>Read <a href="https://example.com/article?q=world lit"><strong>the full article</strong></a>.</p>',
+      'Read the full article.',
+    );
+    expect(markdown).toBe('Read [**the full article**](https://example.com/article?q=world%20lit).');
+    expect(markdownToEditorHtml(markdown)).toContain('<a href="https://example.com/article?q=world%20lit"><strong>the full article</strong></a>');
+  });
+
+  it('keeps relative pasted links but removes unsafe link actions', () => {
+    expect(htmlToMarkdown('<a href="/reading/one">Reading one</a>')).toBe('[Reading one](/reading/one)');
+    expect(htmlToMarkdown('<a href="javascript:alert(1)">Unsafe</a>')).toBe('Unsafe');
+  });
+
   it('removes scripts while preserving useful list structure', () => {
     expect(htmlToMarkdown('<script>alert(1)</script><ul><li>First</li><li><b>Second</b></li></ul>'))
       .toBe('- First\n- **Second**');
