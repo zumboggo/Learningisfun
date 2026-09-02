@@ -10,7 +10,7 @@ const MAX_FONT = 38;
 const DEFAULT_FONT = 24;
 
 export function TodayNotesPage() {
-  const { classId } = useParams<{ classId: string }>();
+  const { classId, sessionId: historicalSessionId } = useParams<{ classId: string; sessionId?: string }>();
   const { user } = useAuth();
   const [sessionId, setSessionId] = useState('');
   const [className, setClassName] = useState('');
@@ -18,20 +18,28 @@ export function TodayNotesPage() {
   const [fontSize, setFontSize] = useState(DEFAULT_FONT);
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [noteDate, setNoteDate] = useState('');
+  const [loadError, setLoadError] = useState('');
   const initialized = useRef(false);
   const editorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!classId || !user || initialized.current) return;
     initialized.current = true;
-    void Promise.all([db.classes.get(classId), getOrCreateTodayNotes(classId, user.$id)]).then(([cls, session]) => {
+    const sessionPromise = historicalSessionId ? db.class_sessions.get(historicalSessionId) : getOrCreateTodayNotes(classId, user.$id);
+    void Promise.all([db.classes.get(classId), sessionPromise]).then(([cls, session]) => {
+      if (!session || session.classId !== classId || session.discussionType !== 'notes') {
+        setLoadError('These class notes could not be found.');
+        return;
+      }
       setClassName(cls?.name || cls?.courseName || 'Class');
       setSessionId(session.$id);
+      setNoteDate(session.sessionDate);
       const content = session.notesMarkdown || session.publishedNotesMarkdown || '';
       setNotes(content);
       if (editorRef.current) editorRef.current.innerHTML = markdownToEditorHtml(content);
     });
-  }, [classId, user]);
+  }, [classId, historicalSessionId, user]);
 
   const save = async () => {
     if (!sessionId || !user) return;
@@ -71,8 +79,8 @@ export function TodayNotesPage() {
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4 sm:px-8">
           <div>
             <Link to={`/classes/${classId}`} className="mb-1 inline-flex items-center gap-1 text-sm font-medium text-blue-700 hover:underline">← Back to class</Link>
-            <h1 className="text-xl font-semibold text-slate-900">Today&apos;s Notes</h1>
-            <p className="text-sm text-slate-500">{className} · {new Date().toLocaleDateString()}</p>
+            <h1 className="text-xl font-semibold text-slate-900">{historicalSessionId ? 'Edit Class Notes' : 'Today\'s Notes'}</h1>
+            <p className="text-sm text-slate-500">{className} · {noteDate ? new Date(`${noteDate}T12:00:00`).toLocaleDateString() : new Date().toLocaleDateString()}</p>
           </div>
           <div className="flex items-center gap-2">
             <button aria-label="Make font smaller" className="h-10 rounded-lg border px-4 text-lg font-semibold hover:bg-slate-50 disabled:opacity-40" disabled={fontSize <= MIN_FONT} onClick={() => setFontSize(size => Math.max(MIN_FONT, size - 2))}>A−</button>
@@ -82,7 +90,7 @@ export function TodayNotesPage() {
             <button className="h-10 rounded-lg bg-blue-600 px-5 font-medium text-white hover:bg-blue-700 disabled:opacity-50" disabled={!sessionId || saving} onClick={() => void save()}>{saving ? 'Saving…' : 'Save'}</button>
           </div>
         </header>
-        <div
+        {loadError ? <div role="alert" className="m-6 rounded-xl bg-amber-50 p-4 text-amber-900">{loadError}</div> : <div
           ref={editorRef}
           autoFocus
           contentEditable
@@ -93,7 +101,7 @@ export function TodayNotesPage() {
           onInput={updateNotes}
           onPaste={pasteFormatted}
           data-placeholder="Write today's notes… Pasted bold, italics, paragraphs, lists, links, and tables will be preserved."
-        />
+        />}
         <footer className="h-8 px-6 text-right text-xs text-slate-400 sm:px-10">{savedAt ? `Saved at ${savedAt}` : ''}</footer>
       </div>
     </main>

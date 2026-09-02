@@ -22,7 +22,7 @@ interface PendingCard {
 type ImportMode = 'new' | 'add' | 'update';
 
 export function CreateDeckPage() {
-  const { user } = useAuth();
+  const { user, isTeacher } = useAuth();
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -38,6 +38,8 @@ export function CreateDeckPage() {
   const [tags, setTags] = useState('');
 
   const [showCsvImport, setShowCsvImport] = useState(false);
+  const [showPasteImport, setShowPasteImport] = useState(false);
+  const [pastedCards, setPastedCards] = useState('');
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvPreview, setCsvPreview] = useState<CsvPreview | null>(null);
   const [csvMapping, setCsvMapping] = useState<CsvMapping | null>(null);
@@ -71,6 +73,13 @@ export function CreateDeckPage() {
 
   const removeCard = (index: number) => {
     setCards(prev => prev.filter((_, i) => i !== index));
+  };
+  const importPastedCards = () => {
+    const rows = pastedCards.split(/\r?\n/).map(line => line.trim()).filter(Boolean).map(line => {
+      const columns = line.includes('\t') ? line.split('\t') : line.split(',');
+      return { front: (columns[0] || '').trim(), back: (columns[1] || '').trim(), hint: (columns[2] || '').trim(), tags: parseTags(columns.slice(3).join(',')) };
+    }).filter(card => card.front && card.back);
+    setCards(current => [...current, ...rows]); setPastedCards(''); setShowPasteImport(false);
   };
 
   const handleCsvFile = async (file: File) => {
@@ -121,14 +130,14 @@ export function CreateDeckPage() {
       let deckId: string;
 
       if (importMode === 'new') {
-        const deck = await createDeck(user.$id, title, description, 'teacher');
+        const deck = await createDeck(user.$id, title, description, isTeacher ? 'teacher' : 'personal');
         deckId = deck.$id;
         for (const c of cards) {
           await addCard(deckId, c.front, c.back, { hint: c.hint, tags: c.tags });
         }
-        await publishDeck(deckId, user.$id);
-        for (const classId of selectedClasses) {
-          await assignDeck(deckId, classId, false, dailyTarget || null);
+        if (isTeacher) {
+          await publishDeck(deckId, user.$id);
+          for (const classId of selectedClasses) await assignDeck(deckId, classId, false, dailyTarget || null);
         }
       } else if (importMode === 'add') {
         deckId = targetDeckId;
@@ -178,7 +187,7 @@ export function CreateDeckPage() {
 
   return (
     <div className="p-4 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Create Flashcard Deck</h1>
+      <h1 className="text-2xl font-bold mb-6">{isTeacher ? 'Create Flashcard Deck' : 'Create My Deck'}</h1>
 
       {error && <div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg mb-4">{error}</div>}
 
@@ -205,7 +214,7 @@ export function CreateDeckPage() {
               </div>
             </>
           )}
-          <div>
+          {isTeacher && <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Daily target for assigned classes</label>
             <input
               type="number"
@@ -214,7 +223,7 @@ export function CreateDeckPage() {
               onChange={e => setDailyTarget(Math.max(0, Number(e.target.value) || 0))}
               className="w-full px-3 py-2.5 border border-gray-300 rounded-lg"
             />
-          </div>
+          </div>}
         </div>
 
         <div className="border-t border-gray-200 pt-4">
@@ -224,6 +233,7 @@ export function CreateDeckPage() {
               <Button onClick={() => setShowCsvImport(true)} size="sm" variant="secondary">
                 Import CSV
               </Button>
+              <Button onClick={() => setShowPasteImport(true)} size="sm" variant="secondary">Paste cards</Button>
             </div>
           </div>
 
@@ -344,7 +354,7 @@ export function CreateDeckPage() {
           size="lg"
         >
           {importMode === 'new'
-            ? `Create & publish deck (${cards.length} cards)`
+            ? `${isTeacher ? 'Create & publish deck' : 'Create my deck'} (${cards.length} cards)`
             : importMode === 'add'
               ? `Add ${cards.length} cards to deck`
               : `Add/update ${cards.length} cards in deck`}
@@ -422,6 +432,7 @@ export function CreateDeckPage() {
           )}
         </div>
       </Modal>
+      <Modal open={showPasteImport} onClose={() => setShowPasteImport(false)} title="Paste cards"><div className="space-y-4"><p className="text-sm text-gray-600">Paste rows copied from Google Sheets or Excel. Use columns in this order: front, back, optional hint, optional tags.</p><textarea autoFocus rows={10} className="w-full rounded-lg border px-3 py-2 font-mono text-sm" value={pastedCards} onChange={event => setPastedCards(event.target.value)} placeholder={'Term 1\tDefinition 1\nTerm 2\tDefinition 2'} /><Button className="w-full" disabled={!pastedCards.trim()} onClick={importPastedCards}>Add pasted cards</Button></div></Modal>
     </div>
   );
 }

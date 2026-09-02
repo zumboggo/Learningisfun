@@ -5,6 +5,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
 import {
   buildFlashcardQueue,
+  filterCustomStudyCards,
   finishFlashcardStudySession,
   getDeckProgress,
   reviewCard,
@@ -47,7 +48,9 @@ export function FlashcardReviewPage() {
   const combinedDeckIds = useMemo(() => deckId === 'combined'
     ? [...new Set((searchParams.get('decks') || '').split(',').filter(Boolean))]
     : deckId ? [deckId] : [], [deckId, searchParams]);
-  const sessionLimit = Math.min(100, Math.max(5, Number(searchParams.get('limit') || 30) || 30));
+  const sessionLimit = Math.min(200, Math.max(5, Number(searchParams.get('limit') || 30) || 30));
+  const customFilter = searchParams.get('filter') as 'all'|'due'|'new'|'difficult'|null;
+  const customTags = useMemo(() => (searchParams.get('tags') || '').split('|').map(tag => tag.trim()).filter(Boolean), [searchParams]);
   const isCombined = deckId === 'combined';
 
   const deck = useLiveQuery(() => (deckId && !isCombined ? db.flashcard_decks.get(deckId) : undefined), [deckId, isCombined]);
@@ -105,11 +108,18 @@ export function FlashcardReviewPage() {
 
   const startSession = async (mode: StudyMode) => {
     if (!combinedDeckIds.length || !user) return;
+    const existingStates = await db.student_card_state.where('userId').equals(user.$id).and(state => combinedDeckIds.includes(state.deckId)).toArray();
+    const stateByCard = new Map(existingStates.map(state => [state.cardId, state]));
+    const customMode: FlashcardQueueMode = customFilter === 'due' || customFilter === 'new' ? customFilter : 'all';
+    const requiresFullPool = Boolean(customFilter || customTags.length);
     // Unlimited practice runs over the whole deck, shuffled, with no cap.
     const queues = await Promise.all(combinedDeckIds.map(id => buildFlashcardQueue(
-      user.$id, id, mode === 'unlimited' ? 'all' : mode, mode === 'unlimited' ? Number.MAX_SAFE_INTEGER : sessionLimit,
+      user.$id, id, mode === 'unlimited' ? 'all' : requiresFullPool ? customMode : mode, mode === 'unlimited' || requiresFullPool ? Number.MAX_SAFE_INTEGER : sessionLimit,
     )));
-    const sessionCards = shuffle(queues.flat()).slice(0, mode === 'unlimited' ? Number.MAX_SAFE_INTEGER : sessionLimit);
+    const matchingCards = customFilter || customTags.length
+      ? filterCustomStudyCards(queues.flat(), existingStates, customTags, customFilter || 'all')
+      : queues.flat();
+    const sessionCards = shuffle(matchingCards).slice(0, mode === 'unlimited' ? Number.MAX_SAFE_INTEGER : sessionLimit);
     if (sessionCards.length === 0) {
       setEmptyMessage(
         mode === 'due' ? 'No due cards right now.'
@@ -120,11 +130,6 @@ export function FlashcardReviewPage() {
     }
     setLapCount(0);
 
-    const existingStates = await db.student_card_state
-      .where('userId').equals(user.$id)
-      .and(state => combinedDeckIds.includes(state.deckId))
-      .toArray();
-    const stateByCard = new Map(existingStates.map(state => [state.cardId, state]));
     const categoryByCard = new Map<string, 'new' | 'review'>();
     for (const card of sessionCards) categoryByCard.set(card.$id, stateByCard.has(card.$id) ? 'review' : 'new');
     sessionCategoryRef.current = categoryByCard;

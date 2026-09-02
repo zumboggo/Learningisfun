@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
-import { getDeckCards, getDeckProgress, getStudentDecks, updateEntireDeck, type EditableDeckCard } from '@/services/flashcard.service';
+import { deletePersonalDeck, getDeckCards, getDeckProgress, getStudentDecks, updateEntireDeck, type EditableDeckCard } from '@/services/flashcard.service';
 import { buildFlashcardDeckCsv } from '@/utils/csv-parser';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
@@ -24,6 +24,7 @@ interface StudentDeckInsight {
   newCount: number;
   longTerm: number;
 }
+interface CustomStudyPreset { id: string; name: string; deckIds: string[]; tags: string[]; filter: 'all'|'due'|'new'|'difficult'; limit: number }
 
 export function DecksListPage() {
   const { user, isTeacher } = useAuth();
@@ -32,8 +33,15 @@ export function DecksListPage() {
   const [openingEditorId, setOpeningEditorId] = useState('');
   const [exportingDeckId, setExportingDeckId] = useState('');
   const [actionError, setActionError] = useState('');
+  const [deletingDeckId, setDeletingDeckId] = useState('');
   const [selectedDeckIds, setSelectedDeckIds] = useState<Set<string> | null>(null);
   const [sessionSize, setSessionSize] = useState(30);
+  const [showCustomStudy, setShowCustomStudy] = useState(false);
+  const [customTags, setCustomTags] = useState<Set<string>>(new Set());
+  const [customFilter, setCustomFilter] = useState<CustomStudyPreset['filter']>('all');
+  const [customLimit, setCustomLimit] = useState(30);
+  const [presetName, setPresetName] = useState('');
+  const [customPresets, setCustomPresets] = useState<CustomStudyPreset[]>([]);
   const navigate = useNavigate();
 
   const decks = useLiveQuery(async () => {
@@ -75,6 +83,11 @@ export function DecksListPage() {
     const nextNew = decks.find(deck => (studentDeckInsights[deck.$id]?.newCount || 0) > 0);
     return nextNew ? [nextNew.$id] : decks.slice(0, 1).map(deck => deck.$id);
   }, [decks, studentDeckInsights]);
+  const availableTags = useLiveQuery(async () => {
+    if (isTeacher || !decks?.length) return [];
+    const cards = await db.flashcard_cards.where('deckId').anyOf(decks.map(deck => deck.$id)).toArray();
+    return [...new Set(cards.flatMap(card => card.tags).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  }, [isTeacher, decks]);
 
   // Class names per deck, so a teacher can see where a deck is already assigned
   // without opening the dialog.
@@ -114,6 +127,13 @@ export function DecksListPage() {
     });
   }, [decks, isTeacher, recommendedDeckIds, studentDeckInsights, user]);
 
+  useEffect(() => {
+    if (!user || isTeacher) return;
+    void db.app_metadata.get(`customStudyPresets:${user.$id}`).then(row => {
+      try { setCustomPresets(JSON.parse(row?.value || '[]') as CustomStudyPreset[]); } catch { setCustomPresets([]); }
+    });
+  }, [isTeacher, user]);
+
   const saveStudyDecks = (ids: string[]) => {
     if (!user) return;
     const next = new Set(ids);
@@ -132,6 +152,21 @@ export function DecksListPage() {
     const ids = [...(selectedDeckIds || [])];
     if (!ids.length) return;
     navigate(`/decks/combined/review?decks=${encodeURIComponent(ids.join(','))}&limit=${sessionSize}&autostart=1`);
+  };
+  const beginCustomStudy = (preset?: CustomStudyPreset) => {
+    const deckIds = preset?.deckIds || [...(selectedDeckIds || [])];
+    if (!deckIds.length) return;
+    const tags = preset?.tags || [...customTags];
+    const filter = preset?.filter || customFilter;
+    const limit = preset?.limit || customLimit;
+    navigate(`/decks/combined/review?decks=${encodeURIComponent(deckIds.join(','))}&limit=${limit}&filter=${filter}&tags=${encodeURIComponent(tags.join('|'))}&autostart=1`);
+  };
+  const saveCustomPreset = async () => {
+    if (!user || !presetName.trim() || !(selectedDeckIds?.size)) return;
+    const preset: CustomStudyPreset = { id: crypto.randomUUID(), name: presetName.trim(), deckIds: [...selectedDeckIds], tags: [...customTags], filter: customFilter, limit: customLimit };
+    const next = [...customPresets, preset].slice(-12);
+    setCustomPresets(next); setPresetName('');
+    await db.app_metadata.put({ key: `customStudyPresets:${user.$id}`, value: JSON.stringify(next) });
   };
 
   const exportDeck = async (deck: FlashcardDeck) => {
@@ -170,6 +205,7 @@ export function DecksListPage() {
 
   const renderDeck = (deck: FlashcardDeck) => {
     const classNames = classNamesByDeck?.[deck.$id] || [];
+    const canEdit = deck.creatorId === user?.$id && (isTeacher || deck.type === 'personal');
     return (
       <Card key={deck.$id}>
         <div className="flex items-start justify-between gap-3">
@@ -182,16 +218,17 @@ export function DecksListPage() {
               </p>
             )}
           </Link>
-          {isTeacher && (
+          {canEdit && (
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Link to={`/decks/${deck.$id}/present`}>
+              {isTeacher && <Link to={`/decks/${deck.$id}/present`}>
                 <Button size="sm">Present</Button>
-              </Link>
-              <Button size="sm" variant="secondary" onClick={() => setAssigningDeck(deck)}>
+              </Link>}
+              {isTeacher && <Button size="sm" variant="secondary" onClick={() => setAssigningDeck(deck)}>
                 Assign
-              </Button>
+              </Button>}
               <Button size="sm" variant="secondary" loading={exportingDeckId === deck.$id} onClick={() => void exportDeck(deck)}>Export CSV</Button>
               <Button size="sm" variant="secondary" loading={openingEditorId === deck.$id} onClick={() => void openDeckEditor(deck)}>Edit</Button>
+              {!isTeacher && <Button size="sm" variant="danger" loading={deletingDeckId === deck.$id} onClick={() => { if (!user || !window.confirm(`Delete “${deck.title}” and all of its cards?`)) return; setDeletingDeckId(deck.$id); void deletePersonalDeck(deck.$id, user.$id).catch(cause => setActionError(cause instanceof Error ? cause.message : 'Could not delete deck.')).finally(() => setDeletingDeckId('')); }}>Delete</Button>}
             </div>
           )}
         </div>
@@ -208,9 +245,7 @@ export function DecksListPage() {
             <Button size="sm">New deck</Button>
           </Link>
         ) : (
-          <Link to="/decks/import">
-            <Button size="sm" variant="secondary">Import CSV</Button>
-          </Link>
+          <div className="flex gap-2"><Link to="/decks/new"><Button size="sm">Create my deck</Button></Link><Link to="/decks/import"><Button size="sm" variant="secondary">Import CSV</Button></Link></div>
         )}
       </div>
 
@@ -241,7 +276,7 @@ export function DecksListPage() {
           </div>
           <div className="sticky bottom-20 z-10 mt-4 rounded-2xl border border-blue-200 bg-white/95 p-3 shadow-xl backdrop-blur sm:bottom-3">
             <div className="mb-2 flex items-center justify-between gap-4 text-sm text-slate-600"><span>{selectedDeckIds?.size ?? 0} {selectedDeckIds?.size === 1 ? 'deck' : 'decks'} selected</span><span>{sessionSize} cards</span></div>
-            <Button size="lg" className="w-full bg-blue-600" disabled={(selectedDeckIds?.size ?? 0) === 0} onClick={beginCombinedStudy}>Study {sessionSize} cards</Button>
+            <div className="grid grid-cols-2 gap-2"><Button size="lg" variant="secondary" disabled={(selectedDeckIds?.size ?? 0) === 0} onClick={() => setShowCustomStudy(true)}>Custom study</Button><Button size="lg" className="w-full bg-blue-600" disabled={(selectedDeckIds?.size ?? 0) === 0} onClick={beginCombinedStudy}>Study {sessionSize} cards</Button></div>
           </div>
         </section>
       )}
@@ -264,6 +299,8 @@ export function DecksListPage() {
         </section>
       )}
 
+      {!isTeacher && personalDecks.length > 0 && <section className="mb-6"><h2 className="mb-3 text-lg font-semibold">My decks</h2><p className="mb-3 text-sm text-slate-500">Your private decks. Edit cards in a table, add new rows, export, or delete them.</p><div className="space-y-3">{personalDecks.map(renderDeck)}</div></section>}
+
       {decks && decks.length === 0 && (
         <Card className="text-center py-8">
           <p className="text-gray-400">
@@ -280,6 +317,7 @@ export function DecksListPage() {
         />
       )}
       {user && editingDeck && <EditDeckModal deck={editingDeck.deck} initialCards={editingDeck.cards} creatorId={user.$id} onClose={() => setEditingDeck(null)} />}
+      {showCustomStudy && <Modal open onClose={() => setShowCustomStudy(false)} title="Custom study"><div className="space-y-4"><p className="text-sm text-slate-600">Build a temporary session from the selected decks. This does not duplicate or move any cards.</p><label className="block text-sm font-medium">Cards to include<select className="mt-1 w-full rounded-lg border px-3 py-2" value={customFilter} onChange={event => setCustomFilter(event.target.value as CustomStudyPreset['filter'])}><option value="all">All matching cards</option><option value="due">Due cards</option><option value="new">New cards</option><option value="difficult">Cards I have struggled with</option></select></label><label className="block text-sm font-medium">Maximum cards<input type="number" min={5} max={200} className="mt-1 w-full rounded-lg border px-3 py-2" value={customLimit} onChange={event => setCustomLimit(Math.min(200, Math.max(5, Number(event.target.value) || 30)))} /></label>{Boolean(availableTags?.length) && <fieldset><legend className="mb-2 text-sm font-medium">Tags <span className="font-normal text-slate-500">(leave empty for every tag)</span></legend><div className="flex max-h-36 flex-wrap gap-2 overflow-y-auto">{availableTags?.map(tag => <button type="button" key={tag} onClick={() => setCustomTags(current => { const next=new Set(current);if(next.has(tag))next.delete(tag);else next.add(tag);return next; })} className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${customTags.has(tag)?'border-emerald-700 bg-emerald-50 text-emerald-800':'border-slate-200 bg-white text-slate-600'}`}>{tag}</button>)}</div></fieldset>}<Button className="w-full" onClick={() => beginCustomStudy()}>Start custom study</Button><div className="border-t pt-4"><label className="block text-sm font-medium">Save these choices<input className="mt-1 w-full rounded-lg border px-3 py-2" value={presetName} onChange={event => setPresetName(event.target.value)} placeholder="Friday vocabulary review" /></label><Button size="sm" variant="secondary" className="mt-2" disabled={!presetName.trim()} onClick={() => void saveCustomPreset()}>Save preset</Button>{customPresets.length > 0 && <div className="mt-3 space-y-2"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Saved presets</p>{customPresets.map(preset => <div key={preset.id} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2"><button className="min-w-0 flex-1 truncate text-left text-sm font-semibold" onClick={() => beginCustomStudy(preset)}>{preset.name}</button><button aria-label={`Delete ${preset.name}`} className="ml-2 text-slate-400 hover:text-red-600" onClick={() => { const next=customPresets.filter(item=>item.id!==preset.id);setCustomPresets(next);if(user)void db.app_metadata.put({key:`customStudyPresets:${user.$id}`,value:JSON.stringify(next)}); }}>×</button></div>)}</div>}</div></div></Modal>}
     </div>
   );
 }

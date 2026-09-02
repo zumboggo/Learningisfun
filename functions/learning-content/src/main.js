@@ -417,9 +417,9 @@ export default async ({ req, res, error }) => {
     }
 
     if (body.action === 'updateFlashcardDeck') {
-      if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
       const deck = await db.getDocument(databaseId, 'flashcard_decks', body.deckId);
       if (deck.creatorId !== userId) return res.json({ error: 'Only the deck creator can edit it' }, 403);
+      if (profile.role !== 'teacher' && deck.type !== 'personal') return res.json({ error: 'Students can only edit personal decks' }, 403);
       const title = String(body.title || '').trim().slice(0, 255);
       const description = String(body.description || '').trim().slice(0, 10000);
       const requestedCards = Array.isArray(body.cards) ? body.cards : [];
@@ -474,6 +474,15 @@ export default async ({ req, res, error }) => {
       }
       const updatedDeck = await db.updateDocument(databaseId, 'flashcard_decks', deck.$id, { title, description, updatedAt: now });
       return res.json({ deck: clean(updatedDeck), cards: savedCards.map(clean) });
+    }
+
+    if (body.action === 'deletePersonalFlashcardDeck') {
+      const deck = await db.getDocument(databaseId, 'flashcard_decks', body.deckId);
+      if (deck.creatorId !== userId || deck.type !== 'personal') return res.json({ error: 'Only the owner can delete this personal deck' }, 403);
+      const cards = await db.listDocuments(databaseId, 'flashcard_cards', [Query.equal('deckId', deck.$id), Query.limit(5000)]);
+      for (const card of cards.documents) await db.deleteDocument(databaseId, 'flashcard_cards', card.$id);
+      await db.deleteDocument(databaseId, 'flashcard_decks', deck.$id);
+      return res.json({ deletedDeckId: deck.$id });
     }
 
     if (body.action === 'startQuizAttempt') {

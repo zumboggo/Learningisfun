@@ -122,7 +122,7 @@ export default function App() {
           <Route path="/decks/:deckId/review" element={<ProtectedRoute><FlashcardReviewPage /></ProtectedRoute>} />
           <Route path="/decks/:deckId/present" element={<FullscreenTeacherRoute><DeckPresentPage /></FullscreenTeacherRoute>} />
           <Route path="/decks/import" element={<ProtectedRoute><ImportDeckPage /></ProtectedRoute>} />
-          <Route path="/decks/new" element={<ProtectedRoute><TeacherRoute><CreateDeckPage /></TeacherRoute></ProtectedRoute>} />
+          <Route path="/decks/new" element={<ProtectedRoute><CreateDeckPage /></ProtectedRoute>} />
 
           <Route path="/classes" element={<ProtectedRoute><ClassesListPage /></ProtectedRoute>} />
           <Route path="/classes/:classId" element={<ProtectedRoute><ClassDetailPage /></ProtectedRoute>} />
@@ -131,6 +131,7 @@ export default function App() {
           <Route path="/classes/:classId/decks/:deckId/progress" element={<ProtectedRoute><TeacherRoute><FlashcardAnalyticsPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/classes/:classId/students/:studentId/progress" element={<ProtectedRoute><TeacherRoute><StudentProgressPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/classes/:classId/notes/today" element={<FullscreenTeacherRoute><TodayNotesPage /></FullscreenTeacherRoute>} />
+          <Route path="/classes/:classId/notes/:sessionId/edit" element={<FullscreenTeacherRoute><TodayNotesPage /></FullscreenTeacherRoute>} />
           <Route path="/classes/:classId/timer" element={<FullscreenTeacherRoute><ClassTimerPage /></FullscreenTeacherRoute>} />
 
           <Route path="/settings" element={<ProtectedRoute><TeacherRoute><TeacherSettingsPage /></TeacherRoute></ProtectedRoute>} />

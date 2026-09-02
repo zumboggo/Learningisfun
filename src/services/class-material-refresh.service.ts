@@ -22,7 +22,7 @@ export async function refreshClassMaterials(classId: string, userId: string, isT
     ['texts', () => syncTextsFromServer([classId], userId, isTeacher)],
     ['presentations', () => syncPresentationLinks([classId])],
     ['writing prompts', () => syncWritingFromServer([classId])],
-    ['card decks', () => syncDecksFromServer([classId], userId, isTeacher)],
+    ['card decks', () => syncDecksFromServer([classId], userId)],
   ];
   const outcomes = await Promise.allSettled(tasks.map(([, task]) => task()));
   const refreshed: string[] = [], failed: string[] = [];

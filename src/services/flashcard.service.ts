@@ -305,6 +305,16 @@ export async function updateEntireDeck(
   });
 }
 
+export async function deletePersonalDeck(deckId: string, creatorId: string): Promise<void> {
+  const deck = await db.flashcard_decks.get(deckId);
+  if (!deck || deck.creatorId !== creatorId || deck.type !== 'personal') throw new Error('Only the owner can delete this personal deck');
+  await executeLearningContent({ action: 'deletePersonalFlashcardDeck', deckId });
+  await db.transaction('rw', db.flashcard_decks, db.flashcard_cards, async () => {
+    await db.flashcard_cards.where('deckId').equals(deckId).delete();
+    await db.flashcard_decks.delete(deckId);
+  });
+}
+
 export async function reviewCard(
   userId: string,
   cardId: string,
@@ -408,6 +418,20 @@ export async function getNewCards(userId: string, deckId: string): Promise<Flash
 }
 
 export type FlashcardQueueMode = 'due' | 'new' | 'mixed' | 'all';
+export type CustomStudyFilter = 'all' | 'due' | 'new' | 'difficult';
+
+export function filterCustomStudyCards(cards: FlashcardCard[], states: StudentCardState[], tags: string[], filter: CustomStudyFilter): FlashcardCard[] {
+  const stateByCard = new Map(states.map(state => [state.cardId, state]));
+  const now = Date.now();
+  return cards.filter(card => {
+    if (tags.length && !card.tags.some(tag => tags.includes(tag))) return false;
+    const state = stateByCard.get(card.$id);
+    if (filter === 'new') return !state;
+    if (filter === 'due') return Boolean(state && (!Number.isFinite(Date.parse(state.dueDate)) || Date.parse(state.dueDate) <= now));
+    if (filter === 'difficult') return Boolean(state && (state.lapses > 0 || state.difficulty >= 7));
+    return true;
+  });
+}
 
 export async function buildFlashcardQueue(
   userId: string,
@@ -701,7 +725,7 @@ export async function getPersonalNote(userId: string, cardId: string): Promise<S
   return db.student_deck_notes.get(`${userId}_${cardId}`);
 }
 
-export async function syncDecksFromServer(classIds: string[], userId: string, isTeacher: boolean): Promise<boolean> {
+export async function syncDecksFromServer(classIds: string[], userId: string): Promise<boolean> {
   try {
     const assignmentResult = classIds.length
       ? await databases.listDocuments(DATABASE_ID, COLLECTIONS.deck_assignments, [Query.equal('classId', classIds), Query.limit(200)])
@@ -711,9 +735,7 @@ export async function syncDecksFromServer(classIds: string[], userId: string, is
       assignedDeckIds.length
         ? databases.listDocuments(DATABASE_ID, COLLECTIONS.flashcard_decks, [Query.equal('$id', assignedDeckIds), Query.equal('status', 'published'), Query.limit(200)])
         : Promise.resolve({ documents: [] }),
-      isTeacher
-        ? databases.listDocuments(DATABASE_ID, COLLECTIONS.flashcard_decks, [Query.equal('creatorId', userId), Query.limit(200)])
-        : Promise.resolve({ documents: [] }),
+      databases.listDocuments(DATABASE_ID, COLLECTIONS.flashcard_decks, [Query.equal('creatorId', userId), Query.limit(200)]),
     ]);
     const deckResult = { documents: [...new Map([...assignedDecks.documents, ...ownedDecks.documents].map(doc => [doc.$id, doc])).values()] };
     for (const doc of deckResult.documents) {
