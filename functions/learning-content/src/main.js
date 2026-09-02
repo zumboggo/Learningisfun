@@ -485,6 +485,9 @@ export default async ({ req, res, error }) => {
       return res.json({ deletedDeckId: deck.$id });
     }
 
+    if(body.action==='setFlashcardPreference'){const card=await db.getDocument(databaseId,'flashcard_cards',body.cardId);const deck=await db.getDocument(databaseId,'flashcard_decks',card.deckId),assignments=await db.listDocuments(databaseId,'deck_assignments',[Query.equal('deckId',deck.$id),Query.limit(500)]);if(deck.creatorId!==userId&&!assignments.documents.some(row=>memberClassIds.has(row.classId)))return res.json({error:'Card is not available to this user'},403);const prior=await db.listDocuments(databaseId,'student_deck_notes',[Query.equal('userId',userId),Query.equal('cardId',card.$id),Query.limit(1)]),data={userId,cardId:card.$id,personalNote:prior.documents[0]?.personalNote||'',personalExample:prior.documents[0]?.personalExample||'',buriedUntil:body.buriedUntil||null,suspended:Boolean(body.suspended)};const saved=prior.total?await db.updateDocument(databaseId,'student_deck_notes',prior.documents[0].$id,data):await db.createDocument(databaseId,'student_deck_notes',ID.unique(),data);return res.json({preference:clean(saved)});}
+    if(body.action==='readFlashcardPreferences'){const result=await db.listDocuments(databaseId,'student_deck_notes',[Query.equal('userId',userId),Query.limit(5000)]);return res.json({preferences:result.documents.map(clean)});}
+
     if (body.action === 'reportFlashcard') {
       if (profile.role !== 'student') return res.json({ error:'Student role required' },403);
       const card=await db.getDocument(databaseId,'flashcard_cards',body.cardId),deck=await db.getDocument(databaseId,'flashcard_decks',card.deckId);

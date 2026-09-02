@@ -289,6 +289,7 @@ export async function setCardStudyPreference(userId: string, cardId: string, pat
   const id = `${userId}_${cardId}`;
   const current = await db.student_deck_notes.get(id);
   await db.student_deck_notes.put({ $id:id, userId, cardId, personalNote:current?.personalNote || '', personalExample:current?.personalExample || '', buriedUntil: patch.buriedUntil === undefined ? current?.buriedUntil : patch.buriedUntil, suspended: patch.suspended === undefined ? current?.suspended : patch.suspended });
+  try { await executeLearningContent({action:'setFlashcardPreference',cardId,buriedUntil:patch.buriedUntil === undefined ? current?.buriedUntil || null : patch.buriedUntil,suspended:patch.suspended === undefined ? Boolean(current?.suspended) : patch.suspended}); } catch { /* The local preference still works offline. */ }
 }
 
 export async function undoLastCardReview(userId: string, cardId: string): Promise<StudentCardState | null> {
@@ -854,6 +855,16 @@ export async function syncDecksFromServer(classIds: string[], userId: string): P
         .filter(assignment => !remoteAssignmentIds.has(assignment.$id) && !protectedAssignmentIds.has(assignment.$id))
         .map(assignment => assignment.$id);
       if (staleAssignmentIds.length) await db.deck_assignments.bulkDelete(staleAssignmentIds);
+    }
+    try {
+      const result = await executeLearningContent<{ preferences: StudentDeckNote[] }>({
+        action: 'readFlashcardPreferences',
+      });
+      for (const preference of result.preferences) {
+        await db.student_deck_notes.put(preference);
+      }
+    } catch {
+      // Keep cached preferences available while offline.
     }
     return true;
   } catch { return false; }

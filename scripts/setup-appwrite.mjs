@@ -351,6 +351,8 @@ const COLLECTIONS = [
       S('cardId', { required: true }),
       TXT('personalNote', { required: false }),
       TXT('personalExample', { required: false }),
+      DATE('buriedUntil', { required: false }),
+      BOOL('suspended', { required: false }),
     ],
     indexes: [
       { key: 'idx_userId', type: 'key', attributes: ['userId'] },
