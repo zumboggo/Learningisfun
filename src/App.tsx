@@ -36,6 +36,9 @@ import { AddClassCardsPage } from '@/pages/teacher/AddClassCardsPage';
 import { CreateDeckPage } from '@/pages/teacher/CreateDeckPage';
 import { DeckPresentPage } from '@/pages/teacher/DeckPresentPage';
 import { TeacherSettingsPage } from '@/pages/TeacherSettingsPage';
+import { PlannerPage } from '@/pages/PlannerPage';
+import { PlannerLessonPage } from '@/pages/PlannerLessonPage';
+import { PlannerPrintPage } from '@/pages/PlannerPrintPage';
 
 import type { ReactNode } from 'react';
 import { getLastPage } from '@/utils/last-page';
@@ -135,6 +138,9 @@ export default function App() {
           <Route path="/classes/:classId/timer" element={<FullscreenTeacherRoute><ClassTimerPage /></FullscreenTeacherRoute>} />
 
           <Route path="/settings" element={<ProtectedRoute><TeacherRoute><TeacherSettingsPage /></TeacherRoute></ProtectedRoute>} />
+          <Route path="/planner" element={<ProtectedRoute><TeacherRoute><PlannerPage /></TeacherRoute></ProtectedRoute>} />
+          <Route path="/planner/:planId/lessons/:lessonId" element={<ProtectedRoute><TeacherRoute><PlannerLessonPage /></TeacherRoute></ProtectedRoute>} />
+          <Route path="/planner/:planId/print" element={<ProtectedRoute><TeacherRoute><PlannerPrintPage /></TeacherRoute></ProtectedRoute>} />
 
           <Route path="/sessions/:sessionId" element={<ProtectedRoute><ClassSessionPage /></ProtectedRoute>} />
 

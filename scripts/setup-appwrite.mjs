@@ -602,6 +602,16 @@ const COLLECTIONS = [
     attributes: [S('teacherId', { required: true }), S('classId', { required: true }), S('title', { required: true }), TXT('url', { required: true }), DATE('assignedAt', { required: true }), DATE('watchedAt', { required: false })],
     indexes: [{ key: 'idx_teacherId', type: 'key', attributes: ['teacherId'] }, { key: 'idx_classId', type: 'key', attributes: ['classId'] }, { key: 'idx_assignedAt', type: 'key', attributes: ['assignedAt'] }],
   },
+  {
+    id: 'planner_sources', name: 'Private Planner Sources',
+    attributes: [S('teacherId',{required:true}),S('filename',{required:true}),S('schoolYear',{required:true}),INT('version',{required:true}),TXT('sourceText',{required:true}),TXT('parsedJson',{required:true}),TXT('mappingJson',{required:true}),BOOL('active',{required:true}),DATE('createdAt',{required:true})],
+    indexes: [{key:'idx_teacherId',type:'key',attributes:['teacherId']},{key:'idx_teacher_active',type:'key',attributes:['teacherId','active']}],
+  },
+  {
+    id: 'weekly_plans', name: 'Private Weekly Plans',
+    attributes: [S('teacherId',{required:true}),S('sourceId',{required:true}),S('weekKey',{required:true}),DATE('weekStart',{required:true}),ENUM('status',['draft','ready','published'],{required:true}),TXT('planJson',{required:true}),TXT('publishedJson',{required:false}),DATE('createdAt',{required:true}),DATE('updatedAt',{required:true})],
+    indexes: [{key:'idx_teacherId',type:'key',attributes:['teacherId']},{key:'idx_teacher_week',type:'unique',attributes:['teacherId','weekKey']},{key:'idx_weekStart',type:'key',attributes:['weekStart']}],
+  },
 ];
 
 function sleep(ms) {

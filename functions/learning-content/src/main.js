@@ -5,6 +5,7 @@ const studentCollections = new Set(['quiz_attempts', 'writing_submissions', 'pee
 const teacherCollections = new Set(['classes', 'deck_assignments', 'quizzes', 'quiz_assignments', 'quiz_questions', 'writing_prompts', 'writing_prompt_assignments', 'texts', 'text_assignments', 'text_paragraphs']);
 const clean = document => { const output = { ...document }; for (const key of Object.keys(output)) if (key.startsWith('$')) delete output[key]; output.$id = document.$id; return output; };
 const membershipId = (classId, userId) => `member_${createHash('sha256').update(`${classId}:${userId}`).digest('hex').slice(0, 29)}`;
+const stableId = (prefix, value) => `${prefix}_${createHash('sha256').update(value).digest('hex').slice(0, 30-prefix.length)}`;
 const nicknameTokens = value => String(value || '').normalize('NFKD').toLowerCase().replace(/[013457@$!]/g, character => ({ '0':'o','1':'i','3':'e','4':'a','5':'s','7':'t','@':'a','$':'s','!':'i' }[character] || character)).split(/[^a-z]+/).filter(Boolean);
 const nicknameError = value => {
   const nickname = String(value || '').trim().replace(/\s+/g, ' ');
@@ -125,6 +126,60 @@ export default async ({ req, res, error }) => {
     const profile = await db.getDocument(databaseId, 'users', userId);
     const memberships = await db.listDocuments(databaseId, 'class_members', [Query.equal('userId', userId), Query.limit(500)]);
     const memberClassIds = new Set(memberships.documents.map(row => row.classId));
+
+    if (body.action === 'readPlanner') {
+      if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
+      const [sourceResult, planResult] = await Promise.all([
+        db.listDocuments(databaseId, 'planner_sources', [Query.equal('teacherId', userId), Query.orderDesc('createdAt'), Query.limit(100)]),
+        db.listDocuments(databaseId, 'weekly_plans', [Query.equal('teacherId', userId), Query.orderAsc('weekStart'), Query.limit(500)]),
+      ]);
+      return res.json({ sources: sourceResult.documents.map(clean), plans: planResult.documents.map(clean) });
+    }
+
+    if (body.action === 'importPlannerSource') {
+      if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
+      const sourceText = String(body.sourceText || ''), parsedJson = String(body.parsedJson || ''), mappingJson = String(body.mappingJson || '{}');
+      if (sourceText.length < 100 || sourceText.length > 900000) return res.json({ error: 'Planner source size is invalid' }, 400);
+      let parsed, mapping;
+      try { parsed = JSON.parse(parsedJson); mapping = JSON.parse(mappingJson); } catch { return res.json({ error: 'Planner source data is invalid' }, 400); }
+      if (!Array.isArray(parsed.weeks) || !parsed.weeks.length || parsed.weeks.length > 60) return res.json({ error: 'Planner source contains no usable weeks' }, 400);
+      const ownedClasses = await db.listDocuments(databaseId, 'classes', [Query.equal('teacherId', userId), Query.limit(500)]), ownedIds = new Set(ownedClasses.documents.map(row => row.$id));
+      if (Object.values(mapping).some(classId => classId && !ownedIds.has(classId))) return res.json({ error: 'A planner block is mapped to a class you do not own' }, 403);
+      const existing = await db.listDocuments(databaseId, 'planner_sources', [Query.equal('teacherId', userId), Query.limit(100)]);
+      for (const source of existing.documents.filter(row => row.active)) await db.updateDocument(databaseId, 'planner_sources', source.$id, { active: false });
+      const now = new Date().toISOString(), source = await db.createDocument(databaseId, 'planner_sources', ID.unique(), { teacherId:userId, filename:String(body.filename||'PLANNER_SOURCE.txt').slice(0,255), schoolYear:String(body.schoolYear||'').slice(0,255), version:existing.total+1, sourceText, parsedJson, mappingJson, active:true, createdAt:now });
+      return res.json({ source: clean(source) });
+    }
+
+    if (body.action === 'updatePlannerMapping') {
+      if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
+      const source = await db.getDocument(databaseId, 'planner_sources', body.sourceId);if(source.teacherId!==userId)return res.json({error:'Not your planner source'},403);
+      const mapping=JSON.parse(String(body.mappingJson||'{}')),owned=await db.listDocuments(databaseId,'classes',[Query.equal('teacherId',userId),Query.limit(500)]),ids=new Set(owned.documents.map(row=>row.$id));
+      if(Object.values(mapping).some(classId=>classId&&!ids.has(classId)))return res.json({error:'Invalid class mapping'},403);
+      return res.json({source:clean(await db.updateDocument(databaseId,'planner_sources',source.$id,{mappingJson:JSON.stringify(mapping)}))});
+    }
+
+    if (body.action === 'saveWeeklyPlan') {
+      if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
+      const source=await db.getDocument(databaseId,'planner_sources',body.sourceId);if(source.teacherId!==userId)return res.json({error:'Not your planner source'},403);
+      let planData;try{planData=JSON.parse(String(body.planJson||''));}catch{return res.json({error:'Weekly plan is invalid'},400);}if(!Array.isArray(planData.lessons)||planData.week?.key!==body.weekKey)return res.json({error:'Weekly plan does not match its source week'},400);
+      const mapping=JSON.parse(source.mappingJson||'{}'),allowed=new Set(Object.values(mapping).filter(Boolean));if(planData.lessons.some(lesson=>lesson.classId&&!allowed.has(lesson.classId)))return res.json({error:'Lesson contains an invalid class mapping'},403);
+      const now=new Date().toISOString(),payload={teacherId:userId,sourceId:source.$id,weekKey:String(body.weekKey).slice(0,255),weekStart:String(body.weekStart).slice(0,64),status:body.status==='ready'?'ready':'draft',planJson:JSON.stringify(planData),updatedAt:now};let plan;
+      if(body.planId){const prior=await db.getDocument(databaseId,'weekly_plans',body.planId);if(prior.teacherId!==userId)return res.json({error:'Not your weekly plan'},403);plan=await db.updateDocument(databaseId,'weekly_plans',prior.$id,payload);}else{const prior=await db.listDocuments(databaseId,'weekly_plans',[Query.equal('teacherId',userId),Query.equal('weekKey',body.weekKey),Query.limit(1)]);plan=prior.total?await db.updateDocument(databaseId,'weekly_plans',prior.documents[0].$id,payload):await db.createDocument(databaseId,'weekly_plans',ID.unique(),{...payload,publishedJson:'',createdAt:now});}
+      return res.json({plan:clean(plan)});
+    }
+
+    if (body.action === 'publishWeeklyPlan') {
+      if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
+      const plan=await db.getDocument(databaseId,'weekly_plans',body.planId);if(plan.teacherId!==userId)return res.json({error:'Not your weekly plan'},403);if(plan.status==='draft')return res.json({error:'Mark the week ready before publishing'},409);
+      const data=JSON.parse(plan.planJson),source=await db.getDocument(databaseId,'planner_sources',plan.sourceId),mapping=JSON.parse(source.mappingJson||'{}'),owned=await db.listDocuments(databaseId,'classes',[Query.equal('teacherId',userId),Query.limit(500)]),ownedIds=new Set(owned.documents.map(row=>row.$id));let agendas=0,texts=0,presentations=0;const now=new Date().toISOString();
+      for(const course of data.courses||[]){const classId=mapping[course.classCode];if(!classId||!ownedIds.has(classId))continue;const lessons=(data.lessons||[]).filter(lesson=>lesson.classCode===course.classCode);
+        if(data.publishAgenda){const agendaId=stableId('pa',`${userId}:${plan.weekKey}:${classId}`),markdown=[`# Week of ${data.week.startDate}`,course.texts?.length?`## Texts\n${course.texts.map(item=>`- ${item.title}${item.date?` — ${item.date}`:''}`).join('\n')}`:'',course.presentations?.some(item=>item.publish)?`## Presentations\n${course.presentations.filter(item=>item.publish).map(item=>`- ${item.title}`).join('\n')}`:'',`## Lessons\n${lessons.map(lesson=>`### ${lesson.date} · ${lesson.daytype}\n- **I do:** ${lesson.iDo}\n- **We do:** ${lesson.weDo}\n- **They do:** ${lesson.theyDo}\n- **Check:** ${lesson.check}${lesson.due?.length?`\n- **Due:** ${lesson.due.join(' · ')}`:''}${lesson.reminders?.length?`\n- **Remember:** ${lesson.reminders.join(' · ')}`:''}`).join('\n\n')}`].filter(Boolean).join('\n\n');const payload={classId,assignmentId:null,discussionType:'notes',textId:null,promptMarkdown:'',title:`Weekly agenda · ${plan.weekKey}`,sessionDate:data.week.startDate,status:'published',votesPerStudent:0,allowStackedVotes:false,notesMarkdown:markdown,publishedNotesMarkdown:markdown,publishedAt:now,updatedAt:now};try{await db.getDocument(databaseId,'class_sessions',agendaId);await db.updateDocument(databaseId,'class_sessions',agendaId,payload);}catch{await db.createDocument(databaseId,'class_sessions',agendaId,{...payload,createdAt:now});}agendas++;}
+        for(const item of (course.presentations||[]).filter(item=>item.publish)){const id=stableId('pp',`${userId}:${plan.weekKey}:${classId}:${item.title}`),payload={teacherId:userId,classId,title:String(item.title).slice(0,255),url:String(item.url||''),assignedAt:item.date||data.week.startDate,watchedAt:null};try{await db.getDocument(databaseId,'presentation_links',id);await db.updateDocument(databaseId,'presentation_links',id,payload);}catch{await db.createDocument(databaseId,'presentation_links',id,payload);}presentations++;}
+        for(const item of (course.texts||[]).filter(item=>item.publish&&item.url)){const textId=stableId('pt',`${userId}:${plan.weekKey}:${item.title}`),assignmentId=stableId('pta',`${textId}:${classId}`),textPayload={teacherId:userId,title:String(item.title).slice(0,255),author:'',source:'Weekly Planner',contentMode:'link',externalUrl:String(item.url),status:'published',updatedAt:now};try{await db.getDocument(databaseId,'texts',textId);await db.updateDocument(databaseId,'texts',textId,textPayload);}catch{await db.createDocument(databaseId,'texts',textId,{...textPayload,createdAt:now});}const assignmentPayload={textId,classId,assignedAt:item.date||data.week.startDate};try{await db.getDocument(databaseId,'text_assignments',assignmentId);await db.updateDocument(databaseId,'text_assignments',assignmentId,assignmentPayload);}catch{await db.createDocument(databaseId,'text_assignments',assignmentId,assignmentPayload);}texts++;}
+      }
+      const published={agendas,texts,presentations},updated=await db.updateDocument(databaseId,'weekly_plans',plan.$id,{status:'published',publishedJson:JSON.stringify(published),updatedAt:now});return res.json({plan:clean(updated),published});
+    }
 
     if (body.action === 'updateNickname') {
       if (profile.role !== 'student') return res.json({ error: 'Only students can change nicknames' }, 403);
