@@ -254,15 +254,24 @@ async function markEntitySynced(entityType: string, entityId: string): Promise<v
   }
 }
 
-export async function getSyncStatus(): Promise<{
+export async function getSyncStatus(userId?: string): Promise<{
   pending: number;
   failed: number;
   lastSyncAt: string | null;
 }> {
-  const pending = await db.sync_queue.where('syncStatus').equals('pending').count();
-  const failed = await db.sync_queue.where('syncStatus').equals('failed').count();
+  const pendingRows = db.sync_queue.where('syncStatus').equals('pending');
+  const failedRows = db.sync_queue.where('syncStatus').equals('failed');
+  const pending = userId ? await pendingRows.and(operation => operation.userId === userId).count() : await pendingRows.count();
+  const failed = userId ? await failedRows.and(operation => operation.userId === userId).count() : await failedRows.count();
   const meta = await db.app_metadata.get('lastSyncAt');
   return { pending, failed, lastSyncAt: meta?.value || null };
+}
+
+export async function retryFailedOperations(userId: string): Promise<void> {
+  const failed = await db.sync_queue.where('syncStatus').equals('failed').and(operation => operation.userId === userId).toArray();
+  await db.transaction('rw', db.sync_queue, async () => {
+    for (const operation of failed) if (operation.id) await db.sync_queue.update(operation.id, { syncStatus: 'pending', retryCount: 0, error: undefined });
+  });
 }
 
 export async function clearSyncedOperations(): Promise<void> {

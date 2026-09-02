@@ -19,7 +19,7 @@ export function SyncIndicator({ pending, failed, isSyncing, online, friendly = f
   const getStatusText = () => {
     if (!online) return 'Offline';
     if (isSyncing) return 'Syncing…';
-    if (failed > 0) return friendly ? 'Updates waiting' : `${failed} failed`;
+    if (failed > 0) return 'Updates waiting';
     if (pending > 0) return friendly ? 'Updating…' : `${pending} pending`;
     return 'Synced';
   };

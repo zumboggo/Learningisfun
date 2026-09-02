@@ -13,7 +13,7 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const { user, logout, isTeacher, isParent, viewAsStudent, setViewAsStudent } = useAuth();
   const location = useLocation();
-  const syncState = useSyncStatus();
+  const syncState = useSyncStatus(user?.$id);
   const online = useOnlineStatus();
   const isStudyRoute = /\/decks\/[^/]+\/review$/.test(location.pathname);
 
@@ -118,7 +118,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               {viewAsStudent ? 'Student view' : 'Teacher view'}
             </button>
           )}
-          <SyncIndicator {...syncState} online={online} />
+          <SyncIndicator {...syncState} online={online} friendly />
           <button
             onClick={() => void logout()}
             className="text-sm text-gray-500 hover:text-gray-700"
