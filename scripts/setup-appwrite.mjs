@@ -520,12 +520,14 @@ const COLLECTIONS = [
     name: 'Quiz Questions',
     attributes: [
       S('quizId', { required: true }),
-      ENUM('type', ['mc', 'cloze'], { required: true }),
+      ENUM('type', ['mc', 'cloze', 'matching'], { required: true }),
       TXT('questionText', { required: true }),
       TXT('options', { required: false }),
       INT('correctIndex', { required: false }),
       S('clozeAnswer', { required: false }),
       TXT('clozeVariants', { required: false }),
+      TXT('matchingData', { required: false }),
+      FLOAT('points', { required: false }),
       TXT('explanation', { required: false }),
       INT('sortOrder', { required: true }),
     ],
@@ -541,6 +543,8 @@ const COLLECTIONS = [
       DATE('completedAt', { required: false }),
       INT('score', { required: true }),
       INT('totalQuestions', { required: true }),
+      INT('scoreHalfPoints', { required: false }),
+      INT('totalHalfPoints', { required: false }),
       TXT('answers', { required: false }),
     ],
     indexes: [
@@ -632,7 +636,7 @@ async function createAttribute(collectionId, def) {
     }
   } catch (err) {
     if (err.code === 409) {
-      if (type === 'enum' && (key === 'role' || key === 'discussionType')) {
+      if (type === 'enum' && (key === 'role' || key === 'discussionType' || (collectionId === 'quiz_questions' && key === 'type'))) {
         await databases.updateEnumAttribute(DATABASE_ID, collectionId, key, def.elements, required, null);
         console.log(`  ~ ${collectionId}.${key} enum updated`);
         return;

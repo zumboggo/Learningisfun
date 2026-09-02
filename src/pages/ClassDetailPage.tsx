@@ -27,7 +27,7 @@ import { Modal } from '@/components/common/Modal';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { CreateQuizModal } from '@/pages/QuizzesPage';
 import { convertQuizScore, createPracticeQuiz, deleteQuiz, getQuizWithQuestions, publishQuiz, readQuizResults, type TeacherQuizResults } from '@/services/quiz.service';
-import { buildQtiAssessmentXml, buildQtiZip, downloadBlob } from '@/services/qti-export';
+import { buildQuizCopyText, buildQtiZip, downloadBlob } from '@/services/qti-export';
 import { addPresentationLinks, createWritingPrompt, deletePresentationLink, finishWritingPrompt, setPresentationWatched, updateWritingPrompt, type WritingPromptSize } from '@/services/presentation.service';
 import { AddDecksToClassModal } from '@/components/common/AddDecksToClassModal';
 import { listFlashcardReports, resolveFlashcardReport, unassignDeck } from '@/services/flashcard.service';
@@ -268,7 +268,7 @@ export function ClassDetailPage() {
   const copyQuizText = async (quizId: string) => {
     const record = await getQuizWithQuestions(quizId);
     if (!record) return;
-    await navigator.clipboard.writeText(buildQtiAssessmentXml(record.quiz, record.questions));
+    await navigator.clipboard.writeText(buildQuizCopyText(record.quiz, record.questions));
     setCopiedQuizId(quizId);
     window.setTimeout(() => setCopiedQuizId(''), 1800);
   };

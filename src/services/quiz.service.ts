@@ -99,6 +99,8 @@ export async function generateQuizQuestions(
     options: q.options ? JSON.stringify(q.options) : '[]',
     correctIndex: q.correctIndex ?? 0,
     clozeAnswer: q.clozeAnswer || '',
+    matchingData: '',
+    points: 1,
     explanation: q.explanation,
     sortOrder: i,
   }));
@@ -174,7 +176,7 @@ export async function saveFlashcardQuiz(params: {
     sourceType: 'flashcards',
     notesWeight: 0,
     flashcardWeight: 100,
-    questionCount: params.preview.result.questions.length,
+    questionCount: params.preview.result.summary.totalPoints,
     timeLimitMinutes: params.timeLimitMinutes,
     allowedAttempts: params.allowedAttempts,
     showAnswerFeedback: params.showAnswerFeedback,
@@ -189,6 +191,8 @@ export async function saveFlashcardQuiz(params: {
     correctIndex: q.correctIndex,
     clozeAnswer: q.cloze?.primary || '',
     clozeVariants: JSON.stringify(q.cloze?.variants || []),
+    matchingData: q.matching ? JSON.stringify(q.matching) : '',
+    points: q.points,
     explanation: q.explanation,
     sortOrder: i,
   }));
@@ -215,7 +219,7 @@ export async function createPracticeQuiz(classId: string, userId: string, questi
   const quiz: Quiz = {
     $id: ID.unique(), classId, sourceClassId: classId, createdBy: userId,
     title: 'Practice Quiz', sourceType: 'flashcards', notesWeight: 0, flashcardWeight: 100,
-    questionCount: preview.result.questions.length, timeLimitMinutes: null,
+    questionCount: preview.result.summary.totalPoints, timeLimitMinutes: null,
     allowedAttempts: 1, showAnswerFeedback: true,
     status: 'published', publishedAt: getTimestamp(), createdAt: getTimestamp(), syncStatus: 'synced',
   };
@@ -223,6 +227,7 @@ export async function createPracticeQuiz(classId: string, userId: string, questi
     $id: ID.unique(), quizId: quiz.$id, type: question.type, questionText: question.questionText,
     options: JSON.stringify(question.options), correctIndex: question.correctIndex,
     clozeAnswer: question.cloze?.primary || '', clozeVariants: JSON.stringify(question.cloze?.variants || []),
+    matchingData: question.matching ? JSON.stringify(question.matching) : '', points: question.points,
     explanation: question.explanation, sortOrder: index,
   }));
   await db.transaction('rw', db.quizzes, db.quiz_questions, async () => {
@@ -250,6 +255,31 @@ function parseClozeVariants(raw: string | undefined): string[] {
   } catch {
     return [];
   }
+}
+
+export interface MatchingQuestionData {
+  pairs: Array<{ id: string; definition: string; term: string; sourceCardId: string; bucket: 'today' | 'review' }>;
+  terms: string[];
+  distractorTerms: string[];
+  pointsPerPair: number;
+}
+
+export function parseMatchingData(raw?: string): MatchingQuestionData {
+  try {
+    const value = JSON.parse(raw || '{}') as Partial<MatchingQuestionData>;
+    return {
+      pairs: Array.isArray(value.pairs) ? value.pairs : [],
+      terms: Array.isArray(value.terms) ? value.terms : [],
+      distractorTerms: Array.isArray(value.distractorTerms) ? value.distractorTerms : [],
+      pointsPerPair: Number(value.pointsPerPair) || 0.5,
+    };
+  } catch { return { pairs: [], terms: [], distractorTerms: [], pointsPerPair: 0.5 }; }
+}
+
+function parseMatchingAnswer(answer: number | string): Record<string, string> {
+  if (typeof answer !== 'string') return {};
+  try { const value = JSON.parse(answer); return value && typeof value === 'object' ? value : {}; }
+  catch { return {}; }
 }
 
 export async function publishQuiz(quizId: string, userId: string): Promise<void> {
@@ -306,7 +336,7 @@ export async function submitQuizAttempt(
   attemptId: string,
   answers: Array<{ questionId: string; answer: number | string }>,
   options: { sync?: boolean } = {},
-): Promise<{ score: number; total: number; results: Array<{ correct: boolean; explanation: string }>; showAnswerFeedback: boolean; attemptsRemaining: number }> {
+): Promise<{ score: number; total: number; results: Array<{ correct: boolean; explanation: string; earned?: number; possible?: number }>; showAnswerFeedback: boolean; attemptsRemaining: number }> {
   const attempt = await db.quiz_attempts.get(attemptId);
   if (!attempt) throw new Error('Attempt not found');
 
@@ -315,7 +345,7 @@ export async function submitQuizAttempt(
       attempt: QuizAttempt;
       score: number;
       total: number;
-      results: Array<{ correct: boolean; explanation: string }>;
+      results: Array<{ correct: boolean; explanation: string; earned?: number; possible?: number }>;
       showAnswerFeedback: boolean;
       attemptsRemaining: number;
     }>({ action: 'submitQuizAttempt', attemptId, answers });
@@ -327,15 +357,24 @@ export async function submitQuizAttempt(
   const questionsById = new Map(questions.map(q => [q.$id, q]));
 
   let score = 0;
-  const results: Array<{ correct: boolean; explanation: string }> = [];
+  const results: Array<{ correct: boolean; explanation: string; earned?: number; possible?: number }> = [];
 
   for (const ans of answers) {
     const question = questionsById.get(ans.questionId);
     if (!question) continue;
 
     let correct: boolean;
+    let earned = 0;
+    const possible = question.points ?? 1;
     if (question.type === 'mc') {
       correct = ans.answer === question.correctIndex;
+      earned = correct ? possible : 0;
+    } else if (question.type === 'matching') {
+      const data = parseMatchingData(question.matchingData);
+      const submitted = parseMatchingAnswer(ans.answer);
+      const correctCount = data.pairs.filter(pair => submitted[pair.id] === pair.term).length;
+      earned = correctCount * data.pointsPerPair;
+      correct = correctCount === data.pairs.length;
     } else {
       // Accept the same alternate spellings Canvas does, so a student isn't
       // marked wrong here for a plural or a hyphen but right over there.
@@ -344,16 +383,19 @@ export async function submitQuizAttempt(
         .map(a => a.trim().toLowerCase())
         .filter(Boolean);
       correct = accepted.includes(given);
+      earned = correct ? possible : 0;
     }
 
-    if (correct) score++;
-    results.push({ correct, explanation: question.explanation });
+    score += earned;
+    results.push({ correct, explanation: question.explanation, earned, possible });
   }
 
   await db.quiz_attempts.update(attemptId, {
     completedAt: getTimestamp(),
     score,
-    totalQuestions: questions.length,
+    totalQuestions: questions.reduce((sum, question) => sum + (question.points ?? 1), 0),
+    scoreHalfPoints: Math.round(score * 2),
+    totalHalfPoints: Math.round(questions.reduce((sum, question) => sum + (question.points ?? 1), 0) * 2),
     answers: JSON.stringify(answers),
     syncStatus: 'local',
   });
@@ -361,7 +403,7 @@ export async function submitQuizAttempt(
   const updated = await db.quiz_attempts.get(attemptId);
   if (updated && options.sync !== false) await addToQueue(updated.userId, 'quiz_attempt', attemptId, 'update', updated);
 
-  return { score, total: questions.length, results, showAnswerFeedback: true, attemptsRemaining: 0 };
+  return { score, total: questions.reduce((sum, question) => sum + (question.points ?? 1), 0), results, showAnswerFeedback: true, attemptsRemaining: 0 };
 }
 
 export async function getQuizWithQuestions(quizId: string): Promise<{
@@ -434,6 +476,7 @@ export async function syncQuizzesFromServer(classIds: string[], options: { inclu
         questionText: doc.questionText as string, options: (doc.options as string) || '[]',
         correctIndex: (doc.correctIndex as number) || 0, clozeAnswer: (doc.clozeAnswer as string) || '',
         clozeVariants: (doc.clozeVariants as string) || '[]', explanation: (doc.explanation as string) || '',
+        matchingData: (doc.matchingData as string) || '', points: Number(doc.points) || 1,
         sortOrder: doc.sortOrder as number,
       });
     }
@@ -441,7 +484,9 @@ export async function syncQuizzesFromServer(classIds: string[], options: { inclu
       await db.quiz_attempts.put({
         $id: doc.$id, quizId: doc.quizId as string, userId: doc.userId as string,
         startedAt: doc.startedAt as string, completedAt: (doc.completedAt as string) || null,
-        score: (doc.score as number) || 0, totalQuestions: (doc.totalQuestions as number) || 0,
+        score: doc.scoreHalfPoints != null && Number.isFinite(Number(doc.scoreHalfPoints)) ? Number(doc.scoreHalfPoints) / 2 : (doc.score as number) || 0,
+        totalQuestions: doc.totalHalfPoints != null && Number.isFinite(Number(doc.totalHalfPoints)) ? Number(doc.totalHalfPoints) / 2 : (doc.totalQuestions as number) || 0,
+        scoreHalfPoints: doc.scoreHalfPoints as number | undefined, totalHalfPoints: doc.totalHalfPoints as number | undefined,
         answers: (doc.answers as string) || '[]', syncStatus: 'synced',
       });
     }

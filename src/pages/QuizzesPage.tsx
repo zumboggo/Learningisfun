@@ -38,7 +38,6 @@ export function CreateQuizModal({
   const classId = sourceClassId;
   const [classIds, setClassIds] = useState<Set<string>>(new Set([sourceClassId]));
   const [recentWeight, setRecentWeight] = useState(60);
-  const [mcWeight, setMcWeight] = useState(60);
   const [questionCount, setQuestionCount] = useState(10);
   const [timeLimit, setTimeLimit] = useState(10);
   const [allowSecondAttempt, setAllowSecondAttempt] = useState(false);
@@ -57,7 +56,6 @@ export function CreateQuizModal({
         classId,
         questionCount,
         recentWeight,
-        multipleChoiceWeight: mcWeight,
       }));
       setStep('review');
     } catch (e) {
@@ -100,8 +98,8 @@ export function CreateQuizModal({
 
           <div className="text-sm text-gray-600">
             <p>
-              {summary.produced} questions · {summary.fromToday} from the last {RECENT_WINDOW_DAYS} days,{' '}
-              {summary.fromReview} from earlier in the course
+              {summary.totalPoints} points · {summary.multipleChoice} multiple choice · {summary.matchingPairs} matches in {summary.matchingBlocks} blocks<br />
+              {summary.fromToday} prompts from the last {RECENT_WINDOW_DAYS} days, {summary.fromReview} from earlier in the course
             </p>
             <p className="text-xs text-gray-400">
               Card pool: {preview.pools.recent} recent, {preview.pools.older} earlier
@@ -124,7 +122,7 @@ export function CreateQuizModal({
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-gray-400">Q{i + 1}</span>
                 <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">
-                  {q.type === 'mc' ? 'Multiple choice' : 'Fill in the blank'}
+                  {q.type === 'mc' ? 'Multiple choice' : q.type === 'matching' ? 'Matching' : 'Fill in the blank'}
                 </span>
                 <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
                   {q.bucket === 'today' ? 'recent' : 'review'}
@@ -149,6 +147,7 @@ export function CreateQuizModal({
                   )}
                 </div>
               )}
+              {q.type === 'matching' && q.matching && <div className="space-y-1 text-sm">{q.matching.pairs.map(pair => <p key={pair.id}><span className="text-gray-600">{pair.definition}</span> → <strong className="text-green-700">{pair.term}</strong></p>)}<p className="text-xs text-gray-400">Unused term: {q.matching.distractorTerms.join(', ')}</p></div>}
               <p className="text-xs text-gray-500 whitespace-pre-line">{q.explanation}</p>
             </div>
           ))}
@@ -195,24 +194,11 @@ export function CreateQuizModal({
           </p>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Question types: {mcWeight}% multiple choice / {100 - mcWeight}% fill-in-the-blank
-          </label>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            step={10}
-            value={mcWeight}
-            onChange={e => setMcWeight(Number(e.target.value))}
-            className="w-full"
-          />
-        </div>
+        <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">About half the points are multiple choice; the other half are definition-to-term matching in groups of five or fewer.</div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Questions</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Total points</label>
             <select
               value={questionCount}
               onChange={e => setQuestionCount(Number(e.target.value))}

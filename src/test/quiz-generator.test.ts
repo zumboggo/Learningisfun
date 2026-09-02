@@ -187,10 +187,13 @@ describe('maskTerm', () => {
 describe('generateQuizFromFlashcards', () => {
   const seed = { seed: 'class-1:2026-08-09' };
 
-  it('produces the requested number of questions', () => {
+  it('produces the requested number of points', () => {
     const result = generateQuizFromFlashcards(makePools(10, 20), { ...seed, questionCount: 10 }, SESSION_DATE);
-    expect(result.questions).toHaveLength(10);
     expect(result.summary.produced).toBe(10);
+    expect(result.summary.totalPoints).toBe(10);
+    expect(result.summary.multipleChoice).toBe(5);
+    expect(result.summary.matchingBlocks).toBe(2);
+    expect(result.summary.matchingPairs).toBe(10);
   });
 
   it('is deterministic for the same seed', () => {
@@ -205,14 +208,15 @@ describe('generateQuizFromFlashcards', () => {
     expect(JSON.stringify(a.questions)).not.toBe(JSON.stringify(b.questions));
   });
 
-  it('respects the multiple-choice ratio', () => {
+  it('uses the balanced multiple-choice and matching format', () => {
     const result = generateQuizFromFlashcards(
       makePools(10, 20),
       { ...seed, questionCount: 10, multipleChoiceWeight: 50 },
       SESSION_DATE,
     );
     expect(result.summary.multipleChoice).toBe(5);
-    expect(result.summary.cloze).toBe(5);
+    expect(result.summary.cloze).toBe(0);
+    expect(result.summary.matchingPairs).toBe(10);
   });
 
   it('gives every MC question exactly four options with a valid correct index', () => {
@@ -242,19 +246,17 @@ describe('generateQuizFromFlashcards', () => {
     }
   });
 
-  it('uses definitions rather than examples for cloze questions', () => {
+  it('uses definitions rather than examples for matching questions', () => {
     const result = generateQuizFromFlashcards(
       makePools(6, 6),
       { ...seed, questionCount: 6, multipleChoiceWeight: 0 },
       SESSION_DATE,
     );
-    for (const q of result.questions) {
-      expect(q.type).toBe('cloze');
-      expect(q.questionText).toContain('___');
-      expect(q.cloze?.primary).toBeTruthy();
-      expect(q.questionText.toLowerCase()).not.toContain(q.cloze!.primary.toLowerCase());
-      expect(q.questionText).not.toContain('We used');
-      expect(q.explanation).not.toContain('Example:');
+    for (const q of result.questions.filter(q => q.type === 'matching')) {
+      for (const pair of q.matching!.pairs) {
+        expect(pair.definition).toContain('the meaning of');
+        expect(pair.definition).not.toContain('We used');
+      }
     }
   });
 
@@ -266,17 +268,7 @@ describe('generateQuizFromFlashcards', () => {
     }
   });
 
-  it('falls back to a definition prompt when there is no usable example sentence', () => {
-    const pools = {
-      today: [card({ $id: 'a', front: 'osmosis', back: 'water moving across a membrane', hint: 'unrelated text' })],
-      review: [],
-    };
-    const result = generateQuizFromFlashcards(pools, { ...seed, questionCount: 1, multipleChoiceWeight: 0 }, SESSION_DATE);
-    expect(result.questions[0].questionText).toContain('water moving across a membrane');
-    expect(result.questions[0].questionText).toContain('___');
-  });
-
-  it('falls back to cloze when there are too few cards for distractors', () => {
+  it('reports insufficient cards instead of reverting to exact-answer cloze', () => {
     const pools = {
       today: [
         card({ $id: 'a', front: 'osmosis', back: 'water movement', hint: 'Osmosis moves water.' }),
@@ -286,7 +278,25 @@ describe('generateQuizFromFlashcards', () => {
     };
     const result = generateQuizFromFlashcards(pools, { ...seed, questionCount: 2, multipleChoiceWeight: 100 }, SESSION_DATE);
     expect(result.summary.multipleChoice).toBe(0);
-    expect(result.summary.cloze).toBe(2);
+    expect(result.summary.cloze).toBe(0);
+    expect(result.summary.skipped.length).toBeGreaterThan(0);
+  });
+
+  it.each([3, 5, 15, 20])('scales a %i-point quiz while keeping matching blocks at five pairs or fewer', points => {
+    const result = generateQuizFromFlashcards(makePools(30, 40), { ...seed, questionCount: points }, SESSION_DATE);
+    expect(result.summary.totalPoints).toBe(points);
+    expect(result.questions.filter(q => q.type === 'matching').every(q => q.matching!.pairs.length <= 5)).toBe(true);
+  });
+
+  it('gives every matching block unique terms and one unused distractor', () => {
+    const result = generateQuizFromFlashcards(makePools(20, 20), { ...seed, questionCount: 10 }, SESSION_DATE);
+    for (const question of result.questions.filter(q => q.type === 'matching')) {
+      const data = question.matching!;
+      expect(new Set(data.pairs.map(pair => pair.term)).size).toBe(data.pairs.length);
+      expect(data.distractorTerms).toHaveLength(1);
+      expect(data.pairs.some(pair => pair.term === data.distractorTerms[0])).toBe(false);
+      expect(data.terms).toHaveLength(data.pairs.length + 1);
+    }
   });
 
   it('reports cards it could not use instead of dropping them silently', () => {

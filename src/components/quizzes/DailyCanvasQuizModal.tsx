@@ -149,8 +149,8 @@ export function DailyCanvasQuizModal({
           <div className="text-sm text-gray-600">
             <p className="font-medium text-gray-800">{preview.settings.title}</p>
             <p>
-              {summary.produced} questions · {summary.fromToday} from today, {summary.fromReview} review ·{' '}
-              {summary.multipleChoice} multiple choice, {summary.cloze} fill-in-the-blank
+              {summary.totalPoints} points · {summary.fromToday} current-card prompts, {summary.fromReview} review prompts ·{' '}
+              {summary.multipleChoice} multiple choice, {summary.matchingPairs} matches in {summary.matchingBlocks} blocks
             </p>
             <p className="text-xs text-gray-400">
               Card pool: {preview.pools.today} added on {preview.settings.quizDate}, {preview.pools.review} older
@@ -175,7 +175,7 @@ export function DailyCanvasQuizModal({
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-gray-400">Q{i + 1}</span>
                 <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">
-                  {q.type === 'mc' ? 'Multiple Choice' : 'Fill in the blank'}
+                  {q.type === 'mc' ? 'Multiple Choice' : q.type === 'matching' ? 'Matching' : 'Fill in the blank'}
                 </span>
                 <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
                   {q.bucket === 'today' ? 'today' : 'review'}
@@ -199,6 +199,7 @@ export function DailyCanvasQuizModal({
                   )}
                 </div>
               )}
+              {q.type === 'matching' && q.matching && <div className="space-y-1 text-sm">{q.matching.pairs.map(pair => <p key={pair.id}><span className="text-gray-600">{pair.definition}</span> → <strong className="text-green-700">{pair.term}</strong></p>)}<p className="text-xs text-gray-400">Unused term: {q.matching.distractorTerms.join(', ')}</p></div>}
             </div>
           ))}
 
@@ -279,12 +280,8 @@ export function DailyCanvasQuizModal({
           />
         </Field>
 
-        <Field label={`Question types: ${mcWeight}% multiple choice / ${100 - mcWeight}% fill-in-the-blank`}>
-          <input
-            type="range" min={0} max={100} step={10}
-            value={mcWeight} onChange={e => setMcWeight(Number(e.target.value))}
-            className="w-full"
-          />
+        <Field label="Question types">
+          <p className="rounded-lg bg-gray-50 p-3 text-sm text-gray-600">About half the points are multiple choice; the other half are definition-to-term matching.</p>
         </Field>
 
         <Field label={`Review recency: half-weight after ${halfLife} days`}>
@@ -297,7 +294,7 @@ export function DailyCanvasQuizModal({
         </Field>
 
         <div className="grid grid-cols-3 gap-3">
-          <Field label="Questions">
+          <Field label="Total points">
             <select value={questionCount} onChange={e => setQuestionCount(Number(e.target.value))} className={inputClass}>
               {[3, 5, 10, 15, 20].map(n => <option key={n} value={n}>{n}</option>)}
             </select>

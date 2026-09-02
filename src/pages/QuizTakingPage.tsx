@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
-import { deleteLocalPracticeQuiz, getQuizWithQuestions, getStudentQuizAttempts, startQuizAttempt, submitQuizAttempt, syncQuizFromServer } from '@/services/quiz.service';
+import { deleteLocalPracticeQuiz, getQuizWithQuestions, getStudentQuizAttempts, parseMatchingData, startQuizAttempt, submitQuizAttempt, syncQuizFromServer } from '@/services/quiz.service';
 import type { Quiz, QuizAttempt, QuizQuestion } from '@/types';
 import { Confetti } from '@/pages/FlashcardReviewPage';
 
@@ -21,7 +21,7 @@ export function QuizTakingPage() {
   const [attemptId, setAttemptId] = useState('');
   const [started, setStarted] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [results, setResults] = useState<{ score: number; total: number; results: Array<{ correct: boolean; explanation: string }>; showAnswerFeedback: boolean; attemptsRemaining: number } | null>(null);
+  const [results, setResults] = useState<{ score: number; total: number; results: Array<{ correct: boolean; explanation: string; earned?: number; possible?: number }>; showAnswerFeedback: boolean; attemptsRemaining: number } | null>(null);
   const [completedAttempts, setCompletedAttempts] = useState(0);
   const [priorAttempts, setPriorAttempts] = useState<QuizAttempt[]>([]);
   const [error, setError] = useState('');
@@ -169,7 +169,7 @@ export function QuizTakingPage() {
                 <div key={i} className={`rounded-lg p-3 ${r.correct ? 'bg-green-50' : 'bg-red-50'}`}>
                   <div className="flex items-center gap-2 mb-1">
                     <span className={`text-sm font-medium ${r.correct ? 'text-green-700' : 'text-red-700'}`}>
-                      Q{i + 1} {r.correct ? '✓' : '✗'}
+                      Q{i + 1} {r.correct ? '✓' : '✗'}{r.possible && r.possible > 1 ? ` · ${r.earned ?? 0}/${r.possible}` : ''}
                     </span>
                   </div>
                   <p className="text-xs text-gray-600">{r.explanation}</p>
@@ -193,7 +193,7 @@ export function QuizTakingPage() {
         <button onClick={() => navigate(isPractice ? returnTo : '/quizzes')} className="text-gray-500 mb-4">Back</button>
         <Card>
           <h1 className="text-2xl font-bold mb-2">{quiz.title}</h1>
-          <p className="text-gray-500 mb-4">{questions.length} questions</p>
+          <p className="text-gray-500 mb-4">{quiz.questionCount} points · {questions.length} question blocks</p>
           {quiz.timeLimitMinutes && (
             <p className="text-sm text-orange-600 mb-4">Time limit: {quiz.timeLimitMinutes} minutes</p>
           )}
@@ -277,7 +277,7 @@ function QuestionCard({
       <div className="flex items-center gap-2 mb-3">
         <span className="text-xs font-medium text-gray-400">Q{index + 1}</span>
         <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">
-          {question.type === 'mc' ? 'Multiple Choice' : 'Fill in the blank'}
+          {question.type === 'mc' ? 'Multiple Choice' : question.type === 'matching' ? 'Matching' : 'Fill in the blank'}
         </span>
       </div>
 
@@ -310,6 +310,24 @@ function QuestionCard({
           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
         />
       )}
+      {question.type === 'matching' && <MatchingQuestion question={question} answer={typeof answer === 'string' ? answer : ''} onAnswer={onAnswer} />}
     </Card>
   );
+}
+
+function MatchingQuestion({ question, answer, onAnswer }: { question: QuizQuestion; answer: string; onAnswer: (answer: string) => void }) {
+  const data = parseMatchingData(question.matchingData);
+  let selected: Record<string, string> = {};
+  try { selected = JSON.parse(answer || '{}'); } catch { selected = {}; }
+  const update = (pairId: string, term: string) => onAnswer(JSON.stringify({ ...selected, [pairId]: term }));
+  return <div className="space-y-4">
+    <p className="text-sm text-gray-500">Choose the best term for each definition. One term will not be used.</p>
+    {data.pairs.map((pair, index) => <label key={pair.id} className="block rounded-xl border border-gray-200 bg-gray-50 p-3">
+      <span className="mb-2 block text-sm font-medium text-gray-800">{index + 1}. {pair.definition}</span>
+      <select aria-label={`Term for definition ${index + 1}`} value={selected[pair.id] || ''} onChange={event => update(pair.id, event.target.value)} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-base">
+        <option value="">Choose a term…</option>
+        {data.terms.map(term => <option key={term} value={term}>{term}</option>)}
+      </select>
+    </label>)}
+  </div>;
 }

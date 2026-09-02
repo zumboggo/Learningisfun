@@ -146,7 +146,7 @@ export async function commitDailyQuiz(
     sourceType: 'flashcards',
     notesWeight: 0,
     flashcardWeight: 100,
-    questionCount: preview.result.questions.length,
+    questionCount: preview.result.summary.totalPoints,
     timeLimitMinutes: config.timeLimitMinutes,
     allowedAttempts: config.allowedAttempts === 2 ? 2 : 1,
     showAnswerFeedback: false,
@@ -167,6 +167,8 @@ export async function commitDailyQuiz(
     correctIndex: q.correctIndex,
     clozeAnswer: q.cloze?.primary || '',
     clozeVariants: JSON.stringify(q.cloze?.variants || []),
+    matchingData: q.matching ? JSON.stringify(q.matching) : '',
+    points: q.points,
     explanation: q.explanation,
     sortOrder: i,
   }));

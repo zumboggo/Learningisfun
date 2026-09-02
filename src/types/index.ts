@@ -362,13 +362,17 @@ export interface QuizAssignment {
 export interface QuizQuestion {
   $id: string;
   quizId: string;
-  type: 'mc' | 'cloze';
+  type: 'mc' | 'cloze' | 'matching';
   questionText: string;
   options: string;
   correctIndex: number;
   clozeAnswer: string;
   /** JSON-encoded string[] — alternate spellings also accepted for a cloze answer. */
   clozeVariants?: string;
+  /** JSON-encoded MatchingQuestionData for matching questions. */
+  matchingData?: string;
+  /** Points available for this visible question card. */
+  points?: number;
   explanation: string;
   sortOrder: number;
 }
@@ -381,6 +385,9 @@ export interface QuizAttempt {
   completedAt: string | null;
   score: number;
   totalQuestions: number;
+  /** Exact half-point grading for balanced retrieval quizzes. */
+  scoreHalfPoints?: number;
+  totalHalfPoints?: number;
   answers: string;
   syncStatus: SyncStatus;
 }

@@ -155,6 +155,22 @@ export function buildQuestionPayload(
     };
   }
 
+  if (question.type === 'matching' && question.matching) {
+    const extraMatches = question.matching.distractorTerms.join('\n');
+    return {
+      question: {
+        ...base,
+        question_type: 'matching_question',
+        question_text: toCanvasHtml(question.questionText),
+        answers: question.matching.pairs.map(pair => ({
+          answer_match_left: pair.definition,
+          answer_match_right: pair.term,
+          matching_answer_incorrect_matches: extraMatches,
+        })),
+      },
+    };
+  }
+
   const cloze = question.cloze;
   if (!cloze) throw new Error(`Cloze question ${position} is missing its answer set`);
 

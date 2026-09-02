@@ -546,29 +546,45 @@ export default async ({ req, res, error }) => {
       }
       const suppliedById = new Map(meaningfulAnswers.map(row => [row.questionId, row.answer]));
       let score = 0;
+      let total = 0;
       const results = questions.map(question => {
         const answer = suppliedById.get(question.$id);
         let correct = false;
-        if (question.type === 'mc') correct = Number(answer) === Number(question.correctIndex);
-        else {
+        let earned = 0;
+        const possible = Number(question.points) || 1;
+        total += possible;
+        if (question.type === 'mc') {
+          correct = Number(answer) === Number(question.correctIndex);
+          earned = correct ? possible : 0;
+        } else if (question.type === 'matching') {
+          let data = { pairs: [], pointsPerPair: 0.5 }, submitted = {};
+          try { data = JSON.parse(question.matchingData || '{}'); } catch { /* invalid questions earn no credit */ }
+          try { submitted = JSON.parse(typeof answer === 'string' ? answer : '{}'); } catch { /* invalid answer earns no credit */ }
+          const pairs = Array.isArray(data.pairs) ? data.pairs : [];
+          const correctCount = pairs.filter(pair => submitted[pair.id] === pair.term).length;
+          earned = correctCount * (Number(data.pointsPerPair) || 0.5);
+          correct = pairs.length > 0 && correctCount === pairs.length;
+        } else {
           let variants = [];
           try { const parsed = JSON.parse(question.clozeVariants || '[]'); if (Array.isArray(parsed)) variants = parsed; } catch { /* use primary answer only */ }
           const accepted = [question.clozeAnswer, ...variants].map(normalizeQuizAnswer).filter(Boolean);
           correct = accepted.includes(normalizeQuizAnswer(answer));
+          earned = correct ? possible : 0;
         }
-        if (correct) score += 1;
-        return { correct, explanation: String(question.explanation || '') };
+        score += earned;
+        return { correct, earned, possible, explanation: String(question.explanation || '') };
       });
       const completedAt = new Date().toISOString();
       const updated = await db.updateDocument(databaseId, 'quiz_attempts', attempt.$id, {
-        completedAt, score, totalQuestions: questions.length,
+        completedAt, score: Math.floor(score), totalQuestions: total,
+        scoreHalfPoints: Math.round(score * 2), totalHalfPoints: Math.round(total * 2),
         answers: JSON.stringify(meaningfulAnswers.map(row => ({ questionId: row.questionId, answer: row.answer }))),
       });
       const attemptResult = await db.listDocuments(databaseId, 'quiz_attempts', [Query.equal('quizId', quiz.$id), Query.equal('userId', userId), Query.limit(100)]);
       const attemptsRemaining = Math.max(0, quizAttemptLimit(quiz) - attemptResult.documents.filter(row => row.completedAt).length);
       const showAnswerFeedback = Boolean(quiz.showAnswerFeedback);
       return res.json({
-        attempt: clean(updated), score, total: questions.length,
+        attempt: { ...clean(updated), score, totalQuestions: total }, score, total,
         results: showAnswerFeedback ? results : [], showAnswerFeedback, attemptsRemaining,
       });
     }
@@ -598,8 +614,8 @@ export default async ({ req, res, error }) => {
           id: attempt.$id,
           startedAt: attempt.startedAt,
           completedAt: attempt.completedAt || null,
-          score: Number(attempt.score) || 0,
-          totalQuestions: Number(attempt.totalQuestions) || quiz.questionCount || 0,
+          score: attempt.scoreHalfPoints != null && Number.isFinite(Number(attempt.scoreHalfPoints)) ? Number(attempt.scoreHalfPoints) / 2 : Number(attempt.score) || 0,
+          totalQuestions: attempt.totalHalfPoints != null && Number.isFinite(Number(attempt.totalHalfPoints)) ? Number(attempt.totalHalfPoints) / 2 : Number(attempt.totalQuestions) || quiz.questionCount || 0,
         };
         const current = attemptsByStudent.get(attempt.userId) || [];
         current.push(projected);
@@ -673,6 +689,13 @@ export default async ({ req, res, error }) => {
             delete projected.clozeAnswer;
             delete projected.clozeVariants;
             delete projected.explanation;
+            if (projected.type === 'matching') {
+              try {
+                const data = JSON.parse(projected.matchingData || '{}');
+                data.pairs = Array.isArray(data.pairs) ? data.pairs.map(({ term, ...pair }) => pair) : [];
+                projected.matchingData = JSON.stringify(data);
+              } catch { projected.matchingData = '{}'; }
+            }
           }
           return projected;
         }),

@@ -23,7 +23,7 @@ export interface ClozeAnswerSet {
 }
 
 export interface GeneratedQuestion {
-  type: 'mc' | 'cloze';
+  type: 'mc' | 'cloze' | 'matching';
   /** The card this came from — lets you trace a bad question back to its source. */
   sourceCardId: string;
   /** Which pool the card came from, for the mix summary. */
@@ -36,8 +36,24 @@ export interface GeneratedQuestion {
   correctIndex: number;
   /** Cloze only. */
   cloze: ClozeAnswerSet | null;
+  matching?: MatchingQuestionData | null;
   explanation: string;
   points: number;
+}
+
+export interface MatchingPair {
+  id: string;
+  definition: string;
+  term: string;
+  sourceCardId: string;
+  bucket: 'today' | 'review';
+}
+
+export interface MatchingQuestionData {
+  pairs: MatchingPair[];
+  terms: string[];
+  distractorTerms: string[];
+  pointsPerPair: number;
 }
 
 export interface GenerationOptions {
@@ -76,6 +92,9 @@ export interface GenerationResult {
     fromReview: number;
     multipleChoice: number;
     cloze: number;
+    matchingBlocks: number;
+    matchingPairs: number;
+    totalPoints: number;
     /** Cards that yielded no usable question, with the reason. */
     skipped: Array<{ cardId: string; front: string; reason: string }>;
   };
@@ -438,6 +457,7 @@ function buildMultipleChoice(
     options: shuffled,
     correctIndex: shuffled.indexOf(back),
     cloze: null,
+    matching: null,
     explanation: buildExplanation(card, front, back),
     points: options.pointsPerQuestion,
   };
@@ -469,8 +489,41 @@ function buildCloze(
       primary: front,
       variants: buildAnswerVariants(front),
     },
+    matching: null,
     explanation: buildExplanation(card, front, back),
     points: options.pointsPerQuestion,
+  };
+}
+
+function buildMatchingBlock(
+  selected: Array<{ card: FlashcardCard; bucket: 'today' | 'review' }>,
+  pool: FlashcardCard[],
+  rng: () => number,
+): GeneratedQuestion | { skipped: string } {
+  const pairs: MatchingPair[] = selected.map(({ card, bucket }, index) => ({
+    id: `pair${index + 1}`,
+    definition: cardText(card, 'back'),
+    term: cardText(card, 'front'),
+    sourceCardId: card.$id,
+    bucket,
+  }));
+  if (pairs.some(pair => !pair.definition || !pair.term)) return { skipped: 'card is missing a term or definition' };
+  if (new Set(pairs.map(pair => pair.term.toLowerCase())).size !== pairs.length) return { skipped: 'matching terms are not unique' };
+  const used = new Set(pairs.map(pair => pair.term.toLowerCase()));
+  const distractor = shuffle(pool, rng).map(card => cardText(card, 'front')).find(term => term && !used.has(term.toLowerCase()));
+  if (!distractor) return { skipped: 'not enough unique terms for a matching distractor' };
+  const terms = shuffle([...pairs.map(pair => pair.term), distractor], rng);
+  return {
+    type: 'matching',
+    sourceCardId: pairs[0].sourceCardId,
+    bucket: pairs[0].bucket,
+    questionText: 'Match each definition to its term.',
+    options: terms,
+    correctIndex: -1,
+    cloze: null,
+    matching: { pairs, terms, distractorTerms: [distractor], pointsPerPair: 0.5 },
+    explanation: pairs.map(pair => `${pair.term} — ${pair.definition}`).join('\n'),
+    points: pairs.length * 0.5,
   };
 }
 
@@ -510,40 +563,34 @@ export function generateQuizFromFlashcards(
   const rng = makeRng(options.seed);
   const allCards = [...pools.today, ...pools.review];
 
-  const selected = selectCards(pools, options, rng, now);
-  const mcTarget = Math.round((selected.length * clampPercent(options.multipleChoiceWeight)) / 100);
+  // questionCount now represents total points. Half is recognition-based MC;
+  // the other half is definition-to-term matching at 0.5 points per pair.
+  const totalPoints = Math.max(1, Math.round(options.questionCount));
+  const mcTarget = Math.ceil(totalPoints / 2);
+  const matchingPairTarget = Math.floor(totalPoints / 2) * 2;
+  const selected = selectCards(
+    pools,
+    { ...options, questionCount: mcTarget + matchingPairTarget },
+    rng,
+    now,
+  );
 
   const questions: GeneratedQuestion[] = [];
   const skipped: GenerationResult['summary']['skipped'] = [];
-  let mcMade = 0;
-
-  for (const { card, bucket } of selected) {
-    const wantMc = mcMade < mcTarget;
-    const primary = wantMc
-      ? buildMultipleChoice(card, bucket, allCards, options, rng)
-      : buildCloze(card, bucket, options);
-
-    if (!('skipped' in primary)) {
-      if (primary.type === 'mc') mcMade++;
-      questions.push(primary);
-      continue;
-    }
-
-    // Fall back to the other format before giving up on the card.
-    const fallback = wantMc
-      ? buildCloze(card, bucket, options)
-      : buildMultipleChoice(card, bucket, allCards, options, rng);
-
-    if (!('skipped' in fallback)) {
-      if (fallback.type === 'mc') mcMade++;
-      questions.push(fallback);
-    } else {
-      skipped.push({
-        cardId: card.$id,
-        front: cardText(card, 'front') || '(blank card)',
-        reason: primary.skipped,
-      });
-    }
+  const mcSelected = selected.slice(0, mcTarget);
+  const matchingSelected = selected.slice(mcTarget, mcTarget + matchingPairTarget);
+  for (const { card, bucket } of mcSelected) {
+    const built = buildMultipleChoice(card, bucket, allCards, { ...options, pointsPerQuestion: 1 }, rng);
+    if ('skipped' in built) skipped.push({ cardId: card.$id, front: cardText(card, 'front') || '(blank card)', reason: built.skipped });
+    else questions.push(built);
+  }
+  for (let index = 0; index < matchingSelected.length; index += 5) {
+    const group = matchingSelected.slice(index, index + 5);
+    if (group.length < 2) break;
+    const built = buildMatchingBlock(group, allCards, rng);
+    if ('skipped' in built) {
+      for (const { card } of group) skipped.push({ cardId: card.$id, front: cardText(card, 'front') || '(blank card)', reason: built.skipped });
+    } else questions.push(built);
   }
 
   preventThreeMatchingAnswerPositions(questions, rng);
@@ -551,12 +598,15 @@ export function generateQuizFromFlashcards(
   return {
     questions,
     summary: {
-      requested: options.questionCount,
-      produced: questions.length,
-      fromToday: questions.filter(q => q.bucket === 'today').length,
-      fromReview: questions.filter(q => q.bucket === 'review').length,
+      requested: totalPoints,
+      produced: questions.reduce((sum, q) => sum + q.points, 0),
+      fromToday: selected.filter(q => q.bucket === 'today').length,
+      fromReview: selected.filter(q => q.bucket === 'review').length,
       multipleChoice: questions.filter(q => q.type === 'mc').length,
       cloze: questions.filter(q => q.type === 'cloze').length,
+      matchingBlocks: questions.filter(q => q.type === 'matching').length,
+      matchingPairs: questions.reduce((sum, q) => sum + (q.matching?.pairs.length || 0), 0),
+      totalPoints: questions.reduce((sum, q) => sum + q.points, 0),
       skipped,
     },
   };
