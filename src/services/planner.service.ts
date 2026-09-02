@@ -7,7 +7,7 @@ export interface PlannerSourceRecord{$id:string;teacherId:string;filename:string
 export interface PlannerSourceVersion{sourceId:string;version:number;createdAt:string;changedWeeks:string[]}
 export interface PlannerClassMapping{sourceCode:string;classId:string}
 export interface PreparationTask{id:string;label:string;kind:'presentation'|'text'|'handout'|'quiz'|'assignment'|'other';status:PlannerTaskStatus;url?:string;dueAt?:string;classCode?:string}
-export interface ExtraActivity{id:string;courseCode:string;label:string;lessonDates:string[]}
+export interface ExtraActivity{id:string;courseCode:string;label:string;lessonDates:string[];target?:string}
 export interface LessonWriteback{status:'planned'|'partial'|'missed';note:string}
 export interface LessonPlan{id:string;classCode:string;classId:string;classLabel:string;date:string;daytype:string;unit:string;goal:string;settle:string;iDo:string;weDo:string;theyDo:string;check:string;exit:string;due:string[];reminders:string[];texts:string[];presentations:string[];materials:string[];extraActivityIds:string[];privateNotes:string;writeback?:LessonWriteback}
 export interface CourseWeekChoices{classCode:string;progress:PlannerProgress;weDoLead:'teacher'|'students'|'named';leadName:string;intention:string;texts:Array<{title:string;date:string;url:string;publish:boolean}>;presentations:Array<{title:string;date:string;givenBy:string;url:string;publish:boolean}>}
