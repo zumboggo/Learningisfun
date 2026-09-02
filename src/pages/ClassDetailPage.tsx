@@ -753,7 +753,7 @@ function QuizResultsModal({ quiz, classId, onClose }: { quiz: Quiz; classId: str
   const [results, setResults] = useState<TeacherQuizResults | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [assignmentPoints, setAssignmentPoints] = useState(20);
+  const [assignmentPoints, setAssignmentPoints] = useState(5);
   const [columnWidths, setColumnWidths] = useState({ username: 170, email: 250, best: 130, converted: 180, attempts: 300 });
 
   const load = useCallback(async () => {
