@@ -1492,5 +1492,6 @@ input, textarea, select, button {
   header, nav, .print-controls { display: none !important; }
   main { padding: 0 !important; margin: 0 !important; }
   .planner-print { width: 100%; max-width: none; padding: 0; font-size: 9pt; }
+  .planner-print, .planner-print * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .planner-print header { display: block !important; }
 }
