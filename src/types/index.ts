@@ -254,6 +254,8 @@ export interface StudentDeckNote {
   cardId: string;
   personalNote: string;
   personalExample: string;
+  buriedUntil?: string | null;
+  suspended?: boolean;
 }
 
 export interface SyncOperation {

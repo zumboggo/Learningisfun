@@ -31,6 +31,7 @@ export const COLLECTIONS = {
   flashcard_study_sessions: 'flashcard_study_sessions',
   student_card_state: 'student_card_state',
   student_deck_notes: 'student_deck_notes',
+  flashcard_reports: 'flashcard_reports',
 
   writing_prompts: 'writing_prompts',
   writing_prompt_assignments: 'writing_prompt_assignments',

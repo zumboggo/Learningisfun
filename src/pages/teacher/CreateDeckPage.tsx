@@ -36,6 +36,7 @@ export function CreateDeckPage() {
   const [back, setBack] = useState('');
   const [hint, setHint] = useState('');
   const [tags, setTags] = useState('');
+  const [cardFormat, setCardFormat] = useState<'basic'|'reverse'|'cloze'>('basic');
 
   const [showCsvImport, setShowCsvImport] = useState(false);
   const [showPasteImport, setShowPasteImport] = useState(false);
@@ -58,13 +59,17 @@ export function CreateDeckPage() {
   );
 
   const addManualCard = () => {
-    if (!front.trim() || !back.trim()) return;
-    setCards(prev => [...prev, {
-      front: front.trim(),
-      back: back.trim(),
+    if (!front.trim() || (cardFormat !== 'cloze' && !back.trim())) return;
+    const clozeMatches=[...front.matchAll(/\{\{c\d+::(.*?)(?:::.*?)?\}\}/g)].map(match=>match[1]);
+    const clozeFront=front.replace(/\{\{c\d+::(.*?)(?:::.*?)?\}\}/g,'[…]');
+    const first={
+      front: cardFormat==='cloze'?clozeFront:front.trim(),
+      back: cardFormat==='cloze'?`${front.replace(/\{\{c\d+::(.*?)(?:::.*?)?\}\}/g,'**$1**')}\n\n${back}`.trim():back.trim(),
       hint: hint.trim(),
       tags: parseTags(tags),
-    }]);
+    };
+    if(cardFormat==='cloze'&&!clozeMatches.length)return;
+    setCards(prev => [...prev, first, ...(cardFormat==='reverse'?[{...first,front:first.back,back:first.front}]:[])]);
     setFront('');
     setBack('');
     setHint('');
@@ -238,6 +243,7 @@ export function CreateDeckPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-2 mb-3 sm:grid-cols-2">
+            <select value={cardFormat} onChange={event=>setCardFormat(event.target.value as typeof cardFormat)} className="rounded-lg border px-3 py-2 text-sm sm:col-span-2"><option value="basic">Basic · front → back</option><option value="reverse">Basic + reverse card</option><option value="cloze">Cloze · use {'{{c1::answer}}'}</option></select>
             <input
               value={front}
               onChange={e => setFront(e.target.value)}
@@ -247,7 +253,7 @@ export function CreateDeckPage() {
             <input
               value={back}
               onChange={e => setBack(e.target.value)}
-              placeholder="Back Markdown"
+              placeholder={cardFormat==='cloze'?'Optional extra explanation':'Back Markdown'}
               className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
             />
             <input

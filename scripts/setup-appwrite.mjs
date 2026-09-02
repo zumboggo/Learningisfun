@@ -358,6 +358,12 @@ const COLLECTIONS = [
     ],
   },
   {
+    id: 'flashcard_reports',
+    name: 'Flashcard Reports',
+    attributes: [S('cardId',{required:true}),S('deckId',{required:true}),S('classId',{required:true}),S('studentId',{required:true}),TXT('reason',{required:true}),ENUM('status',['open','resolved'],{required:true}),DATE('createdAt',{required:true})],
+    indexes: [{key:'idx_classId',type:'key',attributes:['classId']},{key:'idx_cardId',type:'key',attributes:['cardId']},{key:'idx_status',type:'key',attributes:['status']}],
+  },
+  {
     id: 'writing_prompts',
     name: 'Writing Prompts',
     attributes: [

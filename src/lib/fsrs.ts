@@ -14,8 +14,9 @@ export function createNewCard(): Card {
   return createEmptyCard(new Date());
 }
 
-export function scheduleReview(card: Card, rating: Rating): RecordLogItem {
-  const result = f.repeat(card, new Date());
+export function scheduleReview(card: Card, rating: Rating, requestRetention = 0.9): RecordLogItem {
+  const scheduler = requestRetention === 0.9 ? f : fsrs({ request_retention: Math.min(0.97, Math.max(0.8, requestRetention)), maximum_interval: 365, enable_short_term: true, learning_steps: ['1m', '5m'], relearning_steps: ['1m', '5m'] });
+  const result = scheduler.repeat(card, new Date());
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (result as any)[rating];
 }

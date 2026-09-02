@@ -6,6 +6,11 @@ import { db } from '@/db/schema';
 import {
   buildFlashcardQueue,
   filterCustomStudyCards,
+  getDeckStudySettings,
+  reportFlashcard,
+  retentionForIntensity,
+  setCardStudyPreference,
+  undoLastCardReview,
   finishFlashcardStudySession,
   getDeckProgress,
   reviewCard,
@@ -13,6 +18,7 @@ import {
   type FlashcardQueueMode,
 } from '@/services/flashcard.service';
 import { Button } from '@/components/common/Button';
+import { Modal } from '@/components/common/Modal';
 import { Markdown } from '@/components/common/Markdown';
 import { shuffle } from '@/services/class-picker';
 import { useSwipeCard, type SwipeDir } from '@/hooks/useSwipeCard';
@@ -86,6 +92,10 @@ export function FlashcardReviewPage() {
   const [sessionReviewRemaining, setSessionReviewRemaining] = useState(0);
   const [sessionFinished, setSessionFinished] = useState(0);
   const [sessionCardCount, setSessionCardCount] = useState(0);
+  const [lastReviewedCard, setLastReviewedCard] = useState<FlashcardCard | null>(null);
+  const [reportingCard, setReportingCard] = useState<FlashcardCard | null>(null);
+  const [reportReason, setReportReason] = useState('');
+  const [controlMessage, setControlMessage] = useState('');
   const cardStartedAt = useRef(Date.now());
   const activeSecondsRef = useRef(0);
   const studySessionIdRef = useRef('');
@@ -197,11 +207,14 @@ export function FlashcardReviewPage() {
     // itself is still timed, so the minutes still count towards their streak.
     let needsMorePractice = false;
     if (queueMode !== 'unlimited') {
+      const deckSettings = await getDeckStudySettings(user.$id, currentCard.deckId);
       const nextState = await reviewCard(user.$id, currentCard.$id, currentCard.deckId, rating, {
         classId: classByDeck?.[currentCard.deckId] || null,
         sessionId: studySessionId,
         elapsedSeconds,
+        requestRetention: retentionForIntensity(deckSettings.intensity),
       });
+      setLastReviewedCard(currentCard);
       needsMorePractice = nextState.intervalDays < 1;
       if (!needsMorePractice && !finishedCardIdsRef.current.has(currentCard.$id)) {
         finishedCardIdsRef.current.add(currentCard.$id);
@@ -233,6 +246,15 @@ export function FlashcardReviewPage() {
     }
   };
   const browseNext = () => { if (currentIndex >= cards.length - 1) setCurrentIndex(0); else setCurrentIndex(i=>i+1); setShowAnswer(false); };
+  const skipCurrentCard = async (kind:'bury'|'suspend') => {
+    if(!user||!currentCard)return;
+    const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);tomorrow.setHours(0,0,0,0);
+    await setCardStudyPreference(user.$id,currentCard.$id,kind==='bury'?{buriedUntil:tomorrow.toISOString()}:{suspended:true});
+    const remaining=cards.filter(card=>card.$id!==currentCard.$id);setCards(remaining);setControlMessage(kind==='bury'?'Card buried until tomorrow.':'Card suspended. You can restore it in deck settings.');
+    if(!remaining.length){await finishSession();setSessionComplete(true);}else{setCurrentIndex(index=>Math.min(index,remaining.length-1));setShowAnswer(false);}
+  };
+  const undoLast = async () => { if(!user||!lastReviewedCard)return;await undoLastCardReview(user.$id,lastReviewedCard.$id);setSessionComplete(false);setCards(current=>current.some(card=>card.$id===lastReviewedCard.$id)?current:[...current,lastReviewedCard]);setCurrentIndex(current=>Math.max(0,current-1));setReviewedCount(value=>Math.max(0,value-1));setSessionFinished(value=>Math.max(0,value-1));setShowAnswer(true);setControlMessage('Last answer undone. The previous schedule has been restored.');setLastReviewedCard(null); };
+  const sendReport = async()=>{if(!reportingCard||reportReason.trim().length<3)return;await reportFlashcard(reportingCard.$id,reportReason);setReportingCard(null);setReportReason('');setControlMessage('Card reported to your teacher.');};
 
   const handleRateRef = useRef<(rating: ReviewRating) => Promise<void>>(async () => {});
   handleRateRef.current = handleRate;
@@ -401,6 +423,7 @@ export function FlashcardReviewPage() {
         <details className="mb-6 rounded-xl border text-left"><summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-600">Review details</summary><div className="grid grid-cols-4 gap-2 border-t p-3"><RatingBreakdown label="Again" count={againCount} total={reviewedCount} color="red" /><RatingBreakdown label="Hard" count={hardCount} total={reviewedCount} color="orange" /><RatingBreakdown label="Good" count={goodCount} total={reviewedCount} color="green" /><RatingBreakdown label="Easy" count={easyCount} total={reviewedCount} color="blue" /></div></details>
 
         <div className="space-y-3">
+          {lastReviewedCard&&queueMode!=='unlimited'&&<Button onClick={()=>void undoLast()} variant="secondary" className="w-full">Undo last answer</Button>}
           <Button onClick={() => isCombined ? navigate('/decks') : setSessionStarted(false)} className="w-full">
             {isCombined ? 'Back to Cards' : 'Back to deck'}
           </Button>
@@ -446,6 +469,7 @@ export function FlashcardReviewPage() {
           style={{ width: `${queueMode === 'unlimited' ? ((currentIndex + 1) / cards.length) * 100 : (sessionFinished / Math.max(1, sessionCategoryRef.current.size)) * 100}%` }}
         />
       </div>
+      {(controlMessage||lastReviewedCard)&&<div className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600"><span>{controlMessage||'You can undo your last answer.'}</span>{lastReviewedCard&&<button className="font-bold text-blue-700" onClick={()=>void undoLast()}>Undo</button>}</div>}
 
       {currentCard && (
         <div
@@ -455,6 +479,7 @@ export function FlashcardReviewPage() {
           {...swipeHandle.handlers}
           onClick={() => { if (!showAnswer) setShowAnswer(true); }}
         >
+          {!isParent&&<div className="flex justify-end gap-3 px-4 pt-3 text-xs font-semibold text-slate-500"><button onClick={event=>{event.stopPropagation();void skipCurrentCard('bury')}}>Bury</button><button onClick={event=>{event.stopPropagation();void skipCurrentCard('suspend')}}>Suspend</button><button onClick={event=>{event.stopPropagation();setReportingCard(currentCard)}}>Report</button></div>}
           <div className="flashcard-question flex flex-1 flex-col items-center justify-center">
             <div className="flashcard-state-icon flashcard-state-icon-question" aria-hidden="true">?</div>
             <Markdown
@@ -502,6 +527,7 @@ export function FlashcardReviewPage() {
           </div>
         </div>
       )}
+      {reportingCard&&<Modal open onClose={()=>setReportingCard(null)} title="Report a card"><div className="space-y-4"><p className="text-sm text-slate-600">Tell your teacher what is incorrect, unclear, duplicated, or missing.</p><div className="rounded-lg bg-slate-50 p-3 text-sm font-medium">{reportingCard.front}</div><textarea autoFocus rows={4} className="w-full rounded-lg border px-3 py-2" value={reportReason} onChange={event=>setReportReason(event.target.value)} /><Button className="w-full" disabled={reportReason.trim().length<3} onClick={()=>void sendReport()}>Send report</Button></div></Modal>}
     </div>
   );
 }

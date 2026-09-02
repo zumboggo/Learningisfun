@@ -274,6 +274,49 @@ export async function getDeckCards(deckId: string): Promise<FlashcardCard[]> {
   return db.flashcard_cards.where('deckId').equals(deckId).sortBy('sortOrder');
 }
 
+export interface DeckStudySettings { newLimit: number; reviewLimit: number; intensity: 'gentle'|'balanced'|'intensive'; order: 'due'|'random' }
+export const DEFAULT_DECK_STUDY_SETTINGS: DeckStudySettings = { newLimit: 10, reviewLimit: 50, intensity: 'balanced', order: 'due' };
+export async function getDeckStudySettings(userId: string, deckId: string): Promise<DeckStudySettings> {
+  const row = await db.app_metadata.get(`deckStudySettings:${userId}:${deckId}`);
+  try { return { ...DEFAULT_DECK_STUDY_SETTINGS, ...JSON.parse(row?.value || '{}') } as DeckStudySettings; } catch { return DEFAULT_DECK_STUDY_SETTINGS; }
+}
+export async function saveDeckStudySettings(userId: string, deckId: string, settings: DeckStudySettings): Promise<void> {
+  await db.app_metadata.put({ key:`deckStudySettings:${userId}:${deckId}`, value:JSON.stringify(settings) });
+}
+export const retentionForIntensity = (intensity: DeckStudySettings['intensity']) => intensity === 'gentle' ? 0.85 : intensity === 'intensive' ? 0.95 : 0.9;
+
+export async function setCardStudyPreference(userId: string, cardId: string, patch: { buriedUntil?: string|null; suspended?: boolean }): Promise<void> {
+  const id = `${userId}_${cardId}`;
+  const current = await db.student_deck_notes.get(id);
+  await db.student_deck_notes.put({ $id:id, userId, cardId, personalNote:current?.personalNote || '', personalExample:current?.personalExample || '', buriedUntil: patch.buriedUntil === undefined ? current?.buriedUntil : patch.buriedUntil, suspended: patch.suspended === undefined ? current?.suspended : patch.suspended });
+}
+
+export async function undoLastCardReview(userId: string, cardId: string): Promise<StudentCardState | null> {
+  const reviews = await db.card_reviews.where('userId').equals(userId).and(review => review.cardId === cardId).toArray();
+  const latest = reviews.sort((a,b)=>b.reviewAt.localeCompare(a.reviewAt))[0];
+  if (!latest) return null;
+  const restored = getCardFromState(latest.previousState);
+  const current = await db.student_card_state.get(`${userId}_${cardId}`);
+  const state: StudentCardState = { $id:`${userId}_${cardId}`, userId, cardId, deckId:latest.deckId, fsrsState:latest.previousState, dueDate:getNextDueDate(restored).toISOString(), status:getCardStatus(restored), ...getCardReviewFields(restored), lastReviewAt:current?.lastReviewAt || '', reviewCount:Math.max(0,(current?.reviewCount || 1)-1) };
+  await db.student_card_state.put(state);
+  await db.card_reviews.delete(latest.$id);
+  const queued = await db.sync_queue.where('entityId').equals(latest.$id).toArray();
+  if (queued.length) await db.sync_queue.bulkDelete(queued.flatMap(row => row.id === undefined ? [] : [row.id]));
+  const events = await db.flashcard_review_events.where('userId').equals(userId).and(event => event.cardId === cardId).toArray();
+  const latestEvent = events.sort((a,b)=>b.reviewedAt.localeCompare(a.reviewedAt))[0];
+  if (latestEvent) await db.flashcard_review_events.delete(latestEvent.$id);
+  return state;
+}
+
+export async function reportFlashcard(cardId: string, reason: string): Promise<void> {
+  await executeLearningContent({ action:'reportFlashcard', cardId, reason:reason.trim() });
+}
+
+export async function listFlashcardReports(classId: string) {
+  return executeLearningContent<{reports:Array<{id:string;cardId:string;deckTitle:string;front:string;studentName:string;reason:string;createdAt:string}>}>({ action:'listFlashcardReports', classId });
+}
+export async function resolveFlashcardReport(reportId:string):Promise<void>{await executeLearningContent({action:'resolveFlashcardReport',reportId});}
+
 export interface EditableDeckCard {
   id?: string;
   front: string;
@@ -320,14 +363,14 @@ export async function reviewCard(
   cardId: string,
   deckId: string,
   rating: ReviewRating,
-  context: { classId?: string | null; sessionId?: string; elapsedSeconds?: number } = {},
+  context: { classId?: string | null; sessionId?: string; elapsedSeconds?: number; requestRetention?: number } = {},
 ): Promise<StudentCardState> {
   const stateRecord = await db.student_card_state.get(`${userId}_${cardId}`);
   const fsrsCard = stateRecord ? getCardFromState(stateRecord.fsrsState) : createNewCard();
   const previousState = cardToJson(fsrsCard);
 
   const fsrsRating = toFsrsRating(rating);
-  const result = scheduleReview(fsrsCard, fsrsRating);
+  const result = scheduleReview(fsrsCard, fsrsRating, context.requestRetention || 0.9);
   const newCard = result.card;
   const newState = cardToJson(newCard);
   const now = getTimestamp();
@@ -439,16 +482,20 @@ export async function buildFlashcardQueue(
   mode: FlashcardQueueMode = 'mixed',
   limit = 30,
 ): Promise<FlashcardCard[]> {
-  const [cards, states] = await Promise.all([
+  const [cards, states, preferences, settings] = await Promise.all([
     getDeckCards(deckId),
     db.student_card_state.where('userId').equals(userId).and(s => s.deckId === deckId).toArray(),
+    db.student_deck_notes.where('userId').equals(userId).toArray(),
+    getDeckStudySettings(userId, deckId),
   ]);
-  if (mode === 'all') return cards.slice(0, limit);
+  const now = Date.now();
+  const preferenceByCard = new Map(preferences.map(row => [row.cardId,row]));
+  const availableCards = cards.filter(card => { const preference=preferenceByCard.get(card.$id);return !preference?.suspended && (!preference?.buriedUntil || Date.parse(preference.buriedUntil) <= now); });
+  if (mode === 'all') return (settings.order === 'random' ? [...availableCards].sort(()=>Math.random()-.5) : availableCards).slice(0, limit);
 
   const stateByCard = new Map(states.map(s => [s.cardId, s]));
-  const now = Date.now();
   const learnAhead = now + 5 * 60 * 1000;
-  const due = cards
+  const due = availableCards
     .filter(card => {
       const state = stateByCard.get(card.$id);
       if (!state) return false;
@@ -461,9 +508,9 @@ export async function buildFlashcardQueue(
       const bDue = Date.parse(stateByCard.get(b.$id)?.dueDate || '');
       return (Number.isFinite(aDue) ? aDue : 0) - (Number.isFinite(bDue) ? bDue : 0);
     });
-  const fresh = cards.filter(card => !stateByCard.has(card.$id));
+  const fresh = availableCards.filter(card => !stateByCard.has(card.$id)).slice(0, settings.newLimit);
 
-  if (mode === 'due') return due.slice(0, limit);
+  if (mode === 'due') return due.slice(0, Math.min(limit, settings.reviewLimit));
   if (mode === 'new') return fresh.slice(0, limit);
 
   const seen = new Set<string>();

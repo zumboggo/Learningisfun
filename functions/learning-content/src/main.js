@@ -485,6 +485,26 @@ export default async ({ req, res, error }) => {
       return res.json({ deletedDeckId: deck.$id });
     }
 
+    if (body.action === 'reportFlashcard') {
+      if (profile.role !== 'student') return res.json({ error:'Student role required' },403);
+      const card=await db.getDocument(databaseId,'flashcard_cards',body.cardId),deck=await db.getDocument(databaseId,'flashcard_decks',card.deckId);
+      const assignments=await db.listDocuments(databaseId,'deck_assignments',[Query.equal('deckId',deck.$id),Query.limit(500)]);
+      const assignment=assignments.documents.find(row=>memberClassIds.has(row.classId));
+      const reason=String(body.reason||'').trim().slice(0,2000);
+      if(!assignment||reason.length<3)return res.json({error:'Enter a reason for a card assigned to your class'},400);
+      await db.createDocument(databaseId,'flashcard_reports',ID.unique(),{cardId:card.$id,deckId:deck.$id,classId:assignment.classId,studentId:userId,reason,status:'open',createdAt:new Date().toISOString()});
+      return res.json({ok:true});
+    }
+
+    if (body.action === 'listFlashcardReports') {
+      const targetClass=await db.getDocument(databaseId,'classes',body.classId);
+      if(profile.role!=='teacher'||targetClass.teacherId!==userId)return res.json({error:'Not the class owner'},403);
+      const result=await db.listDocuments(databaseId,'flashcard_reports',[Query.equal('classId',body.classId),Query.equal('status','open'),Query.limit(500)]);
+      const reports=[];for(const row of result.documents){const [card,deck,student]=await Promise.all([db.getDocument(databaseId,'flashcard_cards',row.cardId),db.getDocument(databaseId,'flashcard_decks',row.deckId),db.getDocument(databaseId,'users',row.studentId)]);reports.push({id:row.$id,cardId:row.cardId,deckTitle:deck.title,front:card.front,studentName:student.name,reason:row.reason,createdAt:row.createdAt});}
+      return res.json({reports});
+    }
+    if(body.action==='resolveFlashcardReport'){const report=await db.getDocument(databaseId,'flashcard_reports',body.reportId),targetClass=await db.getDocument(databaseId,'classes',report.classId);if(profile.role!=='teacher'||targetClass.teacherId!==userId)return res.json({error:'Not the class owner'},403);await db.updateDocument(databaseId,'flashcard_reports',report.$id,{status:'resolved'});return res.json({ok:true});}
+
     if (body.action === 'startQuizAttempt') {
       if (profile.role !== 'student') return res.json({ error: 'Student role required' }, 403);
       const quiz = await db.getDocument(databaseId, 'quizzes', body.quizId);

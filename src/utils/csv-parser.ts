@@ -142,7 +142,10 @@ export function parseCsvContent(
   content: string,
   mapping: CsvMapping | null,
 ): CsvPreview {
-  const records = parseCsvRows(content.replace(/^\uFEFF/, ''));
+  const cleaned = content.replace(/^\uFEFF/, '');
+  const firstLine = cleaned.split(/\r?\n/, 1)[0] || '';
+  const delimiter = (firstLine.match(/\t/g)?.length || 0) > (firstLine.match(/,/g)?.length || 0) ? '\t' : ',';
+  const records = parseCsvRows(cleaned, delimiter);
   if (records.length === 0) {
     return { headers: [], rows: [], totalRows: 0, invalidRows: 0, emptyRows: 0, duplicates: 0, longFields: 0 };
   }

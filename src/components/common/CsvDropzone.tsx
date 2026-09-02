@@ -63,7 +63,7 @@ export function CsvDropzone({ file, onFile, hint }: CsvDropzoneProps) {
           </>
         ) : (
           <>
-            <p className="mt-3 text-sm font-medium text-gray-700">Drop your CSV file here</p>
+            <p className="mt-3 text-sm font-medium text-gray-700">Drop a CSV or TSV file here</p>
             <p className="mt-1 text-xs text-gray-500">or click to choose a file</p>
           </>
         )}
@@ -74,7 +74,7 @@ export function CsvDropzone({ file, onFile, hint }: CsvDropzoneProps) {
       <input
         ref={inputRef}
         type="file"
-        accept=".csv,.txt"
+        accept=".csv,.tsv,.txt"
         className="hidden"
         onChange={e => {
           take(e.target.files);
