@@ -1486,6 +1486,12 @@ input, textarea, select, button {
 .rich-notes-editor table { width: 100%; border-collapse: collapse; font-size: .8em; }
 .rich-notes-editor th,
 .rich-notes-editor td { border: 1px solid #cbd5e1; padding: .4em .6em; text-align: left; }
+
+/* Anonymous writing-prompt responses should read like paragraphs, not slide titles. */
+[class~="min-h-80"][class~="text-center"] > p.whitespace-pre-wrap {
+  width: 100%;
+  text-align: left;
+}
 @media print {
   @page { size: A4 portrait; margin: 7mm; }
   body { background: white !important; }
