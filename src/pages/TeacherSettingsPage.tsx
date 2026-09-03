@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { getApiKey, setApiKey, testApiKey } from '@/services/ai.service';
 import { classLabel } from '@/utils/helpers';
 import type { TeacherSettings, Class } from '@/types';
+import { listManagedUsers,resetManagedUserAccount,updateManagedUserRole,type ManagedUser } from '@/services/user-management.service';
 
 export function TeacherSettingsPage() {
   const { user } = useAuth();
@@ -57,6 +58,8 @@ export function TeacherSettingsPage() {
 
       <ApiKeyCard />
 
+      <UserAccountsCard />
+
       {classes.map(cls => (
         <ClassSettingsCard
           key={cls.$id}
@@ -66,6 +69,16 @@ export function TeacherSettingsPage() {
       ))}
     </div>
   );
+}
+
+function UserAccountsCard(){
+  const [users,setUsers]=useState<ManagedUser[]>([]),[search,setSearch]=useState(''),[loading,setLoading]=useState(true),[message,setMessage]=useState('');
+  const load=async()=>{setLoading(true);try{setUsers((await listManagedUsers()).users)}catch(cause){setMessage(cause instanceof Error?cause.message:'Could not load users.')}finally{setLoading(false)}};
+  useState(()=>{void load()});
+  const visible=users.filter(user=>`${user.name} ${user.email} ${user.classNames.join(' ')}`.toLowerCase().includes(search.toLowerCase()));
+  const changeRole=async(user:ManagedUser,role:'student'|'parent')=>{setMessage('');try{await updateManagedUserRole(user.$id,role);await load();setMessage(`${user.name} is now a ${role}.`)}catch(cause){setMessage(cause instanceof Error?cause.message:'Could not change role.')}};
+  const reset=async(user:ManagedUser)=>{if(!window.confirm(`Permanently reset ${user.name} (${user.email})? This is only allowed when the account has no student work.`))return;setMessage('');try{await resetManagedUserAccount(user.$id);setUsers(old=>old.filter(item=>item.$id!==user.$id));setMessage(`${user.name}'s account was removed. They can register again.`)}catch(cause){setMessage(cause instanceof Error?cause.message:'Could not reset account.')}};
+  return <Card><div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-lg font-semibold">Student and parent accounts</h2><p className="mt-1 text-xs text-gray-500">Correct a mistaken role, or reset a new account that has no submitted work.</p></div><input className="rounded-lg border px-3 py-2 text-sm" placeholder="Search name, email, or class" value={search} onChange={event=>setSearch(event.target.value)}/></div>{message&&<p className="mt-3 rounded-lg bg-blue-50 p-2 text-sm text-blue-800">{message}</p>}<div className="mt-4 max-h-96 divide-y overflow-auto rounded-lg border">{loading?<p className="p-4 text-sm text-gray-500">Loading accounts…</p>:visible.map(user=><div key={user.$id} className="flex flex-wrap items-center justify-between gap-3 p-3"><div className="min-w-0"><strong className="block truncate text-sm">{user.name}</strong><span className="block truncate text-xs text-gray-500">{user.email}</span><span className="text-xs text-gray-400">{user.classNames.join(' · ')||'Not in a class'} · {user.verified?'verified email':'unverified email'}</span></div><div className="flex items-center gap-2"><select aria-label={`Role for ${user.name}`} className="rounded-lg border px-2 py-1.5 text-xs" value={user.role==='parent'?'parent':'student'} onChange={event=>void changeRole(user,event.target.value as 'student'|'parent')}><option value="student">Student</option><option value="parent">Parent</option></select><Button size="sm" variant="danger" onClick={()=>void reset(user)}>Reset account</Button></div></div>)}{!loading&&!visible.length&&<p className="p-4 text-sm text-gray-500">No matching accounts.</p>}</div><p className="mt-3 text-xs text-gray-500">For safety, accounts with submissions, reviews, votes, annotations, discussions, quiz attempts, or Copywork cannot be reset. Change their role instead.</p></Card>;
 }
 
 function ClassSettingsCard({

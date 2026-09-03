@@ -1,4 +1,4 @@
-import { Client, Databases, ID, Query } from 'node-appwrite';
+import { Client, Databases, ID, Query, Users } from 'node-appwrite';
 import { createHash } from 'node:crypto';
 
 const studentCollections = new Set(['quiz_attempts', 'writing_submissions', 'peer_reviews', 'discussion_questions', 'discussion_answers', 'question_votes', 'text_annotations', 'text_discussion_posts', 'text_discussion_votes']);
@@ -124,11 +124,50 @@ export default async ({ req, res, error }) => {
     if (!userId) return res.json({ error: 'Authentication required' }, 401);
     const body = JSON.parse(req.bodyText || '{}');
     const client = new Client().setEndpoint(process.env.APPWRITE_ENDPOINT).setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID).setKey(process.env.APPWRITE_API_KEY);
-    const db = new Databases(client), databaseId = process.env.APPWRITE_DATABASE_ID || 'main';
+    const db = new Databases(client), users = new Users(client), databaseId = process.env.APPWRITE_DATABASE_ID || 'main';
     const profile = await db.getDocument(databaseId, 'users', userId);
     const memberships = await db.listDocuments(databaseId, 'class_members', [Query.equal('userId', userId), Query.limit(500)]);
     const nowTime = Date.now();
     const memberClassIds = new Set(memberships.documents.filter(row => row.role !== 'substitute' || (row.expiresAt && new Date(row.expiresAt).getTime() > nowTime)).map(row => row.classId));
+
+    if (body.action === 'listManagedUsers') {
+      if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
+      const [profiles, memberRows, classes, accounts] = await Promise.all([
+        db.listDocuments(databaseId, 'users', [Query.orderAsc('name'), Query.limit(500)]),
+        db.listDocuments(databaseId, 'class_members', [Query.limit(5000)]),
+        db.listDocuments(databaseId, 'classes', [Query.equal('teacherId', userId), Query.limit(500)]),
+        users.list({queries:[Query.limit(500)]}),
+      ]);
+      const owned = new Map(classes.documents.map(row=>[row.$id, row.name===row.courseName?row.name:`${row.courseName} · ${row.name}`]));
+      const accountById = new Map(accounts.users.map(row=>[row.$id,row]));
+      const rows = profiles.documents.filter(row=>row.role!=='teacher').map(row=>{
+        const account=accountById.get(row.$id),classNames=memberRows.documents.filter(member=>member.userId===row.$id&&owned.has(member.classId)).map(member=>owned.get(member.classId));
+        return {$id:row.$id,name:row.name,email:row.email,role:row.role,classNames:[...new Set(classNames)],hasLogin:Boolean(account),verified:Boolean(account?.emailVerification)};
+      });
+      return res.json({ users: rows });
+    }
+
+    if (body.action === 'updateManagedUserRole') {
+      if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
+      const target=await db.getDocument(databaseId,'users',body.targetUserId),role=body.role;
+      if(target.role==='teacher'||!['student','parent'].includes(role))return res.json({error:'That role cannot be changed here'},403);
+      const targetMemberships=await db.listDocuments(databaseId,'class_members',[Query.equal('userId',target.$id),Query.limit(500)]),owned=await db.listDocuments(databaseId,'classes',[Query.equal('teacherId',userId),Query.limit(500)]),ownedIds=new Set(owned.documents.map(row=>row.$id));
+      if(targetMemberships.documents.some(row=>!ownedIds.has(row.classId)))return res.json({error:'This account belongs to a class you do not manage'},403);
+      for(const member of targetMemberships.documents)await db.updateDocument(databaseId,'class_members',member.$id,{role});
+      const updated=await db.updateDocument(databaseId,'users',target.$id,{role});return res.json({user:clean(updated)});
+    }
+
+    if (body.action === 'resetManagedUserAccount') {
+      if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
+      const target=await db.getDocument(databaseId,'users',body.targetUserId);if(target.role==='teacher')return res.json({error:'Teacher accounts cannot be reset here'},403);
+      const checks=[['quiz_attempts','userId'],['writing_submissions','authorId'],['peer_reviews','reviewerId'],['discussion_questions','authorId'],['discussion_answers','authorId'],['question_votes','userId'],['text_annotations','authorId'],['text_discussion_posts','authorId'],['text_discussion_votes','userId'],['copywork_entries','userId']];
+      for(const [collection,field] of checks){const result=await db.listDocuments(databaseId,collection,[Query.equal(field,target.$id),Query.limit(1)]);if(result.total)return res.json({error:'This account has student work. Change its role instead of resetting it.'},409);}
+      const targetMemberships=await db.listDocuments(databaseId,'class_members',[Query.equal('userId',target.$id),Query.limit(500)]),owned=await db.listDocuments(databaseId,'classes',[Query.equal('teacherId',userId),Query.limit(500)]),ownedIds=new Set(owned.documents.map(row=>row.$id));if(targetMemberships.documents.some(row=>!ownedIds.has(row.classId)))return res.json({error:'This account belongs to a class you do not manage'},403);
+      await users.delete({userId:target.$id});
+      for(const member of targetMemberships.documents)await db.deleteDocument(databaseId,'class_members',member.$id);
+      await db.deleteDocument(databaseId,'users',target.$id);
+      return res.json({deleted:true});
+    }
 
     if (body.action === 'readCopywork') {
       if (profile.role !== 'student') return res.json({ error: 'Student role required' }, 403);
