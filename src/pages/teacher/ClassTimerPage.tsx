@@ -6,7 +6,8 @@ import { db } from '@/db/schema';
 export function ClassTimerPage() {
   const { classId } = useParams<{ classId: string }>();
   const [searchParams] = useSearchParams();
-  const initialMinutes = Math.min(30, Math.max(1, Number(searchParams.get('minutes')) || 5));
+  const suppliedMinutes = Number(searchParams.get('minutes'));
+  const initialMinutes = Math.min(90, Math.max(0, Number.isFinite(suppliedMinutes) ? suppliedMinutes : 5));
   const initialSeconds = Math.round(initialMinutes * 60);
   const [remaining, setRemaining] = useState(initialSeconds);
   const [running, setRunning] = useState(false);

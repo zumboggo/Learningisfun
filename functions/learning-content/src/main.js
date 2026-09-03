@@ -130,6 +130,30 @@ export default async ({ req, res, error }) => {
     const nowTime = Date.now();
     const memberClassIds = new Set(memberships.documents.filter(row => row.role !== 'substitute' || (row.expiresAt && new Date(row.expiresAt).getTime() > nowTime)).map(row => row.classId));
 
+    if (body.action === 'readCopywork') {
+      if (profile.role !== 'student') return res.json({ error: 'Student role required' }, 403);
+      const result = await db.listDocuments(databaseId, 'copywork_entries', [Query.equal('userId', userId), Query.orderDesc('createdAt'), Query.limit(500)]);
+      return res.json({ entries: result.documents.map(clean) });
+    }
+
+    if (body.action === 'addCopywork') {
+      if (profile.role !== 'student') return res.json({ error: 'Student role required' }, 403);
+      const content = String(body.content || '').trim(), sourceTitle = String(body.sourceTitle || '').trim(), sourceUrl = String(body.sourceUrl || '').trim();
+      if (!content || content.length > 50000) return res.json({ error: 'Copywork must be between 1 and 50,000 characters' }, 400);
+      if (sourceTitle.length > 500 || sourceUrl.length > 2000 || (sourceUrl && !/^https?:\/\//i.test(sourceUrl))) return res.json({ error: 'The source details are invalid' }, 400);
+      const now = new Date().toISOString();
+      const entry = await db.createDocument(databaseId, 'copywork_entries', ID.unique(), { userId, content, sourceTitle, sourceUrl, createdAt: now, updatedAt: now });
+      return res.json({ entry: clean(entry) });
+    }
+
+    if (body.action === 'deleteCopywork') {
+      if (profile.role !== 'student') return res.json({ error: 'Student role required' }, 403);
+      const entry = await db.getDocument(databaseId, 'copywork_entries', body.entryId);
+      if (entry.userId !== userId) return res.json({ error: 'Not your copywork' }, 403);
+      await db.deleteDocument(databaseId, 'copywork_entries', entry.$id);
+      return res.json({ deleted: true });
+    }
+
     if (body.action === 'readPlanner') {
       if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
       const [sourceResult, planResult] = await Promise.all([

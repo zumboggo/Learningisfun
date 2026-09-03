@@ -25,6 +25,7 @@ import { DeckMakeup } from '@/components/student/DeckMakeup';
 import type { Class, ClassSession, DeckAssignment, FlashcardDeck, FlashcardReviewEvent, FlashcardStudySession } from '@/types';
 import { nextNicknameChangeAt, nicknameValidationError, updateNickname } from '@/services/nickname.service';
 import { ErrorLogPanel } from '@/components/student/ErrorLogPanel';
+import { CopyworkPanel } from '@/components/student/CopyworkPanel';
 
 interface DeckAction {
   assignment: DeckAssignment;
@@ -525,6 +526,8 @@ function StudentDashboard() {
       </section>
 
       <ErrorLogPanel userId={user!.$id} />
+
+      {user?.role === 'student' && <CopyworkPanel />}
 
       <details className="student-progress-details">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">

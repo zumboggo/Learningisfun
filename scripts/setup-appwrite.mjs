@@ -40,6 +40,22 @@ const DATE = (key, opts = {}) => S(key, { size: 64, ...opts });
 
 const COLLECTIONS = [
   {
+    id: 'copywork_entries',
+    name: 'Copywork Entries',
+    attributes: [
+      S('userId', { required: true }),
+      TXT('content', { required: true }),
+      S('sourceTitle', { size: 500, required: false }),
+      S('sourceUrl', { size: 2000, required: false }),
+      DATE('createdAt', { required: true }),
+      DATE('updatedAt', { required: true }),
+    ],
+    indexes: [
+      { key: 'idx_userId', type: 'key', attributes: ['userId'] },
+      { key: 'idx_createdAt', type: 'key', attributes: ['createdAt'] },
+    ],
+  },
+  {
     id: 'users',
     name: 'Users',
     attributes: [

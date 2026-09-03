@@ -603,3 +603,13 @@ export interface TextDiscussionVote {
   updatedAt: string;
   syncStatus: SyncStatus;
 }
+
+export interface CopyworkEntry {
+  $id: string;
+  userId: string;
+  content: string;
+  sourceTitle?: string;
+  sourceUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
