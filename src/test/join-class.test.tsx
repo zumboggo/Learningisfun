@@ -9,8 +9,9 @@ const register = vi.fn();
 const joinClass = vi.fn();
 const findClassByJoinCode = vi.fn();
 const findClassByParentCode = vi.fn();
+const findClassBySubstituteCode = vi.fn();
 
-let currentUser: { $id: string; name: string } | null = null;
+let currentUser: { $id: string; name: string; role?: string } | null = null;
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
@@ -25,6 +26,7 @@ vi.mock('@/services/class.service', () => ({
   joinClass: (...args: unknown[]) => joinClass(...args),
   findClassByJoinCode: (...args: unknown[]) => findClassByJoinCode(...args),
   findClassByParentCode: (...args: unknown[]) => findClassByParentCode(...args),
+  findClassBySubstituteCode: (...args: unknown[]) => findClassBySubstituteCode(...args),
 }));
 
 async function renderPage(path = '/join/ABC123') {
@@ -49,6 +51,7 @@ describe('JoinClassPage', () => {
       courseName: 'English 10',
     });
     findClassByParentCode.mockResolvedValue(null);
+    findClassBySubstituteCode.mockResolvedValue(null);
     register.mockResolvedValue({ $id: 'student-1', name: 'Sam' });
     login.mockResolvedValue({ $id: 'student-2', name: 'Alex' });
     joinClass.mockResolvedValue({ $id: 'class-1' });
@@ -56,13 +59,13 @@ describe('JoinClassPage', () => {
 
   it('prefills the code from the URL and previews the class', async () => {
     await renderPage();
-    expect(screen.getByLabelText('Class code')).toHaveValue('ABC123');
+    expect(screen.getByLabelText('Student class code')).toHaveValue('ABC123');
     await waitFor(() => expect(screen.getByText('English 10')).toBeInTheDocument());
   });
 
   it('accepts the code from a query string too', async () => {
     await renderPage('/join?code=xyz789');
-    expect(screen.getByLabelText('Class code')).toHaveValue('XYZ789');
+    expect(screen.getByLabelText('Student class code')).toHaveValue('XYZ789');
   });
 
   it('creates an account and enrols in one submit', async () => {
@@ -156,7 +159,7 @@ describe('JoinClassPage', () => {
   it('warns when the code matches no class', async () => {
     findClassByJoinCode.mockResolvedValue(null);
     await renderPage();
-    expect(await screen.findByText(/couldn't find that code/)).toBeInTheDocument();
+    expect(await screen.findByText(/couldn't preview that student code/)).toBeInTheDocument();
   });
 
   it('offers a one-click join to a student who is already signed in', async () => {
@@ -174,12 +177,23 @@ describe('JoinClassPage', () => {
   });
 
   it('creates a read-only parent account when a parent code is used', async () => {
-    findClassByJoinCode.mockResolvedValue(null);
     findClassByParentCode.mockResolvedValue({ $id:'class-1',name:'Period 3',courseName:'English 10' });
     const user=userEvent.setup(); await renderPage();
-    expect(await screen.findByText(/parent observer/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button',{name:'Parent observer'}));
+    expect(await screen.findByText(/Joining .* as a parent observer/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Parent code')).toHaveValue('ABC123');
     await user.type(screen.getByLabelText('Nickname'),'Pat'); await user.type(screen.getByLabelText('Email'),'pat@example.com'); await user.type(screen.getByLabelText('Password'),'password123'); await user.click(screen.getByRole('button',{name:'Create account & join'}));
     await waitFor(()=>expect(register).toHaveBeenCalledWith('pat@example.com','password123','Pat','parent'));
     expect(joinClass).toHaveBeenCalledWith('student-1','ABC123','parent');
+  });
+
+  it('creates a temporary substitute account when a substitute code is used', async () => {
+    findClassBySubstituteCode.mockResolvedValue({ $id:'class-1',name:'Period 3',courseName:'English 10' });
+    const user=userEvent.setup(); await renderPage();
+    await user.click(screen.getByRole('button',{name:'Substitute'}));
+    expect(await screen.findByText(/temporary substitute/)).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Nickname'),'Ms Lee'); await user.type(screen.getByLabelText('Email'),'lee@example.com'); await user.type(screen.getByLabelText('Password'),'password123'); await user.click(screen.getByRole('button',{name:'Create account & join'}));
+    await waitFor(()=>expect(register).toHaveBeenCalledWith('lee@example.com','password123','Ms Lee','substitute'));
+    expect(joinClass).toHaveBeenCalledWith('student-1','ABC123','substitute');
   });
 });

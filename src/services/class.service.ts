@@ -135,8 +135,21 @@ export async function findClassByParentCode(parentCode: string): Promise<Class |
   } catch { return null; }
 }
 
-export async function joinClass(userId: string, joinCode: string, role: 'student' | 'parent' = 'student'): Promise<Class | null> {
-  const cls = role === 'parent' ? await findClassByParentCode(joinCode) : await findClassByJoinCode(joinCode);
+export async function findClassBySubstituteCode(substituteCode: string): Promise<Class | null> {
+  const valid = (value: Class) => value.substituteCode === substituteCode && value.substituteCodeActive && Boolean(value.substituteExpiresAt) && new Date(value.substituteExpiresAt!).getTime() > Date.now() && value.status === 'active';
+  const local = (await db.classes.toArray()).find(valid);
+  if (local) return local;
+  try {
+    const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.classes, [Query.equal('substituteCode', substituteCode), Query.equal('substituteCodeActive', true), Query.equal('status', 'active')]);
+    const doc = result.documents.find(row => row.substituteExpiresAt && new Date(row.substituteExpiresAt).getTime() > Date.now());
+    if (!doc) return null;
+    const cls: Class = { $id:doc.$id,name:doc.name,courseName:doc.courseName,schoolYear:doc.schoolYear,teacherId:doc.teacherId,joinCode:doc.joinCode,joinCodeActive:doc.joinCodeActive,parentCode:doc.parentCode||'',parentCodeActive:Boolean(doc.parentCodeActive),substituteCode:doc.substituteCode||'',substituteCodeActive:Boolean(doc.substituteCodeActive),substituteExpiresAt:doc.substituteExpiresAt||null,linksJson:(doc.linksJson as string)||'[]',status:doc.status,createdAt:doc.createdAt };
+    await db.classes.put(cls); return cls;
+  } catch { return null; }
+}
+
+export async function joinClass(userId: string, joinCode: string, role: 'student' | 'parent' | 'substitute' = 'student'): Promise<Class | null> {
+  const cls = role === 'parent' ? await findClassByParentCode(joinCode) : role === 'substitute' ? await findClassBySubstituteCode(joinCode) : await findClassByJoinCode(joinCode);
   if (!cls) return null;
 
   const result = await executeLearningContent<{ membership: ClassMember }>({
@@ -147,6 +160,17 @@ export async function joinClass(userId: string, joinCode: string, role: 'student
   await db.class_members.put(result.membership);
 
   return cls;
+}
+
+export async function createSubstituteCode(classId: string, hours: number): Promise<{code:string;expiresAt:string}> {
+  const result = await executeLearningContent<{code:string;expiresAt:string}>({ action:'createSubstituteCode', classId, hours });
+  await db.classes.update(classId, { substituteCode:result.code, substituteCodeActive:true, substituteExpiresAt:result.expiresAt });
+  return result;
+}
+
+export async function revokeSubstituteCode(classId: string): Promise<void> {
+  await executeLearningContent({ action:'revokeSubstituteCode', classId });
+  await db.classes.update(classId, { substituteCodeActive:false, substituteExpiresAt:getTimestamp() });
 }
 
 export async function getUserClasses(userId: string): Promise<Class[]> {
@@ -340,17 +364,20 @@ export async function syncClassesFromServer(userId: string): Promise<boolean> {
         schoolYear: classDoc.schoolYear, teacherId: classDoc.teacherId,
         joinCode: classDoc.joinCode, joinCodeActive: classDoc.joinCodeActive,
         parentCode: (classDoc.parentCode as string) || '', parentCodeActive: Boolean(classDoc.parentCodeActive),
+        substituteCode: (classDoc.substituteCode as string) || '', substituteCodeActive: Boolean(classDoc.substituteCodeActive), substituteExpiresAt: (classDoc.substituteExpiresAt as string) || null,
         linksJson: (classDoc.linksJson as string) || '[]', status: classDoc.status, createdAt: classDoc.createdAt,
       });
     }
 
     for (const doc of memberResult.documents) {
+      if (doc.role === 'substitute' && (!doc.expiresAt || new Date(doc.expiresAt).getTime() <= Date.now())) { await db.class_members.delete(doc.$id); continue; }
       await db.class_members.put({
         $id: doc.$id,
         classId: doc.classId,
         userId: doc.userId,
         role: doc.role,
         joinedAt: doc.joinedAt,
+        expiresAt: doc.expiresAt || null,
       });
 
       try {
@@ -365,6 +392,9 @@ export async function syncClassesFromServer(userId: string): Promise<boolean> {
           joinCodeActive: classDoc.joinCodeActive,
           parentCode: (classDoc.parentCode as string) || '',
           parentCodeActive: Boolean(classDoc.parentCodeActive),
+          substituteCode: (classDoc.substituteCode as string) || '',
+          substituteCodeActive: Boolean(classDoc.substituteCodeActive),
+          substituteExpiresAt: (classDoc.substituteExpiresAt as string) || null,
           linksJson: (classDoc.linksJson as string) || '[]',
           status: classDoc.status,
           createdAt: classDoc.createdAt,

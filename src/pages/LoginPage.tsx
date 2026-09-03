@@ -76,6 +76,8 @@ export function LoginPage() {
           <Link to={recoveryUrl} className="block"><Button type="button" variant="secondary" className="w-full">Forgot Password?</Button></Link>
           <p className="text-center text-xs leading-5 text-gray-500">We’ll email you a secure link to choose a new password.</p>
 
+          <Link to="/join" className="block rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-center text-sm font-semibold text-blue-700 hover:bg-blue-100">Have a student, parent, or substitute class code?</Link>
+
           <p className="text-center text-sm text-gray-500">
             Don't have an account?{' '}
             <Link to="/register" className="text-blue-600 hover:underline">Create one</Link>

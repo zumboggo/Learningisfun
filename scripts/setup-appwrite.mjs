@@ -45,7 +45,7 @@ const COLLECTIONS = [
     attributes: [
       S('email', { size: 320, required: true }),
       S('name', { required: true }),
-      ENUM('role', ['teacher', 'student', 'parent'], { required: true }),
+      ENUM('role', ['teacher', 'student', 'parent', 'substitute'], { required: true }),
       S('deviceId', { required: true }),
       DATE('lastSyncAt', { required: true }),
       DATE('createdAt', { required: true }),
@@ -69,6 +69,9 @@ const COLLECTIONS = [
       BOOL('joinCodeActive', { required: true }),
       S('parentCode', { size: 16, required: false }),
       BOOL('parentCodeActive', { required: false }),
+      S('substituteCode', { size: 16, required: false }),
+      BOOL('substituteCodeActive', { required: false }),
+      DATE('substituteExpiresAt', { required: false }),
       TXT('linksJson', { required: false }),
       ENUM('status', ['active', 'archived'], { required: true }),
       DATE('createdAt', { required: true }),
@@ -77,6 +80,7 @@ const COLLECTIONS = [
       { key: 'idx_teacherId', type: 'key', attributes: ['teacherId'] },
       { key: 'idx_joinCode', type: 'key', attributes: ['joinCode'] },
       { key: 'idx_parentCode', type: 'key', attributes: ['parentCode'] },
+      { key: 'idx_substituteCode', type: 'key', attributes: ['substituteCode'] },
       { key: 'idx_status', type: 'key', attributes: ['status'] },
     ],
   },
@@ -86,8 +90,9 @@ const COLLECTIONS = [
     attributes: [
       S('classId', { required: true }),
       S('userId', { required: true }),
-      ENUM('role', ['teacher', 'student', 'parent'], { required: true }),
+      ENUM('role', ['teacher', 'student', 'parent', 'substitute'], { required: true }),
       DATE('joinedAt', { required: true }),
+      DATE('expiresAt', { required: false }),
     ],
     indexes: [
       { key: 'idx_classId', type: 'key', attributes: ['classId'] },

@@ -26,7 +26,7 @@ interface AuthContextType {
   refreshUser: () => Promise<void>;
   viewAsStudent: boolean;
   setViewAsStudent: (value: boolean) => void;
-  effectiveRole: 'student' | 'teacher' | 'parent' | 'admin' | null;
+  effectiveRole: 'student' | 'teacher' | 'parent' | 'substitute' | 'admin' | null;
   isTeacher: boolean;
   isAdmin: boolean;
   isParent: boolean;

@@ -1,4 +1,4 @@
-export type UserRole = 'student' | 'teacher' | 'parent' | 'admin';
+export type UserRole = 'student' | 'teacher' | 'parent' | 'substitute' | 'admin';
 
 export interface User {
   $id: string;
@@ -22,6 +22,9 @@ export interface Class {
   joinCodeActive: boolean;
   parentCode: string;
   parentCodeActive: boolean;
+  substituteCode?: string;
+  substituteCodeActive?: boolean;
+  substituteExpiresAt?: string | null;
   linksJson: string;
   status: 'active' | 'archived';
   createdAt: string;
@@ -38,6 +41,7 @@ export interface ClassMember {
   userId: string;
   role: UserRole;
   joinedAt: string;
+  expiresAt?: string | null;
 }
 
 export interface ClassSession {

@@ -2,6 +2,7 @@ import { Client, Databases, ID, Query } from 'node-appwrite';
 import { createHash } from 'node:crypto';
 
 const studentCollections = new Set(['quiz_attempts', 'writing_submissions', 'peer_reviews', 'discussion_questions', 'discussion_answers', 'question_votes', 'text_annotations', 'text_discussion_posts', 'text_discussion_votes']);
+const substitutePostCollections = new Set(['discussion_questions', 'discussion_answers', 'text_annotations', 'text_discussion_posts']);
 const teacherCollections = new Set(['classes', 'deck_assignments', 'quizzes', 'quiz_assignments', 'quiz_questions', 'writing_prompts', 'writing_prompt_assignments', 'texts', 'text_assignments', 'text_paragraphs']);
 const clean = document => { const output = { ...document }; for (const key of Object.keys(output)) if (key.startsWith('$')) delete output[key]; output.$id = document.$id; return output; };
 const membershipId = (classId, userId) => `member_${createHash('sha256').update(`${classId}:${userId}`).digest('hex').slice(0, 29)}`;
@@ -17,14 +18,15 @@ const nicknameError = value => {
   if (tokens.some(token=>exact.has(token)) || strong.some(term=>compact.includes(term))) return 'Please choose a school-appropriate nickname';
   return null;
 };
-const ensureSingleMembership = async (db, databaseId, classId, memberUserId, role) => {
+const ensureSingleMembership = async (db, databaseId, classId, memberUserId, role, expiresAt = null) => {
   const existing = await db.listDocuments(databaseId, 'class_members', [Query.equal('classId', classId), Query.equal('userId', memberUserId), Query.limit(500)]);
   if (existing.total) {
     const keep = existing.documents[0];
     for (const duplicate of existing.documents.slice(1)) await db.deleteDocument(databaseId, 'class_members', duplicate.$id);
+    if (keep.role !== role || keep.expiresAt !== expiresAt) return db.updateDocument(databaseId, 'class_members', keep.$id, { role, expiresAt });
     return keep;
   }
-  const data = { classId, userId: memberUserId, role, joinedAt: new Date().toISOString() };
+  const data = { classId, userId: memberUserId, role, joinedAt: new Date().toISOString(), expiresAt };
   const id = membershipId(classId, memberUserId);
   try { return await db.createDocument(databaseId, 'class_members', id, data); }
   catch { return db.getDocument(databaseId, 'class_members', id); }
@@ -125,7 +127,8 @@ export default async ({ req, res, error }) => {
     const db = new Databases(client), databaseId = process.env.APPWRITE_DATABASE_ID || 'main';
     const profile = await db.getDocument(databaseId, 'users', userId);
     const memberships = await db.listDocuments(databaseId, 'class_members', [Query.equal('userId', userId), Query.limit(500)]);
-    const memberClassIds = new Set(memberships.documents.map(row => row.classId));
+    const nowTime = Date.now();
+    const memberClassIds = new Set(memberships.documents.filter(row => row.role !== 'substitute' || (row.expiresAt && new Date(row.expiresAt).getTime() > nowTime)).map(row => row.classId));
 
     if (body.action === 'readPlanner') {
       if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
@@ -234,15 +237,36 @@ export default async ({ req, res, error }) => {
     }
 
     if (body.action === 'joinClass') {
-      const role = body.role === 'parent' ? 'parent' : 'student';
+      const role = body.role === 'parent' ? 'parent' : body.role === 'substitute' ? 'substitute' : 'student';
       if (profile.role !== role) return res.json({ error: `A ${profile.role} account cannot join as ${role}` }, 403);
       const targetClass = await db.getDocument(databaseId, 'classes', body.classId);
       const validCode = role === 'parent'
         ? targetClass.parentCodeActive && targetClass.parentCode === body.joinCode
+        : role === 'substitute'
+          ? targetClass.substituteCodeActive && targetClass.substituteCode === body.joinCode && targetClass.substituteExpiresAt && new Date(targetClass.substituteExpiresAt).getTime() > Date.now()
         : targetClass.joinCodeActive && targetClass.joinCode === body.joinCode;
       if (!validCode || targetClass.status !== 'active') return res.json({ error: 'Invalid or expired class code' }, 403);
-      const membership = await ensureSingleMembership(db, databaseId, targetClass.$id, userId, role);
+      const membership = await ensureSingleMembership(db, databaseId, targetClass.$id, userId, role, role === 'substitute' ? targetClass.substituteExpiresAt : null);
       return res.json({ membership: clean(membership) });
+    }
+
+    if (body.action === 'createSubstituteCode') {
+      if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
+      const targetClass = await db.getDocument(databaseId, 'classes', body.classId);
+      if (targetClass.teacherId !== userId) return res.json({ error: 'Not the class owner' }, 403);
+      const hours = Math.min(168, Math.max(1, Number(body.hours) || 24));
+      const code = createHash('sha256').update(`${targetClass.$id}:${Date.now()}:${Math.random()}`).digest('hex').slice(0, 6).toUpperCase();
+      const expiresAt = new Date(Date.now() + hours * 3600000).toISOString();
+      await db.updateDocument(databaseId, 'classes', targetClass.$id, { substituteCode:code, substituteCodeActive:true, substituteExpiresAt:expiresAt });
+      return res.json({ code, expiresAt });
+    }
+
+    if (body.action === 'revokeSubstituteCode') {
+      if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
+      const targetClass = await db.getDocument(databaseId, 'classes', body.classId);
+      if (targetClass.teacherId !== userId) return res.json({ error: 'Not the class owner' }, 403);
+      await db.updateDocument(databaseId, 'classes', targetClass.$id, { substituteCodeActive:false, substituteExpiresAt:new Date().toISOString() });
+      return res.json({ ok:true });
     }
 
     if (body.action === 'addStudentToClass') {
@@ -1032,6 +1056,9 @@ export default async ({ req, res, error }) => {
     if (!studentCollections.has(collection) && !teacherCollections.has(collection)) return res.json({ error: 'Unsupported collection' }, 400);
     if (teacherCollections.has(collection) && profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
     if (studentCollections.has(collection) && profile.role === 'parent') return res.json({ error: 'Parent accounts are read-only' }, 403);
+    if (profile.role === 'substitute' && (operation !== 'create' || !substitutePostCollections.has(collection))) {
+      return res.json({ error: 'Substitute access can post class content but cannot edit, delete, submit student work, or manage records' }, 403);
+    }
     if (collection === 'quiz_attempts') return res.json({ error: 'Quiz attempts must use the secure quiz submission actions' }, 400);
     const data = { ...body.data }; delete data.$id; delete data.syncStatus;
     let existing = null; if (operation !== 'create') { try { existing = await db.getDocument(databaseId, collection, id); } catch { /* upsert */ } }

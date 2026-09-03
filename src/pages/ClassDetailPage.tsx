@@ -7,6 +7,8 @@ import {
   regenerateJoinCode,
   ensureParentCode,
   regenerateParentCode,
+  createSubstituteCode,
+  revokeSubstituteCode,
   removeStudent,
   moveStudent,
   getClassMembers,
@@ -60,6 +62,8 @@ export function ClassDetailPage() {
   const navigate = useNavigate();
   const [newCode, setNewCode] = useState('');
   const [parentCode, setParentCode] = useState('');
+  const [substituteAccess, setSubstituteAccess] = useState<{code:string;expiresAt:string}|null>(null);
+  const [substituteHours, setSubstituteHours] = useState(24);
   const [pendingRemoval, setPendingRemoval] = useState<{ id: string; name: string } | null>(null);
   const [pendingMove, setPendingMove] = useState<{ id: string; name: string } | null>(null);
   const [moveTargetClassId, setMoveTargetClassId] = useState('');
@@ -403,6 +407,12 @@ export function ClassDetailPage() {
             <div className="mt-2 flex flex-wrap items-center gap-2"><code className="rounded bg-violet-50 px-4 py-2 text-xl font-mono">{parentCode || cls.parentCode || 'Creating…'}</code><CopyButton text={parentCode || cls.parentCode || ''} label="Copy code" copiedLabel="Code copied"/><Button size="sm" variant="secondary" onClick={()=>void regenerateParentCode(cls.$id,user!.$id).then(setParentCode)}>Regenerate</Button></div>
             <p className="mt-3 text-sm text-gray-600">{parents?.length||0} parent observer{parents?.length===1?'':'s'} joined</p>
             {parents?.map(parent=><p key={parent.$id} className="text-xs text-gray-500">{parent.name} · {parent.email}</p>)}
+          </div>
+          <div className="mt-5 border-t pt-4">
+            <h3 className="font-semibold">Temporary substitute access</h3>
+            <p className="text-sm text-gray-500">A substitute can view and post in this class until the code expires. They cannot edit or delete existing content, manage students, or access teacher planning.</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2"><select className="rounded-lg border px-3 py-2 text-sm" value={substituteHours} onChange={event=>setSubstituteHours(Number(event.target.value))}><option value={8}>8 hours</option><option value={24}>1 day</option><option value={48}>2 days</option><option value={168}>1 week</option></select><Button size="sm" variant="secondary" onClick={()=>void createSubstituteCode(cls.$id,substituteHours).then(setSubstituteAccess)}>Generate substitute code</Button>{(substituteAccess||cls.substituteCodeActive)&&<Button size="sm" variant="danger" onClick={()=>void revokeSubstituteCode(cls.$id).then(()=>setSubstituteAccess(null))}>End access now</Button>}</div>
+            {(substituteAccess?.code||cls.substituteCodeActive&&cls.substituteCode)&&<div className="mt-3 flex flex-wrap items-center gap-2"><code className="rounded bg-amber-50 px-4 py-2 text-xl font-mono">{substituteAccess?.code||cls.substituteCode}</code><CopyButton text={substituteAccess?.code||cls.substituteCode||''} label="Copy code" copiedLabel="Code copied"/><span className="text-xs text-gray-500">Expires {new Date(substituteAccess?.expiresAt||cls.substituteExpiresAt||'').toLocaleString()}</span></div>}
           </div>
           {rosterResult && (
             <div className="mt-4 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">

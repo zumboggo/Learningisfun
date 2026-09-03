@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/common/Button';
-import { findClassByJoinCode, findClassByParentCode, joinClass } from '@/services/class.service';
+import { findClassByJoinCode, findClassByParentCode, findClassBySubstituteCode, joinClass } from '@/services/class.service';
 import type { Class } from '@/types';
 
 type Mode = 'signup' | 'signin';
@@ -44,20 +44,19 @@ export function JoinClassPage() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [lookup, setLookup] = useState<{ code: string; cls: Class | null } | null>(null);
-  const [joinRole, setJoinRole] = useState<'student' | 'parent'>('student');
+  const [joinRole, setJoinRole] = useState<'student' | 'parent' | 'substitute'>('student');
 
-  // Preview the class behind the code so students can confirm they are in the
-  // right place before typing an email address.
+  useEffect(() => { if (user?.role === 'parent' || user?.role === 'substitute') setJoinRole(user.role); }, [user?.role]);
+
+  // Preview when collection permissions allow it. The selected role remains
+  // authoritative because signed-out browsers may not be allowed to query classes.
   useEffect(() => {
     if (code.length !== 6) return;
     let cancelled = false;
-    void findClassByJoinCode(code).then(async cls => {
-      if (cls) { if (!cancelled) { setJoinRole('student'); setLookup({ code, cls }); } return; }
-      const parentClass = await findClassByParentCode(code);
-      if (!cancelled) { setJoinRole(parentClass ? 'parent' : 'student'); setLookup({ code, cls: parentClass }); }
-    });
+    const lookupClass = joinRole === 'parent' ? findClassByParentCode(code) : joinRole === 'substitute' ? findClassBySubstituteCode(code) : findClassByJoinCode(code);
+    void lookupClass.then(cls => { if (!cancelled) setLookup({ code, cls }); });
     return () => { cancelled = true; };
-  }, [code]);
+  }, [code, joinRole]);
 
   // Ignore a result that arrived for a code the student has since edited.
   const currentLookup = lookup?.code === code ? lookup : null;
@@ -126,8 +125,13 @@ export function JoinClassPage() {
 
   const codeField = (
     <div>
+      <div className="mb-4 grid grid-cols-3 gap-2 rounded-lg bg-gray-100 p-1" aria-label="Join as">
+        <button type="button" className={`rounded-md px-3 py-2 text-sm font-semibold ${joinRole === 'student' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600'}`} onClick={() => { setJoinRole('student'); setLookup(null); setError(''); }}>Student</button>
+        <button type="button" className={`rounded-md px-3 py-2 text-sm font-semibold ${joinRole === 'parent' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600'}`} onClick={() => { setJoinRole('parent'); setLookup(null); setError(''); }}>Parent observer</button>
+        <button type="button" className={`rounded-md px-3 py-2 text-sm font-semibold ${joinRole === 'substitute' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600'}`} onClick={() => { setJoinRole('substitute'); setLookup(null); setError(''); }}>Substitute</button>
+      </div>
       <label htmlFor="join-code" className="block text-sm font-medium text-gray-700 mb-1">
-        Class code
+        {joinRole === 'parent' ? 'Parent code' : joinRole === 'substitute' ? 'Substitute code' : 'Student class code'}
       </label>
       <input
         id="join-code"
@@ -142,12 +146,12 @@ export function JoinClassPage() {
       />
       {foundClass && (
         <p className="mt-2 text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2">
-          Joining <span className="font-semibold">{foundClass.courseName}</span> — {foundClass.name} as {joinRole === 'parent' ? 'a parent observer' : 'a student'}
+          Joining <span className="font-semibold">{foundClass.courseName}</span> — {foundClass.name} as {joinRole === 'parent' ? 'a parent observer' : joinRole === 'substitute' ? 'a temporary substitute' : 'a student'}
         </p>
       )}
       {!foundClass && lookupDone && (
         <p className="mt-2 text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
-          We couldn't find that code yet. Double-check it with your teacher — you can still try to join.
+          We couldn't preview that {joinRole} code while signed out. Double-check it with the teacher — it will be securely verified after sign-in.
         </p>
       )}
     </div>
@@ -158,7 +162,7 @@ export function JoinClassPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-blue-700">Learning is Fun</h1>
-          <p className="text-gray-500 mt-2">Join your class</p>
+          <p className="text-gray-500 mt-2">Join as a student, parent observer, or substitute</p>
         </div>
 
         {loading ? (
