@@ -39,6 +39,9 @@ const ENUM = (key, elements, opts = {}) => ({ type: 'enum', key, elements, ...op
 const DATE = (key, opts = {}) => S(key, { size: 64, ...opts });
 
 const COLLECTIONS = [
+  { id: 'planning_units', name: 'Private Unit Planning', attributes: [S('teacherId',{required:true}),TXT('dataJson',{required:true}),DATE('updatedAt',{required:true})], indexes:[{key:'idx_teacherId',type:'key',attributes:['teacherId']}] },
+  { id: 'planning_releases', name: 'Planning Releases', attributes:[S('teacherId',{required:true}),S('unitId',{required:true}),DATE('releaseAt',{required:true}),S('status',{required:true}),TXT('payloadJson',{required:true}),S('lastError',{size:2000})], indexes:[{key:'idx_teacher',type:'key',attributes:['teacherId']},{key:'idx_due',type:'key',attributes:['status','releaseAt']},{key:'idx_unit',type:'key',attributes:['unitId']}] },
+  { id: 'planning_materials', name: 'Released Planning Materials', attributes:[S('teacherId',{required:true}),S('classId',{required:true}),S('kind',{required:true}),DATE('releaseAt',{required:true}),TXT('dataJson',{required:true})], indexes:[{key:'idx_class_release',type:'key',attributes:['classId','releaseAt']}] },
   {
     id: 'copywork_entries',
     name: 'Copywork Entries',
@@ -695,6 +698,10 @@ async function createIndex(collectionId, def) {
 }
 
 async function main() {
+  const requested = process.argv.slice(2);
+  for (const id of requested) {
+    if (!COLLECTIONS.some(collection => collection.id === id)) throw new Error(`Unknown collection: ${id}`);
+  }
   try {
     await databases.get(DATABASE_ID);
     console.log(`Database "${DATABASE_ID}" already exists`);
@@ -704,7 +711,7 @@ async function main() {
     console.log(`Created database "${DATABASE_ID}"`);
   }
 
-  for (const col of COLLECTIONS) {
+  for (const col of COLLECTIONS.filter(collection => !requested.length || requested.includes(collection.id))) {
     try {
       await databases.getCollection(DATABASE_ID, col.id);
       console.log(`Collection ${col.id} already exists`);
@@ -725,14 +732,14 @@ async function main() {
   // Profile names are changed only through the authenticated function, which
   // enforces nickname filtering and the 24-hour cooldown. Registration still
   // needs create access and class rosters still need read access.
-  await databases.updateCollection(
+  if (!requested.length || requested.includes('users')) await databases.updateCollection(
     DATABASE_ID,
     'users',
     'Users',
     [Permission.read(Role.users()), Permission.create(Role.users())],
     false,
   );
-  console.log('Hardened users collection: authenticated read/create only');
+  if (!requested.length || requested.includes('users')) console.log('Hardened users collection: authenticated read/create only');
 
   console.log('\nDone. Database ID:', DATABASE_ID);
 }

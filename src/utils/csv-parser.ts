@@ -25,8 +25,40 @@ export function buildFlashcardDeckCsv(cards: Array<{
     .join('\r\n');
 }
 
+export interface ClassFlashcardExportRow {
+  deckTitle: string;
+  front: string;
+  back: string;
+  frontMarkdown?: string;
+  backMarkdown?: string;
+  hint?: string;
+  tags?: string[];
+}
+
+/** Combine every assigned deck into one CSV while preserving its source deck. */
+export function buildClassFlashcardCsv(cards: ClassFlashcardExportRow[]): string {
+  const rows = cards.map(card => [
+    card.deckTitle,
+    card.frontMarkdown || card.front,
+    card.backMarkdown || card.back,
+    card.hint || '',
+    (card.tags || []).join(' '),
+  ]);
+  return [['Deck', 'Front', 'Back', 'Hint', 'Tags'], ...rows]
+    .map(row => row.map(escapeCsvField).join(','))
+    .join('\r\n');
+}
+
+/** Quizlet's paste importer accepts a tab between term/definition and a new row per card. */
+export function buildQuizletImportText(cards: ClassFlashcardExportRow[]): string {
+  const oneLine = (value: string) => value.replace(/\s+/g, ' ').trim();
+  return cards
+    .map(card => `${oneLine(card.frontMarkdown || card.front)}\t${oneLine(card.backMarkdown || card.back)}`)
+    .join('\n');
+}
+
 /** Parse CSV records while preserving line breaks inside quoted card fields. */
-function parseCsvRows(content: string, delimiter = ','): string[][] {
+export function parseCsvRows(content: string, delimiter = ','): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
   let current = '';

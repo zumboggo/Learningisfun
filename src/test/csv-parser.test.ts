@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildFlashcardDeckCsv, parseCsvContent, detectMapping, parseCsvLine, joinBackValues } from '@/utils/csv-parser';
+import { buildClassFlashcardCsv, buildFlashcardDeckCsv, buildQuizletImportText, parseCsvContent, detectMapping, parseCsvLine, joinBackValues } from '@/utils/csv-parser';
 
 describe('CSV Parser', () => {
   describe('flashcard deck export', () => {
@@ -18,6 +18,26 @@ describe('CSV Parser', () => {
       expect(parsed.rows).toHaveLength(1);
       expect(parsed.rows[0].Front).toBe('**Justice**, fairness');
       expect(parsed.rows[0].Back).toBe('A "fair" outcome\n\n*Example sentence*');
+    });
+
+    it('combines class decks with their deck names', () => {
+      const csv = buildClassFlashcardCsv([
+        { deckTitle: 'Poetry, Unit 1', front: 'Metaphor', back: 'A comparison', hint: '', tags: ['poetry'] },
+        { deckTitle: 'Novel', front: 'Voice', back: 'A writer\'s style', hint: 'Listen', tags: [] },
+      ]);
+
+      expect(csv).toContain('Deck,Front,Back,Hint,Tags');
+      expect(csv).toContain('"Poetry, Unit 1",Metaphor,A comparison,,poetry');
+      expect(csv).toContain("Novel,Voice,A writer's style,Listen,");
+    });
+
+    it('creates tab-separated Quizlet paste text without embedded line breaks', () => {
+      const text = buildQuizletImportText([
+        { deckTitle: 'Poetry', front: 'Metaphor', back: 'A comparison\nwithout like or as' },
+        { deckTitle: 'Poetry', front: 'Imagery', back: 'Sensory detail' },
+      ]);
+
+      expect(text).toBe('Metaphor\tA comparison without like or as\nImagery\tSensory detail');
     });
   });
 

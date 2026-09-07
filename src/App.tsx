@@ -37,6 +37,7 @@ import { CreateDeckPage } from '@/pages/teacher/CreateDeckPage';
 import { DeckPresentPage } from '@/pages/teacher/DeckPresentPage';
 import { TeacherSettingsPage } from '@/pages/TeacherSettingsPage';
 import { PlannerPage } from '@/pages/PlannerPage';
+import { PlanningUnitsPage } from '@/pages/PlanningUnitsPage';
 import { PlannerLessonPage } from '@/pages/PlannerLessonPage';
 import { PlannerPrintPage } from '@/pages/PlannerPrintPage';
 
@@ -139,6 +140,7 @@ export default function App() {
 
           <Route path="/settings" element={<ProtectedRoute><TeacherRoute><TeacherSettingsPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/planner" element={<ProtectedRoute><TeacherRoute><PlannerPage /></TeacherRoute></ProtectedRoute>} />
+          <Route path="/planning" element={<ProtectedRoute><TeacherRoute><PlanningUnitsPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/planner/:planId/lessons/:lessonId" element={<ProtectedRoute><TeacherRoute><PlannerLessonPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/planner/:planId/print" element={<ProtectedRoute><TeacherRoute><PlannerPrintPage /></TeacherRoute></ProtectedRoute>} />
 

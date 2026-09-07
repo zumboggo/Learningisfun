@@ -775,6 +775,7 @@ export async function getPersonalNote(userId: string, cardId: string): Promise<S
 
 export async function syncDecksFromServer(classIds: string[], userId: string): Promise<boolean> {
   try {
+    const planning = await executeLearningContent<{decks:FlashcardDeck[];cards:FlashcardCard[];assignments:DeckAssignment[]}>({action:'readPlanningMaterials'});
     const assignmentResult = classIds.length
       ? await databases.listDocuments(DATABASE_ID, COLLECTIONS.deck_assignments, [Query.equal('classId', classIds), Query.limit(200)])
       : { documents: [] };
@@ -785,7 +786,7 @@ export async function syncDecksFromServer(classIds: string[], userId: string): P
         : Promise.resolve({ documents: [] }),
       databases.listDocuments(DATABASE_ID, COLLECTIONS.flashcard_decks, [Query.equal('creatorId', userId), Query.limit(200)]),
     ]);
-    const deckResult = { documents: [...new Map([...assignedDecks.documents, ...ownedDecks.documents].map(doc => [doc.$id, doc])).values()] };
+    const deckResult = { documents: [...new Map([...assignedDecks.documents, ...ownedDecks.documents, ...planning.decks].map(doc => [doc.$id, doc])).values()] };
     for (const doc of deckResult.documents) {
       await db.flashcard_decks.put({
         $id: doc.$id,
@@ -803,6 +804,8 @@ export async function syncDecksFromServer(classIds: string[], userId: string): P
     const cardResult = deckIds.length
       ? await databases.listDocuments(DATABASE_ID, COLLECTIONS.flashcard_cards, [Query.equal('deckId', deckIds), Query.limit(2000)])
       : { documents: [] };
+    cardResult.documents = [...new Map([...cardResult.documents, ...planning.cards].map(doc=>[doc.$id,doc])).values()] as typeof cardResult.documents;
+    assignmentResult.documents = [...new Map([...assignmentResult.documents, ...planning.assignments].map(doc=>[doc.$id,doc])).values()] as typeof assignmentResult.documents;
     for (const doc of cardResult.documents) {
       await db.flashcard_cards.put({
         $id: doc.$id,

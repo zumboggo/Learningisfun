@@ -22,6 +22,7 @@ const functions = new Functions(client);
 const root = resolve(import.meta.dirname, '..');
 
 const allDefinitions = [
+  { id:'planning-release', name:'Planning Release', directory:'functions/learning-content', entrypoint:'src/release.js', schedule:'*/15 * * * *', execute:[], timeout:900, variables:{} },
   {
     id: 'learning-content',
     name: 'Learning Content',
@@ -60,11 +61,12 @@ async function ensureFunction(definition) {
       functionId: definition.id,
       name: definition.name,
       runtime: 'node-22',
-      execute: ['users'],
+      execute: definition.execute || ['users'],
+      schedule: definition.schedule || '',
       timeout: definition.timeout || 30,
       enabled: true,
       logging: true,
-      entrypoint: 'src/main.js',
+      entrypoint: definition.entrypoint || 'src/main.js',
       commands: 'npm install',
     });
     console.log(`Created function ${definition.id}`);
@@ -75,11 +77,12 @@ async function ensureFunction(definition) {
     name: definition.name,
     // Appwrite may clear execute permissions when a function is updated. Keep
     // authenticated-user access explicit on every deploy, not only creation.
-    execute: ['users'],
+    execute: definition.execute || ['users'],
+    schedule: definition.schedule || '',
     timeout: definition.timeout || 30,
     enabled: true,
     logging: true,
-    entrypoint: 'src/main.js',
+    entrypoint: definition.entrypoint || 'src/main.js',
     commands: 'npm install',
   });
 
@@ -120,7 +123,7 @@ async function ensureFunction(definition) {
       functionId: definition.id,
       code: InputFile.fromPath(archive),
       activate: true,
-      entrypoint: 'src/main.js',
+      entrypoint: definition.entrypoint || 'src/main.js',
       commands: 'npm install',
     });
     console.log(`Deployed ${definition.id}: ${deployment.$id}`);

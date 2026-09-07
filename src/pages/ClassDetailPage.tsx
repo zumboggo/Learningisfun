@@ -45,6 +45,8 @@ import { createPeerReviewActivity, listPeerReviewActivities, setPeerReviewActivi
 import type { PeerReviewActivity } from '@/types';
 import { moderateNicknameReport, readClassNicknames, reportNickname, type ClassNickname, type NicknameReport } from '@/services/nickname.service';
 import { refreshClassMaterials } from '@/services/class-material-refresh.service';
+import { AssignedCopywork } from '@/components/student/AssignedCopywork';
+import { buildClassFlashcardCsv, buildQuizletImportText, type ClassFlashcardExportRow } from '@/utils/csv-parser';
 
 const PRESENTATION_FOLDER_URL = 'https://lifeplusworldwide-my.sharepoint.com/:f:/g/personal/david_hepting_cdischina_com/IgCKVDp4qOqzR5itb7Q70yDbAb7A95ZN6fG4XHD74ghu3lU?e=1W9www';
 
@@ -91,6 +93,8 @@ export function ClassDetailPage() {
   const [refreshingMaterials, setRefreshingMaterials] = useState(false);
   const [materialRefreshMessage, setMaterialRefreshMessage] = useState('');
   const [materialRefreshFailed, setMaterialRefreshFailed] = useState(false);
+  const [exportingClassDecks, setExportingClassDecks] = useState(false);
+  const [classDeckExportMessage, setClassDeckExportMessage] = useState('');
 
   const cls = useLiveQuery(() => (classId ? db.classes.get(classId) : undefined), [classId]);
   const members = useLiveQuery(
@@ -164,6 +168,42 @@ export function ClassDetailPage() {
     () => (deckRows || []).reduce((sum, row) => sum + row.cardCount, 0),
     [deckRows],
   );
+
+  const getClassFlashcardExportRows = async (): Promise<ClassFlashcardExportRow[]> => {
+    const rows: ClassFlashcardExportRow[] = [];
+    for (const { assignment, deck } of deckRows || []) {
+      if (!deck) continue;
+      const cards = await db.flashcard_cards.where('deckId').equals(assignment.deckId).sortBy('sortOrder');
+      rows.push(...cards.map(card => ({ ...card, deckTitle: deck.title })));
+    }
+    return rows;
+  };
+
+  const exportAllClassDecks = async () => {
+    if (!cls) return;
+    setExportingClassDecks(true); setClassDeckExportMessage('');
+    try {
+      const rows = await getClassFlashcardExportRows();
+      if (!rows.length) throw new Error('This class has no flashcards to export.');
+      const filename = `${classLabel(cls).replace(/[^\p{L}\p{N}._-]+/gu, '-').replace(/^-+|-+$/g, '') || 'class'}-flashcards.csv`;
+      downloadCsv(filename, `\uFEFF${buildClassFlashcardCsv(rows)}`);
+      setClassDeckExportMessage(`Downloaded ${rows.length} cards from ${deckRows?.length || 0} decks.`);
+    } catch (cause) {
+      setClassDeckExportMessage(cause instanceof Error ? cause.message : 'Could not export the class flashcards.');
+    } finally { setExportingClassDecks(false); }
+  };
+
+  const copyAllClassDecks = async () => {
+    setExportingClassDecks(true); setClassDeckExportMessage('');
+    try {
+      const rows = await getClassFlashcardExportRows();
+      if (!rows.length) throw new Error('This class has no flashcards to copy.');
+      await navigator.clipboard.writeText(buildQuizletImportText(rows));
+      setClassDeckExportMessage(`Copied ${rows.length} cards. In Quizlet, choose Tab between term and definition and New line between cards.`);
+    } catch (cause) {
+      setClassDeckExportMessage(cause instanceof Error ? cause.message : 'Could not copy the class flashcards.');
+    } finally { setExportingClassDecks(false); }
+  };
 
   const discussions = useLiveQuery(async () => {
     if (!classId) return [];
@@ -325,6 +365,7 @@ export function ClassDetailPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-5 p-4 sm:space-y-6 sm:p-6">
+      <AssignedCopywork classId={cls.$id} />
       <Link to="/classes" className="inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-950"><span aria-hidden="true">←</span> All classes</Link>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -524,6 +565,14 @@ export function ClassDetailPage() {
               </div>
             )}
           </div>
+          {deckRows && deckRows.length > 0 && (
+            <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 p-3">
+              <span className="mr-auto text-sm text-gray-600">Export all {totalCards} cards in this class</span>
+              <Button size="sm" variant="secondary" loading={exportingClassDecks} onClick={() => void exportAllClassDecks()}>Download CSV</Button>
+              <Button size="sm" variant="secondary" disabled={exportingClassDecks} onClick={() => void copyAllClassDecks()}>Copy for Quizlet</Button>
+            </div>
+          )}
+          {classDeckExportMessage && <p className="mb-3 text-sm text-gray-600" role="status">{classDeckExportMessage}</p>}
           {deckRows && deckRows.length > 0 ? (
             <div className="space-y-2">
               {deckRows.slice(0, 5).map(({ assignment, deck, cardCount }) => (

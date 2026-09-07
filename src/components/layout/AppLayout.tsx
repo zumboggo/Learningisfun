@@ -27,7 +27,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const navItems = isTeacher
     ? [
         { to: '/classes', label: 'Classes', icon: 'C' },
-        { to: '/planner', label: 'Planner', icon: 'P' },
+        { to: '/planning', label: 'Planning', icon: 'P' },
         { to: '/discussions', label: 'Discussions', icon: 'Q' },
         { to: '/decks', label: 'Cards', icon: 'V' },
         { to: '/texts', label: 'Texts', icon: 'T' },

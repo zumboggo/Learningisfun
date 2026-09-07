@@ -1,7 +1,10 @@
 import { executeLearningContent } from './learning-content.service';
+import type { LessonSlot, UnitPlan } from './unit-planning';
 import type { PlannerWeekSource,ParsedPlannerSource } from './planner-parser';
 
 export type PlannerProgress='on_track'|'partial'|'behind';
+export interface LessonPlan { slots?: LessonSlot[]; overflow?: LessonSlot[] }
+export interface WeeklyPlanData { unitSnapshot?: UnitPlan[] }
 export type PlannerTaskStatus='todo'|'ready'|'unused';
 export interface PlannerSourceRecord{$id:string;teacherId:string;filename:string;schoolYear:string;version:number;sourceText:string;parsedJson:string;mappingJson:string;active:boolean;createdAt:string}
 export interface PlannerSourceVersion{sourceId:string;version:number;createdAt:string;changedWeeks:string[]}
@@ -10,7 +13,7 @@ export interface PreparationTask{id:string;label:string;kind:'presentation'|'tex
 export interface ExtraActivity{id:string;courseCode:string;label:string;lessonDates:string[];target?:string}
 export interface LessonWriteback{status:'planned'|'partial'|'missed';note:string}
 export interface LessonPlan{id:string;classCode:string;classId:string;classLabel:string;date:string;daytype:string;unit:string;goal:string;settle:string;iDo:string;weDo:string;theyDo:string;check:string;exit:string;due:string[];reminders:string[];texts:string[];presentations:string[];materials:string[];extraActivityIds:string[];privateNotes:string;writeback?:LessonWriteback}
-export interface CourseWeekChoices{classCode:string;progress:PlannerProgress;weDoLead:'teacher'|'students'|'named';leadName:string;intention:string;sectionBalanceNote?:string;texts:Array<{title:string;date:string;url:string;publish:boolean}>;presentations:Array<{title:string;date:string;givenBy:string;url:string;publish:boolean}>}
+export interface CourseWeekChoices{classCode:string;progress:PlannerProgress;weDoLead:'teacher'|'students'|'named';leadName:string;intention:string;sectionBalanceNote?:string;texts:Array<{resourceId?:string;content?:string;title:string;date:string;url:string;publish:boolean}>;presentations:Array<{resourceId?:string;title:string;date:string;givenBy:string;url:string;publish:boolean}>}
 export interface WeeklyPlanData{week:PlannerWeekSource;flags:string[];weekNote:string;preparation:PreparationTask[];courses:CourseWeekChoices[];extras:ExtraActivity[];lessons:LessonPlan[];publishAgenda:boolean;includeIntentionsInPrint:boolean}
 export interface WeeklyPlanRecord{$id:string;teacherId:string;sourceId:string;weekKey:string;weekStart:string;status:'draft'|'ready'|'published';planJson:string;publishedJson:string;createdAt:string;updatedAt:string}
 
