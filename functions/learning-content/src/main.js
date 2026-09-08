@@ -1,6 +1,7 @@
 import { Client, Databases, ID, Query, Users } from 'node-appwrite';
 import { createHash } from 'node:crypto';
 import { planningAction, slotAgenda } from './planning.js';
+import { importLegacyWord } from './document-import.js';
 
 const studentCollections = new Set(['quiz_attempts', 'writing_submissions', 'peer_reviews', 'discussion_questions', 'discussion_answers', 'question_votes', 'text_annotations', 'text_discussion_posts', 'text_discussion_votes']);
 const substitutePostCollections = new Set(['discussion_questions', 'discussion_answers', 'text_annotations', 'text_discussion_posts']);
@@ -127,6 +128,7 @@ export default async ({ req, res, error }) => {
     const client = new Client().setEndpoint(process.env.APPWRITE_ENDPOINT).setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID).setKey(process.env.APPWRITE_API_KEY);
     const db = new Databases(client), users = new Users(client), databaseId = process.env.APPWRITE_DATABASE_ID || 'main';
     const profile = await db.getDocument(databaseId, 'users', userId);
+    if (body.action === 'importLegacyWord') return res.json(await importLegacyWord(profile, body.data));
     const memberships = await db.listDocuments(databaseId, 'class_members', [Query.equal('userId', userId), Query.limit(500)]);
     const nowTime = Date.now();
     const memberClassIds = new Set(memberships.documents.filter(row => row.role !== 'substitute' || (row.expiresAt && new Date(row.expiresAt).getTime() > nowTime)).map(row => row.classId));

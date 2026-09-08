@@ -19,11 +19,29 @@ export function splitParagraphs(content: string): string[] {
 }
 
 export async function paragraphsFromFile(file: File): Promise<string[]> {
-  if (file.name.toLowerCase().endsWith('.docx')) {
+  const extension = file.name.toLowerCase().split('.').pop();
+  if (!['doc', 'docx', 'pdf', 'md', 'txt'].includes(extension || '')) throw new Error('Please choose a DOC, DOCX, PDF, Markdown (.md) or TXT file.');
+  if (!file.size) throw new Error('This file is empty.');
+  if (file.size > (extension === 'doc' ? 2 : 10) * 1024 * 1024) throw new Error(`This file is too large. The limit is ${extension === 'doc' ? 2 : 10} MB.`);
+  let content: string;
+  if (extension === 'docx') {
     const result = await mammoth.convertToHtml({ arrayBuffer: await file.arrayBuffer() });
-    return splitParagraphs(htmlToMarkdown(result.value));
+    content = htmlToMarkdown(result.value);
+  } else if (extension === 'pdf') {
+    const { textFromPdf } = await import('./pdf-import');
+    content = await textFromPdf(file);
+  } else if (extension === 'doc') {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    let binary = '';
+    for (let offset = 0; offset < bytes.length; offset += 8192) binary += String.fromCharCode(...bytes.subarray(offset, offset + 8192));
+    const result = await executeLearningContent<{ text: string }>({ action: 'importLegacyWord', data: btoa(binary) });
+    content = result.text;
+  } else {
+    content = await file.text();
   }
-  return splitParagraphs(await file.text());
+  const paragraphs = splitParagraphs(content.replace(/^\uFEFF/, ''));
+  if (!paragraphs.length) throw new Error('No readable text was found in this file.');
+  return paragraphs;
 }
 
 export async function createText(params: { teacherId: string; title: string; author: string; source: string; paragraphs: string[]; classIds: string[]; contentMode?: 'full' | 'link'; externalUrl?: string; schedule?: { assignedAt: string; dueClassNumber?: number } }): Promise<LearningText> {

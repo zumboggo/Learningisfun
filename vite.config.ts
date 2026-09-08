@@ -44,6 +44,11 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         runtimeCaching: [
           {
+            urlPattern: /\/assets\/pdf\.worker\.min-[^/]+\.mjs$/,
+            handler: 'CacheFirst',
+            options: { cacheName: 'pdf-import-worker', expiration: { maxEntries: 2 } },
+          },
+          {
             urlPattern: /^https:\/\/cloud\.appwrite\.io\/.*/i,
             handler: 'NetworkFirst',
             options: {
