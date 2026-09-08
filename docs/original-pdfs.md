@@ -1,0 +1,9 @@
+# Original reading PDFs
+
+New PDF uploads retain the original alongside extracted paragraphs. Teachers can select **PDF only** for scanned/image documents; no OCR is performed. The limit is 5 MiB for original PDFs, 2 MiB for legacy DOC, and 10 MiB for other text imports. Saving an original requires internet access. A failed save leaves the form open for retry; per-teacher content hashes prevent repeated uploads creating duplicate storage files.
+
+The `original-pdfs` bucket has no client permissions and file security is disabled (all direct client access is denied). Server upload is teacher-only. The optional `texts.originalPdfId` points to the original. Opening/downloading checks the current text owner or published-text class assignment and current membership, including substitute expiry. It returns a five-minute bearer URL; that URL must not be persisted or logged. A copied URL can be used until expiry; downloaded files cannot be remotely revoked. Text editing and assignment endpoints also verify parent-text ownership.
+
+Original files are retained rather than deleted automatically when text content changes. Existing readings uploaded before this feature have no recoverable original in storage; their source file must be uploaded again. No PDF, student data, or server credentials are committed to GitHub.
+
+Rollout: run `scripts/setup-appwrite.mjs texts`, then `scripts/setup-pdf-storage.mjs` with the setup environment. The provisioning key requires buckets.read/write and files.read/write; the serving function requires files.write and tokens.write. Deploy `learning-content` before pushing the frontend. `scripts/smoke-pdf-storage.mjs --run` explicitly creates and removes private synthetic fixtures to verify the 5 MiB upload boundary, repeat-upload IDs, byte-exact downloads and denied anonymous downloads. It uses a short-lived JWT for the teacher associated with the single active planning source, without altering their session.

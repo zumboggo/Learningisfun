@@ -505,6 +505,7 @@ export interface LearningText {
   source: string;
   contentMode?: 'full' | 'link';
   externalUrl?: string;
+  originalPdfId?: string;
   status: 'draft' | 'published' | 'archived';
   createdAt: string;
   updatedAt: string;

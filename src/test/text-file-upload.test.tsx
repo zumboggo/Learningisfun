@@ -12,7 +12,7 @@ describe('text file upload control', () => {
     const input = screen.getByLabelText('Upload a document');
     expect(input).toHaveAttribute('accept', '.doc,.docx,.pdf,.md,.txt');
     fireEvent.change(input, { target: { files: [new File(['text'], 'reading.md')] } });
-    await waitFor(() => expect(onImport).toHaveBeenCalledWith('First\n\nSecond'));
+    await waitFor(() => expect(onImport).toHaveBeenCalledWith('First\n\nSecond', undefined));
     expect(busy.mock.calls).toEqual([[true], [false]]);
     expect(screen.getByRole('status')).toHaveTextContent('check the text');
   });
@@ -21,10 +21,22 @@ describe('text file upload control', () => {
     const onImport = vi.fn();
     render(<TextFileUpload onImport={onImport}/>);
     const input = screen.getByLabelText('Upload a document');
-    fireEvent.change(input, { target: { files: [new File(['pdf'], 'scan.pdf')] } });
+    const pdf = new File(['%PDF-1.4'], 'scan.pdf');
+    Object.defineProperty(pdf, 'arrayBuffer', { value: async () => new TextEncoder().encode('%PDF-1.4').buffer });
+    fireEvent.change(input, { target: { files: [pdf] } });
     await screen.findByText('This PDF needs OCR.');
     expect(onImport).not.toHaveBeenCalled();
     expect(input).not.toBeDisabled();
     expect(input).toHaveValue('');
+  });
+  it('retains a scanned original without attempting text extraction in PDF-only mode', async () => {
+    mock.read.mockClear(); const onImport = vi.fn();
+    render(<TextFileUpload onImport={onImport}/>);
+    fireEvent.click(screen.getByLabelText(/PDF only/));
+    const pdf = new File(['%PDF-1.4'], 'scan.pdf');
+    Object.defineProperty(pdf, 'arrayBuffer', { value: async () => new TextEncoder().encode('%PDF-1.4').buffer });
+    fireEvent.change(screen.getByLabelText('Upload a document'), { target: { files: [pdf] } });
+    await waitFor(() => expect(onImport).toHaveBeenCalledWith('', pdf));
+    expect(mock.read).not.toHaveBeenCalled();
   });
 });

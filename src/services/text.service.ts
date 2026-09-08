@@ -44,10 +44,20 @@ export async function paragraphsFromFile(file: File): Promise<string[]> {
   return paragraphs;
 }
 
-export async function createText(params: { teacherId: string; title: string; author: string; source: string; paragraphs: string[]; classIds: string[]; contentMode?: 'full' | 'link'; externalUrl?: string; schedule?: { assignedAt: string; dueClassNumber?: number } }): Promise<LearningText> {
+export async function createText(params: { teacherId: string; title: string; author: string; source: string; paragraphs: string[]; classIds: string[]; contentMode?: 'full' | 'link'; externalUrl?: string; originalPdf?: File; schedule?: { assignedAt: string; dueClassNumber?: number } }): Promise<LearningText> {
+  let originalPdfId: string | undefined;
+  if (params.originalPdf) {
+    const file = params.originalPdf;
+    if (file.size > 5 * 1024 * 1024) throw new Error('Original PDFs must be 5 MB or smaller.');
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    let binary = '';
+    for (let offset = 0; offset < bytes.length; offset += 8192) binary += String.fromCharCode(...bytes.subarray(offset, offset + 8192));
+    const uploaded = await executeLearningContent<{fileId:string}>({ action: 'uploadOriginalPdf', name: file.name, data: btoa(binary) });
+    originalPdfId = uploaded.fileId;
+  }
   const now = getTimestamp();
   const text: LearningText = { $id: ID.unique(), teacherId: params.teacherId, title: params.title, author: params.author,
-    source: params.source, contentMode: params.contentMode || 'full', externalUrl: params.externalUrl || '', status: 'published', createdAt: now, updatedAt: now, syncStatus: 'local' };
+    source: params.source, ...(originalPdfId ? { originalPdfId } : {}), contentMode: params.contentMode || 'full', externalUrl: params.externalUrl || '', status: 'published', createdAt: now, updatedAt: now, syncStatus: 'local' };
   await db.texts.put(text); await addToQueue(params.teacherId, 'text', text.$id, 'create', text);
   for (let i = 0; i < params.paragraphs.length; i++) {
     const paragraph: TextParagraph = { $id: ID.unique(), textId: text.$id, sortOrder: i, content: params.paragraphs[i] };

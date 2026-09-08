@@ -1,9 +1,10 @@
 import { useRef, useState } from 'react';
 import { paragraphsFromFile } from '@/services/text.service';
 
-export function TextFileUpload({ onImport, onBusyChange }: { onImport: (content: string) => void; onBusyChange?: (busy: boolean) => void }) {
+export function TextFileUpload({ onImport, onBusyChange }: { onImport: (content: string, originalPdf?: File) => void; onBusyChange?: (busy: boolean) => void }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const [pdfOnly, setPdfOnly] = useState(false);
   const current = useRef(0);
   return <div className="space-y-1">
     <label className="block text-sm font-medium">Upload a document
@@ -14,16 +15,20 @@ export function TextFileUpload({ onImport, onBusyChange }: { onImport: (content:
         const request = ++current.current;
         setBusy(true); onBusyChange?.(true); setMessage('Reading document…');
         try {
-          const paragraphs = await paragraphsFromFile(file);
+          const isPdf = file.name.toLowerCase().endsWith('.pdf');
+          if (isPdf && file.size > 5 * 1024 * 1024) throw new Error('Original PDFs must be 5 MB or smaller.');
+          if (isPdf && new TextDecoder().decode((await file.arrayBuffer()).slice(0, 5)) !== '%PDF-') throw new Error('This file is not a valid PDF.');
+          const paragraphs = isPdf && pdfOnly ? [] : await paragraphsFromFile(file);
           if (request !== current.current) return;
-          onImport(paragraphs.join('\n\n'));
-          setMessage(`Imported ${paragraphs.length} paragraphs. Please check the text and paragraph breaks before saving.`);
+          onImport(paragraphs.join('\n\n'), isPdf ? file : undefined);
+          setMessage(isPdf && pdfOnly ? 'Original PDF selected. It will be stored privately when you save; no OCR will be performed.' : `Imported ${paragraphs.length} paragraphs. Please check the text and paragraph breaks before saving.${isPdf ? ' The original PDF will also be kept when you save.' : ''}`);
         } catch (error) {
           setMessage(error instanceof Error ? error.message : 'Could not read this file. Please try another format.');
         } finally { setBusy(false); onBusyChange?.(false); }
       }}/>
     </label>
-    <p className="text-xs text-gray-500">DOC, DOCX, PDF, Markdown or TXT. Maximum 10 MB (DOC: 2 MB). PDF and DOC import text, not exact page layouts. DOC needs an internet connection and is read by the app’s private backend; other formats are read on this device.</p>
+    <label className="flex items-center gap-2 text-sm"><input type="checkbox" disabled={busy} checked={pdfOnly} onChange={event => setPdfOnly(event.target.checked)}/>PDF only — keep the original without extracting text (for scans)</label>
+    <p className="text-xs text-gray-500">Maximum 10 MB (PDF: 5 MB; DOC: 2 MB). Original PDFs are stored privately when you save and require internet access. DOC is read by the app’s private backend. Other text extraction happens on this device.</p>
     {message && <p role="status" className="text-sm text-slate-700">{message}</p>}
   </div>;
 }

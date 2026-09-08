@@ -1,7 +1,8 @@
-import { Client, Databases, ID, Query, Users } from 'node-appwrite';
+import { Client, Databases, ID, Query, Users, Storage, Tokens } from 'node-appwrite';
 import { createHash } from 'node:crypto';
 import { planningAction, slotAgenda } from './planning.js';
 import { importLegacyWord } from './document-import.js';
+import { originalPdfAction, authorizeTextMutation } from './original-pdf.js';
 
 const studentCollections = new Set(['quiz_attempts', 'writing_submissions', 'peer_reviews', 'discussion_questions', 'discussion_answers', 'question_votes', 'text_annotations', 'text_discussion_posts', 'text_discussion_votes']);
 const substitutePostCollections = new Set(['discussion_questions', 'discussion_answers', 'text_annotations', 'text_discussion_posts']);
@@ -132,6 +133,7 @@ export default async ({ req, res, error }) => {
     const memberships = await db.listDocuments(databaseId, 'class_members', [Query.equal('userId', userId), Query.limit(500)]);
     const nowTime = Date.now();
     const memberClassIds = new Set(memberships.documents.filter(row => row.role !== 'substitute' || (row.expiresAt && new Date(row.expiresAt).getTime() > nowTime)).map(row => row.classId));
+    if (['uploadOriginalPdf', 'readOriginalPdf'].includes(body.action)) return res.json(await originalPdfAction({ body, profile, userId, memberClassIds, db, databaseId, storage: new Storage(client), tokens: new Tokens(client), endpoint: process.env.APPWRITE_ENDPOINT, projectId: process.env.APPWRITE_FUNCTION_PROJECT_ID }));
     if (['readPlanningUnits','savePlanningUnit','readPlanningMaterials','consolidatePlanningDecks'].includes(body.action)) {
       return res.json(await planningAction({body,profile,userId,memberClassIds,db,databaseId}));
     }
@@ -1130,6 +1132,8 @@ export default async ({ req, res, error }) => {
     }
     if (collection === 'quiz_attempts') return res.json({ error: 'Quiz attempts must use the secure quiz submission actions' }, 400);
     const data = { ...body.data }; delete data.$id; delete data.syncStatus;
+    try { await authorizeTextMutation({ collection, id, data, userId, db, databaseId }); }
+    catch (cause) { return res.json({ error: cause.message }, 403); }
     let existing = null; if (operation !== 'create') { try { existing = await db.getDocument(databaseId, collection, id); } catch { /* upsert */ } }
     if (collection === 'classes') {
       if (!existing || existing.teacherId !== userId || operation === 'delete') return res.json({ error: 'Only the class owner can update class links' }, 403);
