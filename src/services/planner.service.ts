@@ -30,11 +30,6 @@ export function createWeeklyPlan(week:PlannerWeekSource,mapping:Record<string,st
  const courses:CourseWeekChoices[]=week.blocks.map(block=>({classCode:block.code,progress:prior.get(block.code)?.status==='missed'?'behind':prior.get(block.code)?.status==='partial'?'partial':'on_track',weDoLead:'teacher',leadName:'',intention:'',texts:block.textQueue.slice(0,8).map(title=>({title,date:block.days[0]?.iso||week.startDate,url:'',publish:false})),presentations:block.presentationCandidates.map(title=>({title,date:block.days[0]?.iso||week.startDate,givenBy:'teacher',url:'',publish:false}))}));
  const lessons:LessonPlan[]=week.blocks.flatMap(block=>block.days.map((day,index)=>({id:`${block.code}-${day.iso||index}`,classCode:block.code,classId:mapping[block.code]||'',classLabel:block.label,date:day.iso,daytype:day.daytype,unit:block.unit,goal:block.goal,settle:'Deck review',iDo:day.I,weDo:day.W,theyDo:day.Y,check:day.C,exit:'Name the next reading and who owes what.',due:day.due,reminders:[],texts:[],presentations:[],materials:[],extraActivityIds:[],privateNotes:''})));
  for(const block of week.blocks){const blockLessons=lessons.filter(lesson=>lesson.classCode===block.code).sort((a,b)=>a.date.localeCompare(b.date));for(let index=0;index<blockLessons.length;index++){for(const due of blockLessons[index].due){const target=blockLessons[Math.max(0,index-1)];if(target.id!==blockLessons[index].id)target.reminders.push(`Upcoming: ${due}`);}}}
- const preparation:PreparationTask[]=[];
- for(const block of week.blocks){
-  const classId=mapping[block.code]||'',presentation=block.presentationCandidates[0]||'';
-  preparation.push({id:`quiz-results-${block.code}`,label:`Update Quiz results in Canvas · ${block.label}`,kind:'quiz',status:'todo',classCode:block.code,url:classId?`/classes/${classId}#quizzes`:undefined});
-  preparation.push({id:`add-cards-${block.code}`,label:`Add flashcards to ${block.label}${presentation?` · ${presentation}`:''}`,kind:'presentation',status:'todo',classCode:block.code});
- }
+ const preparation:PreparationTask[]=[{id:'flashcards-updated',label:'Flashcards Updated',kind:'other',status:'todo'},...week.blocks.map(block=>({id:`prepare-presentation-${block.code}`,label:`Prepare Presentation · ${block.label}`,kind:'presentation' as const,status:'todo' as const,classCode:block.code}))];
  return {week,flags:[],weekNote:'',preparation,courses,extras:[],lessons,publishAgenda:true,includeIntentionsInPrint:false};
 }

@@ -136,7 +136,7 @@ export function populateSlots(data: WeeklyPlanData, units: UnitPlan[]): WeeklyPl
     const presentations = (course?.presentations || []).filter(item => item.publish && item.date === lesson.date && !resources.some(resource => resource.title === item.title)).map((item, index): LessonSlot => ({ id: `${lesson.id}-presentation-${index}`, title: item.title, kind: 'presentation', content: '', url: item.url, minutes: 10, optional: false, status: 'planned' }));
     const sourceActivities = ([['I do', lesson.iDo], ['We do', lesson.weDo], ['They do', lesson.theyDo], ['Check', lesson.check]] as const).filter(([,content])=>content.trim()).map(([title,content]):LessonSlot=>({id:crypto.randomUUID(),title,content,kind:/quiz/i.test(content)?'quiz':'activity',url:'',minutes:10,optional:false,status:'planned'}));
     const all = [...due, ...resources.map(resourceSlot), ...presentations, ...sourceActivities];
-    lesson.slots = all.slice(0,8); lesson.overflow = all.slice(8);
+    lesson.slots = all; lesson.overflow = [];
   }
   return next;
 }

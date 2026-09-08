@@ -22,14 +22,14 @@ describe('unit planning',()=>{
   it('rejects unmatched core weeks instead of releasing them on a guessed date',()=>{
     expect(()=>importVocabulary('front,back,tags\nx,y,WL U1 W08 TERM CORE wk:Oct 5-9',[week])).toThrow('Cannot match');
   });
-  it('places due items and dated resources in eight slots with visible overflow and preserves edits',()=>{
+  it('places all due items and resources without a slot cap and preserves edits',()=>{
     const resources=Array.from({length:10},(_,i)=>({id:`r${i}`,kind:'presentation' as const,title:`Talk ${i}`,content:'',url:'',week:week.startDate,date:'2026-09-08',minutes:10,optional:false,approved:false,paragraphs:5,targets:[],skills:''}));
     const unit:UnitPlan={id:'u',course:'WL',number:'1',title:'Epic',startDate:week.startDate,endDate:'2026-10-16',knowledge:'',skills:'',essentialQuestion:'',classIds:['blue'],cards:[],resources,vocabularyApproved:false};
     const plan=populateSlots(createWeeklyPlan(week,{'WL-B':'blue'}),[unit]);
-    expect(plan.lessons[0].slots).toHaveLength(8);
+    expect(plan.lessons[0].slots).toHaveLength(15);
     expect(plan.lessons[0].slots![0].title).toBe('Essay');
     expect(plan.lessons[0].slots![0].minutes).toBe(0);
-    expect(plan.lessons[0].overflow).toHaveLength(7);
+    expect(plan.lessons[0].overflow).toHaveLength(0);
     plan.lessons[0].slots![1].title='My edit';
     expect(populateSlots(plan,[]).lessons[0].slots![1].title).toBe('My edit');
     expect(plan.unitSnapshot![0].resources).toHaveLength(10);

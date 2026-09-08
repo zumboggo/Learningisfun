@@ -609,6 +609,7 @@ export interface CopyworkEntry {
   $id: string;
   userId: string;
   content: string;
+  observations?: string[];
   sourceTitle?: string;
   sourceUrl?: string;
   createdAt: string;

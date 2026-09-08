@@ -1,5 +1,6 @@
 import { Client, Databases, ID, Query, Users, Storage, Tokens } from 'node-appwrite';
 import { createHash } from 'node:crypto';
+import { validateObservations } from './copywork.js';
 import { planningAction, slotAgenda } from './planning.js';
 import { importLegacyWord } from './document-import.js';
 import { originalPdfAction, authorizeTextMutation } from './original-pdf.js';
@@ -188,8 +189,11 @@ export default async ({ req, res, error }) => {
       const content = String(body.content || '').trim(), sourceTitle = String(body.sourceTitle || '').trim(), sourceUrl = String(body.sourceUrl || '').trim();
       if (!content || content.length > 50000) return res.json({ error: 'Copywork must be between 1 and 50,000 characters' }, 400);
       if (sourceTitle.length > 500 || sourceUrl.length > 2000 || (sourceUrl && !/^https?:\/\//i.test(sourceUrl))) return res.json({ error: 'The source details are invalid' }, 400);
+      let observations;
+      try { observations = validateObservations(body.observations); }
+      catch (error) { return res.json({ error: error.message }, 400); }
       const now = new Date().toISOString();
-      const entry = await db.createDocument(databaseId, 'copywork_entries', ID.unique(), { userId, content, sourceTitle, sourceUrl, createdAt: now, updatedAt: now });
+      const entry = await db.createDocument(databaseId, 'copywork_entries', ID.unique(), { userId, content, sourceTitle, sourceUrl, observations, createdAt: now, updatedAt: now });
       return res.json({ entry: clean(entry) });
     }
 

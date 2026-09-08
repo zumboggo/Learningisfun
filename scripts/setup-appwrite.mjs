@@ -48,6 +48,7 @@ const COLLECTIONS = [
     attributes: [
       S('userId', { required: true }),
       TXT('content', { required: true }),
+      S('observations', { size: 2000, array: true, required: false }),
       S('sourceTitle', { size: 500, required: false }),
       S('sourceUrl', { size: 2000, required: false }),
       DATE('createdAt', { required: true }),
