@@ -62,7 +62,7 @@ describe('simplified weekly planner', () => {
   it('places routine copies and opens their details when clicked', () => {
     function Harness() { const [data,setData] = useState(fixture); return <WeeklySlots data={data} units={[]} onChange={setData}/>; }
     render(<Harness/>);
-    expect(screen.getByText('Routines')).toBeInTheDocument();
+    expect(screen.getByRole('heading', {name:'Routines'})).toBeInTheDocument();
     fireEvent.click(screen.getByText('+ Routine'));
     routineNames.forEach(name => expect(screen.getByRole('button', {name})).toBeInTheDocument());
     fireEvent.click(screen.getByRole('button',{name:'QFT'}));
@@ -72,7 +72,7 @@ describe('simplified weekly planner', () => {
     expect(screen.getByLabelText('Details')).toHaveAttribute('rows','2');
     fireEvent.click(screen.getByText('Done'));
     fireEvent.click(screen.getByRole('button',{name:'QFT'}));
-    fireEvent.click(screen.getByText('+ Place QFT here'));
+    fireEvent.click(within(screen.getByRole('region', {name:'World Lit Blue lessons'})).getByText('+ Place QFT here'));
     fireEvent.click(screen.getByLabelText('Open QFT details'));
     expect(screen.queryByLabelText('Details')).not.toBeInTheDocument();
     fireEvent.click(screen.getByText('Edit in planning area'));
@@ -105,7 +105,7 @@ describe('simplified weekly planner', () => {
     fireEvent.change(title, { target: { value: 'Demonstrate' } });
     expect(title).toHaveFocus();
     fireEvent.click(screen.getByText('Done'));
-    fireEvent.click(screen.getByLabelText('Copy Demonstrate'));
+    fireEvent.click(within(screen.getByRole('region', {name:'World Lit Blue lessons'})).getByLabelText('Copy Demonstrate'));
     fireEvent.click(screen.getByRole('button', { name: 'World Lit Red' }));
     fireEvent.click(screen.getByText('+ Place Demonstrate here'));
     expect(latest!.lessons[0].slots).toHaveLength(3);
@@ -122,7 +122,7 @@ describe('simplified weekly planner', () => {
     }
     render(<Harness/>);
     const lesson = latest!.lessons[0], slot = lesson.slots![0];
-    fireEvent.drop(screen.getByRole('article'), { dataTransfer: { getData: () => JSON.stringify({ slot, from: lesson.id, index: 0 }) } });
+    fireEvent.drop(within(screen.getByRole('region', {name:'World Lit Blue lessons'})).getByRole('article'), { dataTransfer: { getData: () => JSON.stringify({ slot, from: lesson.id, index: 0 }) } });
     expect(latest!.lessons[0].slots!.map(item => item.title)).toEqual(['We do', 'They do', 'I do']);
     expect(latest!.lessons[0].overflow![0].title).toBe('Older unplaced activity');
     fireEvent.click(screen.getByText('Place', { exact: true }));

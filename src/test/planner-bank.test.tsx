@@ -12,6 +12,23 @@ import type { FlashcardCard } from '@/types';
 const fixture=()=>populateSlots(createWeeklyPlan({key:'week',startDate:'2026-09-07',header:'',calendar:'',blocks:['WL-B','WL-R','AP'].map(code=>({code,label:code,title:code,unit:'',std:'',goal:'',diff:'',presentationCandidates:['Proposed presentation'],textQueue:[],days:[{date:'Tuesday',iso:'2026-09-08',daytype:'',I:'Explain imagery',W:'',Y:'',C:'',due:[]}]}))},{}),[]);
 afterEach(()=>{cleanup();vi.restoreAllMocks();});
 describe('central weekly resource bank',()=>{
+  it('shows both World Lit sections and filters only the resource bank',()=>{
+    const onChange=vi.fn();
+    render(<WeeklySlots data={fixture()} units={[]} onChange={onChange}/>);
+    expect(screen.getByRole('region',{name:'World Lit Blue lessons'})).toBeInTheDocument();
+    expect(screen.getByRole('region',{name:'World Lit Red lessons'})).toBeInTheDocument();
+    const bank=within(screen.getByRole('complementary',{name:'Planning resources'}));
+    fireEvent.change(bank.getByLabelText('Search weekly resources'),{target:{value:'no match'}});
+    expect(bank.queryByLabelText('Edit resource I do')).not.toBeInTheDocument();
+    expect(screen.getAllByLabelText('Open I do details')).toHaveLength(2);
+    fireEvent.change(bank.getByLabelText('Search weekly resources'),{target:{value:'imagery'}});
+    expect(bank.getByLabelText('Edit resource I do')).toBeInTheDocument();
+    fireEvent.click(bank.getByRole('button',{name:/^Texts /}));
+    expect(bank.queryByLabelText('Edit resource I do')).not.toBeInTheDocument();
+    fireEvent.click(bank.getByRole('button',{name:/^All /}));
+    expect(bank.getByLabelText('Edit resource I do')).toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+  });
   it('adds through the lesson picker without scrolling and keeps links across sections',()=>{
     let latest:WeeklyPlanData;
     function Harness(){const[data,setData]=useState(fixture);latest=data;return <WeeklySlots data={data} units={[]} onChange={setData}/>;}
@@ -97,7 +114,7 @@ describe('central weekly resource bank',()=>{
     fireEvent.change(screen.getByLabelText('Details'),{target:{value:'Read the opening stanza'}});
     fireEvent.click(screen.getByText('Done'));
     fireEvent.click(screen.getByText('Shared poem'));
-    fireEvent.click(screen.getByText('+ Place Shared poem here'));
+    fireEvent.click(within(screen.getByRole('region',{name:'World Lit Blue lessons'})).getByText('+ Place Shared poem here'));
     fireEvent.click(screen.getByRole('button',{name:'World Lit Red'}));
     fireEvent.click(screen.getByText('Shared poem'));
     fireEvent.click(screen.getByText('+ Place Shared poem here'));
