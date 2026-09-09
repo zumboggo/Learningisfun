@@ -61,4 +61,5 @@ export class PlannerAutosave {
     if (this.revision > this.savedRevision) this.schedule();
   }
   get pending() { return this.revision > this.savedRevision; }
+  acceptRecord(record: WeeklyPlanRecord) { this.record = record; }
 }

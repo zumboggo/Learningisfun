@@ -22,7 +22,7 @@ export const readPlanner=()=>executeLearningContent<{sources:PlannerSourceRecord
 export const importPlannerSource=(filename:string,sourceText:string,parsed:ParsedPlannerSource,mapping:Record<string,string>,schoolYear='2026-27')=>executeLearningContent<{source:PlannerSourceRecord}>({action:'importPlannerSource',filename,sourceText,parsedJson:JSON.stringify(parsed),mappingJson:JSON.stringify(mapping),schoolYear});
 export const updatePlannerMapping=(sourceId:string,mapping:Record<string,string>)=>executeLearningContent<{source:PlannerSourceRecord}>({action:'updatePlannerMapping',sourceId,mappingJson:JSON.stringify(mapping)});
 export const saveWeeklyPlan=(sourceId:string,data:WeeklyPlanData,status:'draft'|'ready'='draft',planId?:string)=>executeLearningContent<{plan:WeeklyPlanRecord}>({action:'saveWeeklyPlan',sourceId,weekKey:data.week.key,weekStart:data.week.startDate,status,planJson:JSON.stringify(data),planId});
-export const publishWeeklyPlan=(planId:string)=>executeLearningContent<{plan:WeeklyPlanRecord;published:{agendas:number;texts:number;presentations:number}}>({action:'publishWeeklyPlan',planId});
+export const publishWeeklyPlan=(planId:string, expectedUpdatedAt?:string)=>executeLearningContent<{plan:WeeklyPlanRecord;published:{agendas:number;texts:number;presentations:number}}>({action:'publishWeeklyPlan',planId,expectedUpdatedAt});
 
 export function createWeeklyPlan(week:PlannerWeekSource,mapping:Record<string,string>,previous?:WeeklyPlanData):WeeklyPlanData{
  const order:Record<string,number>={'WL-B':0,'WL-R':1,AP:2,ETH:3};
