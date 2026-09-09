@@ -2,11 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
+import { TextViewControls, type TextViewMode } from '@/components/texts/TextViewControls';
 import { Markdown } from '@/components/common/Markdown';
 
 export function TextPresentPage() {
   const { textId } = useParams<{ textId: string }>();
   const navigate = useNavigate();
+  const [mode, setMode] = useState<TextViewMode>('article');
+  const [size, setSize] = useState(32);
   const [slide, setSlide] = useState(0);
   const text = useLiveQuery(() => textId ? db.texts.get(textId) : undefined, [textId]);
   const paragraphs = useLiveQuery(
@@ -20,41 +23,42 @@ export function TextPresentPage() {
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
+      if (mode !== 'phone' || event.target instanceof HTMLElement && event.target.closest('button, a, input, select, textarea')) return;
       if (event.key === 'ArrowLeft') previous();
       if (event.key === 'ArrowRight' || event.key === ' ') {
         event.preventDefault();
         next();
       }
-      if (event.key === 'Escape') navigate('/texts');
+
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [navigate, next, previous]);
+  }, [mode, next, previous]);
 
   if (!text || !paragraphs) return <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-300">Loading text…</div>;
 
   return (
-    <main className="flex min-h-screen flex-col bg-slate-950 text-white">
+    <main className="flex min-h-screen flex-col bg-[#faf9f6] text-slate-900">
       <header className="px-[clamp(1.5rem,5vw,5rem)] pt-[clamp(1.5rem,4vh,3rem)] text-center">
-        <h1 className="text-[clamp(1.25rem,2.5vw,2rem)] font-semibold">{text.title}</h1>
-        {text.author && <p className="mt-1 text-[clamp(.85rem,1.5vw,1.1rem)] text-slate-400">{text.author}</p>}
+        <div className="mb-5 text-left"><TextViewControls mode={mode} onMode={setMode} size={size} onSize={setSize} title={text.title} paragraphs={text.contentMode === 'link' ? [] : paragraphs.map(p => p.content)}/></div><h1 className="text-[clamp(1.25rem,2.5vw,2rem)] font-semibold">{text.title}</h1>
+        {text.author && <p className="mt-1 text-[clamp(.85rem,1.5vw,1.1rem)] text-slate-500">{text.author}</p>}
       </header>
 
       <section className="flex min-h-0 flex-1 items-center justify-center overflow-auto px-[clamp(1.5rem,8vw,8rem)] py-[clamp(2rem,6vh,5rem)]">
         {total > 0 ? (
-          <article className="mx-auto w-full max-w-6xl text-left text-[clamp(1.5rem,3.2vw,3rem)] leading-[1.55] tracking-[-0.01em]">
-            <Markdown content={paragraphs[slide]?.content||''}/>
+          <article className="mx-auto w-full max-w-[70ch] space-y-7 text-left leading-[1.7]" style={{ fontSize: size }}>
+            {(mode === 'article' ? paragraphs : [paragraphs[Math.min(slide, total - 1)]]).map(p => <Markdown key={p.$id} content={p.content} className="[&_table]:text-[1em] [&_code]:text-[.9em]"/>)}
           </article>
         ) : (
           <p className="text-xl text-slate-400">This text has no paragraphs.</p>
         )}
       </section>
 
-      <footer className="grid grid-cols-3 items-center border-t border-white/10 bg-slate-950/95 px-5 py-4">
-        <button onClick={previous} disabled={slide === 0} className="justify-self-start rounded-xl px-6 py-2 text-4xl hover:bg-white/10 disabled:opacity-20" aria-label="Previous paragraph">&lt;</button>
-        <button onClick={() => navigate('/texts')} className="justify-self-center rounded-xl px-5 py-3 text-sm font-semibold hover:bg-white/10">Home</button>
-        <button onClick={next} disabled={slide >= total - 1} className="justify-self-end rounded-xl px-6 py-2 text-4xl hover:bg-white/10 disabled:opacity-20" aria-label="Next paragraph">&gt;</button>
-        <span className="col-start-2 mt-1 justify-self-center text-xs text-slate-500">{total ? `${slide + 1} / ${total}` : '0 / 0'}</span>
+      <footer className="sticky bottom-0 grid grid-cols-3 items-center border-t bg-[#faf9f6] px-5 py-4">
+        {mode === 'phone' && <button onClick={previous} disabled={slide === 0} className="justify-self-start rounded-xl px-6 py-2 text-4xl hover:bg-white/10 disabled:opacity-20" aria-label="Previous paragraph">&lt;</button>}
+        <button onClick={() => navigate('/texts')} className="col-start-2 justify-self-center rounded-xl px-5 py-3 text-sm font-semibold hover:bg-white/10">Home</button>
+        {mode === 'phone' && <button onClick={next} disabled={slide >= total - 1} className="justify-self-end rounded-xl px-6 py-2 text-4xl hover:bg-white/10 disabled:opacity-20" aria-label="Next paragraph">&gt;</button>}
+        {mode === 'phone' && <span className="col-start-2 mt-1 justify-self-center text-xs text-slate-500">{total ? `${slide + 1} / ${total}` : '0 / 0'}</span>}
       </footer>
     </main>
   );
