@@ -8,7 +8,7 @@ export interface PlanningCard { id: string; front: string; back: string; tags: s
 export interface UnitResource { id: string; kind: ResourceKind; title: string; content: string; url: string; week: string; date: string; minutes: number; optional: boolean; approved: boolean; paragraphs: number; targets: string[]; skills: string; }
 export interface UnitPlan { id: string; course: string; number: string; title: string; startDate: string; endDate: string; knowledge: string; skills: string; essentialQuestion: string; classIds: string[]; cards: PlanningCard[]; resources: UnitResource[]; vocabularyApproved: boolean; }
 export interface UnitRecord { $id: string; teacherId: string; dataJson: string; updatedAt: string }
-export interface LessonSlot { id: string; resourceId?: string; title: string; kind: ResourceKind; content: string; url: string; minutes: number; optional: boolean; status: 'planned' | 'completed' | 'partial' | 'skipped'; }
+export interface LessonSlot { publish?: boolean; givenBy?: string; dueDate?: string; id: string; resourceId?: string; title: string; kind: ResourceKind; content: string; url: string; minutes: number; optional: boolean; status: 'planned' | 'completed' | 'partial' | 'skipped'; }
 export const courseCode = (value: string) => value.startsWith('WL') ? 'WL' : value;
 export interface PlanningRelease { $id:string; unitId:string; releaseAt:string; status:string; lastError:string }
 export const readUnits = () => executeLearningContent<{ units: UnitRecord[]; releases:PlanningRelease[] }>({ action: 'readPlanningUnits' });
@@ -96,7 +96,7 @@ export function resourcesForWeek(units: UnitPlan[], code: string, week: string) 
   return units.filter(unit => unit.course === courseCode(code)).flatMap(unit => unit.resources).filter(resource => resource.week === week);
 }
 export function resourceSlot(resource: UnitResource): LessonSlot {
-  return { id: crypto.randomUUID(), resourceId: resource.id, title: resource.title, kind: resource.kind, content: resource.content, url: resource.url, minutes: resource.kind === 'assignment' ? 0 : resource.minutes, optional: resource.optional, status: 'planned' };
+  return { id: crypto.randomUUID(), publish: resource.approved, resourceId: resource.id, title: resource.title, kind: resource.kind, content: resource.content, url: resource.url, minutes: resource.kind === 'assignment' ? 0 : resource.minutes, optional: resource.optional, status: 'planned' };
 }
 export function applyUnitPublication(data:WeeklyPlanData,units:UnitPlan[]):WeeklyPlanData {
   const next=structuredClone(data);

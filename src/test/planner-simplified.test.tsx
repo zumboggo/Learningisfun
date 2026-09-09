@@ -7,6 +7,9 @@ import { createWeeklyPlan, type WeeklyPlanData } from '@/services/planner.servic
 import { normalizePlan } from '@/services/planner-layout';
 import { placePlannerCard } from '@/services/planner-cards';
 import { populateSlots } from '@/services/unit-planning';
+import { routineNames, routineSlot } from '@/services/planner-routines';
+import { PlannerPrintSheet } from '@/pages/PlannerPrintPage';
+import { MemoryRouter } from 'react-router-dom';
 
 function fixture() {
   return normalizePlan(populateSlots(createWeeklyPlan({ key: 'Test week', startDate: '2026-09-07', header: '', calendar: '', blocks: ['WL-B', 'WL-R', 'AP', 'ETH'].map(code => ({ code, label: code, title: code, unit: 'Imagery', std: '', goal: 'Explain imagery', diff: '', presentationCandidates: ['Poetry'], textQueue: [], days: [{ date: 'Tue', iso: '2026-09-08', daytype: '', I: 'Model the skill', W: 'Discuss', Y: 'Write', C: '', due: [] }] })) }, {}), []));
@@ -19,7 +22,7 @@ describe('simplified weekly planner', () => {
     data.preparation.push({ id: 'quiz-results-WL-B', label: 'Update Quiz results in Canvas', kind: 'quiz', status: 'todo' }, { id: 'add-cards-WL-B', label: 'Add flashcards', kind: 'other', status: 'ready' }, { id: 'manual', label: 'Print handout', kind: 'handout', status: 'ready' });
     data.preparation[0].status = 'ready';
     const next = normalizePlan(data);
-    expect(next.preparation).toHaveLength(6);
+    expect(next.preparation).toHaveLength(5);
     expect(next.preparation[0].status).toBe('ready');
     expect(next.preparation.find(task => task.id === 'manual')?.status).toBe('ready');
     expect(normalizePlan(next)).toEqual(next);
@@ -36,6 +39,38 @@ describe('simplified weekly planner', () => {
     expect(screen.getAllByLabelText('Flashcards Updated')).toHaveLength(1);
     fireEvent.click(screen.getAllByLabelText('Presentation done and link posted')[0]);
     expect(screen.getAllByLabelText('Presentation done and link posted')[0]).toBeChecked();
+    expect(screen.getAllByLabelText('Presentation done and link posted')).toHaveLength(3);
+  });
+  it('merges old World Lit preparation checks without losing completion', () => {
+    const plan = fixture();
+    plan.preparation = plan.preparation.filter(task => task.id !== 'prepare-presentation-WL');
+    plan.preparation.push({id:'prepare-presentation-WL-R',label:'Red',kind:'presentation',status:'ready'}, {id:'prepare-presentation-WL-B',label:'Blue',kind:'presentation',status:'todo'});
+    const next = normalizePlan(plan);
+    expect(next.preparation.find(task => task.id === 'prepare-presentation-WL')?.status).toBe('ready');
+    expect(next.preparation.filter(task => task.id.includes('prepare-presentation-WL'))).toHaveLength(1);
+  });
+  it('prints blank write-back spaces, a check for every card and three improvement slots', () => {
+    const plan = fixture();
+    render(<MemoryRouter><PlannerPrintSheet data={plan}/></MemoryRouter>);
+    expect(screen.getAllByText('We Did:')).toHaveLength(plan.lessons.length);
+    expect(screen.getAllByLabelText('Completion checkbox')).toHaveLength(plan.lessons.flatMap(lesson => lesson.slots || []).length);
+    expect(screen.getByText('Improvements for next time')).toBeInTheDocument();
+    expect(screen.getByText('Instruction / explanation')).toBeInTheDocument();
+    expect(screen.getByText('Activities / pacing')).toBeInTheDocument();
+    expect(screen.getByText('Support / other')).toBeInTheDocument();
+  });
+  it('places routine copies and opens their details when clicked', () => {
+    function Harness() { const [data,setData] = useState(fixture); return <WeeklySlots data={data} units={[]} onChange={setData}/>; }
+    render(<Harness/>);
+    fireEvent.click(screen.getByText('Routines'));
+    routineNames.forEach(name => expect(screen.getByRole('button', {name})).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button',{name:'QFT'}));
+    fireEvent.click(screen.getByText('+ Place QFT here'));
+    fireEvent.click(screen.getByLabelText('Open QFT details'));
+    fireEvent.change(screen.getByLabelText('Details'), {target:{value:'Generate questions about the opening image.'}});
+    fireEvent.click(screen.getByText('Done'));
+    expect(screen.getByText('Generate questions about the opening image.')).toBeInTheDocument();
+    expect(routineSlot('QFT').content).toBe('');
   });
   it('moves, copies and reorders without losing cards or imposing eight slots', () => {
     const data = fixture(), first = data.lessons[0], second = data.lessons[1], slot = first.slots![0];

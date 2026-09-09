@@ -3,19 +3,26 @@ import { Link, useParams } from 'react-router-dom';
 import { Button } from '@/components/common/Button';
 import { readPlanner, type WeeklyPlanData } from '@/services/planner.service';
 
+import { normalizePlan } from '@/services/planner-layout';
+
+export function PrintCheck() { return <span aria-label="Completion checkbox" className="planner-paper-check"/>; }
 const targets = (goal: string) => goal.split(/\s*(?=\d+\)\s)/).map(value => value.replace(/^\d+\)\s*/, '').trim()).filter(Boolean);
 const activityTone: Record<string, string> = { I: 'bg-blue-50', We: 'bg-violet-50', They: 'bg-emerald-50', Check: 'bg-amber-50' };
 
 function ActivityRow({ label, children }: { label: 'I' | 'We' | 'They' | 'Check'; children: string }) {
-  return <div className={`grid grid-cols-[2.5rem_1fr] gap-1 rounded-md px-1.5 py-1 ${activityTone[label]}`}><b>{label}</b><span>{children || '—'}</span></div>;
+  return <div className={`grid grid-cols-[2.5rem_1fr] gap-1 rounded-md px-1.5 py-1 ${activityTone[label]}`}><b><PrintCheck/>{label}</b><span>{children || '—'}</span></div>;
 }
 
 export function PlannerPrintPage() {
   const { planId } = useParams();
   const [data, setData] = useState<WeeklyPlanData | null>(null);
-  useEffect(() => { void readPlanner().then(result => { const row = result.plans.find(plan => plan.$id === planId); if (row) setData(JSON.parse(row.planJson)); }); }, [planId]);
+  useEffect(() => { void readPlanner().then(result => { const row = result.plans.find(plan => plan.$id === planId); if (row) setData(normalizePlan(JSON.parse(row.planJson))); }); }, [planId]);
   if (!data) return <div className="p-6">Loading summary…</div>;
 
+  return <PlannerPrintSheet data={data}/>;
+}
+
+export function PlannerPrintSheet({data}: {data: WeeklyPlanData}) {
   const worldLit = data.week.blocks.filter(block => block.code === 'WL-B' || block.code === 'WL-R');
   const groups = [worldLit, ...data.week.blocks.filter(block => !block.code.startsWith('WL-')).map(block => [block])].filter(group => group.length);
 
@@ -39,9 +46,10 @@ export function PlannerPrintPage() {
           <section><h3 className="text-[9px] font-bold uppercase text-blue-800">Weekly knowledge &amp; skills</h3><ol className="mt-0.5 list-decimal space-y-0.5 pl-4 text-[9px] leading-tight">{weeklyTargets.map(target => <li key={target}>{target}</li>)}{data.unitSnapshot?.flatMap(unit=>unit.cards).filter(card=>card.week===data.week.startDate&&codes.some(code=>code.startsWith(card.id.split('-')[0]))).map(card=><li key={card.id}>{card.front}</li>)}</ol></section>
           <section className="text-[9px] leading-tight"><h3 className="font-bold uppercase text-gray-700">Materials and options</h3>{texts.length > 0 && <p className="mt-1 rounded-md bg-emerald-50 px-1.5 py-1"><b>Texts:</b> {texts.map(item => `${item.title}${item.date ? ` (${item.date.slice(5)})` : ''}`).join(' · ')}</p>}{presentations.length > 0 && <p className="mt-1 rounded-md bg-fuchsia-50 px-1.5 py-1"><b>Presentations:</b> {presentations.map(item => `${item.title}${item.givenBy && item.givenBy !== 'teacher' ? ` — ${item.givenBy}` : ''}`).join(' · ')}</p>}{extras.length > 0 && <div className="mt-1"><b>Possible activities</b><div className="mt-0.5 flex flex-wrap gap-1">{extras.map(item => <span key={`${item.label}-${item.target}`} className="rounded-md border border-slate-300 bg-slate-50 px-1.5 py-1">{item.label}{item.target ? <small className="block text-blue-700">{item.target}</small> : null}</span>)}</div></div>}{primary?.sectionBalanceNote && <p className="mt-1 rounded-md bg-amber-50 px-1.5 py-1"><b>Keep Blue/Red aligned:</b> {primary.sectionBalanceNote}</p>}</section>
         </div>
-        <div className="mt-2 grid grid-cols-2 gap-2 border-t pt-2">{lessons.map(lesson => <section key={lesson.id} className="rounded-lg border border-gray-300 bg-white p-1.5 text-[9px] leading-tight shadow-sm"><h3 className="mb-1 flex items-center justify-between gap-2 font-bold uppercase"><span className="rounded bg-gray-900 px-1.5 py-0.5 text-white">{lesson.date.slice(5)}</span><span>{blocks.length > 1 ? lesson.classLabel.replace('World Literature · ', 'WL ') : lesson.daytype}</span></h3><div className="space-y-1">{lesson.slots ? lesson.slots.map(slot=><div key={slot.id} className="rounded-md border bg-slate-50 px-2 py-1"><b>{slot.title}</b> · {slot.minutes} min{slot.optional?' · If time':''}<p>{slot.content}</p></div>) : <><ActivityRow label="I">{lesson.iDo}</ActivityRow><ActivityRow label="We">{lesson.weDo}</ActivityRow><ActivityRow label="They">{lesson.theyDo}</ActivityRow><ActivityRow label="Check">{lesson.check}</ActivityRow></>}</div>{lesson.due.length > 0 && <p className="mt-1 rounded-md border border-red-200 bg-red-50 px-1.5 py-1"><b>Due:</b> {lesson.due.join(' · ')}</p>}{lesson.reminders.length > 0 && <p className="mt-1 rounded-md border border-orange-200 bg-orange-50 px-1.5 py-1"><b>Remind:</b> {lesson.reminders.join(' · ')}</p>}</section>)}</div>
+        <div className="mt-2 grid grid-cols-2 gap-2 border-t pt-2">{lessons.map(lesson => <section key={lesson.id} className="planner-printed-lesson rounded-lg border border-gray-300 bg-white p-1.5 text-[9px] leading-tight shadow-sm"><h3 className="mb-1 flex items-center justify-between gap-2 font-bold uppercase"><span className="rounded bg-gray-900 px-1.5 py-0.5 text-white">{lesson.date.slice(5)}</span><span>{blocks.length > 1 ? lesson.classLabel.replace('World Literature · ', 'WL ') : lesson.daytype}</span></h3><div className="space-y-1">{lesson.slots ? lesson.slots.map(slot=><div key={slot.id} className="rounded-md border bg-slate-50 px-2 py-1"><b><PrintCheck/>{slot.title}</b> · {slot.minutes} min{slot.optional?' · If time':''}<p>{slot.content}</p></div>) : <><ActivityRow label="I">{lesson.iDo}</ActivityRow><ActivityRow label="We">{lesson.weDo}</ActivityRow><ActivityRow label="They">{lesson.theyDo}</ActivityRow><ActivityRow label="Check">{lesson.check}</ActivityRow></>}</div>{lesson.due.length > 0 && <p className="mt-1 rounded-md border border-red-200 bg-red-50 px-1.5 py-1"><PrintCheck/><b>Due:</b> {lesson.due.join(' · ')}</p>}{lesson.reminders.length > 0 && <p className="mt-1 rounded-md border border-orange-200 bg-orange-50 px-1.5 py-1"><PrintCheck/><b>Remind:</b> {lesson.reminders.join(' · ')}</p>}<div className="planner-we-did mt-2 rounded-md border border-gray-400 p-2"><b>We Did:</b></div></section>)}</div>
         {data.includeIntentionsInPrint && primary?.intention && <p className="mt-1 border-t pt-1 text-[9px] italic"><b>Private intention:</b> {primary.intention}</p>}
       </article>;
     })}</section>
+    <footer className="planner-improvements rounded-lg border border-gray-500 bg-white p-2"><h2 className="text-xs font-bold">Improvements for next time</h2><div className="mt-1 grid grid-cols-3 gap-2">{['Instruction / explanation', 'Activities / pacing', 'Support / other'].map(label => <div key={label} className="planner-improvement-slot rounded border border-gray-300 p-1.5"><h3 className="text-[9px] text-gray-600">{label}</h3></div>)}</div></footer>
   </main>;
 }

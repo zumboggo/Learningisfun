@@ -2,7 +2,7 @@ import { Query } from 'node-appwrite';
 import { createHash } from 'node:crypto';
 
 const id = (...parts) => `pl_${createHash('sha256').update(parts.join(':')).digest('hex').slice(0,30)}`;
-export const slotAgenda = lesson => `### ${lesson.date}\n${lesson.slots.filter(slot=>!slot.optional).map(slot=>`- **${slot.title}:** ${slot.content||''}${/^https?:\/\//.test(slot.url||'')?` [Open](${slot.url})`:''}`).join('\n')}${lesson.reminders?.length?`\n- **Remember:** ${lesson.reminders.join(' · ')}`:''}`;
+export const slotAgenda = lesson => `### ${lesson.date}\n${lesson.slots.filter(slot=>!slot.optional && slot.publish !== false).map(slot=>`- **${slot.title}:** ${slot.content||''}${/^https?:\/\//.test(slot.url||'')?` [Open](${slot.url})`:''}`).join('\n')}${lesson.reminders?.length?`\n- **Remember:** ${lesson.reminders.join(' · ')}`:''}`;
 export function fridayRelease(week) {
   const date = new Date(`${week}T00:00:00Z`);
   date.setUTCDate(date.getUTCDate() - ((date.getUTCDay()+6)%7) - 3);
