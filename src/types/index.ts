@@ -497,7 +497,12 @@ export interface TeacherWritingFeedback {
   syncStatus: SyncStatus;
 }
 
+export type TqeType = 'thought' | 'question' | 'epiphany';
+export type AnnotationMode = 'tqe' | 'regular';
+
 export interface LearningText {
+  annotationMode?: AnnotationMode;
+  tqeStage?: 'thought' | 'full';
   $id: string;
   teacherId: string;
   title: string;
@@ -552,6 +557,7 @@ export interface TextVersionParagraph {
 }
 
 export interface TextAnnotation {
+  tqeType?: TqeType;
   $id: string;
   textId: string;
   paragraphId: string;

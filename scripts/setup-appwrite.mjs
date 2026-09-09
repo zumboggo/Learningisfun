@@ -579,7 +579,7 @@ const COLLECTIONS = [
   },
   {
     id: 'texts', name: 'Texts',
-    attributes: [S('teacherId', { required: true }), S('title', { required: true }), S('author', { required: false }), TXT('source', { required: false }), ENUM('contentMode', ['full','link'], { required: false }), TXT('externalUrl', { required: false }), S('originalPdfId', { required: false }), ENUM('status', ['draft','published','archived'], { required: true }), DATE('createdAt', { required: true }), DATE('updatedAt', { required: true })],
+    attributes: [ENUM('annotationMode', ['tqe','regular'], { required: false }), ENUM('tqeStage', ['thought','full'], { required: false }), S('teacherId', { required: true }), S('title', { required: true }), S('author', { required: false }), TXT('source', { required: false }), ENUM('contentMode', ['full','link'], { required: false }), TXT('externalUrl', { required: false }), S('originalPdfId', { required: false }), ENUM('status', ['draft','published','archived'], { required: true }), DATE('createdAt', { required: true }), DATE('updatedAt', { required: true })],
     indexes: [{ key: 'idx_teacherId', type: 'key', attributes: ['teacherId'] }, { key: 'idx_status', type: 'key', attributes: ['status'] }],
   },
   {
@@ -603,8 +603,13 @@ const COLLECTIONS = [
     indexes: [{ key: 'idx_versionId', type: 'key', attributes: ['versionId'] }, { key: 'idx_textId', type: 'key', attributes: ['textId'] }, { key: 'idx_originalParagraphId', type: 'key', attributes: ['originalParagraphId'] }, { key: 'idx_version_order', type: 'unique', attributes: ['versionId','sortOrder'] }],
   },
   {
+    id: 'tqe_records', name: 'TQE classroom records',
+    attributes: [S('textId', { required: true }), S('classId', { required: true }), S('kind', { required: true }), S('ownerId', { required: true }), TXT('payloadJson', { required: true }), DATE('updatedAt', { required: true })],
+    indexes: [{ key: 'idx_text_class', type: 'key', attributes: ['textId','classId'] }],
+  },
+  {
     id: 'text_annotations', name: 'Text Annotations',
-    attributes: [S('textId', { required: true }), S('paragraphId', { required: true }), S('classId', { required: true }), S('authorId', { required: true }), S('anonymousLabel', { required: true }), ENUM('type', ['observation','question'], { required: true }), ENUM('kind', ['annotation','highlight','page_note','reply'], { required: false }), TXT('content', { required: true }), TXT('selectedText', { required: false }), TXT('tagsJson', { required: false }), S('parentId', { required: false }), ENUM('visibility', ['class','private'], { required: false }), ENUM('moderationStatus', ['visible','hidden'], { required: true }), BOOL('flagged', { required: false }), TXT('flagReason', { required: false }), DATE('createdAt', { required: true }), DATE('updatedAt', { required: true })],
+    attributes: [ENUM('tqeType', ['thought','question','epiphany'], { required: false }), S('textId', { required: true }), S('paragraphId', { required: true }), S('classId', { required: true }), S('authorId', { required: true }), S('anonymousLabel', { required: true }), ENUM('type', ['observation','question'], { required: true }), ENUM('kind', ['annotation','highlight','page_note','reply'], { required: false }), TXT('content', { required: true }), TXT('selectedText', { required: false }), TXT('tagsJson', { required: false }), S('parentId', { required: false }), ENUM('visibility', ['class','private'], { required: false }), ENUM('moderationStatus', ['visible','hidden'], { required: true }), BOOL('flagged', { required: false }), TXT('flagReason', { required: false }), DATE('createdAt', { required: true }), DATE('updatedAt', { required: true })],
     indexes: [{ key: 'idx_text_class', type: 'key', attributes: ['textId','classId'] }, { key: 'idx_paragraphId', type: 'key', attributes: ['paragraphId'] }, { key: 'idx_authorId', type: 'key', attributes: ['authorId'] }, { key: 'idx_parentId', type: 'key', attributes: ['parentId'] }, { key: 'idx_flagged', type: 'key', attributes: ['flagged'] }],
   },
   {

@@ -98,6 +98,8 @@ async function executeSyncOperation(op: SyncOperation): Promise<void> {
       id: (data.$id as string | undefined) || entityId, data,
     }));
     if (execution.status === 'failed') throw new Error(execution.errors || 'Secure sync failed');
+    const response = JSON.parse(execution.responseBody || '{}');
+    if (response.error || execution.responseStatusCode >= 400) throw new Error(response.error || 'Secure sync was rejected');
     await markEntitySynced(entityType, (data.$id as string | undefined) || entityId);
     return;
   }

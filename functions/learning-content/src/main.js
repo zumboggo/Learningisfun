@@ -4,6 +4,7 @@ import { validateObservations } from './copywork.js';
 import { planningAction, slotAgenda } from './planning.js';
 import { importLegacyWord } from './document-import.js';
 import { originalPdfAction, authorizeTextMutation } from './original-pdf.js';
+import { handleTqe } from './tqe.js';
 
 const studentCollections = new Set(['quiz_attempts', 'writing_submissions', 'peer_reviews', 'discussion_questions', 'discussion_answers', 'question_votes', 'text_annotations', 'text_discussion_posts', 'text_discussion_votes']);
 const substitutePostCollections = new Set(['discussion_questions', 'discussion_answers', 'text_annotations', 'text_discussion_posts']);
@@ -1063,6 +1064,15 @@ export default async ({ req, res, error }) => {
       }
     }
 
+    if (body.action === 'readTqe' || body.action === 'saveTqe') return await handleTqe({ body, db, databaseId, Query, userId, profile, res });
+    if (body.action === 'setAnnotationMode') {
+      const text = await db.getDocument(databaseId, 'texts', body.textId);
+      if (profile.role !== 'teacher' || text.teacherId !== userId) return res.json({ error: 'Only the text owner can change annotation mode' }, 403);
+      if (!['tqe', 'regular'].includes(body.annotationMode)) return res.json({ error: 'Invalid mode' }, 400);
+      if (body.tqeStage && !['thought','full'].includes(body.tqeStage)) return res.json({error:'Invalid TQE stage'},400);
+      await db.updateDocument(databaseId, 'texts', text.$id, { annotationMode: body.annotationMode, tqeStage: body.tqeStage || 'full' });
+      return res.json({ ok: true });
+    }
     if (body.action === 'readTexts') {
       const requested = Array.isArray(body.classIds) ? body.classIds : [];
       let allowedClassIds = requested.filter(classId => memberClassIds.has(classId));
@@ -1081,18 +1091,36 @@ export default async ({ req, res, error }) => {
       if (!body.includeContent) return res.json({ assignments: assignments.map(clean), texts: textResult.documents.map(clean), paragraphs: [], versions: [], versionParagraphs: [], annotations: [] });
       const [paragraphResult, annotationResult, versionResult] = await Promise.all([
         db.listDocuments(databaseId, 'text_paragraphs', [Query.equal('textId', textIds), Query.limit(1000)]),
-        db.listDocuments(databaseId, 'text_annotations', [Query.equal('textId', textIds), Query.equal('classId', allowedClassIds), Query.limit(1000)]),
+        (async () => {
+          const documents = []; let cursor;
+          do {
+            const page = await db.listDocuments(databaseId, 'text_annotations', [Query.equal('textId', textIds), Query.equal('classId', allowedClassIds), Query.limit(100), ...(cursor ? [Query.cursorAfter(cursor)] : [])]);
+            documents.push(...page.documents);
+            cursor = page.documents.length === 100 ? page.documents.at(-1).$id : undefined;
+          } while (cursor);
+          return { documents };
+        })(),
         db.listDocuments(databaseId, 'text_versions', [Query.equal('textId', textIds), Query.limit(1000)]),
       ]);
       const textUpdatedAt = new Map(textResult.documents.map(row => [row.$id, new Date(row.updatedAt).getTime()]));
       const currentVersions = versionResult.documents.filter(row => new Date(row.createdAt).getTime() >= (textUpdatedAt.get(row.textId) || 0));
       const readyVersionIds = currentVersions.filter(row => row.status === 'ready').map(row => row.$id);
       const versionParagraphResult = readyVersionIds.length ? await db.listDocuments(databaseId, 'text_version_paragraphs', [Query.equal('versionId', readyVersionIds), Query.limit(5000)]) : { documents: [] };
+      const ownTypes = new Map();
+      for (const row of annotationResult.documents) if (row.authorId === userId && (row.visibility || 'class') === 'class' && (row.kind || 'annotation') === 'annotation' && row.moderationStatus === 'visible' && row.content?.trim()) {
+        const key = `${row.textId}:${row.classId}`;
+        if (!ownTypes.has(key)) ownTypes.set(key, new Set());
+        if (row.tqeType) ownTypes.get(key).add(row.tqeType);
+      }
+      const stages = new Map(textResult.documents.map(row => [row.$id, row.tqeStage || 'full']));
+      const modes = new Map(textResult.documents.map(row => [row.$id, row.annotationMode || 'tqe']));
       const ownCounts = new Map();
       for (const row of annotationResult.documents) if (row.authorId === userId && (row.visibility || 'class') === 'class' && (row.kind || 'annotation') === 'annotation') ownCounts.set(`${row.textId}:${row.classId}`, (ownCounts.get(`${row.textId}:${row.classId}`) || 0) + 1);
       const annotations = annotationResult.documents.filter(row => {
         if ((row.visibility || 'class') === 'private') return row.authorId === userId;
-        return profile.role === 'teacher' || profile.role === 'parent' || row.authorId === userId || (ownCounts.get(`${row.textId}:${row.classId}`) || 0) >= 3;
+        if (profile.role === 'teacher') return true;
+        if (row.moderationStatus !== 'visible') return row.authorId === userId;
+        return profile.role === 'parent' || row.authorId === userId || (modes.get(row.textId) === 'regular' ? (ownCounts.get(`${row.textId}:${row.classId}`) || 0) >= 3 : (stages.get(row.textId) === 'thought' ? ['thought'] : ['thought','question','epiphany']).every(type => ownTypes.get(`${row.textId}:${row.classId}`)?.has(type)));
       }).map(row => { const projected = clean(row); if (profile.role !== 'teacher' && row.authorId !== userId) { delete projected.authorId; delete projected.flagReason; } return projected; });
       return res.json({ assignments: assignments.map(clean), texts: textResult.documents.map(clean), paragraphs: paragraphResult.documents.map(clean), versions: currentVersions.map(clean), versionParagraphs: versionParagraphResult.documents.map(clean), annotations });
     }
@@ -1139,7 +1167,11 @@ export default async ({ req, res, error }) => {
     const data = { ...body.data }; delete data.$id; delete data.syncStatus;
     try { await authorizeTextMutation({ collection, id, data, userId, db, databaseId }); }
     catch (cause) { return res.json({ error: cause.message }, 403); }
-    let existing = null; if (operation !== 'create') { try { existing = await db.getDocument(databaseId, collection, id); } catch { /* upsert */ } }
+    let existing = null; if (operation !== 'create' || collection === 'text_annotations') { try { existing = await db.getDocument(databaseId, collection, id); } catch { /* upsert */ } }
+    if (collection === 'text_annotations' && existing && operation === 'create') {
+      if (existing.authorId !== userId) return res.json({error:'Cannot replace another annotation'},403);
+      return res.json({ok:true});
+    }
     if (collection === 'classes') {
       if (!existing || existing.teacherId !== userId || operation === 'delete') return res.json({ error: 'Only the class owner can update class links' }, 403);
       let links;
@@ -1224,9 +1256,17 @@ export default async ({ req, res, error }) => {
       await db.updateDocument(databaseId, 'text_discussion_posts', post.$id, { score: post.score - oldValue + data.value, updatedAt: new Date().toISOString() }); return res.json({ ok: true });
     }
     if (collection === 'text_annotations') {
+      if (existing && (data.textId && data.textId !== existing.textId || data.classId && data.classId !== existing.classId)) return res.json({error:'Cannot move an annotation to another reading or class'},403);
+      if (existing && existing.authorId !== userId) return res.json({error:'Use moderation controls for another author’s annotation'},403);
       const textId = data.textId || existing?.textId, annotationClassId = data.classId || existing?.classId;
       const assignment = await db.listDocuments(databaseId,'text_assignments',[Query.equal('textId',textId),Query.equal('classId',annotationClassId),Query.limit(1)]);
       if (!assignment.total) return res.json({error:'Text is not assigned to this class'},403);
+      if (operation === 'delete') {
+        const replies=await db.listDocuments(databaseId,collection,[Query.equal('parentId',id),Query.limit(5000)]);
+        for(const reply of replies.documents)await db.deleteDocument(databaseId,collection,reply.$id);
+        await db.deleteDocument(databaseId,collection,id);
+        return res.json({ok:true});
+      }
       if (operation === 'create') {
         data.authorId=userId;data.anonymousLabel=`Reader ${userId.slice(-4).toUpperCase()}`;data.createdAt=new Date().toISOString();data.moderationStatus='visible';data.flagged=false;data.flagReason='';
         if (!['annotation','highlight','page_note','reply'].includes(data.kind || 'annotation')) return res.json({error:'Invalid annotation kind'},400);
@@ -1235,6 +1275,24 @@ export default async ({ req, res, error }) => {
         if (data.parentId) { const parent=await db.getDocument(databaseId,'text_annotations',data.parentId);if(parent.textId!==textId||parent.classId!==annotationClassId||parent.parentId)return res.json({error:'Invalid reply target'},400);data.kind='reply';data.paragraphId=parent.paragraphId;data.selectedText=''; }
       } else if (existing && !isTeacher) {
         data.textId=existing.textId;data.classId=existing.classId;data.paragraphId=existing.paragraphId;data.authorId=existing.authorId;data.anonymousLabel=existing.anonymousLabel;data.kind=existing.kind;data.parentId=existing.parentId;data.visibility=existing.visibility;data.moderationStatus=existing.moderationStatus;data.flagged=existing.flagged;data.flagReason=existing.flagReason;data.createdAt=existing.createdAt;
+      }
+      if (operation !== 'delete') {
+        const text = await db.getDocument(databaseId, 'texts', textId);
+        if (data.tqeType && !['thought','question','epiphany'].includes(data.tqeType)) return res.json({error:'Choose Thought, Question, or Epiphany'},400);
+        if ((text.annotationMode || 'tqe') === 'tqe' && (data.kind || 'annotation') === 'annotation' && !data.tqeType) return res.json({error:'Choose a TQE type'},400);
+        if (data.tqeType) data.type = data.tqeType === 'question' ? 'question' : 'observation';
+        if ((data.kind || 'annotation') === 'annotation') {
+          const paragraph = await db.getDocument(databaseId, 'text_paragraphs', data.paragraphId || existing?.paragraphId);
+          if (paragraph.textId !== textId) return res.json({error:'Paragraph does not belong to this reading'},400);
+        }
+        if (data.parentId && !isTeacher) {
+          const parent = await db.getDocument(databaseId,'text_annotations',data.parentId);
+          if (parent.moderationStatus !== 'visible' || (parent.visibility || 'class') !== 'class') return res.json({error:'Reply target is unavailable'},403);
+          const own = await db.listDocuments(databaseId,'text_annotations',[Query.equal('textId',textId),Query.equal('classId',annotationClassId),Query.equal('authorId',userId),Query.limit(5000)]);
+          const roots = own.documents.filter(a => (a.kind || 'annotation') === 'annotation' && (a.visibility || 'class') === 'class' && a.moderationStatus === 'visible' && a.content?.trim());
+          const unlocked = text.annotationMode === 'regular' ? roots.length >= 3 : (text.tqeStage === 'thought' ? ['thought'] : ['thought','question','epiphany']).every(type => roots.some(a => a.tqeType === type));
+          if (!unlocked) return res.json({error:'Complete your annotations before replying to classmates'},403);
+        }
       }
       let tags=[];try{tags=JSON.parse(data.tagsJson||'[]')}catch{return res.json({error:'Invalid annotation tags'},400)}
       if(!Array.isArray(tags)||tags.length>8||tags.some(tag=>typeof tag!=='string'||tag.length>40))return res.json({error:'Use up to 8 short tags'},400);

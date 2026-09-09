@@ -10,6 +10,16 @@ import type { LearningText, TextAnnotation, TextAssignment, TextParagraph, TextS
 
 export const ANNOTATIONS_TO_UNLOCK = 3;
 
+export function tqeProgress(rows: TextAnnotation[]) {
+  const eligible = rows.filter(a => (a.visibility || 'class') === 'class' && (a.kind || 'annotation') === 'annotation' && a.moderationStatus === 'visible' && a.content.trim());
+  return { thought: eligible.some(a => a.tqeType === 'thought'), question: eligible.some(a => a.tqeType === 'question'), epiphany: eligible.some(a => a.tqeType === 'epiphany') };
+}
+
+export async function setAnnotationMode(textId: string, annotationMode: 'tqe'|'regular', tqeStage: 'thought'|'full' = 'full') {
+  await executeLearningContent({ action: 'setAnnotationMode', textId, annotationMode, tqeStage });
+  await db.texts.update(textId, { annotationMode, tqeStage });
+}
+
 export function splitParagraphs(content: string): string[] {
   return content.replace(/\r\n?/g, '\n').split(/\n[ \t]*\n+/).map(block => {
     const lines=block.split('\n').map(line=>line.trim()).filter(Boolean);
@@ -57,7 +67,7 @@ export async function createText(params: { teacherId: string; title: string; aut
   }
   const now = getTimestamp();
   const text: LearningText = { $id: ID.unique(), teacherId: params.teacherId, title: params.title, author: params.author,
-    source: params.source, ...(originalPdfId ? { originalPdfId } : {}), contentMode: params.contentMode || 'full', externalUrl: params.externalUrl || '', status: 'published', createdAt: now, updatedAt: now, syncStatus: 'local' };
+    annotationMode: 'tqe', source: params.source, ...(originalPdfId ? { originalPdfId } : {}), contentMode: params.contentMode || 'full', externalUrl: params.externalUrl || '', status: 'published', createdAt: now, updatedAt: now, syncStatus: 'local' };
   await db.texts.put(text); await addToQueue(params.teacherId, 'text', text.$id, 'create', text);
   for (let i = 0; i < params.paragraphs.length; i++) {
     const paragraph: TextParagraph = { $id: ID.unique(), textId: text.$id, sortOrder: i, content: params.paragraphs[i] };
@@ -105,19 +115,19 @@ export async function setTextAssignmentDueDate(assignmentId: string, userId: str
   await addToQueue(userId, 'text_assignment', assignmentId, 'update', updated);
 }
 
-export async function addAnnotation(params: { textId: string; paragraphId: string; classId: string; authorId: string; type: TextAnnotation['type']; content: string; kind?: NonNullable<TextAnnotation['kind']>; selectedText?: string; tags?: string[]; parentId?: string | null; visibility?: NonNullable<TextAnnotation['visibility']> }): Promise<TextAnnotation> {
+export async function addAnnotation(params: { textId: string; paragraphId: string; classId: string; authorId: string; type: TextAnnotation['type']; tqeType?: TextAnnotation['tqeType']; content: string; kind?: NonNullable<TextAnnotation['kind']>; selectedText?: string; tags?: string[]; parentId?: string | null; visibility?: NonNullable<TextAnnotation['visibility']> }): Promise<TextAnnotation> {
   const now = getTimestamp(); const id = ID.unique();
   const annotation: TextAnnotation = { $id: id, textId: params.textId, paragraphId: params.paragraphId, classId: params.classId,
-    authorId: params.authorId, anonymousLabel: `Reader ${params.authorId.slice(-4).toUpperCase()}`, type: params.type, kind: params.kind || 'annotation', content: params.content.trim(),
+    tqeType: params.tqeType, authorId: params.authorId, anonymousLabel: `Reader ${params.authorId.slice(-4).toUpperCase()}`, type: params.type, kind: params.kind || 'annotation', content: params.content.trim(),
     selectedText: params.selectedText?.trim() || '', tagsJson: JSON.stringify((params.tags || []).map(tag=>tag.trim().toLowerCase()).filter(Boolean).slice(0,8)), parentId: params.parentId || null, visibility: params.visibility || 'class',
     moderationStatus: 'visible', flagged: false, flagReason: '', createdAt: now, updatedAt: now, syncStatus: 'local' };
   await db.text_annotations.put(annotation); await addToQueue(params.authorId, 'text_annotation', id, 'create', annotation); return annotation;
 }
 
-export async function updateAnnotation(annotationId: string, userId: string, content: string, tags: string[]): Promise<void> {
+export async function updateAnnotation(annotationId: string, userId: string, content: string, tags: string[], tqeType?: TextAnnotation['tqeType']): Promise<void> {
   const annotation = await db.text_annotations.get(annotationId);
   if (!annotation || annotation.authorId !== userId) throw new Error('You can only edit your own annotation');
-  const updated: TextAnnotation = { ...annotation, content: content.trim(), tagsJson: JSON.stringify(tags.map(tag=>tag.trim().toLowerCase()).filter(Boolean).slice(0,8)), updatedAt: getTimestamp(), syncStatus: 'local' };
+  const updated: TextAnnotation = { ...annotation, tqeType: tqeType || annotation.tqeType, type: tqeType ? (tqeType === 'question' ? 'question' : 'observation') : annotation.type, content: content.trim(), tagsJson: JSON.stringify(tags.map(tag=>tag.trim().toLowerCase()).filter(Boolean).slice(0,8)), updatedAt: getTimestamp(), syncStatus: 'local' };
   await db.text_annotations.put(updated); await addToQueue(userId, 'text_annotation', annotationId, 'update', updated);
 }
 
@@ -140,7 +150,9 @@ export async function moderateAnnotation(annotationId: string, command: 'hide'|'
 }
 
 export async function canSeePeerAnnotations(textId: string, classId: string, userId: string): Promise<boolean> {
-  return (await db.text_annotations.where('[textId+classId]').equals([textId, classId]).and(a => a.authorId === userId && (a.visibility || 'class') === 'class' && (a.kind || 'annotation') === 'annotation').count()) >= ANNOTATIONS_TO_UNLOCK;
+  const text = await db.texts.get(textId);
+  const rows = await db.text_annotations.where('[textId+classId]').equals([textId, classId]).and(a => a.authorId === userId && (a.visibility || 'class') === 'class' && (a.kind || 'annotation') === 'annotation' && a.moderationStatus === 'visible').toArray();
+  return text?.annotationMode === 'regular' ? rows.length >= ANNOTATIONS_TO_UNLOCK : text?.tqeStage === 'thought' ? tqeProgress(rows).thought : Object.values(tqeProgress(rows)).every(Boolean);
 }
 
 export async function syncTextsFromServer(classIds: string[], _userId: string, isTeacher: boolean): Promise<boolean> {
@@ -178,7 +190,12 @@ export async function syncTextFromServer(textId: string, classId: string): Promi
     for (const paragraph of result.paragraphs) await db.text_paragraphs.put(paragraph);
     for (const version of result.versions || []) await db.text_versions.put(version);
     for (const paragraph of result.versionParagraphs || []) await db.text_version_paragraphs.put(paragraph);
-    for (const annotation of result.annotations) await db.text_annotations.put({ ...annotation, syncStatus: 'synced' });
+    const localAnnotations = await db.text_annotations.where('[textId+classId]').equals([textId,classId]).toArray();
+    const pendingAnnotations = await db.sync_queue.where('entityType').equals('text_annotation').filter(row => row.syncStatus !== 'synced').toArray();
+    const pendingIds = new Set(pendingAnnotations.map(row => row.entityId));
+    const returnedIds = new Set(result.annotations.map(row => row.$id));
+    await db.text_annotations.bulkDelete(localAnnotations.filter(row => !returnedIds.has(row.$id) && !pendingIds.has(row.$id)).map(row => row.$id));
+    for (const annotation of result.annotations) if (!pendingIds.has(annotation.$id)) await db.text_annotations.put({ ...annotation, syncStatus: 'synced' });
     const [localParagraphs,queuedParagraphChanges]=await Promise.all([db.text_paragraphs.where('textId').equals(textId).toArray(),db.sync_queue.where('entityType').equals('text_paragraph').filter(row=>row.syncStatus!=='synced').toArray()]);
     const remoteParagraphIds=new Set(result.paragraphs.map(row=>row.$id)),protectedParagraphIds=new Set(queuedParagraphChanges.map(row=>row.entityId));
     const staleParagraphIds=localParagraphs.filter(row=>!remoteParagraphIds.has(row.$id)&&!protectedParagraphIds.has(row.$id)).map(row=>row.$id);if(staleParagraphIds.length)await db.text_paragraphs.bulkDelete(staleParagraphIds);
