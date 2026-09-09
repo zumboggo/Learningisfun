@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { afterEach, describe, expect, it } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { WeeklySlots } from '@/components/planner/WeeklySlots';
 import { prepareWeeklyBank, editWeeklyResource, shortWords } from '@/services/planner-bank';
 import { createWeeklyPlan, type WeeklyPlanData } from '@/services/planner.service';
@@ -10,8 +10,41 @@ import { groupWeeklyVocabulary } from '@/services/weekly-vocabulary';
 import type { FlashcardCard } from '@/types';
 
 const fixture=()=>populateSlots(createWeeklyPlan({key:'week',startDate:'2026-09-07',header:'',calendar:'',blocks:['WL-B','WL-R','AP'].map(code=>({code,label:code,title:code,unit:'',std:'',goal:'',diff:'',presentationCandidates:['Proposed presentation'],textQueue:[],days:[{date:'Tuesday',iso:'2026-09-08',daytype:'',I:'Explain imagery',W:'',Y:'',C:'',due:[]}]}))},{}),[]);
-afterEach(cleanup);
+afterEach(()=>{cleanup();vi.restoreAllMocks();});
 describe('central weekly resource bank',()=>{
+  it('adds through the lesson picker without scrolling and keeps links across sections',()=>{
+    let latest:WeeklyPlanData;
+    function Harness(){const[data,setData]=useState(fixture);latest=data;return <WeeklySlots data={data} units={[]} onChange={setData}/>;}
+    render(<Harness/>);
+    fireEvent.click(screen.getByLabelText('Add I do to a lesson'));
+    const picker=within(screen.getByRole('dialog'));
+    expect(picker.queryByText('AP Lang')).not.toBeInTheDocument();
+    expect(picker.getByText('World Lit Blue')).toBeInTheDocument();
+    fireEvent.click(picker.getByText('World Lit Red'));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(latest!.lessons[1].slots).toHaveLength(2);
+    expect(latest!.lessons[1].slots![1].planningItemId).toBe(latest!.lessons[0].slots![0].planningItemId);
+    fireEvent.click(screen.getByLabelText('Add I do to a lesson'));
+    fireEvent.click(within(screen.getByRole('dialog')).getByText('Cancel'));
+    expect(latest!.lessons[1].slots).toHaveLength(2);
+  });
+  it('confirms resource deletion and removes linked placements only after approval',()=>{
+    let latest:WeeklyPlanData;
+    function Harness(){const[data,setData]=useState(fixture);latest=data;return <WeeklySlots data={data} units={[]} onChange={setData}/>;}
+    const confirm=vi.spyOn(window,'confirm').mockReturnValue(false);
+    render(<Harness/>);
+    expect(screen.getByLabelText('Edit resource I do')).toHaveTextContent('✎');
+    expect(screen.getByLabelText('Edit resource I do')).not.toHaveTextContent('Edit');
+    fireEvent.click(screen.getByLabelText('Delete resource I do'));
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('every lesson in this week'));
+    expect(latest!.lessons[0].slots).toHaveLength(1);
+    confirm.mockReturnValue(true);
+    fireEvent.click(screen.getByLabelText('Delete resource I do'));
+    expect(latest!.lessons[0].slots).toHaveLength(0);
+    expect(latest!.lessons[1].slots).toHaveLength(0);
+    expect(latest!.lessons[2].slots).toHaveLength(1);
+    expect(screen.queryByLabelText('Delete resource I do')).not.toBeInTheDocument();
+  });
   it('migrates matching World Lit items once, without merging other courses or divergent edits',()=>{
     const original=fixture(), next=prepareWeeklyBank(original);
     expect(next.weeklyResources).toHaveLength(2);
