@@ -21,11 +21,21 @@ describe('central weekly resource bank',()=>{
     expect(picker.queryByText('AP Lang')).not.toBeInTheDocument();
     expect(picker.getByText('World Lit Blue')).toBeInTheDocument();
     fireEvent.click(picker.getByText('World Lit Red'));
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(latest!.lessons[1].slots).toHaveLength(2);
     expect(latest!.lessons[1].slots![1].planningItemId).toBe(latest!.lessons[0].slots![0].planningItemId);
-    fireEvent.click(screen.getByLabelText('Add I do to a lesson'));
-    fireEvent.click(within(screen.getByRole('dialog')).getByText('Cancel'));
+    fireEvent.click(picker.getByText('World Lit Blue'));
+    expect(latest!.lessons[0].slots).toHaveLength(2);
+    fireEvent.click(picker.getByLabelText('Remove I do from World Lit Red · 2026-09-08'));
+    expect(latest!.lessons[1].slots).toHaveLength(0);
+    expect(latest!.lessons[0].slots).toHaveLength(2);
+    expect(latest!.weeklyResources!.some(item=>item.title==='I do')).toBe(true);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(picker.queryByLabelText('Remove I do from World Lit Red · 2026-09-08')).not.toBeInTheDocument();
+    fireEvent.click(picker.getByText('World Lit Red'));
+    fireEvent.click(picker.getByText('World Lit Red'));
+    fireEvent.click(picker.getByText('Done'));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(latest!.lessons[1].slots).toHaveLength(2);
   });
   it('confirms resource deletion and removes linked placements only after approval',()=>{
