@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { resourceSlot, type LessonSlot, type UnitResource, type ResourceKind } from '@/services/unit-planning';
 import type { LessonPlan } from '@/services/planner.service';
-import { routineNames, routineSlot } from '@/services/planner-routines';
 import { shortWords, type WeeklyResource } from '@/services/planner-bank';
 
 export function PlannerResourceTray({resources,week,lessons,onSelect,onAdd,items=[],onEdit,onPlace,onDelete}:{
@@ -26,12 +25,11 @@ export function PlannerResourceTray({resources,week,lessons,onSelect,onAdd,items
           const slot={...item,planningItemId:item.id};
           const count=lessons.filter(lesson=>lesson.slots?.some(s=>s.planningItemId===item.id)).length;
           return <div key={item.id} draggable onDragStart={e=>e.dataTransfer.setData('application/planning-slot',JSON.stringify({slot}))} className="rounded-xl border bg-white p-2">
-            <button className="block w-full text-left text-sm font-medium" onClick={()=>onSelect(slot)}>{shortWords(item.title,6)}</button>
-            <p className="text-xs text-slate-500">{shortWords(item.content,12)}</p>
+            <button className="block w-full truncate text-left text-sm font-medium" onClick={()=>onSelect(slot)}>{shortWords(item.title,6)}</button>
+            <p className="truncate text-xs text-slate-500">{shortWords(item.content,12)}</p>
             <div className="mt-2 flex items-center justify-between gap-1 text-xs"><span>{count ? `In ${count} lesson${count===1?'':'s'}` : 'Not placed'}</span><div className="flex gap-1"><button aria-label={'Add '+item.title+' to a lesson'} title="Add to a lesson" className={icon} onClick={()=>onPlace?onPlace(slot):onSelect(slot)}>+</button><button aria-label={'Edit resource '+item.title} title="Edit resource" className={icon} onClick={()=>onEdit?.(item.id)}>✎</button>{onDelete&&<button aria-label={'Delete resource '+item.title} title="Delete resource" className={icon} onClick={()=>onDelete(item.id)}>×</button>}</div></div>
           </div>;
         })}</div>
-        {kind==='activity' && <details className="mt-2"><summary className="cursor-pointer text-sm">Routines</summary><div className="mt-2 flex flex-wrap gap-1">{routineNames.map(name=><button key={name} draggable onDragStart={e=>e.dataTransfer.setData('application/planning-slot',JSON.stringify({slot:routineSlot(name)}))} onClick={()=>onSelect(routineSlot(name))} className="rounded-lg border bg-white px-2 py-2 text-xs">{name}</button>)}</div></details>}
       </section>)}
     </div>
     <details><summary className="cursor-pointer text-sm font-medium">Source suggestions · {resources.filter(item=>item.week===week).length}</summary><div className="mt-2 grid gap-2 sm:grid-cols-3">{resources.filter(item=>item.week===week).map(renderResource)}</div></details>

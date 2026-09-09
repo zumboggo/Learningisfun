@@ -38,7 +38,7 @@ export function projectCardMaterials(data: WeeklyPlanData): WeeklyPlanData {
     for (const lesson of next.lessons.filter(row => row.classCode === course.classCode)) {
       for (const slot of [...(lesson.slots || []), ...(lesson.overflow || [])]) {
         const common = { resourceId: slot.resourceId || slot.id, title: slot.title, date: slot.dueDate || lesson.date, url: slot.url, publish: slot.publish !== false };
-        if (slot.kind === 'text') course.texts.push({ ...common, content: slot.content });
+        if (slot.kind === 'text' && !slot.existingTextId) course.texts.push({ ...common, content: slot.content });
         if (slot.kind === 'presentation') course.presentations.push({ ...common, givenBy: slot.givenBy || 'teacher' });
       }
       lesson.texts = course.texts.filter(item => item.date === lesson.date).map(item => item.title);

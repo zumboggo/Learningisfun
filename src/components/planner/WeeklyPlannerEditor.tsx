@@ -1,3 +1,8 @@
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '@/db/schema';
+import { addAssignedTexts } from '@/services/planner-assigned-texts';
+import { syncTextsFromServer } from '@/services/text.service';
+import { runCachedSync } from '@/services/sync-policy';
 import { prepareWeeklyBank } from '@/services/planner-bank';
 import { useEffect, useReducer, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -12,6 +17,22 @@ import { WeeklySlots } from './WeeklySlots';
 export function WeeklyPlannerEditor({ initial, record, sourceId, userId, units, onUnitsChange, onSaved }: { initial: WeeklyPlanData; record?: WeeklyPlanRecord; sourceId: string; userId: string; units: UnitPlan[]; onUnitsChange: (units: UnitPlan[]) => void; onSaved: (record: WeeklyPlanRecord) => void }) {
   const [, redraw] = useReducer(value => value + 1, 0);
   const [writer] = useState(() => new PlannerAutosave(`planner-draft:${userId}:${sourceId}:${initial.week.key}`, { data: prepareWeeklyBank(migrateCardEditor(initial)), ready: record?.status === 'ready' || record?.status === 'published' }, record, localStorage, async (draft, id) => { const saved = (await saveWeeklyPlan(sourceId, projectCardMaterials(draft.data), draft.ready ? 'ready' : 'draft', id)).plan; onSaved(saved); return saved; }));
+  const classIdsKey = [...new Set(initial.lessons.map(lesson=>lesson.classId).filter(Boolean))].sort().join('|');
+  const assignedReadings = useLiveQuery(async () => {
+    if(!classIdsKey)return {texts:[],assignments:[]};
+    const assignments=await db.text_assignments.where('classId').anyOf(classIdsKey.split('|')).toArray();
+    const texts=await db.texts.bulkGet([...new Set(assignments.map(item=>item.textId))]);
+    return {assignments,texts:texts.filter((text):text is NonNullable<typeof text>=>Boolean(text)&&text!.teacherId===userId)};
+  },[classIdsKey,userId]);
+  useEffect(()=>{
+    if(!classIdsKey)return;
+    void runCachedSync('planner-texts:'+userId+':'+classIdsKey,5*60*1000,()=>syncTextsFromServer(classIdsKey.split('|'),userId,true)).catch(()=>{});
+  },[classIdsKey,userId]);
+  useEffect(()=>{
+    if(!assignedReadings)return;
+    const next=addAssignedTexts(writer.draft.data,assignedReadings.texts,assignedReadings.assignments,window.location.href);
+    if(JSON.stringify(next.weeklyResources)!==JSON.stringify(writer.draft.data.weeklyResources))writer.update({...writer.draft,data:next});
+  },[assignedReadings,writer]);
   const [busy, setBusy] = useState(false), [message, setMessage] = useState('');
   const [share,setShare]=useState<WeeklyPlanData|null>(null);
   const [shareError,setShareError]=useState('');
