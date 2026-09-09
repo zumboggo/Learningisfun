@@ -27,7 +27,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const navItems = isTeacher
     ? [
         { to: '/classes', label: 'Classes', icon: 'C' },
-        { to: '/planning', label: 'Planning', icon: 'P' },
+        { to: '/planner', label: 'Planning', icon: 'P' },
         { to: '/discussions', label: 'Discussions', icon: 'Q' },
         { to: '/decks', label: 'Cards', icon: 'V' },
         { to: '/texts', label: 'Texts', icon: 'T' },
@@ -84,7 +84,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               key={item.to}
               to={item.to}
               className={`student-floating-nav-item ${
-                location.pathname.startsWith(item.to)
+                (location.pathname.startsWith(item.to) || (item.to === '/planner' && location.pathname === '/planning'))
                   ? 'student-floating-nav-item-active'
                   : ''
               }`}
@@ -141,7 +141,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               key={item.to}
               to={item.to}
               className={`flex min-w-0 flex-col items-center px-0.5 py-2 ${
-                location.pathname.startsWith(item.to)
+                (location.pathname.startsWith(item.to) || (item.to === '/planner' && location.pathname === '/planning'))
                   ? 'text-blue-600'
                   : 'text-gray-500'
               }`}
@@ -162,7 +162,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               key={item.to}
               to={item.to}
               className={`flex items-center gap-3 px-4 py-3 text-sm ${
-                location.pathname.startsWith(item.to)
+                (location.pathname.startsWith(item.to) || (item.to === '/planner' && location.pathname === '/planning'))
                   ? 'bg-blue-50 text-blue-700 font-medium border-r-2 border-blue-600'
                   : 'text-gray-600 hover:bg-gray-50'
               }`}

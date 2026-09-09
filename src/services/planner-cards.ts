@@ -2,6 +2,17 @@ import type { WeeklyPlanData } from './planner.service';
 import type { LessonSlot } from './unit-planning';
 
 export interface CardSelection { slot: LessonSlot; from?: string; index?: number }
+/** Restore card placement only, preserving later text edits and unrelated weekly settings. */
+export function undoPlannerPlacement(current: WeeklyPlanData, before: WeeklyPlanData): WeeklyPlanData {
+  const next = structuredClone(current);
+  const live = new Map(current.lessons.flatMap(lesson=>[...(lesson.slots||[]),...(lesson.overflow||[])]).map(slot=>[slot.id,slot]));
+  for(const lesson of next.lessons) {
+    const old=before.lessons.find(row=>row.id===lesson.id); if(!old)continue;
+    lesson.slots=old.slots?.map(slot=>structuredClone(live.get(slot.id)||slot));
+    lesson.overflow=old.overflow?.map(slot=>structuredClone(live.get(slot.id)||slot));
+  }
+  return next;
+}
 export function placePlannerCard(data: WeeklyPlanData, selection: CardSelection, lessonId: string, index: number): WeeklyPlanData {
   const next = structuredClone(data);
   const destination = next.lessons.find(lesson => lesson.id === lessonId);
