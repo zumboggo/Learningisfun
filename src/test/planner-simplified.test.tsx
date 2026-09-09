@@ -62,8 +62,8 @@ describe('simplified weekly planner', () => {
   it('places routine copies and opens their details when clicked', () => {
     function Harness() { const [data,setData] = useState(fixture); return <WeeklySlots data={data} units={[]} onChange={setData}/>; }
     render(<Harness/>);
-    expect(screen.queryByText('Routines')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('+ Activity'));
+    expect(screen.getByText('Routines')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('+ Routine'));
     routineNames.forEach(name => expect(screen.getByRole('button', {name})).toBeInTheDocument());
     fireEvent.click(screen.getByRole('button',{name:'QFT'}));
     expect(screen.queryByLabelText('Activity type')).not.toBeInTheDocument();

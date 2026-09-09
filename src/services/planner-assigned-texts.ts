@@ -17,7 +17,7 @@ export function addAssignedTexts(data: WeeklyPlanData, texts: LearningText[], as
     const course = courseCode(lesson.classCode), id = `assigned-${course}-${text.$id}`;
     if (next.dismissedAssignedTexts?.includes(id) || next.weeklyResources!.some(item => item.id === id || item.course === course && item.existingTextId === text.$id)) continue;
     const url = new URL(baseUrl); url.hash = `/texts/${text.$id}`;
-    next.weeklyResources!.push({ id, course, existingTextId:text.$id, resourceId:id, title:text.title, content:text.author ? `By ${text.author}` : '', url:url.href, kind:'text', minutes:0, optional:false, publish:true, status:'planned' });
+    next.weeklyResources!.push({ id, course, existingTextId:text.$id, assignedReading:true, resourceId:id, title:text.title, content:text.author ? `By ${text.author}` : '', url:url.href, kind:'text', minutes:0, optional:false, publish:true, status:'planned' });
   }
   return next;
 }

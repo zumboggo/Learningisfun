@@ -1,6 +1,6 @@
 import type { LessonSlot } from './unit-planning';
 
-export const routineNames = ['QFT', 'Copywork', 'Popup Debate', 'TQE', 'Presentations', 'Experiments'] as const;
+export const routineNames = ['QFT', 'Popup Debate', 'TQE', 'Experiments'] as const;
 export function routineSlot(title: typeof routineNames[number]): LessonSlot {
-  return { id: `routine-${title}`, title, kind: title === 'Presentations' ? 'presentation' : title === 'Copywork' ? 'copywork' : 'activity', content: '', url: '', minutes: 10, optional: false, status: 'planned' };
+  return { id: `routine-${title}`, title, kind: 'activity', isRoutine: true, content: '', url: '', minutes: 10, optional: false, status: 'planned' };
 }
