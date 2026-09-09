@@ -8,7 +8,7 @@ export interface PlanningCard { id: string; front: string; back: string; tags: s
 export interface UnitResource { id: string; kind: ResourceKind; title: string; content: string; url: string; week: string; date: string; minutes: number; optional: boolean; approved: boolean; paragraphs: number; targets: string[]; skills: string; }
 export interface UnitPlan { id: string; course: string; number: string; title: string; startDate: string; endDate: string; knowledge: string; skills: string; essentialQuestion: string; classIds: string[]; cards: PlanningCard[]; resources: UnitResource[]; vocabularyApproved: boolean; }
 export interface UnitRecord { $id: string; teacherId: string; dataJson: string; updatedAt: string }
-export interface LessonSlot { publish?: boolean; givenBy?: string; dueDate?: string; id: string; resourceId?: string; title: string; kind: ResourceKind; content: string; url: string; minutes: number; optional: boolean; status: 'planned' | 'completed' | 'partial' | 'skipped'; }
+export interface LessonSlot { planningItemId?: string; activityType?: string; publish?: boolean; givenBy?: string; dueDate?: string; id: string; resourceId?: string; title: string; kind: ResourceKind; content: string; url: string; minutes: number; optional: boolean; status: 'planned' | 'completed' | 'partial' | 'skipped'; }
 export const courseCode = (value: string) => value.startsWith('WL') ? 'WL' : value;
 export interface PlanningRelease { $id:string; unitId:string; releaseAt:string; status:string; lastError:string }
 export const readUnits = () => executeLearningContent<{ units: UnitRecord[]; releases:PlanningRelease[] }>({ action: 'readPlanningUnits' });
@@ -124,18 +124,17 @@ export function populateSlots(data: WeeklyPlanData, units: UnitPlan[]): WeeklyPl
     if (lesson.slots) continue;
     const classDays=next.lessons.filter(item=>item.classCode===lesson.classCode).map(item=>item.date).sort();
     const resources = resourcesForWeek(units, lesson.classCode, data.week.startDate).filter(item => {
+      if(item.kind==='presentation'||item.kind==='copywork')return false;
       if(!item.date)return lesson.date===classDays[0];
       if(classDays.includes(item.date))return item.date===lesson.date;
-      if(item.kind==='copywork'||item.kind==='assignment')return lesson.date===([...classDays].reverse().find(date=>date<=item.date)||classDays[0]);
+      if(item.kind==='assignment')return lesson.date===([...classDays].reverse().find(date=>date<=item.date)||classDays[0]);
       const other=next.week.blocks.find(block=>courseCode(block.code)===courseCode(lesson.classCode)&&block.days.some(day=>day.iso===item.date));
       const index=other?.days.findIndex(day=>day.iso===item.date)??-1;
       return index>=0 && classDays[index]===lesson.date;
     });
     const due: LessonSlot[] = lesson.due.map((title, index) => ({ id: `${lesson.id}-due-${index}`, title, kind: /quiz/i.test(title) ? 'quiz' : 'assignment', content: '', url: '', minutes: 0, optional: false, status: 'planned' }));
-    const course = data.courses.find(item => item.classCode === lesson.classCode);
-    const presentations = (course?.presentations || []).filter(item => item.publish && item.date === lesson.date && !resources.some(resource => resource.title === item.title)).map((item, index): LessonSlot => ({ id: `${lesson.id}-presentation-${index}`, title: item.title, kind: 'presentation', content: '', url: item.url, minutes: 10, optional: false, status: 'planned' }));
-    const sourceActivities = ([['I do', lesson.iDo], ['We do', lesson.weDo], ['They do', lesson.theyDo], ['Check', lesson.check]] as const).filter(([,content])=>content.trim()).map(([title,content]):LessonSlot=>({id:crypto.randomUUID(),title,content,kind:/quiz/i.test(content)?'quiz':'activity',url:'',minutes:10,optional:false,status:'planned'}));
-    const all = [...due, ...resources.map(resourceSlot), ...presentations, ...sourceActivities];
+    const sourceActivities = ([['I do', lesson.iDo], ['We do', lesson.weDo], ['They do', lesson.theyDo], ['Check', lesson.check]] as const).filter(([,content])=>content.trim()).map(([title,content]):LessonSlot=>({id:crypto.randomUUID(),title,content,activityType:title,kind:/quiz/i.test(content)?'quiz':'activity',url:'',minutes:10,optional:false,status:'planned'}));
+    const all = [...due, ...resources.map(resourceSlot), ...sourceActivities];
     lesson.slots = all; lesson.overflow = [];
   }
   return next;

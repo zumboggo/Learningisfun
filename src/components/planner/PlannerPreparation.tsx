@@ -19,6 +19,7 @@ export function PlannerPreparation({ data, units, onChange }: { data: WeeklyPlan
         const courseUnits = units.filter(unit => unit.course === courseCode(block.code));
         const cards = courseUnits.flatMap(unit => unit.cards).filter(card => card.week === data.week.startDate);
         const topics = [...new Set([
+          ...(data.weeklyResources || []).filter(item => item.course === courseCode(block.code) && item.kind === 'presentation').map(item => item.title),
           ...courseUnits.flatMap(unit => unit.resources).filter(item => item.kind === 'presentation' && (item.week === data.week.startDate || data.lessons.some(lesson => matches(lesson.classCode) && lesson.date === item.date))).map(item => item.title),
           ...data.lessons.filter(lesson => matches(lesson.classCode)).flatMap(lesson => lesson.slots || []).filter(slot => slot.kind === 'presentation').map(slot => slot.title),
         ])];

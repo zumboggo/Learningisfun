@@ -67,9 +67,11 @@ describe('simplified weekly planner', () => {
     fireEvent.click(screen.getByRole('button',{name:'QFT'}));
     fireEvent.click(screen.getByText('+ Place QFT here'));
     fireEvent.click(screen.getByLabelText('Open QFT details'));
+    expect(screen.queryByLabelText('Details')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('Edit in planning area'));
     fireEvent.change(screen.getByLabelText('Details'), {target:{value:'Generate questions about the opening image.'}});
     fireEvent.click(screen.getByText('Done'));
-    expect(screen.getByText('Generate questions about the opening image.')).toBeInTheDocument();
+    expect(screen.getAllByText('Generate questions about the opening image.')[0]).toBeInTheDocument();
     expect(routineSlot('QFT').content).toBe('');
   });
   it('moves, copies and reorders without losing cards or imposing eight slots', () => {
@@ -90,7 +92,7 @@ describe('simplified weekly planner', () => {
     function Harness() { const [data, setData] = useState(fixture); latest = data; return <WeeklySlots data={data} units={[]} onChange={setData}/>; }
     render(<Harness/>);
     expect(screen.queryByLabelText('Minutes')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByLabelText('Edit I do'));
+    fireEvent.click(screen.getByLabelText('Edit resource I do'));
     const title = within(screen.getByRole('dialog')).getByLabelText('Title');
     title.focus();
     fireEvent.change(title, { target: { value: 'Demonstrate' } });
@@ -101,7 +103,7 @@ describe('simplified weekly planner', () => {
     fireEvent.click(screen.getByText('+ Place Demonstrate here'));
     expect(latest!.lessons[0].slots).toHaveLength(3);
     expect(latest!.lessons[1].slots).toHaveLength(4);
-    fireEvent.click(screen.getByLabelText('Remove Demonstrate from this lesson'));
+    fireEvent.click(screen.getAllByLabelText('Remove Demonstrate from this lesson')[1]);
     expect(latest!.lessons[0].slots).toHaveLength(3);
     expect(latest!.lessons[1].slots).toHaveLength(3);
   });

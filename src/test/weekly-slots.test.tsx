@@ -11,12 +11,12 @@ function Harness(){const [data,setData]=useState(populateSlots(createWeeklyPlan(
 describe('weekly slot editor',()=>{
   it('keeps focus in the detail editor and supports copying without dragging',async()=>{
     const user=userEvent.setup();render(<Harness/>);
-    await user.click(screen.getByLabelText('Edit I do'));
+    await user.click(screen.getByLabelText('Edit resource I do'));
     const title=screen.getByLabelText('Title');await user.clear(title);await user.type(title,'Presentation about rhetoric');
     expect(title).toHaveFocus();expect(title).toHaveValue('Presentation about rhetoric');
     await user.click(screen.getByRole('button',{name:'Done'}));
     await user.click(screen.getByRole('button',{name:'Copy Presentation about rhetoric'}));
     await user.click(screen.getByRole('button',{name:/Place Presentation about rhetoric here/}));
-    expect(screen.getAllByLabelText('Edit Presentation about rhetoric')).toHaveLength(2);
+    expect(screen.getAllByLabelText('Open Presentation about rhetoric details')).toHaveLength(2);
   });
 });

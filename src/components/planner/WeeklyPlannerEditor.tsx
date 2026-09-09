@@ -1,3 +1,4 @@
+import { prepareWeeklyBank } from '@/services/planner-bank';
 import { useEffect, useReducer, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PlannerAutosave } from '@/services/planner-autosave';
@@ -10,7 +11,7 @@ import { WeeklySlots } from './WeeklySlots';
 
 export function WeeklyPlannerEditor({ initial, record, sourceId, userId, units, onUnitsChange, onSaved }: { initial: WeeklyPlanData; record?: WeeklyPlanRecord; sourceId: string; userId: string; units: UnitPlan[]; onUnitsChange: (units: UnitPlan[]) => void; onSaved: (record: WeeklyPlanRecord) => void }) {
   const [, redraw] = useReducer(value => value + 1, 0);
-  const [writer] = useState(() => new PlannerAutosave(`planner-draft:${userId}:${sourceId}:${initial.week.key}`, { data: migrateCardEditor(initial), ready: record?.status === 'ready' || record?.status === 'published' }, record, localStorage, async (draft, id) => { const saved = (await saveWeeklyPlan(sourceId, projectCardMaterials(draft.data), draft.ready ? 'ready' : 'draft', id)).plan; onSaved(saved); return saved; }));
+  const [writer] = useState(() => new PlannerAutosave(`planner-draft:${userId}:${sourceId}:${initial.week.key}`, { data: prepareWeeklyBank(migrateCardEditor(initial)), ready: record?.status === 'ready' || record?.status === 'published' }, record, localStorage, async (draft, id) => { const saved = (await saveWeeklyPlan(sourceId, projectCardMaterials(draft.data), draft.ready ? 'ready' : 'draft', id)).plan; onSaved(saved); return saved; }));
   const [busy, setBusy] = useState(false), [message, setMessage] = useState('');
   const [share,setShare]=useState<WeeklyPlanData|null>(null);
   const [shareError,setShareError]=useState('');

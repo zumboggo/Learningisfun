@@ -1,3 +1,4 @@
+import { groupWeeklyVocabulary } from '@/services/weekly-vocabulary';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -1016,11 +1017,18 @@ function SimplePresentationLinksPanel({ links, isOwner }: { links: PresentationL
 function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }: { classId: string; materials: WeeklyMaterial[]; isOwner: boolean; onOpenQuizResults: (quiz: Quiz) => void }) {
   const { user, isParent } = useAuth();
   const teacherClasses=useLiveQuery(()=>user?db.classes.where('teacherId').equals(user.$id).toArray():[],[user?.$id]);
+  const releasedCards = useLiveQuery(async () => {
+    const assignments = await db.deck_assignments.where('classId').equals(classId).toArray();
+    const deckIds = [...new Set(assignments.map(item => item.deckId))];
+    return deckIds.length ? db.flashcard_cards.where('deckId').anyOf(deckIds).toArray() : [];
+  }, [classId]);
+  const vocabulary = groupWeeklyVocabulary(releasedCards || []);
   const groups = new Map<string, WeeklyMaterial[]>();
   for (const material of materials) {
     const key = weekStart(material.date);
     groups.set(key, [...(groups.get(key) || []), material]);
   }
+  for (const week of vocabulary.keys()) if (!groups.has(week)) groups.set(week, []);
   const currentWeek = weekStart(todayKey());
   const upcomingWeek = addDays(currentWeek, 7);
   if (isOwner) {
@@ -1105,6 +1113,7 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
             </button>
             {isOpen && <div className="space-y-3 border-t bg-gray-50 p-4">
               {isOwner && <div className="flex flex-wrap gap-2"><Button size="sm" onClick={() => openQuickAdd('presentation', week)}>+ Presentation</Button><Button size="sm" variant="secondary" onClick={() => openQuickAdd('text', week)}>+ Text</Button></div>}
+              {Boolean(vocabulary.get(week)?.length) && <details className="overflow-hidden rounded-xl border border-blue-200 bg-blue-50" open={week === currentWeek ? true : undefined}><summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-blue-950">Core vocabulary · {vocabulary.get(week)!.length} terms</summary><dl className="grid gap-3 border-t border-blue-200 p-4 sm:grid-cols-2">{vocabulary.get(week)!.map(card => <div key={card.$id} className="rounded-lg bg-white p-3"><dt className="font-semibold text-slate-900"><Markdown content={card.frontMarkdown || card.front}/></dt><dd className="mt-1 text-sm text-slate-700"><Markdown content={card.backMarkdown || card.back}/></dd></div>)}</dl></details>}
               {texts.length > 0 && <CompactWeekSection title="Texts" count={texts.length} color="emerald" open={openSections.has(`${week}-texts`)} onToggle={() => setOpenSections(current => toggleSetValue(current, `${week}-texts`))}>{texts.map(item => <div key={item.assignment.$id} className="flex items-center gap-3 border-t border-emerald-100 px-4 py-2.5 hover:bg-emerald-100/50"><TextMaterialLink item={item} />{isOwner && <button className="shrink-0 text-xs font-semibold text-emerald-800 underline" onClick={() => setEditingText(item.text)}>Edit</button>}</div>)}</CompactWeekSection>}
               {presentations.length > 0 && <CompactWeekSection title="Presentations" count={presentations.length} color="fuchsia" open={openSections.has(`${week}-presentations`)} onToggle={() => setOpenSections(current => toggleSetValue(current, `${week}-presentations`))}>{presentations.map(item => <div key={item.presentation.$id} className="flex items-center gap-3 border-t border-fuchsia-100 px-4 py-2.5"><input aria-label={`Mark ${item.presentation.title} watched`} type="checkbox" className="h-5 w-5" checked={Boolean(item.presentation.watchedAt)} disabled={!isOwner} onChange={event => void setPresentationWatched(item.presentation.$id, event.target.checked)} /><a href={item.presentation.url || PRESENTATION_FOLDER_URL} target="_blank" rel="noreferrer" className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-fuchsia-950">{item.presentation.title}</span><span className="text-xs text-fuchsia-800">{item.presentation.watchedAt ? 'Watched' : 'Posted · not watched'} · {formatDate(item.date)}</span></a>{isOwner && <button className="text-xs font-semibold text-red-700 underline" onClick={() => window.confirm('Delete this presentation entry?') && void deletePresentationLink(item.presentation.$id)}>Delete</button>}</div>)}</CompactWeekSection>}
               {notes.length > 0 && <CompactWeekSection title="Class notes" count={notes.length} color="blue" open={openSections.has(`${week}-notes`)} onToggle={() => setOpenSections(current => toggleSetValue(current, `${week}-notes`))}>{notes.map(item => <article key={item.session.$id} className="border-t border-blue-100 px-4 py-3"><div className="mb-2 flex items-center justify-between gap-3"><p className="text-xs font-semibold text-blue-700">{formatDate(item.date)}</p>{isOwner && <Link to={`/classes/${classId}/notes/${item.session.$id}/edit`} className="text-xs font-semibold text-blue-800 underline">Edit notes</Link>}</div><Markdown content={item.session.publishedNotesMarkdown} className="text-base leading-7 text-gray-800" /></article>)}</CompactWeekSection>}

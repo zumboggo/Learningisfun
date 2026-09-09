@@ -1,5 +1,6 @@
 import type { WeeklyPlanData } from './planner.service';
 import type { LessonSlot } from './unit-planning';
+import { prepareWeeklyBank } from './planner-bank';
 
 export interface CardSelection { slot: LessonSlot; from?: string; index?: number }
 /** Restore card placement only, preserving later text edits and unrelated weekly settings. */
@@ -11,7 +12,7 @@ export function undoPlannerPlacement(current: WeeklyPlanData, before: WeeklyPlan
     lesson.slots=old.slots?.map(slot=>structuredClone(live.get(slot.id)||slot));
     lesson.overflow=old.overflow?.map(slot=>structuredClone(live.get(slot.id)||slot));
   }
-  return next;
+  return current.weeklyResources ? prepareWeeklyBank(next) : next;
 }
 export function placePlannerCard(data: WeeklyPlanData, selection: CardSelection, lessonId: string, index: number): WeeklyPlanData {
   const next = structuredClone(data);
