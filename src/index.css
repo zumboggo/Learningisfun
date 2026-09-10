@@ -1496,30 +1496,68 @@ input, textarea, select, button {
   width: 100%;
   text-align: left;
 }
-.planner-paper-check { display: inline-block; width: 2.5mm; height: 2.5mm; border: 1px solid #475569; border-radius: .4mm; margin-right: 1.5mm; vertical-align: middle; background: white; }
-.planner-print { font-size: 9px; }
-.planner-print .planner-course-panel { padding: 2mm; border-radius: 3mm; }
-.planner-print .planner-course-panel h2 { font-size: 12px; }
-.planner-print .planner-course-panel h2 + span { font-size: 8px; }
-.planner-print .planner-printed-lesson { padding: 1mm; box-shadow: none; }
-.planner-print .planner-printed-lesson .space-y-1 > div { padding: .6mm 1mm; margin-top: .6mm; line-height: 1.15; }
-.planner-print .planner-lesson-grid { gap: 1.5mm; margin-top: 1.5mm; padding-top: 1.5mm; }
-.planner-print .planner-paper-check { width: 2mm; height: 2mm; margin-right: .8mm; }
-.planner-we-did { min-height: 5mm; margin-top: 1mm; padding: .6mm 1mm; }
-.planner-improvements { margin-top: 2mm; break-inside: avoid; }
-.planner-improvement-slot { min-height: 6mm; }
+
+/* Fixed paper canvases: overflow is deliberately summarized/clipped, never paginated. */
+.planner-print { color: #17212b; font-family: Arial, Helvetica, sans-serif; }
+.planner-paper-page {
+  box-sizing: border-box; width: 196mm; height: 280mm; margin: 0 auto 8mm;
+  padding: 0; overflow: hidden; background: white;
+  display: block; position: relative;
+  font-size: 8pt; line-height: 1.25;
+}
+.planner-paper-page * { min-width: 0; box-sizing: border-box; overflow-wrap: anywhere; }
+.planner-print-header { height: 21mm; display: flex; align-items: center; gap: 8mm; overflow: hidden; }
+.planner-print-header > div:first-child { flex: 0 0 64mm; }
+.planner-print-header h1 { font-size: 22pt; line-height: 1.1; font-weight: 750; }
+.planner-print-header p { font-size: 10pt; font-weight: 600; margin-top: 1mm; }
+.planner-print-prep { display: flex; flex-wrap: wrap; align-content: center; gap: 1mm 2mm; max-height: 19mm; overflow: hidden; font-size: 7pt; }
+.planner-print-prep small { flex-basis: 100%; color: #56616c; font-size: 6.5pt; }
+.planner-page-courses { position: absolute; top: 24mm; bottom: 10mm; left: 0; right: 0; display: grid; gap: 4mm; min-height: 0; overflow: hidden; }
+.planner-course-panel { display: grid; grid-template-rows: 7mm 16mm minmax(0, 1fr) auto; gap: 2mm; padding: 3mm; border: .25mm solid #aebbc5; border-radius: 3mm; min-height: 0; overflow: hidden; }
+.planner-course-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 3mm; overflow: hidden; }
+.planner-course-heading h2 { font-size: 12pt; line-height: 1.2; font-weight: 700; flex: 1; }
+.planner-course-heading > span { max-width: 46%; font-size: 6.5pt; color: #56616c; text-align: right; }
+.planner-course-overview { display: grid; grid-template-columns: 1.15fr 1fr; gap: 2mm; overflow: hidden; font-size: 7pt; line-height: 1.3; }
+.planner-skills-strip, .planner-resource-strip { border-radius: 1.5mm; padding: 1.4mm 2mm; overflow: hidden; }
+.planner-skills-strip { background: #eef4f8; }
+.planner-resource-strip { background: #eff7f1; }
+.planner-course-overview p { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; margin-bottom: .5mm; }
+.planner-lesson-grid { display: grid; gap: 2.5mm; min-height: 0; overflow: hidden; }
+.planner-printed-lesson { display: flex; flex-direction: column; min-height: 0; padding: 1.5mm; border: .2mm solid #c1ccd4; border-radius: 2mm; overflow: hidden; }
+.planner-printed-lesson h3 { display: flex; justify-content: space-between; gap: 1mm; align-items: baseline; flex-shrink: 0; padding: 1mm; margin: -1mm -1mm 1mm; background: #f3f5f6; border-radius: 1mm; }
+.planner-printed-lesson h3 > span { font-size: 10pt; font-weight: 700; white-space: nowrap; }
+.planner-printed-lesson h3 small { font-size: 6.5pt; text-transform: uppercase; text-align: right; }
+.planner-print-activities { min-height: 0; overflow: hidden; flex: 1; }
+.planner-print-activity { display: grid; grid-template-columns: 2.5mm minmax(0, 1fr) auto; gap: 1mm; align-items: start; padding: 1mm .6mm; border-bottom: .15mm solid #e2e6ea; border-radius: .8mm; margin-bottom: .5mm; }
+.planner-print-activity b { font-size: 8pt; font-weight: 600; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.planner-print-activity p { font-size: 7pt; line-height: 1.2; color: #56616c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.planner-print-activity > small { font-size: 6.5pt; white-space: nowrap; }
+.planner-activity-presentation { background: #edf4fb; }
+.planner-activity-text { background: #f0f7f2; }
+.planner-activity-quiz { border-left: .6mm solid #c5b484; }
+.planner-lesson-dense .planner-print-activity { padding-top: .65mm; padding-bottom: .65mm; margin-bottom: .25mm; }
+.planner-lesson-dense .planner-print-activity p { display: none; }
+.planner-lesson-end { flex-shrink: 0; max-height: 22mm; overflow: hidden; font-size: 7pt; }
+.planner-print-due, .planner-print-reminder { background: #fff4df; border-radius: 1mm; padding: .8mm 1mm; margin-top: .6mm; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.planner-print-due { background: #fcf0e6; }
+.planner-print-overflow { color: #6d5c36; font-size: 6pt; }
+.planner-print-reserves { border-top: .2mm dashed #cbd3da; margin-top: 3mm; padding: 1.5mm 1mm; font-size: 7pt; color: #56616c; }
+.planner-print-reserves p { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; margin-top: 1mm; }
+.planner-we-did { border-top: .2mm solid #cbd3da; margin-top: 1mm; height: 4mm; padding-top: .7mm; font-size: 7pt; }
+.planner-paper-check { display: inline-block; width: 2.2mm; height: 2.2mm; border: .2mm solid #56616c; border-radius: .4mm; background: white; margin-top: .2mm; }
+.planner-course-bottom { font-size: 6.5pt; max-height: 5mm; overflow: hidden; display: flex; gap: 2mm; }
+.planner-course-bottom:empty { display: none; }
+.planner-print-footer { position: absolute; bottom: 0; left: 0; right: 0; height: 7mm; display: flex; align-items: center; gap: 4mm; justify-content: space-between; overflow: hidden; font-size: 6.5pt; color: #56616c; }
+.planner-improvements { display: flex; gap: 3mm; align-items: center; flex: 1; border: .2mm solid #c1ccd4; border-radius: 1.5mm; padding: 1.5mm 2mm; }
+.planner-improvements span { border-bottom: .2mm solid #b4c0c9; flex: 1; height: 2mm; }
 @media print {
   @page { size: A4 portrait; margin: 7mm; }
   @page planner-notes { size: A4 portrait; margin: 7mm; }
   body { background: white !important; }
   header, nav, .print-controls { display: none !important; }
   main { padding: 0 !important; margin: 0 !important; }
-  .planner-print { page: planner-notes; width: 100%; max-width: none; padding: 0; font-size: 9pt; }
-  .planner-print .planner-improvements { position: static; height: auto; }
-  .planner-printed-lesson { break-inside: avoid; }
-  .planner-course-grid { display: block; }
-  .planner-course-panel { break-inside: avoid; min-height: 115mm; }
-  .planner-course-panel:nth-child(2n + 3) { break-before: page; }
+  .planner-print { page: planner-notes; width: 196mm; max-width: none; min-height: 0; display: block; }
+  .planner-paper-page { margin: 0; break-inside: avoid; break-after: page; }
+  .planner-paper-page:last-child { break-after: auto; }
   .planner-print, .planner-print * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .planner-print header { display: block !important; }
 }

@@ -8,7 +8,8 @@ import { normalizePlan } from '@/services/planner-layout';
 import { placePlannerCard } from '@/services/planner-cards';
 import { populateSlots } from '@/services/unit-planning';
 import { routineNames, routineSlot } from '@/services/planner-routines';
-import { PlannerPrintSheet, printExcerpt } from '@/pages/PlannerPrintPage';
+import { PlannerPrintSheet } from '@/pages/PlannerPrintPage';
+import { compactPrintText as printExcerpt } from '@/services/planner-print';
 import { MemoryRouter } from 'react-router-dom';
 
 function fixture() {
@@ -22,7 +23,7 @@ describe('simplified weekly planner', () => {
     plan.lessons[0].slots![0].content = 'One two three four five six seven eight';
     const { container } = render(<MemoryRouter><PlannerPrintSheet data={plan}/></MemoryRouter>);
     expect(container.querySelectorAll('.planner-course-panel')).toHaveLength(4);
-    expect(screen.getByText('One two three four five…')).toBeInTheDocument();
+    expect(screen.getByText(/One two three four five…/)).toBeInTheDocument();
     expect(plan.lessons[0].slots![0].content).toBe('One two three four five six seven eight');
     expect(printExcerpt('  One\n two  three ')).toBe('One two three');
     expect(printExcerpt('')).toBe('');
@@ -59,15 +60,13 @@ describe('simplified weekly planner', () => {
     expect(next.preparation.find(task => task.id === 'prepare-presentation-WL')?.status).toBe('ready');
     expect(next.preparation.filter(task => task.id.includes('prepare-presentation-WL'))).toHaveLength(1);
   });
-  it('prints blank write-back spaces, a check for every card and three improvement slots', () => {
+  it('prints write-back lines, a check for every card and one improvements line', () => {
     const plan = fixture();
     render(<MemoryRouter><PlannerPrintSheet data={plan}/></MemoryRouter>);
     expect(screen.getAllByText('We Did:')).toHaveLength(plan.lessons.length);
     expect(screen.getAllByLabelText('Completion checkbox')).toHaveLength(plan.lessons.flatMap(lesson => lesson.slots || []).length);
     expect(screen.getByText('Improvements for next time')).toBeInTheDocument();
-    expect(screen.getByText('Instruction / explanation')).toBeInTheDocument();
-    expect(screen.getByText('Activities / pacing')).toBeInTheDocument();
-    expect(screen.getByText('Support / other')).toBeInTheDocument();
+    expect(screen.getAllByText('Improvements for next time')).toHaveLength(1);
   });
   it('places routine copies and opens their details when clicked', () => {
     function Harness() { const [data,setData] = useState(fixture); return <WeeklySlots data={data} units={[]} onChange={setData}/>; }

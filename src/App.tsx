@@ -142,7 +142,7 @@ export default function App() {
           <Route path="/planner" element={<ProtectedRoute><TeacherRoute><PlannerPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/planning" element={<ProtectedRoute><TeacherRoute><PlanningUnitsPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/planner/:planId/lessons/:lessonId" element={<ProtectedRoute><TeacherRoute><PlannerLessonPage /></TeacherRoute></ProtectedRoute>} />
-          <Route path="/planner/:planId/print" element={<ProtectedRoute><TeacherRoute><PlannerPrintPage /></TeacherRoute></ProtectedRoute>} />
+          <Route path="/planner/:planId/print" element={<FullscreenTeacherRoute><PlannerPrintPage /></FullscreenTeacherRoute>} />
 
           <Route path="/sessions/:sessionId" element={<ProtectedRoute><ClassSessionPage /></ProtectedRoute>} />
 
