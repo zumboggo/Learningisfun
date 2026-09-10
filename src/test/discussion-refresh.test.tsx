@@ -1,0 +1,22 @@
+import { afterEach, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { RedditDiscussionPage } from '@/pages/RedditDiscussionPage';
+import type { ClassSession } from '@/types';
+const sync=vi.hoisted(()=>vi.fn().mockResolvedValue(undefined));
+vi.mock('@/services/text-discussion.service',()=>({syncTextDiscussion:sync}));
+vi.mock('react-router-dom',()=>({useNavigate:()=>vi.fn()}));
+vi.mock('@/contexts/AuthContext',()=>({useAuth:()=>({user:{$id:'teacher'},isTeacher:true,isParent:false})}));
+vi.mock('dexie-react-hooks',()=>({useLiveQuery:()=>[]}));
+afterEach(()=>{cleanup();sync.mockClear();});
+it('explicitly refreshes replies without discarding an open draft and reports failures',async()=>{
+  render(<RedditDiscussionPage session={{$id:'session',classId:'class',title:'Our discussion',status:'active'} as ClassSession}/>);
+  fireEvent.click(screen.getByText('Share your thought or question…'));
+  fireEvent.change(screen.getByPlaceholderText('Share your thought or question…'),{target:{value:'Keep this draft'}});
+  sync.mockRejectedValueOnce(new Error('Offline'));
+  fireEvent.click(screen.getByText('Refresh replies'));
+  await waitFor(()=>expect(screen.getByRole('alert')).toHaveTextContent('Could not refresh'));
+  expect(sync).toHaveBeenLastCalledWith('session',true);
+  expect(screen.getByPlaceholderText('Share your thought or question…')).toHaveValue('Keep this draft');
+  fireEvent.click(screen.getByText('Refresh replies'));
+  await waitFor(()=>expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+});

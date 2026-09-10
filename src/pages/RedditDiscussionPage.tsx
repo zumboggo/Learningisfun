@@ -12,6 +12,8 @@ import type { ClassSession, TextDiscussionPost } from '@/types';
 export function RedditDiscussionPage({ session }: { session: ClassSession }) {
   const { user, isTeacher, isParent } = useAuth();
   const navigate = useNavigate();
+  const [refreshing, setRefreshing] = useState(false), [refreshError, setRefreshError] = useState('');
+  const refresh = async () => { setRefreshing(true); setRefreshError(''); try { await syncTextDiscussion(session.$id, true); } catch { setRefreshError('Could not refresh. Check your connection and try again.'); } finally { setRefreshing(false); } };
   const [draft, setDraft] = useState('');
   const [composerOpen, setComposerOpen] = useState(false);
   const [sort, setSort] = useState<'top' | 'new'>('top');
@@ -40,7 +42,8 @@ export function RedditDiscussionPage({ session }: { session: ClassSession }) {
     {!readOnly && <section className={`reddit-composer ${composerOpen ? 'reddit-composer-open' : ''}`}>
       {!composerOpen ? <button onClick={() => setComposerOpen(true)}><ChatIcon/><span>Share your thought or question…</span><span aria-hidden="true">⌄</span></button> : <><textarea autoFocus rows={4} placeholder="Share your thought or question…" value={draft} onChange={event => setDraft(event.target.value)}/><div className="reddit-composer-actions"><button onClick={() => { setDraft(''); setComposerOpen(false); }}>Cancel</button><Button size="sm" disabled={!draft.trim()} onClick={() => void submitPost()}>Post</Button></div></>}
     </section>}
-    <div className="reddit-feed-toolbar"><div className="reddit-sort-control" aria-label="Sort discussion posts"><button className={sort === 'top' ? 'active' : ''} onClick={() => setSort('top')}>Top</button><button className={sort === 'new' ? 'active' : ''} onClick={() => setSort('new')}>New</button></div><span>{roots.length} {roots.length === 1 ? 'thread' : 'threads'}</span></div>
+    <div className="reddit-feed-toolbar"><div className="reddit-sort-control" aria-label="Sort discussion posts"><button className={sort === 'top' ? 'active' : ''} onClick={() => setSort('top')}>Top</button><button className={sort === 'new' ? 'active' : ''} onClick={() => setSort('new')}>New</button></div><Button size="sm" variant="secondary" loading={refreshing} onClick={()=>void refresh()}>Refresh replies</Button><span>{roots.length} {roots.length === 1 ? 'thread' : 'threads'}</span></div>
+    {refreshError && <p role="alert" className="text-sm text-red-700">{refreshError}</p>}
     <section className="reddit-feed">{roots.length ? roots.map(post => <Thread key={post.$id} post={post} all={posts || []} votes={votes || []} userId={user.$id} isTeacher={isTeacher} readOnly={isParent} sort={sort}/>) : <div className="reddit-empty-feed">No posts yet. Start the conversation.</div>}</section><Modal open={editingSession} onClose={()=>setEditingSession(false)} title="Edit discussion"><div className="space-y-4"><label className="block text-sm font-medium">Title<input className="mt-1 w-full rounded-lg border px-3 py-2" value={editTitle} onChange={e=>setEditTitle(e.target.value)}/></label><label className="block text-sm font-medium">Topic or focus<textarea className="mt-1 w-full rounded-lg border px-3 py-2" rows={4} value={editFocus} onChange={e=>setEditFocus(e.target.value)}/></label><Button className="w-full" disabled={!editTitle.trim()} onClick={()=>void updateClassSession(session.$id,user.$id,{title:editTitle.trim(),promptMarkdown:editFocus.trim()}).then(()=>setEditingSession(false))}>Save changes</Button></div></Modal>
   </div>;
 }

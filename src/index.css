@@ -1469,6 +1469,10 @@ input, textarea, select, button {
   pointer-events: none;
 }
 
+.reader-prose { font-family: Charter, 'Bitstream Charter', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif; line-height: 1.8; letter-spacing: .005em; }
+.passage-highlight { background: #f5e7a3; color: inherit; border-radius: .15em; cursor: pointer; }
+.passage-highlight:hover, .passage-highlight:focus-visible { background: #ecd16b; outline: 2px solid #a47b20; outline-offset: 2px; }
+
 .rich-notes-editor p,
 .rich-notes-editor ul,
 .rich-notes-editor ol,

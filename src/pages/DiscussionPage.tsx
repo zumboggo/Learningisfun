@@ -500,7 +500,7 @@ export function DiscussionPage() {
             </div>
             <div className="flex gap-2">
               <Button size="sm" variant="secondary" loading={refreshing} onClick={() => void refreshDiscussion()}>
-                Refresh totals
+                Refresh replies
               </Button>
               <Button size="sm" variant="secondary" onClick={openSettings}>
                 Settings

@@ -3,6 +3,17 @@ import { Query } from 'node-appwrite';
 import { InputFile } from 'node-appwrite/file';
 
 export const PDF_BUCKET = 'original-pdfs';
+export async function readEditableParagraphs({db, databaseId, textId, profile, userId}) {
+  const text = await db.getDocument(databaseId, 'texts', textId);
+  if (profile.role !== 'teacher' || text.teacherId !== userId) throw new Error('Only the text owner can edit this text');
+  const paragraphs = []; let cursor;
+  do {
+    const page = await db.listDocuments(databaseId, 'text_paragraphs', [Query.equal('textId', textId), Query.limit(100), ...(cursor ? [Query.cursorAfter(cursor)] : [])]);
+    paragraphs.push(...page.documents);
+    cursor = page.documents.length === 100 ? page.documents.at(-1).$id : undefined;
+  } while(cursor);
+  return paragraphs;
+}
 const prefix = userId => `pdf_${createHash('sha256').update(userId).digest('hex').slice(0, 10)}_`;
 export function ownsPdf(userId, fileId) {
   return typeof fileId === 'string' && fileId.startsWith(prefix(userId)) && /^pdf_[a-f0-9]{10}_[a-f0-9]{20}$/.test(fileId);

@@ -14,19 +14,14 @@ vi.mock('@/db/schema', () => ({ db: {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe('article text display', () => {
-  it('presents the whole article by default, scales text, and retains paragraph mode', () => {
+  it('presents the whole article by default, scales text, and has no phone mode', () => {
     render(<TextPresentPage/>);
     expect(screen.getByText('First')).toBeInTheDocument();
     expect(screen.getByText('Second passage.')).toBeInTheDocument();
     expect(screen.queryByLabelText('Next paragraph')).not.toBeInTheDocument();
     fireEvent.click(screen.getByLabelText('Larger text'));
     expect(screen.getByRole('article')).toHaveStyle({ fontSize: '34px' });
-    fireEvent.click(screen.getByText('Cell Phone Mode'));
-    expect(screen.queryByText('Second passage.')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByLabelText('Next paragraph'));
-    expect(screen.getByText('Second passage.')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('Article Mode'));
-    expect(screen.getByText('First')).toBeInTheDocument();
+    expect(screen.queryByText('Cell Phone Mode')).not.toBeInTheDocument();
   });
   it('does not intercept Space in article mode', () => {
     render(<TextPresentPage/>);
@@ -38,7 +33,7 @@ describe('article text display', () => {
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function(this: HTMLAnchorElement) {
       expect(this.download).toBe('Title.md');
     });
-    render(<TextViewControls title="Title" paragraphs={['**Bold** and [link](https://example.com)', '*Italic*']} mode="article" onMode={vi.fn()} size={22} onSize={vi.fn()}/>);
+    render(<TextViewControls title="Title" paragraphs={['**Bold** and [link](https://example.com)', '*Italic*']} size={22} onSize={vi.fn()}/>);
     fireEvent.click(screen.getByText('Export .md'));
     expect(click).toHaveBeenCalledOnce();
     const blob = create.mock.calls[0][0] as Blob;
@@ -46,7 +41,7 @@ describe('article text display', () => {
     expect(content).toBe('# Title\n\n**Bold** and [link](https://example.com)\n\n*Italic*\n');
   });
   it('disables export when there is no extracted reading', () => {
-    render(<TextViewControls title="Scan" paragraphs={[]} mode="article" onMode={vi.fn()} size={16} onSize={vi.fn()}/>);
+    render(<TextViewControls title="Scan" paragraphs={[]} size={16} onSize={vi.fn()}/>);
     expect(screen.getByText('Export .md')).toBeDisabled();
     expect(screen.getByLabelText('Smaller text')).toBeDisabled();
   });

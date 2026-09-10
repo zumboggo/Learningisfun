@@ -1,16 +1,19 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
 import { Modal } from '@/components/common/Modal';
 import { Button } from '@/components/common/Button';
 import { MarkdownPasteEditor } from '@/components/common/MarkdownPasteEditor';
-import { splitParagraphs, updateTextAssignments, updateTextMetadata, updateTextParagraphs } from '@/services/text.service';
+import { loadTextForEditing, splitParagraphs, updateTextAssignments, updateTextMetadata, updateTextParagraphs } from '@/services/text.service';
 import type { LearningText, TextAssignment, TextParagraph } from '@/types';
 
 export function TextEditorModal({text,teacherId,classes,onClose}:{text:LearningText;teacherId:string;classes:Array<{id:string;name:string}>;onClose:()=>void}){
-  const paragraphs=useLiveQuery(()=>db.text_paragraphs.where('textId').equals(text.$id).sortBy('sortOrder'),[text.$id]);
+  const [loaded, setLoaded] = useState<{textId:string;paragraphs:TextParagraph[]}|null>(null), [loadError, setLoadError] = useState('');
+  useEffect(() => { let active = true; void loadTextForEditing(text.$id).then(paragraphs => { if(active)setLoaded({textId:text.$id,paragraphs}); }).catch(() => { if(active)setLoadError('Could not load the complete text. Reconnect and reopen this editor before making changes.'); }); return () => { active = false; }; }, [text.$id]);
+  const paragraphs=loaded?.textId===text.$id ? loaded.paragraphs : undefined;
   const assignments=useLiveQuery(()=>db.text_assignments.where('textId').equals(text.$id).toArray(),[text.$id]);
-  if(!paragraphs||!assignments)return <Modal open onClose={onClose} title="Edit text"><p className="p-4 text-sm text-gray-500">Loading text…</p></Modal>;
+  if(loadError)return <Modal open onClose={onClose} title="Edit text"><p role="alert">{loadError}</p></Modal>;
+  if(!loaded||!paragraphs||!assignments)return <Modal open onClose={onClose} title="Edit text"><p className="p-4 text-sm text-gray-500">Loading text…</p></Modal>;
   return <TextEditorForm key={text.$id} text={text} teacherId={teacherId} classes={classes} paragraphs={paragraphs} assignments={assignments} onClose={onClose}/>;
 }
 

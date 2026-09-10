@@ -1,17 +1,20 @@
 /* eslint-disable react-refresh/only-export-components -- this shared renderer also exposes its matching word counter */
 import type { ReactNode } from 'react';
+import { anchorHighlights, type PassageHighlight } from '@/components/texts/anchored-highlights';
 
 interface MarkdownProps {
   content: string;
   className?: string;
+  highlights?: PassageHighlight[];
+  onHighlightClick?: (id: string) => void;
 }
 
 const INLINE_TOKEN = /(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\)|\*[^*]+\*)/g;
 
-export function Markdown({ content, className = '' }: MarkdownProps) {
+export function Markdown({ content, className = '', highlights, onHighlightClick }: MarkdownProps) {
   return (
     <div className={`space-y-3 leading-relaxed ${className}`}>
-      {renderBlocks(content)}
+      {highlights?.length ? anchorHighlights(renderBlocks(content), highlights, onHighlightClick) : renderBlocks(content)}
     </div>
   );
 }

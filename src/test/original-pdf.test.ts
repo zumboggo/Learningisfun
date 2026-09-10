@@ -1,11 +1,26 @@
 import { describe, expect, it, vi } from 'vitest';
 // @ts-expect-error Independently deployed server module.
-import { originalPdfAction, ownsPdf, authorizeTextMutation } from '../../functions/learning-content/src/original-pdf.js';
+import { originalPdfAction, ownsPdf, authorizeTextMutation, readEditableParagraphs } from '../../functions/learning-content/src/original-pdf.js';
 
 function context() {
   return { body: { action: 'uploadOriginalPdf', data: btoa('%PDF-1.4\nExample'), name: 'Reading.pdf' }, profile: { role: 'teacher' }, userId: 'teacher', memberClassIds: new Set<string>(), databaseId: 'main', endpoint: 'https://example.com/v1', projectId: 'project', storage: { createFile: vi.fn().mockResolvedValue({}) }, tokens: { createFileToken: vi.fn().mockResolvedValue({ secret: 'short-lived-token' }) }, db: { getDocument: vi.fn(), listDocuments: vi.fn().mockResolvedValue({ documents: [] }) } };
 }
 describe('private original PDFs', () => {
+  it('loads all editable paragraphs only for the owning teacher', async () => {
+    const c = context();
+    c.db.getDocument.mockResolvedValue({teacherId:'teacher'});
+    for (const role of ['student','parent']) {
+      c.profile.role=role;
+      await expect(readEditableParagraphs({...c,textId:'text'})).rejects.toThrow('Only the text owner');
+    }
+    c.profile.role='teacher'; c.userId='other';
+    await expect(readEditableParagraphs({...c,textId:'text'})).rejects.toThrow('Only the text owner');
+    expect(c.db.listDocuments).not.toHaveBeenCalled();
+    c.userId='teacher';
+    c.db.listDocuments.mockResolvedValueOnce({documents:Array.from({length:100},(_,i)=>({$id:String(i)}))}).mockResolvedValueOnce({documents:[{$id:'last'}]});
+    expect(await readEditableParagraphs({...c,textId:'text'})).toHaveLength(101);
+    expect(c.db.listDocuments).toHaveBeenCalledTimes(2);
+  });
   it('stores exact bytes privately and reuses the same ID on retries', async () => {
     const c = context();
     const first = await originalPdfAction(c);

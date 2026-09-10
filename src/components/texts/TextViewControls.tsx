@@ -1,13 +1,9 @@
-export type TextViewMode = 'article' | 'phone';
-
-export function TextViewControls({ mode, onMode, size, onSize, title, paragraphs }: {
-  mode: TextViewMode; onMode: (mode: TextViewMode) => void;
+export function TextViewControls({ size, onSize, title, paragraphs }: {
   size: number; onSize: (size: number) => void; title: string; paragraphs: string[];
 }) {
   const button = 'rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 disabled:opacity-40';
   return <div className="flex flex-wrap items-center gap-2" aria-label="Text display and export">
-    <button className={button} aria-pressed={mode === 'article'} onClick={() => onMode('article')}>Article Mode</button>
-    <button className={button} aria-pressed={mode === 'phone'} onClick={() => onMode('phone')}>Cell Phone Mode</button>
+    <span className="text-sm font-medium text-slate-600">Reader Mode</span>
     <button className={button} aria-label="Smaller text" disabled={size <= 16} onClick={() => onSize(Math.max(16, size - 2))}>A−</button>
     <output className="text-sm" aria-label="Font size">{size}px</output>
     <button className={button} aria-label="Larger text" disabled={size >= 56} onClick={() => onSize(Math.min(56, size + 2))}>A+</button>

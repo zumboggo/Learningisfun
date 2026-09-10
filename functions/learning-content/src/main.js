@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { validateObservations } from './copywork.js';
 import { planningAction, slotAgenda } from './planning.js';
 import { importLegacyWord } from './document-import.js';
-import { originalPdfAction, authorizeTextMutation } from './original-pdf.js';
+import { originalPdfAction, authorizeTextMutation, readEditableParagraphs } from './original-pdf.js';
 import { handleTqe } from './tqe.js';
 
 const studentCollections = new Set(['quiz_attempts', 'writing_submissions', 'peer_reviews', 'discussion_questions', 'discussion_answers', 'question_votes', 'text_annotations', 'text_discussion_posts', 'text_discussion_votes']);
@@ -1072,6 +1072,10 @@ export default async ({ req, res, error }) => {
       if (body.tqeStage && !['thought','full'].includes(body.tqeStage)) return res.json({error:'Invalid TQE stage'},400);
       await db.updateDocument(databaseId, 'texts', text.$id, { annotationMode: body.annotationMode, tqeStage: body.tqeStage || 'full' });
       return res.json({ ok: true });
+    }
+    if (body.action === 'readTextForEditing') {
+      const paragraphs = await readEditableParagraphs({db, databaseId, textId:body.textId, profile, userId});
+      return res.json({paragraphs: paragraphs.map(clean)});
     }
     if (body.action === 'readTexts') {
       const requested = Array.isArray(body.classIds) ? body.classIds : [];

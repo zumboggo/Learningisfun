@@ -10,6 +10,25 @@ import type { LearningText, TextAnnotation, TextAssignment, TextParagraph, TextS
 
 export const ANNOTATIONS_TO_UNLOCK = 3;
 
+export async function reconcileTextParagraphs(textId: string, remote: TextParagraph[]) {
+  await db.transaction('rw', db.text_paragraphs, db.sync_queue, async () => {
+    const pending = await db.sync_queue.where('entityType').equals('text_paragraph').filter(row => row.syncStatus !== 'synced').toArray();
+    const protectedIds = new Set(pending.map(row => row.entityId));
+    const remoteIds = new Set(remote.map(row => row.$id));
+    const local = await db.text_paragraphs.where('textId').equals(textId).toArray();
+    await db.text_paragraphs.bulkDelete(local.filter(row => !remoteIds.has(row.$id) && !protectedIds.has(row.$id)).map(row => row.$id));
+    await db.text_paragraphs.bulkPut(remote.filter(row => !protectedIds.has(row.$id)));
+  });
+}
+
+export async function loadTextForEditing(textId: string) {
+  if (FUNCTION_IDS.learningContent) {
+    const result = await executeLearningContent<{paragraphs: TextParagraph[]}>({action: 'readTextForEditing', textId});
+    await reconcileTextParagraphs(textId, result.paragraphs);
+  }
+  return db.text_paragraphs.where('textId').equals(textId).sortBy('sortOrder');
+}
+
 export function tqeProgress(rows: TextAnnotation[]) {
   const eligible = rows.filter(a => (a.visibility || 'class') === 'class' && (a.kind || 'annotation') === 'annotation' && a.moderationStatus === 'visible' && a.content.trim());
   return { thought: eligible.some(a => a.tqeType === 'thought'), question: eligible.some(a => a.tqeType === 'question'), epiphany: eligible.some(a => a.tqeType === 'epiphany') };
@@ -68,11 +87,13 @@ export async function createText(params: { teacherId: string; title: string; aut
   const now = getTimestamp();
   const text: LearningText = { $id: ID.unique(), teacherId: params.teacherId, title: params.title, author: params.author,
     annotationMode: 'tqe', source: params.source, ...(originalPdfId ? { originalPdfId } : {}), contentMode: params.contentMode || 'full', externalUrl: params.externalUrl || '', status: 'published', createdAt: now, updatedAt: now, syncStatus: 'local' };
+  await db.transaction('rw', db.texts, db.text_paragraphs, db.sync_queue, async () => {
   await db.texts.put(text); await addToQueue(params.teacherId, 'text', text.$id, 'create', text);
   for (let i = 0; i < params.paragraphs.length; i++) {
-    const paragraph: TextParagraph = { $id: ID.unique(), textId: text.$id, sortOrder: i, content: params.paragraphs[i] };
+    const paragraph: TextParagraph = { $id: `p_${text.$id}_${i}`, textId: text.$id, sortOrder: i, content: params.paragraphs[i] };
     await db.text_paragraphs.put(paragraph); await addToQueue(params.teacherId, 'text_paragraph', paragraph.$id, 'create', paragraph);
   }
+  });
   await setTextClasses(text.$id, params.classIds, params.teacherId, params.schedule);
   return text;
 }
@@ -81,10 +102,13 @@ export async function updateTextMetadata(textId:string,teacherId:string,updates:
 
 export async function updateTextParagraphs(textId:string,teacherId:string,contents:string[]):Promise<void>{
   const text=await db.texts.get(textId); if(!text||text.teacherId!==teacherId)throw new Error('Only the text creator can edit it');
+  await loadTextForEditing(textId);
+  await db.transaction('rw', db.text_paragraphs, db.text_annotations, db.sync_queue, async () => {
   const existing=await db.text_paragraphs.where('textId').equals(textId).sortBy('sortOrder');
   const removed=existing.slice(contents.length); if(removed.length){const annotatedIds=new Set((await db.text_annotations.where('textId').equals(textId).toArray()).map(row=>row.paragraphId));const blocked=removed.find(row=>annotatedIds.has(row.$id));if(blocked)throw new Error(`Paragraph ${blocked.sortOrder+1} has student annotations and cannot be removed. You can still rewrite it.`);}
-  for(let index=0;index<contents.length;index++){const content=contents[index].trim();const current=existing[index];if(current){if(current.content===content&&current.sortOrder===index)continue;const updated={...current,content,sortOrder:index};await db.text_paragraphs.put(updated);await addToQueue(teacherId,'text_paragraph',current.$id,'update',updated);}else{const paragraph:TextParagraph={$id:ID.unique(),textId,sortOrder:index,content};await db.text_paragraphs.put(paragraph);await addToQueue(teacherId,'text_paragraph',paragraph.$id,'create',paragraph);}}
+  for(let index=0;index<contents.length;index++){const content=contents[index].trim();const current=existing[index];if(current){if(current.content===content&&current.sortOrder===index)continue;const updated={...current,content,sortOrder:index};await db.text_paragraphs.put(updated);await addToQueue(teacherId,'text_paragraph',current.$id,'update',updated);}else{const paragraph:TextParagraph={$id:`p_${textId}_${index}`,textId,sortOrder:index,content};await db.text_paragraphs.put(paragraph);await addToQueue(teacherId,'text_paragraph',paragraph.$id,'create',paragraph);}}
   for(const paragraph of removed){await db.text_paragraphs.delete(paragraph.$id);await addToQueue(teacherId,'text_paragraph',paragraph.$id,'delete',paragraph);}
+  });
   const versions=await db.text_versions.where('textId').equals(textId).toArray(); if(versions.length){await db.text_versions.bulkDelete(versions.map(row=>row.$id));await db.text_version_paragraphs.where('textId').equals(textId).delete();}
 }
 
@@ -166,7 +190,6 @@ export async function syncTextsFromServer(classIds: string[], _userId: string, i
     const staleAssignmentIds=localAssignments.filter(row=>!remoteAssignmentIds.has(row.$id)&&!protectedAssignmentIds.has(row.$id)).map(row=>row.$id);if(staleAssignmentIds.length)await db.text_assignments.bulkDelete(staleAssignmentIds);
     if (!ids.length && !isTeacher) return true;
     for (const text of result.texts) await db.texts.put({ ...text, syncStatus: 'synced' });
-    for (const paragraph of result.paragraphs) await db.text_paragraphs.put(paragraph);
     for (const annotation of result.annotations) await db.text_annotations.put({ ...annotation, syncStatus: 'synced' });
     return true;
   } catch { return false; }
@@ -187,7 +210,7 @@ export async function syncTextFromServer(textId: string, classId: string): Promi
     });
     if (result.assignments.length) await db.text_assignments.bulkPut(result.assignments);
     for (const text of result.texts) await db.texts.put({ ...text, syncStatus: 'synced' });
-    for (const paragraph of result.paragraphs) await db.text_paragraphs.put(paragraph);
+    await reconcileTextParagraphs(textId, result.paragraphs);
     for (const version of result.versions || []) await db.text_versions.put(version);
     for (const paragraph of result.versionParagraphs || []) await db.text_version_paragraphs.put(paragraph);
     const localAnnotations = await db.text_annotations.where('[textId+classId]').equals([textId,classId]).toArray();
@@ -196,9 +219,6 @@ export async function syncTextFromServer(textId: string, classId: string): Promi
     const returnedIds = new Set(result.annotations.map(row => row.$id));
     await db.text_annotations.bulkDelete(localAnnotations.filter(row => !returnedIds.has(row.$id) && !pendingIds.has(row.$id)).map(row => row.$id));
     for (const annotation of result.annotations) if (!pendingIds.has(annotation.$id)) await db.text_annotations.put({ ...annotation, syncStatus: 'synced' });
-    const [localParagraphs,queuedParagraphChanges]=await Promise.all([db.text_paragraphs.where('textId').equals(textId).toArray(),db.sync_queue.where('entityType').equals('text_paragraph').filter(row=>row.syncStatus!=='synced').toArray()]);
-    const remoteParagraphIds=new Set(result.paragraphs.map(row=>row.$id)),protectedParagraphIds=new Set(queuedParagraphChanges.map(row=>row.entityId));
-    const staleParagraphIds=localParagraphs.filter(row=>!remoteParagraphIds.has(row.$id)&&!protectedParagraphIds.has(row.$id)).map(row=>row.$id);if(staleParagraphIds.length)await db.text_paragraphs.bulkDelete(staleParagraphIds);
     const remoteVersionIds=new Set((result.versions||[]).map(row=>row.$id)),localVersions=await db.text_versions.where('textId').equals(textId).toArray(),staleVersions=localVersions.filter(row=>!remoteVersionIds.has(row.$id));
     if(staleVersions.length){await db.text_versions.bulkDelete(staleVersions.map(row=>row.$id));for(const version of staleVersions)await db.text_version_paragraphs.where('versionId').equals(version.$id).delete();}
     return true;

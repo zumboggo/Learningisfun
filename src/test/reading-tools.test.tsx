@@ -23,13 +23,13 @@ describe('reading support controls', () => {
   });
   it('opens a larger reading view with font controls and browser-specific help', () => {
     render(<ReadingTools title="A calm reading" paragraphs={['**Important** ideas.']}/>);
-    fireEvent.click(screen.getByText('Reader Mode'));
+    fireEvent.click(screen.getByText('Fullscreen reading'));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByRole('article')).toHaveStyle({ fontSize: '24px' });
     fireEvent.click(screen.getByLabelText('Larger reader text'));
     expect(screen.getByRole('article')).toHaveStyle({ fontSize: '26px' });
     expect(screen.getByText('Chrome help')).toHaveAttribute('href', expect.stringContaining('support.google.com'));
-    fireEvent.click(screen.getByText('Exit Reader Mode'));
+    fireEvent.click(screen.getByText('Exit fullscreen'));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
   it('explains unavailable link/PDF text without pretending to read it', () => {

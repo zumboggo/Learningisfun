@@ -590,7 +590,7 @@ const COLLECTIONS = [
   {
     id: 'text_paragraphs', name: 'Text Paragraphs',
     attributes: [S('textId', { required: true }), INT('sortOrder', { required: true }), TXT('content', { required: true })],
-    indexes: [{ key: 'idx_textId', type: 'key', attributes: ['textId'] }, { key: 'idx_text_order', type: 'key', attributes: ['textId','sortOrder'] }],
+    indexes: [{ key: 'idx_textId', type: 'key', attributes: ['textId'] }, { key: 'idx_text_order', type: 'key', attributes: ['textId','sortOrder'] }, { key: 'unique_text_position', type: 'unique', attributes: ['textId','sortOrder'] }],
   },
   {
     id: 'text_versions', name: 'Text Support Versions',
