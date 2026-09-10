@@ -8,7 +8,7 @@ import { normalizePlan } from '@/services/planner-layout';
 import { placePlannerCard } from '@/services/planner-cards';
 import { populateSlots } from '@/services/unit-planning';
 import { routineNames, routineSlot } from '@/services/planner-routines';
-import { PlannerPrintSheet } from '@/pages/PlannerPrintPage';
+import { PlannerPrintSheet, printExcerpt } from '@/pages/PlannerPrintPage';
 import { MemoryRouter } from 'react-router-dom';
 
 function fixture() {
@@ -17,6 +17,16 @@ function fixture() {
 afterEach(cleanup);
 
 describe('simplified weekly planner', () => {
+  it('prints four separate compact sections and shortens descriptions without changing saved plans', () => {
+    const plan = fixture();
+    plan.lessons[0].slots![0].content = 'One two three four five six seven eight';
+    const { container } = render(<MemoryRouter><PlannerPrintSheet data={plan}/></MemoryRouter>);
+    expect(container.querySelectorAll('.planner-course-panel')).toHaveLength(4);
+    expect(screen.getByText('One two three four five…')).toBeInTheDocument();
+    expect(plan.lessons[0].slots![0].content).toBe('One two three four five six seven eight');
+    expect(printExcerpt('  One\n two  three ')).toBe('One two three');
+    expect(printExcerpt('')).toBe('');
+  });
   it('upgrades old tasks once while preserving manual work and saved completion', () => {
     const data = fixture();
     data.preparation.push({ id: 'quiz-results-WL-B', label: 'Update Quiz results in Canvas', kind: 'quiz', status: 'todo' }, { id: 'add-cards-WL-B', label: 'Add flashcards', kind: 'other', status: 'ready' }, { id: 'manual', label: 'Print handout', kind: 'handout', status: 'ready' });

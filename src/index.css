@@ -1493,19 +1493,29 @@ input, textarea, select, button {
   text-align: left;
 }
 .planner-paper-check { display: inline-block; width: 2.5mm; height: 2.5mm; border: 1px solid #475569; border-radius: .4mm; margin-right: 1.5mm; vertical-align: middle; background: white; }
-.planner-we-did { min-height: 16mm; }
-.planner-improvements { margin-top: 5mm; break-inside: avoid; }
-.planner-improvement-slot { min-height: 18mm; }
+.planner-print { font-size: 9px; }
+.planner-print .planner-course-panel { padding: 2mm; border-radius: 3mm; }
+.planner-print .planner-course-panel h2 { font-size: 12px; }
+.planner-print .planner-course-panel h2 + span { font-size: 8px; }
+.planner-print .planner-printed-lesson { padding: 1mm; box-shadow: none; }
+.planner-print .planner-printed-lesson .space-y-1 > div { padding: .6mm 1mm; margin-top: .6mm; line-height: 1.15; }
+.planner-print .planner-lesson-grid { gap: 1.5mm; margin-top: 1.5mm; padding-top: 1.5mm; }
+.planner-print .planner-paper-check { width: 2mm; height: 2mm; margin-right: .8mm; }
+.planner-we-did { min-height: 5mm; margin-top: 1mm; padding: .6mm 1mm; }
+.planner-improvements { margin-top: 2mm; break-inside: avoid; }
+.planner-improvement-slot { min-height: 6mm; }
 @media print {
   @page { size: A4 portrait; margin: 7mm; }
-  @page planner-notes { size: A4 portrait; margin: 7mm 7mm 40mm; }
+  @page planner-notes { size: A4 portrait; margin: 7mm; }
   body { background: white !important; }
   header, nav, .print-controls { display: none !important; }
   main { padding: 0 !important; margin: 0 !important; }
   .planner-print { page: planner-notes; width: 100%; max-width: none; padding: 0; font-size: 9pt; }
-  .planner-print .planner-improvements { position: fixed; bottom: -32mm; left: 0; right: 0; height: 29mm; margin: 0; box-sizing: border-box; }
+  .planner-print .planner-improvements { position: static; height: auto; }
   .planner-printed-lesson { break-inside: avoid; }
-  .planner-course-panel { break-inside: auto; }
+  .planner-course-grid { display: block; }
+  .planner-course-panel { break-inside: avoid; min-height: 115mm; }
+  .planner-course-panel:nth-child(2n + 3) { break-before: page; }
   .planner-print, .planner-print * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .planner-print header { display: block !important; }
 }
