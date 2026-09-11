@@ -1,3 +1,4 @@
+import { textAssignmentAvailable } from './text-schedule.js';
 import { createHash } from 'node:crypto';
 
 export const tqeComplete = (rows, stage = 'full') => (stage === 'thought' ? ['thought'] : ['thought','question','epiphany']).every(type => rows.some(a => a.tqeType === type && (a.kind || 'annotation') === 'annotation' && (a.visibility || 'class') === 'class' && a.moderationStatus === 'visible' && a.content?.trim()));
@@ -13,7 +14,7 @@ export async function handleTqe({ body, db, databaseId, Query, userId, profile, 
   if (!teacher && !student) return res.json({ error: 'Class access required' }, 403);
   if (!teacher && text.status !== 'published') return res.json({ error: 'Reading is not published' }, 403);
   const assigned = await db.listDocuments(databaseId, 'text_assignments', [Query.equal('textId', text.$id), Query.equal('classId', cls.$id), Query.limit(1)]);
-  if (!assigned.total) return res.json({ error: 'Text is not assigned here' }, 403);
+  if (!assigned.documents.some(row=>teacher||textAssignmentAvailable(row))) return res.json({ error: 'Text is not assigned here' }, 403);
   const list = async collection => {
     const rows = []; let cursor;
     do {

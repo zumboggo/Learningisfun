@@ -518,6 +518,7 @@ export interface LearningText {
 }
 
 export interface TextAssignment {
+  dueDate?: string;
   $id: string;
   textId: string;
   classId: string;

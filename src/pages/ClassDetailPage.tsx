@@ -1,3 +1,5 @@
+import { textSchedule, textAssignmentAvailable } from '@/services/text-schedule';
+import { ClassReadingDate } from '@/components/texts/ClassReadingDate';
 import { groupWeeklyVocabulary } from '@/services/weekly-vocabulary';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
@@ -34,7 +36,7 @@ import { buildQuizCopyText, buildQtiZip, downloadBlob } from '@/services/qti-exp
 import { addPresentationLinks, createWritingPrompt, deletePresentationLink, finishWritingPrompt, setPresentationWatched, updateWritingPrompt, type WritingPromptSize } from '@/services/presentation.service';
 import { AddDecksToClassModal } from '@/components/common/AddDecksToClassModal';
 import { listFlashcardReports, resolveFlashcardReport, unassignDeck } from '@/services/flashcard.service';
-import { createText, setTextAssignmentDueDate, setTextClasses, splitParagraphs } from '@/services/text.service';
+import { createText, updateTextAssignments, setTextAssignmentDueDate, splitParagraphs } from '@/services/text.service';
 import { RandomStudentModal } from '@/components/teacher/RandomStudentModal';
 import { CreateGroupsModal } from '@/components/teacher/CreateGroupsModal';
 import type { Class, ClassLink, ClassSession, LearningText, PresentationLink, Quiz, QuizAttempt, TextAssignment } from '@/types';
@@ -239,7 +241,7 @@ export function ClassDetailPage() {
     const texts = await Promise.all(assignments.map(assignment => db.texts.get(assignment.textId)));
     const textMaterials: WeeklyMaterial[] = assignments.flatMap((assignment, index) => {
       const text = texts[index];
-      return text?.status === 'published' ? [{ kind: 'text' as const, date: assignment.assignedAt, text, assignment }] : [];
+      return text?.status === 'published' && (isOwner || textAssignmentAvailable(assignment)) ? [{ kind: 'text' as const, date: assignment.assignedAt, text, assignment }] : [];
     });
     const quizAssignments = await db.quiz_assignments.where('classId').equals(classId).toArray();
     const quizMaterials: WeeklyMaterial[] = (await Promise.all(quizAssignments.map(async assignment => ({ assignment, quiz: await db.quizzes.get(assignment.quizId) }))))
@@ -949,7 +951,7 @@ function AssignTextsToClassModal({ open, classId, teacherId, onClose }: { open: 
   const [mode, setMode] = useState<'existing' | 'new'>('new');
   const [contentMode, setContentMode] = useState<'full' | 'link'>('full');
   const [chosen, setChosen] = useState<Set<string> | null>(null);
-  const [dueDate, setDueDate] = useState(todayKey());
+  const [dueDate, setDueDate] = useState('');
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [source, setSource] = useState('');
@@ -960,7 +962,7 @@ function AssignTextsToClassModal({ open, classId, teacherId, onClose }: { open: 
   const [error, setError] = useState('');
   const selected = chosen || new Set(assignments?.map(assignment => assignment.textId) || []);
   const toggle = (textId: string) => { const next = new Set(selected); if (next.has(textId)) next.delete(textId); else next.add(textId); setChosen(next); };
-  const schedule = { assignedAt: new Date(`${dueDate}T12:00:00`).toISOString() };
+  const schedule = textSchedule(dueDate);
   const save = async () => {
     setBusy(true); setError('');
     try {
@@ -968,7 +970,7 @@ function AssignTextsToClassModal({ open, classId, teacherId, onClose }: { open: 
         const current = await db.text_assignments.where('textId').equals(text.$id).toArray();
         const classIds = new Set(current.map(assignment => assignment.classId));
         if (selected.has(text.$id)) classIds.add(classId); else classIds.delete(classId);
-        await setTextClasses(text.$id, [...classIds], teacherId, selected.has(text.$id) ? schedule : undefined);
+        await updateTextAssignments(text.$id, teacherId, [...classIds].map(id=>{const prior=current.find(a=>a.classId===id);return id===classId?{classId:id,...(prior&&!dueDate?{assignedAt:prior.assignedAt,dueDate:prior.dueDate}:textSchedule(dueDate,prior?.assignedAt))}:{classId:id,assignedAt:prior!.assignedAt,dueDate:prior!.dueDate};}));
       }
       setChosen(null); onClose();
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not assign texts.'); }
@@ -984,7 +986,7 @@ function AssignTextsToClassModal({ open, classId, teacherId, onClose }: { open: 
   };
   const close = () => { if (busy) return; setChosen(null); setError(''); onClose(); };
   const newTextValid = Boolean(title.trim()) && (contentMode === 'link' ? /^https?:\/\//i.test(externalUrl) : (splitParagraphs(copiedText).length > 0 || Boolean(originalPdf)));
-  return <Modal open={open} onClose={close} title="Assign Text"><div className="space-y-4"><div className="grid grid-cols-2 gap-1 rounded-lg bg-gray-100 p-1"><button className={`rounded-md px-3 py-2 text-sm font-medium ${mode==='existing'?'bg-white shadow-sm':''}`} onClick={()=>setMode('existing')}>Choose existing</button><button className={`rounded-md px-3 py-2 text-sm font-medium ${mode==='new'?'bg-white shadow-sm':''}`} onClick={()=>setMode('new')}>Add new text</button></div>{error&&<p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}<label className="block text-sm font-medium">Due date<input type="date" className="mt-1 w-full rounded-lg border px-3 py-2" value={dueDate} onChange={e=>setDueDate(e.target.value)}/></label>{mode==='existing'?<><p className="text-sm text-gray-500">Choose from texts you have already added.</p><div className="max-h-72 space-y-2 overflow-auto">{texts?.length ? texts.map(text => <label key={text.$id} className="flex items-start gap-3 rounded-lg border p-3"><input type="checkbox" className="mt-1" checked={selected.has(text.$id)} onChange={() => toggle(text.$id)} /><span><strong className="block text-sm">{text.title}</strong><span className="text-xs text-gray-500">{text.author || 'Unknown author'}{text.contentMode==='link'?' · Link':''}</span></span></label>) : <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No saved texts yet. Choose “Add new text” above.</p>}</div><Button className="w-full" loading={busy} onClick={() => void save()}>Save text assignments</Button></>:<><div className="grid grid-cols-2 gap-1 rounded-lg border p-1"><button className={`rounded-md px-3 py-2 text-sm ${contentMode==='full'?'bg-blue-50 font-semibold text-blue-700':''}`} onClick={()=>setContentMode('full')}>Paste or upload</button><button className={`rounded-md px-3 py-2 text-sm ${contentMode==='link'?'bg-blue-50 font-semibold text-blue-700':''}`} onClick={()=>setContentMode('link')}>Post a link</button></div><input className="w-full rounded-lg border px-3 py-2" placeholder="Text title" value={title} onChange={e=>setTitle(e.target.value)}/><div className="grid grid-cols-2 gap-3"><input className="w-full rounded-lg border px-3 py-2" placeholder="Author (optional)" value={author} onChange={e=>setAuthor(e.target.value)}/><input className="w-full rounded-lg border px-3 py-2" placeholder="Source (optional)" value={source} onChange={e=>setSource(e.target.value)}/></div>{contentMode==='link'?<input type="url" className="w-full rounded-lg border px-3 py-2" placeholder="https://…" value={externalUrl} onChange={e=>setExternalUrl(e.target.value)}/>:<><TextFileUpload onBusyChange={setBusy} onImport={(content,file)=>{setCopiedText(content);setOriginalPdf(file)}}/><MarkdownPasteEditor value={copiedText} onChange={setCopiedText} rows={10}/><p className="text-xs text-gray-500">{splitParagraphs(copiedText).length} paragraph{splitParagraphs(copiedText).length===1?'':'s'} detected</p></>}<Button className="w-full" loading={busy} disabled={!newTextValid} onClick={()=>void createAndAssign()}>Add and assign text</Button></>}</div></Modal>;
+  return <Modal open={open} onClose={close} title="Assign Text"><div className="space-y-4"><div className="grid grid-cols-2 gap-1 rounded-lg bg-gray-100 p-1"><button className={`rounded-md px-3 py-2 text-sm font-medium ${mode==='existing'?'bg-white shadow-sm':''}`} onClick={()=>setMode('existing')}>Choose existing</button><button className={`rounded-md px-3 py-2 text-sm font-medium ${mode==='new'?'bg-white shadow-sm':''}`} onClick={()=>setMode('new')}>Add new text</button></div>{error&&<p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}<ClassReadingDate name="this class" value={dueDate} onChange={setDueDate}/>{mode==='existing'?<><p className="text-sm text-gray-500">Choose from texts you have already added.</p><div className="max-h-72 space-y-2 overflow-auto">{texts?.length ? texts.map(text => <label key={text.$id} className="flex items-start gap-3 rounded-lg border p-3"><input type="checkbox" className="mt-1" checked={selected.has(text.$id)} onChange={() => toggle(text.$id)} /><span><strong className="block text-sm">{text.title}</strong><span className="text-xs text-gray-500">{text.author || 'Unknown author'}{text.contentMode==='link'?' · Link':''}</span></span></label>) : <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No saved texts yet. Choose “Add new text” above.</p>}</div><Button className="w-full" loading={busy} onClick={() => void save()}>Save text assignments</Button></>:<><div className="grid grid-cols-2 gap-1 rounded-lg border p-1"><button className={`rounded-md px-3 py-2 text-sm ${contentMode==='full'?'bg-blue-50 font-semibold text-blue-700':''}`} onClick={()=>setContentMode('full')}>Paste or upload</button><button className={`rounded-md px-3 py-2 text-sm ${contentMode==='link'?'bg-blue-50 font-semibold text-blue-700':''}`} onClick={()=>setContentMode('link')}>Post a link</button></div><input className="w-full rounded-lg border px-3 py-2" placeholder="Text title" value={title} onChange={e=>setTitle(e.target.value)}/><div className="grid grid-cols-2 gap-3"><input className="w-full rounded-lg border px-3 py-2" placeholder="Author (optional)" value={author} onChange={e=>setAuthor(e.target.value)}/><input className="w-full rounded-lg border px-3 py-2" placeholder="Source (optional)" value={source} onChange={e=>setSource(e.target.value)}/></div>{contentMode==='link'?<input type="url" className="w-full rounded-lg border px-3 py-2" placeholder="https://…" value={externalUrl} onChange={e=>setExternalUrl(e.target.value)}/>:<><TextFileUpload onBusyChange={setBusy} onImport={(content,file)=>{setCopiedText(content);setOriginalPdf(file)}}/><MarkdownPasteEditor value={copiedText} onChange={setCopiedText} rows={10}/><p className="text-xs text-gray-500">{splitParagraphs(copiedText).length} paragraph{splitParagraphs(copiedText).length===1?'':'s'} detected</p></>}<Button className="w-full" loading={busy} disabled={!newTextValid} onClick={()=>void createAndAssign()}>Add and assign text</Button></>}</div></Modal>;
 }
 
 function SimplePresentationLinksPanel({ links, isOwner }: { links: PresentationLink[]; isOwner: boolean }) {
@@ -1206,13 +1208,13 @@ function WeeklyClassReview({ materials, isOwner }: { materials: WeeklyMaterial[]
   const [savingDueDate, setSavingDueDate] = useState(false);
   const editDueDate = (item: Extract<WeeklyMaterial, { kind: 'text' }>) => {
     setEditingDueDate(item);
-    setDueDate(item.date.slice(0, 10));
+    setDueDate(item.assignment.dueDate||'');
   };
   const saveDueDate = async () => {
-    if (!editingDueDate || !dueDate || !user) return;
+    if (!editingDueDate || !user) return;
     setSavingDueDate(true);
     try {
-      await setTextAssignmentDueDate(editingDueDate.assignment.$id, user.$id, new Date(`${dueDate}T12:00:00`).toISOString());
+      await setTextAssignmentDueDate(editingDueDate.assignment.$id, user.$id, dueDate);
       setEditingDueDate(null);
     } finally { setSavingDueDate(false); }
   };
@@ -1245,7 +1247,7 @@ function WeeklyClassReview({ materials, isOwner }: { materials: WeeklyMaterial[]
                 </button>
                 {isOpen && (
                   <div className="space-y-3 border-t bg-gray-50 p-4">
-                    {counts.texts > 0 && <CompactWeekSection title="Texts" count={counts.texts} color="emerald" open={openSections.has(`${week}-texts`)} onToggle={() => setOpenSections(current => toggleSetValue(current, `${week}-texts`))}>{items.filter((item): item is Extract<WeeklyMaterial,{kind:'text'}> => item.kind === 'text').map(item => <div key={item.assignment.$id} className="flex items-center gap-3 border-t border-emerald-100 px-4 py-2.5 hover:bg-emerald-100/50"><Link to={`/texts/${item.text.$id}`} className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-emerald-950">{item.text.title}</span><span className="text-xs text-emerald-800">Due {formatDate(item.date)}{item.text.author ? ` · ${item.text.author}` : ''}</span></Link>{isOwner&&<button className="shrink-0 text-xs font-semibold text-emerald-800 underline" onClick={()=>editDueDate(item)}>Edit due date</button>}</div>)}</CompactWeekSection>}
+                    {counts.texts > 0 && <CompactWeekSection title="Texts" count={counts.texts} color="emerald" open={openSections.has(`${week}-texts`)} onToggle={() => setOpenSections(current => toggleSetValue(current, `${week}-texts`))}>{items.filter((item): item is Extract<WeeklyMaterial,{kind:'text'}> => item.kind === 'text').map(item => <div key={item.assignment.$id} className="flex items-center gap-3 border-t border-emerald-100 px-4 py-2.5 hover:bg-emerald-100/50"><Link to={`/texts/${item.text.$id}`} className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-emerald-950">{item.text.title}</span><span className="text-xs text-emerald-800">{item.assignment.dueDate?`Due ${formatDate(item.assignment.dueDate)}`:`Posted ${formatDate(item.date)}`}{item.text.author ? ` · ${item.text.author}` : ''}</span></Link>{isOwner&&<button className="shrink-0 text-xs font-semibold text-emerald-800 underline" onClick={()=>editDueDate(item)}>Edit due date</button>}</div>)}</CompactWeekSection>}
                     {counts.presentations > 0 && <CompactWeekSection title="Presentations" count={counts.presentations} color="fuchsia" open={openSections.has(`${week}-presentations`)} onToggle={() => setOpenSections(current => toggleSetValue(current, `${week}-presentations`))}>{items.filter((item): item is Extract<WeeklyMaterial,{kind:'presentation'}> => item.kind === 'presentation').map(item => <div key={item.presentation.$id} className="flex items-center gap-3 border-t border-fuchsia-100 px-4 py-2.5"><input aria-label={`Mark ${item.presentation.title} watched`} type="checkbox" className="h-5 w-5" checked={Boolean(item.presentation.watchedAt)} disabled={!isOwner} onChange={event=>void setPresentationWatched(item.presentation.$id,event.target.checked)}/><a href={item.presentation.url} target="_blank" rel="noreferrer" className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-fuchsia-950">{item.presentation.title}</span><span className="text-xs text-fuchsia-800">{item.presentation.watchedAt?'Watched':'Posted · not watched'} · {formatDate(item.date)}</span></a></div>)}</CompactWeekSection>}
                     {counts.notes > 0 && <CompactWeekSection title="Class notes" count={counts.notes} color="blue" open={openSections.has(`${week}-notes`)} onToggle={()=>setOpenSections(current=>toggleSetValue(current,`${week}-notes`))}>{items.filter((item):item is Extract<WeeklyMaterial,{kind:'notes'}>=>item.kind==='notes').map(item=><article key={item.session.$id} className="border-t border-blue-100 px-4 py-3"><p className="mb-2 text-xs font-semibold text-blue-700">{formatDate(item.date)}</p><Markdown content={item.session.publishedNotesMarkdown} className="text-base leading-7 text-gray-800" /></article>)}</CompactWeekSection>}
                     {counts.writingPrompts > 0 && <CompactWeekSection title="Writing prompts" count={counts.writingPrompts} color="cyan" open={openSections.has(`${week}-writing`)} onToggle={()=>setOpenSections(current=>toggleSetValue(current,`${week}-writing`))}>{items.filter((item):item is Extract<WeeklyMaterial,{kind:'writingPrompt'}>=>item.kind==='writingPrompt').map(item=><article key={item.session.$id} className="border-t border-cyan-100 px-4 py-3"><p className="mb-2 text-xs font-semibold text-cyan-800">{formatDate(item.date)}</p><Markdown content={item.session.publishedNotesMarkdown} className="text-sm text-gray-800" /></article>)}</CompactWeekSection>}
@@ -1259,7 +1261,7 @@ function WeeklyClassReview({ materials, isOwner }: { materials: WeeklyMaterial[]
         </div>
       )}
     </section>
-    {editingDueDate&&<Modal open onClose={()=>setEditingDueDate(null)} title="Edit text due date"><div className="space-y-4"><p className="text-sm text-gray-600">Move <strong>{editingDueDate.text.title}</strong> to a different date and week.</p><label className="block text-sm font-medium">Due date<input type="date" className="mt-1 w-full rounded-lg border px-3 py-2" value={dueDate} onChange={event=>setDueDate(event.target.value)}/></label><Button className="w-full" loading={savingDueDate} disabled={!dueDate} onClick={()=>void saveDueDate()}>Save due date</Button></div></Modal>}
+    {editingDueDate&&<Modal open onClose={()=>setEditingDueDate(null)} title="Edit text due date"><div className="space-y-4"><p className="text-sm text-gray-600">Move <strong>{editingDueDate.text.title}</strong> to a different date and week.</p><label className="block text-sm font-medium">Due date<input type="date" className="mt-1 w-full rounded-lg border px-3 py-2" value={dueDate} onChange={event=>setDueDate(event.target.value)}/></label><Button className="w-full" loading={savingDueDate} onClick={()=>void saveDueDate()}>Save due date</Button></div></Modal>}
     </>
   );
 }

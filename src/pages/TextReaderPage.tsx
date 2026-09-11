@@ -1,3 +1,4 @@
+import { textAssignmentAvailable } from '@/services/text-schedule';
 import { TextViewControls } from '@/components/texts/TextViewControls';
 import { ReadingTools } from '@/components/texts/ReadingTools';
 import { OriginalPdf } from '@/components/texts/OriginalPdf';
@@ -50,14 +51,14 @@ export function TextReaderPage() {
     const assignments = await db.text_assignments.where('textId').equals(textId).toArray();
     const members = await db.class_members.where('userId').equals(user.$id).toArray();
     const classes = await db.classes.bulkGet(assignments.map(a => a.classId));
-    return classes.filter(c => c && (c.teacherId === user.$id || members.some(m => m.classId === c.$id)));
+    return classes.filter(c => c && (c.teacherId === user.$id || (members.some(m => m.classId === c.$id) && assignments.some(a=>a.classId===c.$id&&textAssignmentAvailable(a)))));
   }, [textId, user?.$id]);
   const defaultClassId = useLiveQuery(async () => {
     if (!textId || !user) return '';
     const assigned = await db.text_assignments.where('textId').equals(textId).toArray();
     if (isTeacher) return assigned[0]?.classId || '';
     const mine = await db.class_members.where('userId').equals(user.$id).toArray();
-    return assigned.find(assignment => mine.some(member => member.classId === assignment.classId))?.classId || '';
+    return assigned.find(assignment => textAssignmentAvailable(assignment) && mine.some(member => member.classId === assignment.classId))?.classId || '';
   }, [textId, user?.$id, isTeacher]);
 
   const classId = availableClasses?.some(c=>c?.$id===selectedClass) ? selectedClass : defaultClassId;
@@ -126,6 +127,7 @@ export function TextReaderPage() {
   const composerView = composer ? <AnnotationComposer inline={composer.paragraphId!=='page'} thoughtOnly={thoughtOnly} tqe={tqe && composer.kind==='annotation'} posting={posting} title={composer.kind==='reply'?'Reply':composer.kind==='page_note'?'Page note':'Annotate passage'} selectedText={composer.selectedText} draft={draft} setDraft={setDraft} type={type} setType={setType} tags={tags} setTags={setTags} privateNote={privateNote} setPrivateNote={setPrivateNote} onClose={()=>setComposer(null)} onPost={()=>void post()} /> : null;
   const renderAnnotation = (annotation: TextAnnotation) => <AnnotationCard key={annotation.$id} annotation={annotation} replies={(annotations || []).filter(reply=>reply.parentId===annotation.$id)} userId={user.$id} isTeacher={Boolean(isTeacher)} canWrite={!isParent} onReply={() => startComposer({paragraphId:annotation.paragraphId,selectedText:'',parentId:annotation.$id,kind:'reply'})} onEdit={setEditing} onFlag={item=>{setFlagging(item);setFlagReason('')}} />;
 
+  if (!isTeacher && (!availableClasses?.length || !classId)) return <div className="p-6"><Link to="/texts">← Texts</Link><p>This reading is not available to your class yet.</p></div>;
   return <div className="mx-auto max-w-6xl space-y-5 p-4">
     <header><Link to="/texts" className="text-sm text-blue-600">← Texts</Link><div className="mt-2 flex flex-wrap items-start justify-between gap-3"><div><h1 className="text-2xl font-bold">{text.title}</h1><p className="text-gray-500">{text.author}</p></div>{!isParent && text.contentMode !== 'link' && <Button size="sm" variant="secondary" onClick={() => startComposer({paragraphId:'page',selectedText:'',kind:'page_note'})}>+ Page note</Button>}</div>{text.contentMode !== 'link' && !isTeacher && !isParent && !tqe && sharedMine < ANNOTATIONS_TO_UNLOCK && <p className="mt-2 rounded bg-blue-50 p-2 text-sm">Add {ANNOTATIONS_TO_UNLOCK-sharedMine} more shared observation{ANNOTATIONS_TO_UNLOCK-sharedMine===1?'':'s'} or question{ANNOTATIONS_TO_UNLOCK-sharedMine===1?'':'s'} to reveal classmates’ notes. Private highlights do not count.</p>}</header>
     {availableClasses && availableClasses.length > 1 && <label className="block text-sm font-medium">Class section<select className="ml-3 rounded-lg border p-2" value={classId || ''} onChange={event => { setSelectedClass(event.target.value); setComposer(null); }}>{availableClasses.map(c => c && <option key={c.$id} value={c.$id}>{c.courseName} · {c.name}</option>)}</select></label>}

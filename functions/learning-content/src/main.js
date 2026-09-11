@@ -1,3 +1,4 @@
+import { textAssignmentAvailable } from './text-schedule.js';
 import { Client, Databases, ID, Query, Users, Storage, Tokens } from 'node-appwrite';
 import { createHash } from 'node:crypto';
 import { validateObservations } from './copywork.js';
@@ -47,7 +48,7 @@ const quizAttemptLimit = quiz => quiz.allowedAttempts === 2 ? 2 : 1;
 const normalizeQuizAnswer = value => String(value ?? '').trim().toLowerCase();
 const quizIsAssignedToMember = async (db, databaseId, quizId, memberClassIds) => {
   const assignments = await db.listDocuments(databaseId, 'quiz_assignments', [Query.equal('quizId', quizId), Query.limit(500)]);
-  return assignments.documents.some(row => memberClassIds.has(row.classId));
+  return assignments.documents.some(row => memberClassIds.has(row.classId) && textAssignmentAvailable(row));
 };
 const questionVoteWeight = vote => Math.max(1, Number(vote?.weight) || 1);
 const normalizeSourceLink = data => {
@@ -1089,7 +1090,7 @@ export default async ({ req, res, error }) => {
       const assignmentQueries = [Query.equal('classId', allowedClassIds), Query.limit(500)];
       if (body.textId) assignmentQueries.unshift(Query.equal('textId', body.textId));
       const assignmentResult = await db.listDocuments(databaseId, 'text_assignments', assignmentQueries);
-      const assignments = assignmentResult.documents, textIds = [...new Set(assignments.map(row => row.textId))];
+      const assignments = assignmentResult.documents.filter(row=>profile.role==='teacher'||textAssignmentAvailable(row)), textIds = [...new Set(assignments.map(row => row.textId))];
       if (!textIds.length) return res.json({ assignments: [], texts: [], paragraphs: [], versions: [], versionParagraphs: [], annotations: [] });
       const textResult = await db.listDocuments(databaseId, 'texts', [Query.equal('$id', textIds), Query.limit(500)]);
       if (!body.includeContent) return res.json({ assignments: assignments.map(clean), texts: textResult.documents.map(clean), paragraphs: [], versions: [], versionParagraphs: [], annotations: [] });
@@ -1121,6 +1122,7 @@ export default async ({ req, res, error }) => {
       const ownCounts = new Map();
       for (const row of annotationResult.documents) if (row.authorId === userId && (row.visibility || 'class') === 'class' && (row.kind || 'annotation') === 'annotation') ownCounts.set(`${row.textId}:${row.classId}`, (ownCounts.get(`${row.textId}:${row.classId}`) || 0) + 1);
       const annotations = annotationResult.documents.filter(row => {
+        if (!assignments.some(a=>a.textId===row.textId && a.classId===row.classId)) return false;
         if ((row.visibility || 'class') === 'private') return row.authorId === userId;
         if (profile.role === 'teacher') return true;
         if (row.moderationStatus !== 'visible') return row.authorId === userId;
@@ -1264,7 +1266,7 @@ export default async ({ req, res, error }) => {
       if (existing && existing.authorId !== userId) return res.json({error:'Use moderation controls for another author’s annotation'},403);
       const textId = data.textId || existing?.textId, annotationClassId = data.classId || existing?.classId;
       const assignment = await db.listDocuments(databaseId,'text_assignments',[Query.equal('textId',textId),Query.equal('classId',annotationClassId),Query.limit(1)]);
-      if (!assignment.total) return res.json({error:'Text is not assigned to this class'},403);
+      if (!assignment.documents.some(row=>profile.role==='teacher'||textAssignmentAvailable(row))) return res.json({error:'Text is not available to this class yet'},403);
       if (operation === 'delete') {
         const replies=await db.listDocuments(databaseId,collection,[Query.equal('parentId',id),Query.limit(5000)]);
         for(const reply of replies.documents)await db.deleteDocument(databaseId,collection,reply.$id);

@@ -1,3 +1,4 @@
+import { textSchedule } from './text-schedule';
 import { ID } from 'appwrite';
 import mammoth from 'mammoth';
 import { db } from '@/db/schema';
@@ -73,7 +74,7 @@ export async function paragraphsFromFile(file: File): Promise<string[]> {
   return paragraphs;
 }
 
-export async function createText(params: { teacherId: string; title: string; author: string; source: string; paragraphs: string[]; classIds: string[]; contentMode?: 'full' | 'link'; externalUrl?: string; originalPdf?: File; schedule?: { assignedAt: string; dueClassNumber?: number } }): Promise<LearningText> {
+export async function createText(params: { teacherId: string; title: string; author: string; source: string; paragraphs: string[]; classIds: string[]; contentMode?: 'full' | 'link'; externalUrl?: string; originalPdf?: File; classDates?: Record<string,string>; schedule?: { assignedAt: string; dueClassNumber?: number; dueDate?: string } }): Promise<LearningText> {
   let originalPdfId: string | undefined;
   if (params.originalPdf) {
     const file = params.originalPdf;
@@ -95,6 +96,7 @@ export async function createText(params: { teacherId: string; title: string; aut
   }
   });
   await setTextClasses(text.$id, params.classIds, params.teacherId, params.schedule);
+  if(params.classDates) await updateTextAssignments(text.$id,params.teacherId,params.classIds.map(classId=>({classId,...textSchedule(params.classDates?.[classId]||'',now)})));
   return text;
 }
 
@@ -112,20 +114,20 @@ export async function updateTextParagraphs(textId:string,teacherId:string,conten
   const versions=await db.text_versions.where('textId').equals(textId).toArray(); if(versions.length){await db.text_versions.bulkDelete(versions.map(row=>row.$id));await db.text_version_paragraphs.where('textId').equals(textId).delete();}
 }
 
-export async function updateTextAssignments(textId:string,userId:string,access:Array<{classId:string;assignedAt:string}>):Promise<void>{
-  const current=await db.text_assignments.where('textId').equals(textId).toArray(),wanted=new Map(access.map(row=>[row.classId,row.assignedAt]));
-  for(const [classId,assignedAt] of wanted){const existing=current.find(row=>row.classId===classId);if(existing){if(existing.assignedAt!==assignedAt){const updated={...existing,assignedAt};await db.text_assignments.put(updated);await addToQueue(userId,'text_assignment',existing.$id,'update',updated);}}else{const assignment:TextAssignment={$id:ID.unique(),textId,classId,assignedAt};await db.text_assignments.put(assignment);await addToQueue(userId,'text_assignment',assignment.$id,'create',assignment);}}
+export async function updateTextAssignments(textId:string,userId:string,access:Array<{classId:string;assignedAt:string;dueDate?:string}>):Promise<void>{
+  const current=await db.text_assignments.where('textId').equals(textId).toArray(),wanted=new Map(access.map(row=>[row.classId,row]));
+  for(const [classId,schedule] of wanted){const {assignedAt,dueDate}=schedule;const existing=current.find(row=>row.classId===classId);if(existing){if(existing.assignedAt!==assignedAt || existing.dueDate!==dueDate){const updated={...existing,assignedAt,dueDate:dueDate||''};await db.text_assignments.put(updated);await addToQueue(userId,'text_assignment',existing.$id,'update',updated);}}else{const assignment:TextAssignment={$id:ID.unique(),textId,classId,assignedAt,dueDate:dueDate||''};await db.text_assignments.put(assignment);await addToQueue(userId,'text_assignment',assignment.$id,'create',assignment);}}
   for(const assignment of current)if(!wanted.has(assignment.classId)){await db.text_assignments.delete(assignment.$id);await addToQueue(userId,'text_assignment',assignment.$id,'delete',assignment);}
 }
 
-export async function setTextClasses(textId: string, classIds: string[], userId: string, schedule?: { assignedAt: string; dueClassNumber?: number }): Promise<void> {
+export async function setTextClasses(textId: string, classIds: string[], userId: string, schedule?: { assignedAt: string; dueClassNumber?: number; dueDate?: string }): Promise<void> {
   const current = await db.text_assignments.where('textId').equals(textId).toArray(); const wanted = new Set(classIds);
   for (const classId of wanted) if (!current.some(a => a.classId === classId)) {
-    const a: TextAssignment = { $id: ID.unique(), textId, classId, assignedAt: schedule?.assignedAt || getTimestamp(), dueClassNumber: schedule?.dueClassNumber };
+    const a: TextAssignment = { $id: ID.unique(), textId, classId, assignedAt: schedule?.assignedAt || getTimestamp(), dueDate: schedule?.dueDate || '', dueClassNumber: schedule?.dueClassNumber };
     await db.text_assignments.put(a); await addToQueue(userId, 'text_assignment', a.$id, 'create', a);
   }
-  if (schedule) for (const a of current) if (wanted.has(a.classId) && (a.assignedAt !== schedule.assignedAt || a.dueClassNumber !== schedule.dueClassNumber)) {
-    const updated = { ...a, assignedAt: schedule.assignedAt, dueClassNumber: schedule.dueClassNumber };
+  if (schedule) for (const a of current) if (wanted.has(a.classId) && (a.dueDate !== schedule.dueDate || a.assignedAt !== schedule.assignedAt || a.dueClassNumber !== schedule.dueClassNumber)) {
+    const updated = { ...a, dueDate: schedule.dueDate || '', assignedAt: schedule.assignedAt, dueClassNumber: schedule.dueClassNumber };
     await db.text_assignments.put(updated); await addToQueue(userId, 'text_assignment', a.$id, 'update', updated);
   }
   for (const a of current) if (!wanted.has(a.classId)) { await db.text_assignments.delete(a.$id); await addToQueue(userId, 'text_assignment', a.$id, 'delete', a); }
@@ -134,7 +136,7 @@ export async function setTextClasses(textId: string, classIds: string[], userId:
 export async function setTextAssignmentDueDate(assignmentId: string, userId: string, assignedAt: string): Promise<void> {
   const assignment = await db.text_assignments.get(assignmentId);
   if (!assignment) throw new Error('Text assignment not found');
-  const updated: TextAssignment = { ...assignment, assignedAt };
+  const updated: TextAssignment = { ...assignment, ...textSchedule(assignedAt.slice(0,10), assignment.dueDate ? undefined : assignment.assignedAt) };
   await db.text_assignments.put(updated);
   await addToQueue(userId, 'text_assignment', assignmentId, 'update', updated);
 }

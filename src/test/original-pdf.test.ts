@@ -6,6 +6,13 @@ function context() {
   return { body: { action: 'uploadOriginalPdf', data: btoa('%PDF-1.4\nExample'), name: 'Reading.pdf' }, profile: { role: 'teacher' }, userId: 'teacher', memberClassIds: new Set<string>(), databaseId: 'main', endpoint: 'https://example.com/v1', projectId: 'project', storage: { createFile: vi.fn().mockResolvedValue({}) }, tokens: { createFileToken: vi.fn().mockResolvedValue({ secret: 'short-lived-token' }) }, db: { getDocument: vi.fn(), listDocuments: vi.fn().mockResolvedValue({ documents: [] }) } };
 }
 describe('private original PDFs', () => {
+  it('does not issue a PDF link before a reading is released', async () => {
+    const c=context(); c.body.action='readOriginalPdf'; c.profile.role='student'; c.memberClassIds.add('class');
+    c.db.getDocument.mockResolvedValue({$id:'text',teacherId:'teacher',status:'published'});
+    c.db.listDocuments.mockResolvedValue({documents:[{classId:'class',dueDate:'2099-09-14'}]});
+    await expect(originalPdfAction(c)).rejects.toThrow('not available');
+    expect(c.tokens.createFileToken).not.toHaveBeenCalled();
+  });
   it('loads all editable paragraphs only for the owning teacher', async () => {
     const c = context();
     c.db.getDocument.mockResolvedValue({teacherId:'teacher'});

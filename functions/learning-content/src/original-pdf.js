@@ -1,3 +1,4 @@
+import { textAssignmentAvailable, textReleaseAt } from './text-schedule.js';
 import { createHash } from 'node:crypto';
 import { Query } from 'node-appwrite';
 import { InputFile } from 'node-appwrite/file';
@@ -21,6 +22,7 @@ export function ownsPdf(userId, fileId) {
 
 export async function authorizeTextMutation({ collection, id, data, userId, db, databaseId }) {
   if (!['texts', 'text_assignments', 'text_paragraphs'].includes(collection)) return;
+  if(collection==='text_assignments' && data.dueDate) textReleaseAt(data.dueDate);
   let prior;
   try { prior = await db.getDocument(databaseId, collection, id); }
   catch (error) { if (error.code !== 404) throw error; }
@@ -55,8 +57,8 @@ export async function originalPdfAction({ body, profile, userId, memberClassIds,
     const owns = profile.role === 'teacher' && text.teacherId === userId;
     if (!owns) {
       if (text.status !== 'published' || !memberClassIds.size) throw new Error('This PDF is not available to your class.');
-      const assignments = await db.listDocuments(databaseId, 'text_assignments', [Query.equal('textId', text.$id), Query.equal('classId', [...memberClassIds]), Query.limit(1)]);
-      if (!assignments.documents.length) throw new Error('This PDF is not available to your class.');
+      const assignments = await db.listDocuments(databaseId, 'text_assignments', [Query.equal('textId', text.$id), Query.equal('classId', [...memberClassIds]), Query.limit(100)]);
+      if (!assignments.documents.some(a=>textAssignmentAvailable(a))) throw new Error('This PDF is not available to your class.');
     }
     if (!ownsPdf(text.teacherId, text.originalPdfId)) throw new Error('No original PDF is attached to this text.');
     // Check access afresh on every open. Never persist the short-lived bearer URL.

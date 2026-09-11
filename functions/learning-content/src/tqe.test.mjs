@@ -2,6 +2,14 @@ import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { handleTqe, tqeComplete } from './tqe.js';
 
+test('scheduled readings block student TQE access but remain available to their teacher',async()=>{
+  for(const role of ['student','teacher']){
+    const {call,storage}=harness({role,userId:role==='teacher'?'t':'s'});
+    storage.text_assignments[0].dueDate='2099-09-14';
+    assert.equal((await call({action:'readTqe'})).status,role==='teacher'?200:403);
+  }
+});
+
 const annotation = (id,type,authorId='s') => ({$id:id,textId:'text',classId:'class',authorId,tqeType:type,kind:'annotation',visibility:'class',moderationStatus:'visible',content:'A reading observation'});
 test('Thought-only stage unlocks with one Thought and preserves full-stage requirements',()=>{
   const thought=annotation('a','thought');
