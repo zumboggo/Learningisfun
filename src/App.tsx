@@ -1,4 +1,5 @@
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { sharedReadingDestination } from '@/utils/text-share';
+import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { LoginPage } from '@/pages/LoginPage';
@@ -45,6 +46,7 @@ import type { ReactNode } from 'react';
 import { getLastPage } from '@/utils/last-page';
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
+  const location=useLocation();
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -56,7 +58,7 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{from:location.pathname}} replace />;
   }
 
   return <AppLayout>{children}</AppLayout>;
@@ -80,9 +82,10 @@ function FullscreenTeacherRoute({ children }: { children: ReactNode }) {
 }
 
 function PublicRoute({ children }: { children: ReactNode }) {
+  const location=useLocation();
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user) return <Navigate to={sharedReadingDestination(location.state)||"/dashboard"} replace />;
   return <>{children}</>;
 }
 

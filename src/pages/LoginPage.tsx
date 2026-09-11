@@ -1,5 +1,6 @@
+import { sharedReadingDestination } from '@/utils/text-share';
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/common/Button';
 import { getLastPage } from '@/utils/last-page';
@@ -7,6 +8,7 @@ import { getLastPage } from '@/utils/last-page';
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location=useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -19,7 +21,7 @@ export function LoginPage() {
     setLoading(true);
     try {
       const signedIn = await login(email, password);
-      navigate(getLastPage(signedIn.$id), { replace: true });
+      navigate(sharedReadingDestination(location.state)||getLastPage(signedIn.$id), { replace: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : '';
       setError(/could not load|failed to fetch|network/i.test(message)
