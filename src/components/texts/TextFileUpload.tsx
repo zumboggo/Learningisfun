@@ -6,9 +6,11 @@ export function TextFileUpload({ onImport, onBusyChange }: { onImport: (content:
   const [message, setMessage] = useState('');
   const [pdfOnly, setPdfOnly] = useState(false);
   const current = useRef(0);
+  const fileInput = useRef<HTMLInputElement>(null);
   return <div className="space-y-1">
-    <label className="block text-sm font-medium">Upload a document
-      <input className="mt-1 block w-full text-sm" type="file" accept=".doc,.docx,.pdf,.md,.txt" disabled={busy} onChange={async event => {
+    <div className="flex justify-center py-3"><button type="button" disabled={busy} onClick={()=>fileInput.current?.click()} className="min-h-16 w-full max-w-sm rounded-xl border-2 border-blue-600 bg-blue-50 px-6 py-4 text-lg font-semibold text-blue-800 shadow-sm hover:bg-blue-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50">{busy?'Reading document…':'Upload a document'}</button></div>
+    <label className="sr-only">Upload a document
+      <input ref={fileInput} className="sr-only" tabIndex={-1} type="file" accept=".doc,.docx,.pdf,.md,.txt" disabled={busy} onChange={async event => {
         const file = event.target.files?.[0];
         event.target.value = '';
         if (!file) return;

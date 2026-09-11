@@ -16,6 +16,7 @@ it('waits for the complete server snapshot before initializing the editable draf
   expect(screen.queryByText('Save all changes')).not.toBeInTheDocument();
   await act(async()=>resolve([{$id:'one',textId:'text',sortOrder:0,content:'First complete paragraph'},{$id:'two',textId:'text',sortOrder:1,content:'Second complete paragraph'}]));
   expect(screen.getByLabelText('Text body')).toHaveValue('First complete paragraph\n\nSecond complete paragraph');
+  expect(screen.getByRole('button',{name:'Save all changes'}).compareDocumentPosition(screen.getByLabelText('Text body')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });
 it('does not allow edits from an incomplete cache when the server fails',async()=>{
   load.mockRejectedValue(new Error('Offline'));

@@ -5,6 +5,15 @@ vi.mock('@/services/text.service', () => ({ paragraphsFromFile: mock.read }));
 import { TextFileUpload } from '@/components/texts/TextFileUpload';
 afterEach(cleanup);
 describe('text file upload control', () => {
+  it('opens the file picker from a visible bordered button',()=>{
+    render(<TextFileUpload onImport={vi.fn()}/>);
+    const input=screen.getByLabelText('Upload a document');
+    const click=vi.spyOn(input,'click');
+    const button=screen.getByRole('button',{name:'Upload a document'});
+    expect(button).toHaveClass('border-2');
+    fireEvent.click(button);
+    expect(click).toHaveBeenCalledOnce();
+  });
   it('accepts every supported extension and imports an editable preview', async () => {
     mock.read.mockResolvedValue(['First', 'Second']);
     const onImport = vi.fn(), busy = vi.fn();
