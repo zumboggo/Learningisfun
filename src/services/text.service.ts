@@ -100,7 +100,7 @@ export async function createText(params: { teacherId: string; title: string; aut
   return text;
 }
 
-export async function updateTextMetadata(textId:string,teacherId:string,updates:{title:string;author:string;source:string;externalUrl?:string}):Promise<void>{const text=await db.texts.get(textId);if(!text||text.teacherId!==teacherId)throw new Error('Only the text creator can edit it');const patch={title:updates.title.trim(),author:updates.author.trim(),source:updates.source.trim(),externalUrl:updates.externalUrl?.trim() || text.externalUrl || '',updatedAt:getTimestamp(),syncStatus:'local' as const};await db.texts.update(textId,patch);const updated=await db.texts.get(textId);if(updated)await addToQueue(teacherId,'text',textId,'update',updated);}
+export async function updateTextMetadata(textId:string,teacherId:string,updates:{title:string;author:string;source:string;externalUrl?:string}):Promise<void>{const text=await db.texts.get(textId);if(!text||text.teacherId!==teacherId)throw new Error('Only the text creator can edit it');const patch={title:updates.title.trim(),author:updates.author.trim(),source:updates.source.trim(),externalUrl:updates.externalUrl===undefined ? (text.externalUrl||'') : updates.externalUrl.trim(),updatedAt:getTimestamp(),syncStatus:'local' as const};await db.texts.update(textId,patch);const updated=await db.texts.get(textId);if(updated)await addToQueue(teacherId,'text',textId,'update',updated);}
 
 export async function updateTextParagraphs(textId:string,teacherId:string,contents:string[]):Promise<void>{
   const text=await db.texts.get(textId); if(!text||text.teacherId!==teacherId)throw new Error('Only the text creator can edit it');
