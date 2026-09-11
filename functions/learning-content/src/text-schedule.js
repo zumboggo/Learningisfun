@@ -4,7 +4,7 @@ export function textReleaseAt(dueDate) {
   const day = new Date(`${dueDate}T00:00:00Z`);
   if (!Number.isFinite(day.getTime()) || day.toISOString().slice(0,10) !== dueDate) throw new Error('Choose a valid reading date.');
   day.setUTCDate(day.getUTCDate() - (day.getUTCDay()+6)%7 - 3);
-  day.setUTCHours(9); // Friday 17:00 Asia/Shanghai
+  day.setUTCHours(0); // Friday 08:00 Asia/Shanghai
   return day.toISOString();
 }
 export function textAssignmentAvailable(assignment, now = Date.now()) {

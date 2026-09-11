@@ -2,7 +2,7 @@ import { describe,it,expect } from 'vitest';
 // @ts-expect-error Server functions are JavaScript deployed independently.
 import { fridayRelease, validateUnit, planningAction } from '../../functions/learning-content/src/planning.js';
 describe('planning authorization',()=>{
-  it('uses the same release boundary as the client',()=>expect(fridayRelease('2026-09-07')).toBe('2026-09-04T09:00:00.000Z'));
+  it('uses the same release boundary as the client',()=>expect(fridayRelease('2026-09-07')).toBe('2026-09-04T00:00:00.000Z'));
   it('rejects unsafe links and unprepared approved copywork',()=>{
     const unit={id:'unit',course:'WL',startDate:'2026-09-08',classIds:[],cards:[],resources:[{id:'r',kind:'text',title:'Text',url:'javascript:alert(1)'}]};
     expect(()=>validateUnit(unit)).toThrow('Links');

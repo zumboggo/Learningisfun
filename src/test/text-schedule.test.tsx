@@ -5,17 +5,17 @@ import { textAssignmentAvailable, textReleaseAt, textSchedule } from '@/services
 import { ClassReadingDate } from '@/components/texts/ClassReadingDate';
 afterEach(cleanup);
 describe('reading deadlines and release dates',()=>{
-  it.each(['2026-09-14','2026-09-16','2026-09-20'])('releases %s at 5pm China time on the previous Friday',date=>{
-    expect(textReleaseAt(date)).toBe('2026-09-11T09:00:00.000Z');
+  it.each(['2026-09-14','2026-09-16','2026-09-20'])('releases %s at 8am China time on the previous Friday',date=>{
+    expect(textReleaseAt(date)).toBe('2026-09-11T00:00:00.000Z');
   });
   it('handles year boundaries and rejects invalid dates',()=>{
-    expect(textReleaseAt('2027-01-01')).toBe('2026-12-25T09:00:00.000Z');
+    expect(textReleaseAt('2027-01-01')).toBe('2026-12-25T00:00:00.000Z');
     expect(()=>textReleaseAt('2026-02-30')).toThrow();
   });
   it('opens at the exact boundary and keeps undated legacy texts visible',()=>{
     const assignment={dueDate:'2026-09-14'};
-    expect(textAssignmentAvailable(assignment,Date.parse('2026-09-11T08:59:59Z'))).toBe(false);
-    expect(textAssignmentAvailable(assignment,Date.parse('2026-09-11T09:00:00Z'))).toBe(true);
+    expect(textAssignmentAvailable(assignment,Date.parse('2026-09-10T23:59:59Z'))).toBe(false);
+    expect(textAssignmentAvailable(assignment,Date.parse('2026-09-11T00:00:00Z'))).toBe(true);
     expect(textAssignmentAvailable({})).toBe(true);
     expect(textAssignmentAvailable({dueDate:''})).toBe(true);
     expect(textAssignmentAvailable({dueDate:'bad'})).toBe(false);

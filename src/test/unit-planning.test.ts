@@ -5,10 +5,10 @@ import type { PlannerWeekSource } from '@/services/planner-parser';
 
 const week:PlannerWeekSource={key:'Sep 7-11',header:'',startDate:'2026-09-07',calendar:'',blocks:[{code:'WL-B',title:'World Literature',label:'Blue',unit:'Unit 1',std:'Reading',goal:'Explain imagery',diff:'',presentationCandidates:[],textQueue:[],days:[{date:'Tue 08 Sep',iso:'2026-09-08',daytype:'',I:'Model',W:'Discuss',Y:'Write',C:'Check',due:['Essay']}]}]};
 describe('unit planning',()=>{
-  it('releases at 17:00 China time on the previous Friday across year boundaries and holidays',()=>{
-    expect(precedingFriday('2026-09-07')).toBe('2026-09-04T09:00:00.000Z');
-    expect(precedingFriday('2027-01-04')).toBe('2027-01-01T09:00:00.000Z');
-    expect(precedingFriday('2026-10-05')).toBe('2026-10-02T09:00:00.000Z');
+  it('releases at 08:00 China time on the previous Friday across year boundaries and holidays',()=>{
+    expect(precedingFriday('2026-09-07')).toBe('2026-09-04T00:00:00.000Z');
+    expect(precedingFriday('2027-01-04')).toBe('2027-01-01T00:00:00.000Z');
+    expect(precedingFriday('2026-10-05')).toBe('2026-10-02T00:00:00.000Z');
   });
   it('keeps the same term in different courses and imports exact definitions without duplicate re-imports',()=>{
     const csv='front,back,tags\nclaim,A position,WL U1 W05 TERM CORE wk:Sep 7-11\nclaim,A position,AP U1 W05 TERM CORE wk:Sep 7-11';

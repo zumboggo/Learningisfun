@@ -46,15 +46,15 @@ describe('scheduled releases',()=>{
     const db=database();
     for(const key of ['blue','red'])db.table('classes').set(key,{$id:key,teacherId:'teacher',schoolYear:'2026-27'});
     const payload={kind:'core',course:'WL',classIds:['blue','red'],cards:[{id:'core-1',front:'epic',back:'A long narrative poem',tags:['CORE'],week:'2026-09-07'}]};
-    db.table('planning_releases').set('job',{$id:'job',teacherId:'teacher',releaseAt:'2026-09-04T09:00:00.000Z',status:'pending',payloadJson:JSON.stringify(payload)});
-    await releaseDue(db,'main','2026-09-04T08:59:59.000Z');
+    db.table('planning_releases').set('job',{$id:'job',teacherId:'teacher',releaseAt:'2026-09-04T00:00:00.000Z',status:'pending',payloadJson:JSON.stringify(payload)});
+    await releaseDue(db,'main','2026-09-03T23:59:59.000Z');
     expect(db.table('flashcard_cards').size).toBe(0);
-    await releaseDue(db,'main','2026-09-04T09:00:00.000Z');
+    await releaseDue(db,'main','2026-09-04T00:00:00.000Z');
     expect(db.table('flashcard_cards').size).toBe(1);
     expect(db.table('deck_assignments').size).toBe(2);
     const original=[...db.table('flashcard_cards').values()][0];
     db.table('planning_releases').get('job')!.status='pending';
-    await releaseDue(db,'main','2026-09-05T09:00:00.000Z');
+    await releaseDue(db,'main','2026-09-05T00:00:00.000Z');
     expect(db.table('flashcard_cards').size).toBe(1);
     expect([...db.table('flashcard_cards').values()][0].$id).toBe(original.$id);
     expect([...db.table('flashcard_cards').values()][0].createdAt).toBe(original.createdAt);
@@ -63,15 +63,15 @@ describe('scheduled releases',()=>{
   });
   it('releases a shared copywork link without creating any completed student entry',async()=>{
     const db=database();db.table('classes').set('blue',{$id:'blue',teacherId:'teacher',name:'Blue',courseName:'WL'});
-    db.table('planning_releases').set('copy',{$id:'copy',teacherId:'teacher',releaseAt:'2026-09-04T09:00:00.000Z',status:'pending',payloadJson:JSON.stringify({kind:'copywork',classIds:['blue'],resource:{id:'r',week:'2026-09-07',date:'2026-09-11',title:'Passage',url:'https://example.com',paragraphs:5}})});
-    await releaseDue(db,'main','2026-09-04T09:00:00.000Z');
+    db.table('planning_releases').set('copy',{$id:'copy',teacherId:'teacher',releaseAt:'2026-09-04T00:00:00.000Z',status:'pending',payloadJson:JSON.stringify({kind:'copywork',classIds:['blue'],resource:{id:'r',week:'2026-09-07',date:'2026-09-11',title:'Passage',url:'https://example.com',paragraphs:5}})});
+    await releaseDue(db,'main','2026-09-04T00:00:00.000Z');
     expect(db.table('planning_materials').size).toBe(1);
     expect(db.table('copywork_entries').size).toBe(0);
   });
   it('marks ownership changes as failed and leaves materials unpublished',async()=>{
     const db=database();db.table('classes').set('blue',{$id:'blue',teacherId:'someone-else'});
-    db.table('planning_releases').set('job',{$id:'job',teacherId:'teacher',releaseAt:'2026-09-04T09:00:00.000Z',status:'pending',payloadJson:JSON.stringify({kind:'core',classIds:['blue']})});
-    await releaseDue(db,'main','2026-09-04T09:00:00.000Z');
+    db.table('planning_releases').set('job',{$id:'job',teacherId:'teacher',releaseAt:'2026-09-04T00:00:00.000Z',status:'pending',payloadJson:JSON.stringify({kind:'core',classIds:['blue']})});
+    await releaseDue(db,'main','2026-09-04T00:00:00.000Z');
     expect(db.table('planning_releases').get('job')!.status).toBe('failed');
     expect(db.table('planning_materials').size).toBe(0);
   });

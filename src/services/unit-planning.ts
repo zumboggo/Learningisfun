@@ -21,7 +21,7 @@ export function precedingFriday(week: string): string {
   const date = new Date(`${week}T00:00:00Z`);
   const weekday = date.getUTCDay();
   date.setUTCDate(date.getUTCDate() - ((weekday + 6) % 7) - 3);
-  return `${date.toISOString().slice(0, 10)}T09:00:00.000Z`;
+  return `${date.toISOString().slice(0, 10)}T00:00:00.000Z`;
 }
 
 export function importVocabulary(csv: string, weeks: PlannerWeekSource[], existing: UnitPlan[] = []): UnitPlan[] {

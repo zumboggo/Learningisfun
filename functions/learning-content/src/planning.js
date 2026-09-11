@@ -6,7 +6,7 @@ export const slotAgenda = lesson => `### ${lesson.date}\n${lesson.slots.filter(s
 export function fridayRelease(week) {
   const date = new Date(`${week}T00:00:00Z`);
   date.setUTCDate(date.getUTCDate() - ((date.getUTCDay()+6)%7) - 3);
-  return `${date.toISOString().slice(0,10)}T09:00:00.000Z`;
+  return `${date.toISOString().slice(0,10)}T00:00:00.000Z`;
 }
 export async function listAll(db, databaseId, collection, filters=[]) {
   const rows=[]; let cursor;
@@ -87,8 +87,15 @@ async function scheduleUnit(db,databaseId,teacherId,unit) {
     groups.get(key).cards.push(card);
   }
   for(const group of groups.values()) {
-    const key=id(unit.id,group.kind,group.releaseAt); wanted.add(key);
+    // Preserve existing job IDs when changing only the release hour.
+    const sameDay=previous.find(job=>{const payload=JSON.parse(job.payloadJson);return payload.kind===group.kind&&job.releaseAt.slice(0,10)===group.releaseAt.slice(0,10);});
+    const key=sameDay?.$id||id(unit.id,group.kind,group.releaseAt); wanted.add(key);
     const payloadJson=JSON.stringify({course:unit.course,classIds:unit.classIds,...group});
+    if(sameDay?.status==='done') {
+      const oldPayload=JSON.parse(sameDay.payloadJson);
+      oldPayload.releaseAt=group.releaseAt;
+      if(JSON.stringify(oldPayload)===payloadJson)continue;
+    }
     if(priorById.get(key)?.payloadJson!==payloadJson)await put(db,databaseId,'planning_releases',key,{teacherId,unitId:unit.id,releaseAt:group.releaseAt,status:'pending',payloadJson,lastError:''});
   }
   for(const resource of unit.resources.filter(row=>row.kind==='copywork'&&row.approved)) {
