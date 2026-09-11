@@ -518,6 +518,8 @@ export interface LearningText {
 }
 
 export interface TextAssignment {
+  isCopywork?: boolean;
+  isAssignedReading?: boolean;
   dueDate?: string;
   $id: string;
   textId: string;

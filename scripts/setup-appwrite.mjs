@@ -584,7 +584,7 @@ const COLLECTIONS = [
   },
   {
     id: 'text_assignments', name: 'Text Assignments',
-    attributes: [S('dueDate', { required: false, size: 10 }), S('textId', { required: true }), S('classId', { required: true }), DATE('assignedAt', { required: true }), INT('dueClassNumber', { required: false, min: 1, max: 3 })],
+    attributes: [BOOL('isCopywork', { required: false }), BOOL('isAssignedReading', { required: false }), S('dueDate', { required: false, size: 10 }), S('textId', { required: true }), S('classId', { required: true }), DATE('assignedAt', { required: true }), INT('dueClassNumber', { required: false, min: 1, max: 3 })],
     indexes: [{ key: 'idx_textId', type: 'key', attributes: ['textId'] }, { key: 'idx_classId', type: 'key', attributes: ['classId'] }, { key: 'idx_text_class', type: 'unique', attributes: ['textId','classId'] }],
   },
   {
