@@ -1,12 +1,19 @@
 import { ID } from 'node-appwrite';
+import { createHash } from 'node:crypto';
 import { InputFile } from 'node-appwrite/file';
 export const PRESENTATION_BUCKET = 'presentation-files';
 export const PRESENTATION_PREFIX = 'presentation-file:';
+const ownerPrefix=userId=>'plan_'+createHash('sha256').update(userId).digest('hex').slice(0,10)+'_';
+export function ownsPlannerPresentation(userId,url) {
+  return typeof url==='string' && url.startsWith(PRESENTATION_PREFIX+ownerPrefix(userId)) && /^presentation-file:plan_[a-f0-9]{10}_[a-f0-9]{20}$/.test(url);
+}
 export async function presentationFileAction({body,profile,userId,memberClassIds,db,databaseId,storage,tokens,endpoint,projectId}) {
-  if(body.action==='uploadPresentationFile') {
+  if(body.action==='uploadPresentationFile' || body.action==='uploadPlannerPresentation') {
     if(profile.role!=='teacher') throw new Error('Only teachers can upload presentations.');
-    const cls=await db.getDocument(databaseId,'classes',body.classId);
-    if(cls.teacherId!==userId) throw new Error('You must own this class.');
+    const privatePlan=body.action==='uploadPlannerPresentation';
+    const classIds=privatePlan?[]:[...new Set(Array.isArray(body.classIds)?body.classIds:[body.classId])];
+    if(!privatePlan && (!classIds.length||classIds.length>50||classIds.some(id=>typeof id!=='string'||!id)))throw new Error('Choose one or more classes.');
+    for(const id of classIds){const cls=await db.getDocument(databaseId,'classes',id);if(cls.teacherId!==userId)throw new Error('You must own this class.');}
     const title=String(body.title||'').trim();
     const name=String(body.name||'').replace(/[\r\n\\/]/g,'_');
     if(!title || title.length>255 || !/\.pptx?$/i.test(name) || name.length>180) throw new Error('Choose a PowerPoint (.ppt or .pptx) and a title.');
@@ -16,12 +23,16 @@ export async function presentationFileAction({body,profile,userId,memberClassIds
     if(!valid || bytes.length>5*1024*1024) throw new Error('Choose a valid PowerPoint of 5 MB or smaller.');
     const assignedAt=String(body.assignedAt||new Date().toISOString());
     if(!Number.isFinite(Date.parse(assignedAt))) throw new Error('Choose a valid date.');
-    const fileId=ID.unique();
-    await storage.createFile({bucketId:PRESENTATION_BUCKET,fileId,file:InputFile.fromBuffer(bytes,name),permissions:[]});
+    const fileId=privatePlan?ownerPrefix(userId)+createHash('sha256').update(bytes).digest('hex').slice(0,20):ID.unique();
+    try { await storage.createFile({bucketId:PRESENTATION_BUCKET,fileId,file:InputFile.fromBuffer(bytes,name),permissions:[]}); }
+    catch(error) { if(!privatePlan || error.code!==409)throw error; }
+    if(privatePlan)return {url:PRESENTATION_PREFIX+fileId};
+    const links=[];
     try {
-      const link=await db.createDocument(databaseId,'presentation_links',ID.unique(),{teacherId:userId,classId:cls.$id,title,url:PRESENTATION_PREFIX+fileId,assignedAt,watchedAt:null});
-      return {link};
+      for(const classId of classIds)links.push(await db.createDocument(databaseId,'presentation_links',ID.unique(),{teacherId:userId,classId,title,url:PRESENTATION_PREFIX+fileId,assignedAt,watchedAt:null}));
+      return {links,link:links[0]};
     } catch(error) {
+      for(const link of links)await db.deleteDocument(databaseId,'presentation_links',link.$id).catch(()=>{});
       await storage.deleteFile({bucketId:PRESENTATION_BUCKET,fileId}).catch(()=>{});
       throw error;
     }

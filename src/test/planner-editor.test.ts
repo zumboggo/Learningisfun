@@ -7,6 +7,17 @@ import { slotAgenda } from '../../functions/learning-content/src/planning.js';
 
 function fixture() { return populateSlots(createWeeklyPlan({key:'Week',startDate:'2026-09-07',header:'',calendar:'',blocks:[{code:'AP',label:'AP',title:'AP',unit:'1',std:'',goal:'Read',diff:'',presentationCandidates:[],textQueue:[],days:[{date:'Tue',iso:'2026-09-08',daytype:'',I:'Model',W:'',Y:'',C:'',due:[]}]}]},{}),[]); }
 describe('one-source weekly editing',()=>{
+  it('publishes an attached bank resource only to checked classes, preserving vocabulary',()=>{
+    const plan=fixture();plan.lessons[0].classId='ap';
+    plan.courses.push({...structuredClone(plan.courses[0]),classCode:'WL-R'});
+    plan.lessons.push({...structuredClone(plan.lessons[0]),id:'red',classCode:'WL-R',classId:'red'});
+    plan.weeklyResources=[{id:'ppt',kind:'presentation',title:'Weekly vocab',content:'Keep all vocabulary',url:'presentation-file:private',course:'AP',publishClassIds:['ap','red'],minutes:10,optional:false,status:'planned'}];
+    const projected=projectCardMaterials(plan);
+    expect(projected.courses.map(c=>c.presentations.length)).toEqual([1,1]);
+    expect(projected.weeklyResources![0].content).toBe('Keep all vocabulary');
+    plan.weeklyResources[0].publishClassIds=['red'];
+    expect(projectCardMaterials(plan).courses.map(c=>c.presentations.length)).toEqual([0,1]);
+  });
   it('imports legacy materials and extras once, preserving dates and notes',()=>{
     const plan=fixture();
     plan.courses[0].texts.push({title:'Essay',url:'https://example.com',date:'2026-09-09',publish:true});

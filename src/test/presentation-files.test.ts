@@ -1,12 +1,28 @@
 import { describe,it,expect,vi } from 'vitest';
 // @ts-expect-error Separately deployed backend module
-import { presentationFileAction } from '../../functions/learning-content/src/presentation-files.js';
+import { presentationFileAction, ownsPlannerPresentation } from '../../functions/learning-content/src/presentation-files.js';
 const context=()=>({
   body:{action:'uploadPresentationFile',classId:'class',title:'Slides',name:'slides.pptx',data:btoa('PK\x03\x04test'),linkId:'link'},profile:{role:'teacher'},userId:'teacher',memberClassIds:new Set<string>(),databaseId:'main',endpoint:'https://example.com/v1',projectId:'project',
   db:{getDocument:vi.fn().mockResolvedValue({$id:'class',teacherId:'teacher'}),createDocument:vi.fn().mockResolvedValue({$id:'link'})},
   storage:{createFile:vi.fn().mockResolvedValue({}),deleteFile:vi.fn().mockResolvedValue({})},tokens:{createFileToken:vi.fn().mockResolvedValue({secret:'temporary'})}
 });
 describe('class PowerPoint files',()=>{
+  it('stores planner attachments privately without creating class posts',async()=>{
+    const c=context();c.body.action='uploadPlannerPresentation';
+    const result=await presentationFileAction(c);
+    expect(ownsPlannerPresentation('teacher',result.url)).toBe(true);
+    expect(ownsPlannerPresentation('other',result.url)).toBe(false);
+    expect(c.db.createDocument).not.toHaveBeenCalled();
+    c.profile.role='student';await expect(presentationFileAction(c)).rejects.toThrow('Only teachers');
+  });
+  it('shares one stored file across selected classes, deduplicating selections',async()=>{
+    const c=context();
+    const result=await presentationFileAction({...c,body:{...c.body,classIds:['blue','red','blue']}});
+    expect(result.links).toHaveLength(2);
+    expect(c.storage.createFile).toHaveBeenCalledTimes(1);
+    expect(c.db.createDocument.mock.calls.map(call=>call[3].classId)).toEqual(['blue','red']);
+    expect(c.db.createDocument.mock.calls[0][3].url).toBe(c.db.createDocument.mock.calls[1][3].url);
+  });
   it('uploads privately and creates a class reference, not a permanent public URL',async()=>{
     const c=context();await presentationFileAction(c);
     expect(c.storage.createFile.mock.calls[0][0].permissions).toEqual([]);

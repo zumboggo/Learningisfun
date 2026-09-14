@@ -11,8 +11,8 @@ export function prepareWeeklyBank(data: WeeklyPlanData): WeeklyPlanData {
     for (const slot of [...(lesson.slots || []), ...(lesson.overflow || [])]) {
       const existing = next.weeklyResources.find(item => item.id === slot.planningItemId);
       if (existing) {
-        const { isRoutine, isCopywork, assignedReading, activityType, title, kind, content, url, minutes, optional, publish, givenBy, dueDate } = existing;
-        Object.assign(slot, { isRoutine, isCopywork, assignedReading, activityType, title, kind, content, url, minutes, optional, publish, givenBy, dueDate });
+        const { publishClassIds, isRoutine, isCopywork, assignedReading, activityType, title, kind, content, url, minutes, optional, publish, givenBy, dueDate } = existing;
+        Object.assign(slot, { publishClassIds, isRoutine, isCopywork, assignedReading, activityType, title, kind, content, url, minutes, optional, publish, givenBy, dueDate });
         continue;
       }
       const course = courseCode(lesson.classCode);
