@@ -16,7 +16,16 @@ describe('bounded weekly print summary',()=>{
     const {container}=render(<MemoryRouter><PlannerPrintSheet data={plan}/></MemoryRouter>);
     expect(container.querySelectorAll('.planner-paper-page')).toHaveLength(2);
     expect(container.querySelectorAll('.planner-course-panel')).toHaveLength(6);
-    expect(screen.getAllByText('Improvements for next time')).toHaveLength(1);
+    expect(screen.getAllByText('9 qualities')).toHaveLength(1);
+    expect(screen.getAllByText('EAL Support')).toHaveLength(1);
+    expect(screen.getAllByText('Learning Support')).toHaveLength(1);
+    expect(screen.queryByText('Improvements for next time')).not.toBeInTheDocument();
+  });
+  it('prints saved weekly support notes once without mutating them',()=>{
+    const plan=fixture();
+    plan.lessonRequirements={qualities:'Curiosity and compassion',eal:'Offer sentence frames',learning:'Chunk instructions'};
+    render(<MemoryRouter><PlannerPrintSheet data={plan}/></MemoryRouter>);
+    for(const value of Object.values(plan.lessonRequirements)) expect(screen.getAllByText(value)).toHaveLength(1);
   });
   it('retains essential late resources before optional fillers and preserves their teaching order',()=>{
     const items=Array.from({length:14},(_,i)=>slot(i,{optional:i<12,...(i===12?{kind:'quiz'}:i===13?{kind:'text'}:{})}));

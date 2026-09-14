@@ -1548,8 +1548,12 @@ input, textarea, select, button {
 .planner-course-bottom { font-size: 6.5pt; max-height: 5mm; overflow: hidden; display: flex; gap: 2mm; }
 .planner-course-bottom:empty { display: none; }
 .planner-print-footer { position: absolute; bottom: 0; left: 0; right: 0; height: 7mm; display: flex; align-items: center; gap: 4mm; justify-content: space-between; overflow: hidden; font-size: 6.5pt; color: #56616c; }
-.planner-improvements { display: flex; gap: 3mm; align-items: center; flex: 1; border: .2mm solid #c1ccd4; border-radius: 1.5mm; padding: 1.5mm 2mm; }
-.planner-improvements span { border-bottom: .2mm solid #b4c0c9; flex: 1; height: 2mm; }
+.planner-has-requirements .planner-page-courses { bottom: 17mm; }
+.planner-has-requirements .planner-print-footer { height: 14mm; }
+.planner-requirements { flex: 1; border: .2mm solid #c1ccd4; border-radius: 1.5mm; padding: 1mm 2mm; }
+.planner-requirements > div { display: flex; gap: 2mm; align-items: center; height: 3.5mm; }
+.planner-requirements b { flex: 0 0 24mm; }
+.planner-requirements span { border-bottom: .2mm solid #dbe1e6; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media print {
   @page { size: A4 portrait; margin: 7mm; }
   @page planner-notes { size: A4 portrait; margin: 7mm; }

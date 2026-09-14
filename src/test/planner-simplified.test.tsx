@@ -60,13 +60,13 @@ describe('simplified weekly planner', () => {
     expect(next.preparation.find(task => task.id === 'prepare-presentation-WL')?.status).toBe('ready');
     expect(next.preparation.filter(task => task.id.includes('prepare-presentation-WL'))).toHaveLength(1);
   });
-  it('prints write-back lines, a check for every card and one improvements line', () => {
+  it('prints write-back lines, a check for every card and lesson requirement lines', () => {
     const plan = fixture();
     render(<MemoryRouter><PlannerPrintSheet data={plan}/></MemoryRouter>);
     expect(screen.getAllByText('We Did:')).toHaveLength(plan.lessons.length);
     expect(screen.getAllByLabelText('Completion checkbox')).toHaveLength(plan.lessons.flatMap(lesson => lesson.slots || []).length);
-    expect(screen.getByText('Improvements for next time')).toBeInTheDocument();
-    expect(screen.getAllByText('Improvements for next time')).toHaveLength(1);
+    expect(screen.getByText('9 qualities')).toBeInTheDocument();
+    expect(screen.getAllByText('9 qualities')).toHaveLength(1);
   });
   it('places routine copies and opens their details when clicked', () => {
     function Harness() { const [data,setData] = useState(fixture); return <WeeklySlots data={data} units={[]} onChange={setData}/>; }

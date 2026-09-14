@@ -33,7 +33,7 @@ export function PlannerPrintSheet({data}: {data: WeeklyPlanData}) {
       <div className="flex items-center justify-between"><Link to="/planner">← Planning</Link><Button onClick={()=>window.print()}>Print / Save PDF</Button></div>
       <p className="text-sm text-slate-600">Two-page maximum · A4 portrait, 100% scale. Titles and essentials come first; long descriptions and crowded lists are shortened. Your full plan remains unchanged.</p>
     </div>
-    {pages.map((page,pageIndex)=><section key={pageIndex} className="planner-paper-page" aria-label={`Weekly summary page ${pageIndex+1}`}>
+    {pages.map((page,pageIndex)=><section key={pageIndex} className={`planner-paper-page ${pageIndex===pages.length-1?'planner-has-requirements':''}`} aria-label={`Weekly summary page ${pageIndex+1}`}>
       <div className="planner-print-header">
         <div><h1>{compactPrintText(data.week.key,8,45)}</h1><p>Weekly teaching plan</p></div>
         <div className="planner-print-prep"><b>Prepare</b>{preparation.slice(0,6).map(task=><span key={task.id}>{task.status==='ready'?'✓':'□'} {compactPrintText(task.label.replace(/^Prepare Presentation\s*·\s*/,'Slides · '),5,42)}</span>)}{preparation.length>6&&<span>+{preparation.length-6} in planner</span>}<small>{compactPrintText([data.week.calendar,data.weekNote].filter(Boolean).join(' · '),20,170)}</small></div>
@@ -43,7 +43,7 @@ export function PlannerPrintSheet({data}: {data: WeeklyPlanData}) {
         {!page.length&&<p>No classes planned for this week.</p>}
       </div>
       <footer className="planner-print-footer">
-        {pageIndex===pages.length-1 ? <div className="planner-improvements"><b>Improvements for next time</b><span/></div> : <span>Shortened print summary · Full details remain in Planning</span>}
+        {pageIndex===pages.length-1 ? <div className="planner-requirements">{([['qualities','9 qualities'],['eal','EAL Support'],['learning','Learning Support']] as const).map(([key,label])=><div key={key}><b>{label}</b><span>{data.lessonRequirements?.[key]||' '}</span></div>)}</div> : <span>Shortened print summary · Full details remain in Planning</span>}
         <span>{pageIndex+1} / {pages.length}</span>
       </footer>
     </section>)}
