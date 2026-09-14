@@ -105,7 +105,7 @@ export async function findClassByJoinCode(joinCode: string): Promise<Class | nul
     const cls: Class = {
       $id: doc.$id,
       name: doc.name,
-      courseName: doc.courseName,
+      courseName: doc.courseName, canvasCourseId: doc.canvasCourseId || '',
       schoolYear: doc.schoolYear,
       teacherId: doc.teacherId,
       joinCode: doc.joinCode,
@@ -130,7 +130,7 @@ export async function findClassByParentCode(parentCode: string): Promise<Class |
     const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.classes, [Query.equal('parentCode', parentCode), Query.equal('parentCodeActive', true), Query.equal('status', 'active')]);
     if (!result.documents.length) return null;
     const doc = result.documents[0];
-    const cls: Class = { $id:doc.$id,name:doc.name,courseName:doc.courseName,schoolYear:doc.schoolYear,teacherId:doc.teacherId,joinCode:doc.joinCode,joinCodeActive:doc.joinCodeActive,parentCode:doc.parentCode,parentCodeActive:doc.parentCodeActive,linksJson:(doc.linksJson as string)||'[]',status:doc.status,createdAt:doc.createdAt };
+    const cls: Class = { $id:doc.$id,name:doc.name,courseName:doc.courseName,canvasCourseId:doc.canvasCourseId||'',schoolYear:doc.schoolYear,teacherId:doc.teacherId,joinCode:doc.joinCode,joinCodeActive:doc.joinCodeActive,parentCode:doc.parentCode,parentCodeActive:doc.parentCodeActive,linksJson:(doc.linksJson as string)||'[]',status:doc.status,createdAt:doc.createdAt };
     await db.classes.put(cls); return cls;
   } catch { return null; }
 }
@@ -143,7 +143,7 @@ export async function findClassBySubstituteCode(substituteCode: string): Promise
     const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.classes, [Query.equal('substituteCode', substituteCode), Query.equal('substituteCodeActive', true), Query.equal('status', 'active')]);
     const doc = result.documents.find(row => row.substituteExpiresAt && new Date(row.substituteExpiresAt).getTime() > Date.now());
     if (!doc) return null;
-    const cls: Class = { $id:doc.$id,name:doc.name,courseName:doc.courseName,schoolYear:doc.schoolYear,teacherId:doc.teacherId,joinCode:doc.joinCode,joinCodeActive:doc.joinCodeActive,parentCode:doc.parentCode||'',parentCodeActive:Boolean(doc.parentCodeActive),substituteCode:doc.substituteCode||'',substituteCodeActive:Boolean(doc.substituteCodeActive),substituteExpiresAt:doc.substituteExpiresAt||null,linksJson:(doc.linksJson as string)||'[]',status:doc.status,createdAt:doc.createdAt };
+    const cls: Class = { $id:doc.$id,name:doc.name,courseName:doc.courseName,canvasCourseId:doc.canvasCourseId||'',schoolYear:doc.schoolYear,teacherId:doc.teacherId,joinCode:doc.joinCode,joinCodeActive:doc.joinCodeActive,parentCode:doc.parentCode||'',parentCodeActive:Boolean(doc.parentCodeActive),substituteCode:doc.substituteCode||'',substituteCodeActive:Boolean(doc.substituteCodeActive),substituteExpiresAt:doc.substituteExpiresAt||null,linksJson:(doc.linksJson as string)||'[]',status:doc.status,createdAt:doc.createdAt };
     await db.classes.put(cls); return cls;
   } catch { return null; }
 }
@@ -316,9 +316,9 @@ export async function moveStudent(sourceClassId: string, targetClassId: string, 
   await db.class_members.put(result.membership);
 }
 
-export async function updateClassDetails(classId: string, courseName: string, name: string): Promise<void> {
-  const result = await executeLearningContent<{ class: Class }>({ action: 'updateClassDetails', classId, courseName, name });
-  await db.classes.update(classId, { courseName: result.class.courseName, name: result.class.name });
+export async function updateClassDetails(classId: string, courseName: string, name: string, canvasCourseId?: string): Promise<void> {
+  const result = await executeLearningContent<{ class: Class }>({ action: 'updateClassDetails', classId, courseName, name, canvasCourseId });
+  await db.classes.update(classId, { courseName: result.class.courseName, name: result.class.name, canvasCourseId: result.class.canvasCourseId });
 }
 
 function parseRosterCsv(content: string): Array<{ name: string; email: string; password: string }> {
@@ -360,7 +360,7 @@ export async function syncClassesFromServer(userId: string): Promise<boolean> {
 
     for (const classDoc of taughtResult.documents) {
       await db.classes.put({
-        $id: classDoc.$id, name: classDoc.name, courseName: classDoc.courseName,
+        $id: classDoc.$id, name: classDoc.name, courseName: classDoc.courseName, canvasCourseId: classDoc.canvasCourseId || '',
         schoolYear: classDoc.schoolYear, teacherId: classDoc.teacherId,
         joinCode: classDoc.joinCode, joinCodeActive: classDoc.joinCodeActive,
         parentCode: (classDoc.parentCode as string) || '', parentCodeActive: Boolean(classDoc.parentCodeActive),
@@ -385,7 +385,7 @@ export async function syncClassesFromServer(userId: string): Promise<boolean> {
         await db.classes.put({
           $id: classDoc.$id,
           name: classDoc.name,
-          courseName: classDoc.courseName,
+          courseName: classDoc.courseName, canvasCourseId: classDoc.canvasCourseId || '',
           schoolYear: classDoc.schoolYear,
           teacherId: classDoc.teacherId,
           joinCode: classDoc.joinCode,

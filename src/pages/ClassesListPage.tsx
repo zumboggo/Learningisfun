@@ -123,6 +123,7 @@ function SearchIcon() {
 }
 
 function EditClassModal({ cls, onClose }: { cls: Class; onClose: () => void }) {
+  const [canvasCourseId,setCanvasCourseId]=useState(cls.canvasCourseId||'');
   const [courseName, setCourseName] = useState(cls.courseName);
   const [name, setName] = useState(cls.name);
   const [saving, setSaving] = useState(false);
@@ -130,9 +131,9 @@ function EditClassModal({ cls, onClose }: { cls: Class; onClose: () => void }) {
   const save = async () => {
     if (!courseName.trim() || !name.trim()) return;
     setSaving(true); setError('');
-    try { await updateClassDetails(cls.$id, courseName.trim(), name.trim()); onClose(); }
+    try { await updateClassDetails(cls.$id, courseName.trim(), name.trim(), canvasCourseId.trim()); onClose(); }
     catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not update class'); }
     finally { setSaving(false); }
   };
-  return <Modal open onClose={onClose} title="Edit class"><div className="space-y-4">{error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}<label className="block text-sm font-medium">Course name<input className="mt-1 w-full rounded-lg border px-3 py-2" value={courseName} onChange={event => setCourseName(event.target.value)} /></label><label className="block text-sm font-medium">Section<input className="mt-1 w-full rounded-lg border px-3 py-2" value={name} onChange={event => setName(event.target.value)} /></label><Button className="w-full" loading={saving} disabled={!courseName.trim() || !name.trim()} onClick={() => void save()}>Save changes</Button></div></Modal>;
+  return <Modal open onClose={onClose} title="Edit class"><div className="space-y-4">{error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}<label className="block text-sm font-medium">Course name<input className="mt-1 w-full rounded-lg border px-3 py-2" value={courseName} onChange={event => setCourseName(event.target.value)} /></label><label className="block text-sm font-medium">Section<input className="mt-1 w-full rounded-lg border px-3 py-2" value={name} onChange={event => setName(event.target.value)} /></label><label className="block text-sm font-medium">Canvas course ID (optional)<input inputMode="numeric" maxLength={32} className="mt-1 w-full rounded-lg border px-3 py-2" value={canvasCourseId} onChange={event=>setCanvasCourseId(event.target.value)} /></label><Button className="w-full" loading={saving} disabled={!courseName.trim() || !name.trim()} onClick={() => void save()}>Save changes</Button></div></Modal>;
 }

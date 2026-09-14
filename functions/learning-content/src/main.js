@@ -409,7 +409,9 @@ export default async ({ req, res, error }) => {
       if (existingClass.teacherId !== userId) return res.json({ error: 'Not the class owner' }, 403);
       const courseName = String(body.courseName || '').trim(), name = String(body.name || '').trim();
       if (!courseName || !name || courseName.length > 200 || name.length > 200) return res.json({ error: 'Course name and section are required' }, 400);
-      const updatedClass = await db.updateDocument(databaseId, 'classes', body.classId, { courseName, name });
+      const canvasCourseId=body.canvasCourseId===undefined?existingClass.canvasCourseId||'':String(body.canvasCourseId).trim();
+      if(canvasCourseId&&!/^\d{1,32}$/.test(canvasCourseId))return res.json({error:'Canvas course ID must contain only digits'},400);
+      const updatedClass = await db.updateDocument(databaseId, 'classes', body.classId, { courseName, name, canvasCourseId });
       return res.json({ class: clean(updatedClass) });
     }
 

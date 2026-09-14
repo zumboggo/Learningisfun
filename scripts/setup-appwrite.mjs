@@ -83,6 +83,7 @@ const COLLECTIONS = [
     attributes: [
       S('name', { required: true }),
       S('courseName', { required: true }),
+      S('canvasCourseId', { size: 32, required: false }),
       S('schoolYear', { required: true }),
       S('teacherId', { required: true }),
       S('joinCode', { size: 16, required: true }),
