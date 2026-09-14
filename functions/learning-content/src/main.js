@@ -1,3 +1,4 @@
+import { presentationFileAction } from './presentation-files.js';
 import { textAssignmentAvailable } from './text-schedule.js';
 import { Client, Databases, ID, Query, Users, Storage, Tokens } from 'node-appwrite';
 import { createHash } from 'node:crypto';
@@ -136,6 +137,7 @@ export default async ({ req, res, error }) => {
     const memberships = await db.listDocuments(databaseId, 'class_members', [Query.equal('userId', userId), Query.limit(500)]);
     const nowTime = Date.now();
     const memberClassIds = new Set(memberships.documents.filter(row => row.role !== 'substitute' || (row.expiresAt && new Date(row.expiresAt).getTime() > nowTime)).map(row => row.classId));
+    if (['uploadPresentationFile','downloadPresentationFile'].includes(body.action)) return res.json(await presentationFileAction({body,profile,userId,memberClassIds,db,databaseId,storage:new Storage(client),tokens:new Tokens(client),endpoint:process.env.APPWRITE_ENDPOINT,projectId:process.env.APPWRITE_FUNCTION_PROJECT_ID}));
     if (['uploadOriginalPdf', 'readOriginalPdf'].includes(body.action)) return res.json(await originalPdfAction({ body, profile, userId, memberClassIds, db, databaseId, storage: new Storage(client), tokens: new Tokens(client), endpoint: process.env.APPWRITE_ENDPOINT, projectId: process.env.APPWRITE_FUNCTION_PROJECT_ID }));
     if (['readPlanningUnits','savePlanningUnit','readPlanningMaterials','consolidatePlanningDecks'].includes(body.action)) {
       return res.json(await planningAction({body,profile,userId,memberClassIds,db,databaseId}));

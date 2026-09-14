@@ -1,3 +1,4 @@
+import { PowerPointUpload } from '@/components/common/PowerPointUpload';
 import { ExportAssignedReadings } from '@/components/planner/ExportAssignedReadings';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -30,7 +31,7 @@ export function PlanningUnitsPage() {
   const vocabularyWeeks=unit?[...new Set(unit.cards.map(card=>card.week).filter(Boolean))].sort():[];
   const choices=[...new Set([...unitWeeks.map(week=>week.startDate),...vocabularyWeeks])].sort();
   return <main className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6">
-    <header className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-3xl font-bold">Planning</h1><p className="text-sm text-slate-500">Build your unit bank, then arrange each week.</p></div><Link to="/planner" className="rounded-lg border px-4 py-2">Weeks →</Link><ExportAssignedReadings/></header>
+    <header className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-3xl font-bold">Planning</h1><p className="text-sm text-slate-500">Build your unit bank, then arrange each week.</p></div><Link to="/planner" className="rounded-lg border px-4 py-2">Weeks →</Link><ExportAssignedReadings/><PowerPointUpload/></header>
     {message&&<p role="status" className="rounded-xl bg-blue-50 p-3 text-sm text-blue-900">{message}</p>}
     <div className="flex flex-wrap gap-2"><label className="cursor-pointer rounded-lg border bg-white px-4 py-2 text-sm">Import vocabulary / planning brief<input type="file" accept=".csv,.txt,.json,.local" className="hidden" onChange={event=>void importFile(event.target.files?.[0])}/></label><Button variant="secondary" onClick={()=>{const next:UnitPlan={id:crypto.randomUUID(),course:'WL',number:'1',title:'New unit',startDate:weeks[0]?.startDate||new Date().toISOString().slice(0,10),endDate:weeks[0]?.startDate||'',knowledge:'',skills:'',essentialQuestion:'',classIds:[],cards:[],resources:[],vocabularyApproved:false};setUnits(current=>[...current,next]);setSelected(next.id);}}>New unit</Button><Link to="/planner" className="p-2 text-sm text-blue-700">Annual calendar and class mapping</Link></div>
     {units.length>0&&<div className="flex flex-wrap items-center gap-3"><label className="text-sm"><input type="checkbox" checked={units.every(item=>item.vocabularyApproved)} onChange={e=>setUnits(current=>current.map(item=>({...item,vocabularyApproved:e.target.checked})))}/>Approve all vocabulary schedules</label><Button variant="secondary" loading={busy} onClick={()=>void saveAll()}>Save all units</Button></div>}
