@@ -13,11 +13,13 @@ export function ReadingDiscussionsList() {
     const group=`${row.className} — week of ${readingWeek(row.date)}`;
     groups.set(group,[...(groups.get(group)||[]),row]);
   }
+  const latestWeekByClass=new Map<string,string>();
+  for(const readings of groups.values())if(!latestWeekByClass.has(readings[0].classId))latestWeekByClass.set(readings[0].classId,readingWeek(readings[0].date));
   return <section aria-label="Text discussions" className="mb-6 space-y-3">
     <div className="flex items-center justify-between"><h2 className="text-lg font-semibold">Texts</h2><Button size="sm" variant="secondary" loading={loading} onClick={()=>void refresh()}>Refresh texts</Button></div>
     <p className="text-sm text-slate-600">Read, wonder, connect. Every assigned reading has a separate conversation for your class.</p>
     {error&&<p role="alert" className="text-red-700">{error}</p>}
     {!loading&&!error&&!rows.length&&<p className="text-slate-500">Your available assigned texts will appear here.</p>}
-    {[...groups].map(([group,readings])=><details key={group} open className="rounded-2xl border border-slate-200 bg-white p-4"><summary className="cursor-pointer text-sm font-semibold text-slate-600">{group}</summary><div className="mt-2 divide-y divide-slate-100">{readings.map(row=><Link className="flex min-h-12 items-center justify-between gap-3 py-3 text-blue-800" key={row.id} to={`/discussions/texts/${row.textId}/${row.classId}`}><span>{row.title}{!row.available&&<small className="ml-2 text-slate-500">Teacher preview · not released</small>}</span><span aria-hidden="true">→</span></Link>)}</div></details>)}
+    {[...groups].map(([group,readings])=><details key={group} open={readingWeek(readings[0].date)===latestWeekByClass.get(readings[0].classId)} className="rounded-2xl border border-slate-200 bg-white p-4"><summary className="cursor-pointer text-sm font-semibold text-slate-600">{group}</summary><div className="mt-2 divide-y divide-slate-100">{readings.map(row=><Link className="flex min-h-12 items-center justify-between gap-3 py-3 text-blue-800" key={row.id} to={`/discussions/texts/${row.textId}/${row.classId}`}><span>{row.title}{!row.available&&<small className="ml-2 text-slate-500">Teacher preview · not released</small>}</span><span aria-hidden="true">→</span></Link>)}</div></details>)}
   </section>;
 }
