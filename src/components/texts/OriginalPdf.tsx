@@ -1,8 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { executeLearningContent } from '@/services/learning-content.service';
 import { Button } from '@/components/common/Button';
 
-export function OriginalPdf({ textId }: { textId: string }) {
+export function OriginalPdf({ textId, embedded=false }: { textId: string; embedded?: boolean }) {
+  const [preview,setPreview]=useState('');
+  useEffect(()=>{
+    if(!embedded)return;
+    let cancelled=false;setPreview('');setError('');
+    void executeLearningContent<{url:string}>({action:'readOriginalPdf',textId,download:false}).then(result=>{if(!cancelled)setPreview(result.url)}).catch(cause=>{if(!cancelled)setError(cause instanceof Error?cause.message:'Could not load original PDF.')});
+    return ()=>{cancelled=true};
+  },[textId,embedded]);
   const [busy, setBusy] = useState(false), [error, setError] = useState('');
   async function open(download: boolean) {
     // Open synchronously to avoid popup blockers while authorization is checked.
@@ -17,5 +24,5 @@ export function OriginalPdf({ textId }: { textId: string }) {
       tab?.close(); setError(cause instanceof Error ? cause.message : 'Could not open the PDF.');
     } finally { setBusy(false); }
   }
-  return <section aria-label="Original file" className="rounded-xl border bg-white p-3"><div className="flex flex-wrap items-center gap-2"><div className="mr-auto"><p className="text-sm font-medium">Original file · PDF</p><p className="text-xs text-slate-600">Read the extracted text below, or open the original with its layout and images.</p></div><Button size="sm" variant="secondary" disabled={busy} onClick={() => void open(false)}>View Original ↗</Button><Button size="sm" variant="secondary" disabled={busy} onClick={() => void open(true)}>Download Original</Button></div>{error && <p role="alert" className="mt-2 text-sm text-red-700">{error}</p>}</section>;
+  return <section aria-label="Original file" className="rounded-xl border border-slate-200 bg-white p-3"><div className="flex flex-wrap items-center gap-2"><div className="mr-auto"><p className="text-sm font-medium">Original file · PDF</p><p className="text-xs text-slate-600">Original layout and images. If the preview is unavailable, open or download the file.</p></div><Button size="sm" variant="secondary" disabled={busy} onClick={() => void open(false)}>View Original ↗</Button><Button size="sm" variant="secondary" disabled={busy} onClick={() => void open(true)}>Download Original</Button></div>{error && <p role="alert" className="mt-2 text-sm text-red-700">{error}</p>}{embedded&&!preview&&!error&&<p role="status" className="p-4 text-sm">Loading original PDF…</p>}{embedded&&preview&&<iframe title="Original uploaded PDF" src={preview} className="mt-3 h-[75vh] min-h-96 w-full rounded-lg border-0" referrerPolicy="no-referrer"/>}</section>;
 }

@@ -1470,6 +1470,12 @@ input, textarea, select, button {
 }
 
 .reader-prose { font-family: Charter, 'Bitstream Charter', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif; line-height: 1.8; letter-spacing: .005em; }
+.reader-shell { margin-top: 1rem; margin-bottom: 2rem; border: 1px solid #e5eaf0; border-radius: 20px; background: white; }
+.reader-title { font-family: Charter, 'Iowan Old Style', Georgia, serif; line-height: 1.2; color: #1e293b; }
+.reader-toolbar { border-bottom: 1px solid #edf1f5; padding-bottom: 1rem; }
+.reader-paper .reader-prose { line-height: 1.8; }
+.reader-toolbar button:disabled { opacity: .4; cursor: not-allowed; }
+@media (max-width: 640px) { .reader-shell { border-radius: 0; border-left: 0; border-right: 0; margin-top: 0; } .reader-paper { padding-left: 1.6rem; padding-right: .5rem; } }
 .passage-highlight { background: #f5e7a3; color: inherit; border-radius: .15em; cursor: pointer; }
 .passage-highlight:hover, .passage-highlight:focus-visible { background: #ecd16b; outline: 2px solid #a47b20; outline-offset: 2px; }
 

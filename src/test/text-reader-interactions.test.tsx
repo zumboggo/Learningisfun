@@ -25,6 +25,8 @@ it('opens notes beside a selected passage, closes them, and keeps a single reade
   const {container}=render(<TextReaderPage/>);
   expect(screen.queryByText('Cell Phone Mode')).not.toBeInTheDocument();
   expect(screen.getAllByLabelText('Reading text')).toHaveLength(1);
+  expect(screen.queryByRole('button',{name:'Show notes for highlighted passage'})).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button',{name:/^Notes/}));
   fireEvent.click(screen.getByRole('button',{name:'Show notes for highlighted passage'}));
   const margin=screen.getByRole('complementary',{name:'Notes for paragraph 1'});
   expect(within(margin).getByText(notes[0].content)).toBeInTheDocument();
@@ -36,7 +38,8 @@ it('opens notes beside a selected passage, closes them, and keeps a single reade
 });
 it('opens the annotation editor in the margin rather than a separate reading mode',()=>{
   render(<TextReaderPage/>);
-  fireEvent.click(screen.getAllByText('+ Note')[0]);
+  fireEvent.click(screen.getByRole('button',{name:/^Notes/}));
+  fireEvent.click(screen.getByRole('button',{name:'Add annotation to paragraph 1'}));
   expect(screen.getByRole('region',{name:'Annotate passage'})).toBeInTheDocument();
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   fireEvent.click(screen.getByLabelText('Cancel annotation'));

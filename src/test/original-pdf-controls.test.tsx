@@ -7,6 +7,12 @@ vi.mock('@/services/learning-content.service', () => ({ executeLearningContent: 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.resetAllMocks(); });
 
 describe('student original file controls', () => {
+  it('loads an authorized inline original only when embedded mode is selected',async()=>{
+    vi.mocked(executeLearningContent).mockResolvedValue({url:'https://example.com/private.pdf'});
+    render(<OriginalPdf textId="reading-1" embedded/>);
+    await waitFor(()=>expect(screen.getByTitle('Original uploaded PDF')).toHaveAttribute('src','https://example.com/private.pdf'));
+    expect(executeLearningContent).toHaveBeenCalledWith({action:'readOriginalPdf',textId:'reading-1',download:false});
+  });
   it.each([['View Original', false], ['Download Original', true]] as const)('authorizes %s only on request', async (label, download) => {
     const replace = vi.fn();
     vi.spyOn(window, 'open').mockReturnValue({ location: { replace }, opener: null } as unknown as Window);
@@ -16,7 +22,7 @@ describe('student original file controls', () => {
     fireEvent.click(screen.getByRole('button', { name: new RegExp(label) }));
     await waitFor(() => expect(replace).toHaveBeenCalledWith('https://example.com/private-file'));
     expect(executeLearningContent).toHaveBeenCalledWith({ action: 'readOriginalPdf', textId: 'reading-1', download });
-    expect(screen.getByText(/Read the extracted text below/)).toBeInTheDocument();
+    expect(screen.getByText(/Original layout and images/)).toBeInTheDocument();
   });
 
   it('shows authorization errors and closes the empty tab', async () => {
