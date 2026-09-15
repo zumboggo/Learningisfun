@@ -7,6 +7,7 @@ import { planningAction, slotAgenda } from './planning.js';
 import { importLegacyWord } from './document-import.js';
 import { originalPdfAction, authorizeTextMutation, readEditableParagraphs } from './original-pdf.js';
 import { handleTqe } from './tqe.js';
+import { readingDiscussionAction } from './reading-discussion.js';
 
 const studentCollections = new Set(['quiz_attempts', 'writing_submissions', 'peer_reviews', 'discussion_questions', 'discussion_answers', 'question_votes', 'text_annotations', 'text_discussion_posts', 'text_discussion_votes']);
 const substitutePostCollections = new Set(['discussion_questions', 'discussion_answers', 'text_annotations', 'text_discussion_posts']);
@@ -137,6 +138,13 @@ export default async ({ req, res, error }) => {
     const memberships = await db.listDocuments(databaseId, 'class_members', [Query.equal('userId', userId), Query.limit(500)]);
     const nowTime = Date.now();
     const memberClassIds = new Set(memberships.documents.filter(row => row.role !== 'substitute' || (row.expiresAt && new Date(row.expiresAt).getTime() > nowTime)).map(row => row.classId));
+    if (body.action === 'saveTqe' || ['flagTextAnnotation','moderateTextAnnotation','setAnnotationMode'].includes(body.action) || (body.action === 'mutate' && body.collection === 'text_annotations')) {
+      return res.json({ error: 'Legacy annotations and TQE are read-only. Your existing work is preserved; use Discussions → Texts for new contributions.' }, 403);
+    }
+    if (['listReadingDiscussions','readReadingDiscussion','postReadingDiscussion','voteReadingDiscussion','reportReadingDiscussion','moderateReadingDiscussion'].includes(body.action)) {
+      try { return res.json(await readingDiscussionAction({ body, profile, userId, memberClassIds, db, databaseId })); }
+      catch (cause) { if(cause.code===403)return res.json({error:cause.message},403);throw cause; }
+    }
     if (['uploadPresentationFile','downloadPresentationFile','uploadPlannerPresentation'].includes(body.action)) return res.json(await presentationFileAction({body,profile,userId,memberClassIds,db,databaseId,storage:new Storage(client),tokens:new Tokens(client),endpoint:process.env.APPWRITE_ENDPOINT,projectId:process.env.APPWRITE_FUNCTION_PROJECT_ID}));
     if (['uploadOriginalPdf', 'readOriginalPdf'].includes(body.action)) return res.json(await originalPdfAction({ body, profile, userId, memberClassIds, db, databaseId, storage: new Storage(client), tokens: new Tokens(client), endpoint: process.env.APPWRITE_ENDPOINT, projectId: process.env.APPWRITE_FUNCTION_PROJECT_ID }));
     if (['readPlanningUnits','savePlanningUnit','readPlanningMaterials','consolidatePlanningDecks'].includes(body.action)) {

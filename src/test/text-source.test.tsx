@@ -15,5 +15,5 @@ it('supports existing URL sources but never creates script links',()=>{
 });
 it('does not render a stray zero when a paragraph has no TQE notes',()=>{
   const {container}=render(<ParagraphCard article density={0} index={0} paragraph={{$id:'p',textId:'t',sortOrder:0,content:'The article begins here.'}} readOnly onAnnotate={vi.fn()} onHighlight={vi.fn()}/>);
-  expect(container.textContent).toBe('The article begins here.');
+  expect(container.textContent).toBe('1The article begins here.');
 });

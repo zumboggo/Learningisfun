@@ -19,6 +19,8 @@ import { WritingPage } from '@/pages/WritingPage';
 import { LivePresentationPage } from '@/pages/LivePresentationPage';
 import { TextsPage } from '@/pages/TextsPage';
 import { TextReaderPage } from '@/pages/TextReaderPage';
+import { ReadingDiscussionPage } from '@/pages/ReadingDiscussionPage';
+import { TextLegacyArchivePage } from '@/pages/TextLegacyArchivePage';
 import { PeerReviewPage } from '@/pages/PeerReviewPage';
 import { StudentProgressPage } from '@/pages/StudentProgressPage';
 import { ClassesListPage } from '@/pages/ClassesListPage';
@@ -113,6 +115,7 @@ export default function App() {
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
 
           <Route path="/discussions" element={<ProtectedRoute><DiscussionsListPage /></ProtectedRoute>} />
+          <Route path="/discussions/texts/:textId/:classId" element={<ProtectedRoute><ReadingDiscussionPage /></ProtectedRoute>} />
           <Route path="/discussions/:sessionId" element={<ProtectedRoute><DiscussionPage /></ProtectedRoute>} />
 
           <Route path="/quizzes" element={<ProtectedRoute><QuizzesPage /></ProtectedRoute>} />
@@ -122,6 +125,7 @@ export default function App() {
           <Route path="/presentations/:sessionId/live" element={<ProtectedRoute><LivePresentationPage /></ProtectedRoute>} />
           <Route path="/texts" element={<ProtectedRoute><TextsPage /></ProtectedRoute>} />
           <Route path="/texts/:textId" element={<ProtectedRoute><TextReaderPage /></ProtectedRoute>} />
+          <Route path="/texts/:textId/legacy" element={<ProtectedRoute><TextLegacyArchivePage /></ProtectedRoute>} />
           <Route path="/texts/:textId/present" element={<FullscreenTeacherRoute><TextPresentPage /></FullscreenTeacherRoute>} />
           <Route path="/peer-reviews/:activityId" element={<ProtectedRoute><PeerReviewPage /></ProtectedRoute>} />
 

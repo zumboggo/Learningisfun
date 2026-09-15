@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,6 +13,7 @@ import type { ClassSession } from '@/types';
 import { Modal } from '@/components/common/Modal';
 import { createClassSession } from '@/services/class-session.service';
 import { runCachedSync, SYNC_WINDOWS } from '@/services/sync-policy';
+import { ReadingDiscussionsList } from '@/components/texts/ReadingDiscussionsList';
 
 interface DiscussionSessionRow {
   session: ClassSession;
@@ -96,7 +97,8 @@ export function DiscussionsListPage() {
           <Button size="sm" onClick={() => setCreating(true)}>Start discussion</Button>
         )}
       </div>
-      <div className="mb-4 flex gap-2 overflow-auto">{(['all','text','question','qft'] as const).map(type => <Button key={type} size="sm" variant={filter===type?'primary':'secondary'} onClick={()=>setFilter(type)}>{type==='all'?'All':type==='qft'?'QFT':type[0].toUpperCase()+type.slice(1)}</Button>)}</div>
+      <div className="mb-4 flex gap-2 overflow-auto">{(['all','text','question','qft'] as const).map(type => <Button key={type} size="sm" variant={filter===type?'primary':'secondary'} onClick={()=>setFilter(type)}>{type==='all'?'All':type==='text'?'Texts':type==='qft'?'QFT':type[0].toUpperCase()+type.slice(1)}</Button>)}</div>
+      {(filter==='all'||filter==='text')&&<ReadingDiscussionsList/>}
 
       {rows && rows.length > 0 ? (
         <div className="space-y-3">
@@ -121,7 +123,7 @@ export function DiscussionsListPage() {
         </div>
       ) : (
         <EmptyState
-          title="No discussions yet"
+          title={filter==='all'||filter==='text'?'No other discussions yet':'No discussions yet'}
           message={isTeacher ? 'Start a discussion from one of your classes to begin collecting questions.' : "Your teacher hasn't started any discussions yet."}
           action={isTeacher ? (
             <Link to="/classes">
@@ -136,10 +138,11 @@ export function DiscussionsListPage() {
 }
 
 function CreateDiscussionModal({teacherId,onClose}:{teacherId:string;onClose:()=>void}) {
+  const navigate=useNavigate();
   const [type,setType]=useState<'text'|'qft'>('qft'),[classId,setClassId]=useState(''),[textId,setTextId]=useState(''),[title,setTitle]=useState(''),[prompt,setPrompt]=useState('');
   const classes=useLiveQuery(()=>db.classes.where('teacherId').equals(teacherId).toArray(),[teacherId]);
   const selectedClassId=classId||classes?.[0]?.$id||'';
   const texts=useLiveQuery(async()=>{if(!selectedClassId)return [];const ids=(await db.text_assignments.where('classId').equals(selectedClassId).toArray()).map(a=>a.textId);return ids.length?db.texts.where('$id').anyOf(ids).toArray():[]},[selectedClassId]);
-  return <Modal open onClose={onClose} title="Start discussion"><div className="space-y-4"><div className="grid grid-cols-2 gap-2"><Button size="sm" variant={type==='qft'?'primary':'secondary'} onClick={()=>setType('qft')}>Topic + questions</Button><Button size="sm" variant={type==='text'?'primary':'secondary'} onClick={()=>setType('text')}>Uploaded text</Button></div><select className={input} value={selectedClassId} onChange={e=>setClassId(e.target.value)}>{classes?.map(c=><option key={c.$id} value={c.$id}>{classLabel(c)}</option>)}</select>{type==='text'&&<select className={input} value={textId} onChange={e=>setTextId(e.target.value)}><option value="">Choose a text</option>{texts?.map(t=><option key={t.$id} value={t.$id}>{t.title}</option>)}</select>}<input className={input} value={title} onChange={e=>setTitle(e.target.value)} placeholder="Overall discussion topic"/><textarea className={input} rows={4} value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder={type==='qft'?'Broad focus or context for the questions teachers and students will add':'Optional focus for discussing this text'}/><Button disabled={!selectedClassId||!title.trim()||(type==='text'&&!textId)} onClick={()=>void createClassSession(selectedClassId,teacherId,{title,discussionType:type,textId:type==='text'?textId:null,promptMarkdown:prompt}).then(onClose)}>Create discussion</Button></div></Modal>;
+  return <Modal open onClose={onClose} title="Start discussion"><div className="space-y-4"><div className="grid grid-cols-2 gap-2"><Button size="sm" variant={type==='qft'?'primary':'secondary'} onClick={()=>setType('qft')}>Topic + questions</Button><Button size="sm" variant={type==='text'?'primary':'secondary'} onClick={()=>setType('text')}>Uploaded text</Button></div><select className={input} value={selectedClassId} onChange={e=>setClassId(e.target.value)}>{classes?.map(c=><option key={c.$id} value={c.$id}>{classLabel(c)}</option>)}</select>{type==='text'&&<select className={input} value={textId} onChange={e=>setTextId(e.target.value)}><option value="">Choose a text</option>{texts?.map(t=><option key={t.$id} value={t.$id}>{t.title}</option>)}</select>}{type==='qft'&&<><input className={input} value={title} onChange={e=>setTitle(e.target.value)} placeholder="Overall discussion topic"/><textarea className={input} rows={4} value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder={type==='qft'?'Broad focus or context for the questions teachers and students will add':'Optional focus for discussing this text'}/></>}<Button disabled={!selectedClassId||(type==='qft'&&!title.trim())||(type==='text'&&!textId)} onClick={()=>{if(type==='text'){navigate(`/discussions/texts/${textId}/${selectedClassId}`);onClose();}else void createClassSession(selectedClassId,teacherId,{title,discussionType:type,textId:null,promptMarkdown:prompt}).then(onClose);}}>{type==='text'?'Open text discussion':'Create discussion'}</Button></div></Modal>;
 }
 const input='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm';
