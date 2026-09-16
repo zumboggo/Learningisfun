@@ -389,6 +389,7 @@ export function ClassDetailPage() {
               <summary className="inline-flex min-h-9 cursor-pointer list-none items-center rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-950">More <span className="ml-1 text-xs" aria-hidden="true">▾</span></summary>
               <div className="absolute right-0 z-20 mt-2 grid w-52 gap-1 rounded-xl border border-gray-200 bg-white p-2 shadow-xl">
                 <button onClick={() => setShowAssignTexts(true)} className="rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-gray-100">Add a text</button>
+                <button disabled={refreshingMaterials} onClick={() => void refreshMaterials()} className="rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-gray-100 disabled:opacity-50">{refreshingMaterials ? 'Refreshing…' : '↻ Refresh class'}</button>
                 <button onClick={() => setShowPicker(true)} className="rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-gray-100">Pick a student</button>
                 <button onClick={() => setShowGroups(true)} className="rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-gray-100">Create groups</button>
                 <button onClick={messageClass} disabled={!students?.some(student => student.email && student.email !== 'Profile not synced yet')} className="rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-gray-100 disabled:text-gray-400">Message class</button>
@@ -399,7 +400,7 @@ export function ClassDetailPage() {
         ) : <Button size="sm" variant="secondary" loading={refreshingMaterials} onClick={() => void refreshMaterials()}>↻ Refresh class</Button>}
       </div>
 
-      {materialRefreshMessage && !isOwner && <p role="status" className={`rounded-lg px-3 py-2 text-sm ${materialRefreshFailed ? 'bg-amber-50 text-amber-800' : 'bg-green-50 text-green-800'}`}>{materialRefreshMessage}</p>}
+      {materialRefreshMessage && <p role="status" className={`rounded-lg px-3 py-2 text-sm ${materialRefreshFailed ? 'bg-amber-50 text-amber-800' : 'bg-green-50 text-green-800'}`}>{materialRefreshMessage}</p>}
 
       {livePresentations?.length ? <section aria-label="Active writing prompt" className="space-y-2">{livePresentations.map(session => <Link key={session.$id} to={`/presentations/${session.$id}/live`} className="flex items-center justify-between rounded-xl border border-blue-700 bg-blue-600 p-4 !text-white shadow-sm hover:bg-blue-700"><span><span className="block text-xs font-semibold uppercase tracking-wide text-blue-100">Writing now</span><strong className="mt-1 block text-lg !text-white">Writing Prompt</strong><span className="text-sm text-blue-100">{isOwner ? 'View and present anonymous responses' : 'Open prompt and write your response'}</span></span><span className="text-2xl text-white" aria-hidden="true">→</span></Link>)}</section> : null}
 
@@ -1027,6 +1028,9 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
     const rank = (week: string) => week === currentWeek ? 0 : week === upcomingWeek ? 1 : week > currentWeek ? 2 : 3;
     return rank(a[0]) - rank(b[0]) || b[0].localeCompare(a[0]);
   });
+  const [showOtherWeeks, setShowOtherWeeks] = useState(false);
+  const otherWeekCount = weeks.filter(([week]) => week !== currentWeek && week !== upcomingWeek).length;
+  const visibleWeeks = showOtherWeeks ? weeks : weeks.filter(([week]) => week === currentWeek || week === upcomingWeek);
   const [openWeeks, setOpenWeeks] = useState<Set<string>>(() => {
     if (isOwner) return new Set([currentWeek]);
     try { const saved = JSON.parse(localStorage.getItem(`class-open-weeks:${classId}`) || '[]') as string[]; return new Set(saved.length ? saved : [currentWeek]); }
@@ -1084,7 +1088,7 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">{isOwner&&<PowerPointUpload classId={classId}/>}</div><h2 className="mb-1 text-lg font-semibold">{isOwner ? 'Weekly class materials' : 'This week and earlier'}</h2>
       {!isOwner && <p className="mb-3 text-sm text-gray-500">Current work stays easy to reach. Previous weeks remain quietly archived below.</p>}
       {!weeks.length ? <Card><p className="text-sm text-gray-500">Notes, writing prompts, quizzes, discussions, texts, and links will appear here by week.</p></Card> : <div className="space-y-3">
-        {weeks.map(([week, unsortedItems]) => {
+        {visibleWeeks.map(([week, unsortedItems]) => {
           const priority: Record<WeeklyMaterial['kind'], number> = { text: 0, presentation: 1, notes: 2, writingPrompt: 3, discussion: 4, quiz: 5 };
           const items = [...unsortedItems].sort((a, b) => priority[a.kind] - priority[b.kind] || b.date.localeCompare(a.date));
           const isOpen = openWeeks.has(week);
@@ -1121,6 +1125,7 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
         })}
       </div>}
     </section>
+    {otherWeekCount > 0 && <button type="button" aria-expanded={showOtherWeeks} className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-left text-sm font-medium text-gray-600 hover:bg-gray-50" onClick={()=>setShowOtherWeeks(value=>!value)}>{showOtherWeeks ? '▾ Hide earlier and later weeks' : `▸ Earlier and later weeks (${otherWeekCount})`}</button>}
     {quickAdd?.kind==='text' && user && <CreateTextModal teacherId={user.$id} classes={(teacherClasses||[]).map(cls=>({id:cls.$id,name:classLabel(cls)}))} initialClassIds={[classId]} initialMode="link" allowTitleOnly assignedAt={new Date(`${quickAdd.week}T12:00:00`).toISOString()} onClose={()=>setQuickAdd(null)}/>}
     {quickAdd?.kind==='link' && <Modal open onClose={() => !adding && setQuickAdd(null)} title={`Add link · ${formatWeek(quickAdd.week)}`}><div className="space-y-4">
       {addError && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{addError}</p>}
