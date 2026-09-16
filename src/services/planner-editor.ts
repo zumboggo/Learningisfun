@@ -1,3 +1,4 @@
+import { prepareWeeklyBank } from './planner-bank';
 import type { WeeklyPlanData } from './planner.service';
 import type { LessonSlot } from './unit-planning';
 
@@ -32,22 +33,30 @@ export function migrateCardEditor(data: WeeklyPlanData): WeeklyPlanData {
 }
 
 export function projectCardMaterials(data: WeeklyPlanData): WeeklyPlanData {
-  const next = structuredClone(data);
+  const next = prepareWeeklyBank(data);
   for (const course of next.courses) {
     course.texts = []; course.presentations = [];
     for (const lesson of next.lessons.filter(row => row.classCode === course.classCode)) {
       for (const slot of [...(lesson.slots || []), ...(lesson.overflow || [])]) {
-        const common = { resourceId: slot.resourceId || (slot.kind==='presentation' ? slot.planningItemId : undefined) || slot.id, title: slot.title, date: slot.dueDate || lesson.date, url: slot.url, publish: slot.publish !== false };
+        const common = { resourceId: slot.resourceId || slot.planningItemId || slot.id, title: slot.title, date: slot.dueDate || lesson.date, url: slot.url, publish: slot.publish !== false };
         if (slot.kind === 'text' && !slot.existingTextId) course.texts.push({ ...common, content: slot.content });
         if (slot.kind === 'presentation' && (!slot.publishClassIds || slot.publishClassIds.includes(lesson.classId))) course.presentations.push({ ...common, givenBy: slot.givenBy || 'teacher' });
       }
-      lesson.texts = course.texts.filter(item => item.date === lesson.date).map(item => item.title);
-      lesson.presentations = course.presentations.filter(item => item.date === lesson.date && item.publish).map(item => item.title);
     }
     const classId=next.lessons.find(lesson=>lesson.classCode===course.classCode)?.classId;
     for(const item of next.weeklyResources||[])if(item.kind==='presentation'&&classId&&item.publishClassIds?.includes(classId)){
       const resourceId=item.resourceId||item.id;
       if(!course.presentations.some(p=>p.resourceId===resourceId))course.presentations.push({resourceId,title:item.title,date:item.dueDate||next.week.startDate,url:item.url,publish:item.publish!==false,givenBy:item.givenBy||'teacher'});
+    }
+    // One separate material per resource/date/class, even if used twice in a lesson.
+    // Distinct dates remain distinct assignments; source snapshots are untouched.
+    const unique = <T extends {resourceId?:string;title:string;date:string;url:string}>(items:T[]) =>
+      [...new Map(items.map(item=>[JSON.stringify([item.resourceId||item.title,item.date,item.url]),item])).values()];
+    course.texts = unique(course.texts);
+    course.presentations = unique(course.presentations);
+    for (const lesson of next.lessons.filter(row=>row.classCode===course.classCode)) {
+      lesson.texts = course.texts.filter(item=>item.date===lesson.date).map(item=>item.title);
+      lesson.presentations = course.presentations.filter(item=>item.date===lesson.date&&item.publish).map(item=>item.title);
     }
   }
   // Legacy extra choices were copied to cards during migration.

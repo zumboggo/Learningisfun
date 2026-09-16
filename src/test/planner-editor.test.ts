@@ -48,3 +48,15 @@ describe('one-source weekly editing',()=>{
     expect(slotAgenda(plan.lessons[0])).toContain('Model');
   });
 });
+
+it('publishes a repeated shared resource only once per date, but retains different due dates',()=>{
+  const plan=fixture();const first=plan.lessons[0];
+  first.slots=[{id:'one',kind:'text',title:'Essay',content:'Read',url:'https://example.com',minutes:5,optional:false,status:'planned'}];
+  first.slots.push({...first.slots[0],id:'two'});
+  plan.lessons.push({...structuredClone(first),id:'later',date:'2026-09-10'});
+  const projected=projectCardMaterials(plan);
+  expect(projected.courses[0].texts.map(t=>t.date)).toEqual(['2026-09-08','2026-09-10']);
+  expect(first.slots).toHaveLength(2);
+  expect(projected.lessons[0].slots).toHaveLength(2);
+  expect(projectCardMaterials(projected)).toEqual(projected);
+});

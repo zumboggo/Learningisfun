@@ -1,3 +1,5 @@
+import { DiscussionVote, DiscussionModeration, SimpleDiscussionComposer, DiscussionTextInput } from '@/components/discussions/DiscussionControls';
+import { Markdown } from '@/components/common/Markdown';
 import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate } from 'react-router-dom';
@@ -14,7 +16,6 @@ export function RedditDiscussionPage({ session }: { session: ClassSession }) {
   const navigate = useNavigate();
   const [refreshing, setRefreshing] = useState(false), [refreshError, setRefreshError] = useState('');
   const refresh = async () => { setRefreshing(true); setRefreshError(''); try { await syncTextDiscussion(session.$id, true); } catch { setRefreshError('Could not refresh. Check your connection and try again.'); } finally { setRefreshing(false); } };
-  const [draft, setDraft] = useState('');
   const [composerOpen, setComposerOpen] = useState(false);
   const [sort, setSort] = useState<'top' | 'new'>('top');
   const [editingSession,setEditingSession]=useState(false),[editTitle,setEditTitle]=useState(session.title),[editFocus,setEditFocus]=useState(session.promptMarkdown||'');
@@ -26,11 +27,6 @@ export function RedditDiscussionPage({ session }: { session: ClassSession }) {
   const readOnly = isParent || session.status !== 'active';
   if (!user) return null;
 
-  const submitPost = async () => {
-    if (!draft.trim()) return;
-    await addDiscussionPost({ sessionId: session.$id, textId: session.textId, classId: session.classId, authorId: user.$id, content: draft.trim(), isTeacher });
-    setDraft(''); setComposerOpen(false);
-  };
 
   return <div className="reddit-discussion-page">
     <header className="reddit-discussion-header">
@@ -40,38 +36,34 @@ export function RedditDiscussionPage({ session }: { session: ClassSession }) {
     {session.promptMarkdown && <section className="reddit-pinned-prompt"><span className="reddit-pin" aria-hidden="true">◆</span><p>{session.promptMarkdown}</p></section>}
     {readOnly && <p className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">This discussion is finished. You can still read the complete conversation.</p>}
     {!readOnly && <section className={`reddit-composer ${composerOpen ? 'reddit-composer-open' : ''}`}>
-      {!composerOpen ? <button onClick={() => setComposerOpen(true)}><ChatIcon/><span>Share your thought or question…</span><span aria-hidden="true">⌄</span></button> : <><textarea autoFocus rows={4} placeholder="Share your thought or question…" value={draft} onChange={event => setDraft(event.target.value)}/><div className="reddit-composer-actions"><button onClick={() => { setDraft(''); setComposerOpen(false); }}>Cancel</button><Button size="sm" disabled={!draft.trim()} onClick={() => void submitPost()}>Post</Button></div></>}
+      {!composerOpen ? <button onClick={() => setComposerOpen(true)}><ChatIcon/><span>Share your thought or question…</span><span aria-hidden="true">⌄</span></button> : <SimpleDiscussionComposer placeholder="Share your thought or question…" storageKey={`discussion-draft:${user.$id}:${session.$id}`} onCancel={()=>setComposerOpen(false)} onSubmit={content=>addDiscussionPost({sessionId:session.$id,textId:session.textId,classId:session.classId,authorId:user.$id,content,isTeacher})}/>}
     </section>}
     <div className="reddit-feed-toolbar"><div className="reddit-sort-control" aria-label="Sort discussion posts"><button className={sort === 'top' ? 'active' : ''} onClick={() => setSort('top')}>Top</button><button className={sort === 'new' ? 'active' : ''} onClick={() => setSort('new')}>New</button></div><Button size="sm" variant="secondary" loading={refreshing} onClick={()=>void refresh()}>Refresh replies</Button><span>{roots.length} {roots.length === 1 ? 'thread' : 'threads'}</span></div>
     {refreshError && <p role="alert" className="text-sm text-red-700">{refreshError}</p>}
-    <section className="reddit-feed">{roots.length ? roots.map(post => <Thread key={post.$id} post={post} all={posts || []} votes={votes || []} userId={user.$id} isTeacher={isTeacher} readOnly={isParent} sort={sort}/>) : <div className="reddit-empty-feed">No posts yet. Start the conversation.</div>}</section><Modal open={editingSession} onClose={()=>setEditingSession(false)} title="Edit discussion"><div className="space-y-4"><label className="block text-sm font-medium">Title<input className="mt-1 w-full rounded-lg border px-3 py-2" value={editTitle} onChange={e=>setEditTitle(e.target.value)}/></label><label className="block text-sm font-medium">Topic or focus<textarea className="mt-1 w-full rounded-lg border px-3 py-2" rows={4} value={editFocus} onChange={e=>setEditFocus(e.target.value)}/></label><Button className="w-full" disabled={!editTitle.trim()} onClick={()=>void updateClassSession(session.$id,user.$id,{title:editTitle.trim(),promptMarkdown:editFocus.trim()}).then(()=>setEditingSession(false))}>Save changes</Button></div></Modal>
+    <section className="reddit-feed">{roots.length ? roots.map(post => <Thread key={post.$id} post={post} all={posts || []} votes={votes || []} userId={user.$id} isTeacher={isTeacher} readOnly={readOnly} sort={sort}/>) : <div className="reddit-empty-feed">No posts yet. Start the conversation.</div>}</section><Modal open={editingSession} onClose={()=>setEditingSession(false)} title="Edit discussion"><div className="space-y-4"><label className="block text-sm font-medium">Title<input className="mt-1 w-full rounded-lg border px-3 py-2" value={editTitle} onChange={e=>setEditTitle(e.target.value)}/></label><label className="block text-sm font-medium">Topic or focus<textarea className="mt-1 w-full rounded-lg border px-3 py-2" rows={4} value={editFocus} onChange={e=>setEditFocus(e.target.value)}/></label><Button className="w-full" disabled={!editTitle.trim()} onClick={()=>void updateClassSession(session.$id,user.$id,{title:editTitle.trim(),promptMarkdown:editFocus.trim()}).then(()=>setEditingSession(false))}>Save changes</Button></div></Modal>
   </div>;
 }
 
 function sortPosts(posts: TextDiscussionPost[], sort: 'top' | 'new') { return [...posts].sort((a, b) => sort === 'top' ? b.score - a.score || b.updatedAt.localeCompare(a.updatedAt) : b.createdAt.localeCompare(a.createdAt)); }
 
-function Thread({ post, all, votes, userId, isTeacher, readOnly, sort }: { post: TextDiscussionPost; all: TextDiscussionPost[]; votes: Array<{postId:string;value:number}>; userId:string; isTeacher:boolean; readOnly:boolean; sort:'top'|'new' }) {
-  const [reply, setReply] = useState(''); const [replyOpen, setReplyOpen] = useState(false);
+function Thread({ post, all, votes, userId, isTeacher, readOnly, sort, ancestorLocked=false }: { ancestorLocked?:boolean; post: TextDiscussionPost; all: TextDiscussionPost[]; votes: Array<{postId:string;value:number}>; userId:string; isTeacher:boolean; readOnly:boolean; sort:'top'|'new' }) {
+  const [replyOpen, setReplyOpen] = useState(false);
   const [editing,setEditing]=useState(false),[editContent,setEditContent]=useState(post.content);
   const mine = votes.find(vote => vote.postId === post.$id)?.value || 0;
   const children = sortPosts(all.filter(candidate => candidate.parentId === post.$id), sort);
   const descendantCount = countDescendants(post.$id, all);
   if (post.moderationStatus === 'hidden' && !isTeacher) return null;
-  const submitReply = async () => { if (!reply.trim()) return; await addDiscussionPost({ sessionId:post.classSessionId, textId:post.textId, classId:post.classId, parentId:post.$id, authorId:userId, content:reply.trim(), isTeacher }); setReply(''); setReplyOpen(false); };
+  const locked=ancestorLocked||post.locked||post.moderationStatus==='hidden';
 
   return <div className={`reddit-thread reddit-thread-depth-${Math.min(post.depth, 3)}`}>
     <article className={`reddit-post ${post.moderationStatus === 'hidden' ? 'reddit-post-hidden' : ''}`}>
-      <div className="reddit-vote-rail">
-        {!readOnly && <button className={mine === 1 ? 'active' : ''} aria-label="Upvote" onClick={() => void voteOnPost(post.$id, userId, mine === 1 ? 0 : 1)}>▲</button>}
-        <strong>{post.score}</strong>
-        {!readOnly && <button className={mine === -1 ? 'active-down' : ''} aria-label="Downvote" onClick={() => void voteOnPost(post.$id, userId, mine === -1 ? 0 : -1)}>▼</button>}
-      </div>
-      <div className="reddit-post-main"><div className="reddit-post-meta"><span className={post.isTeacherPost ? 'reddit-teacher-author' : ''}>{post.isTeacherPost ? 'Teacher' : post.authorId === userId ? 'You' : post.anonymousLabel}</span><time dateTime={post.createdAt}>{formatDiscussionTime(post.createdAt)}</time></div>{editing?<div className="reddit-reply-composer"><textarea rows={3} value={editContent} onChange={event=>setEditContent(event.target.value)}/><div><button onClick={()=>setEditing(false)}>Cancel</button><Button size="sm" disabled={!editContent.trim()} onClick={()=>void editDiscussionPost(post.$id,userId,editContent).then(()=>setEditing(false))}>Save</Button></div></div>:<p className="reddit-post-content">{post.content}</p>}
-        <div className="reddit-post-actions">{descendantCount > 0 && <span><ChatIcon/> {descendantCount} {descendantCount === 1 ? 'reply' : 'replies'}</span>}{!readOnly && post.depth < 3 && !post.locked && <button onClick={() => setReplyOpen(value => !value)}>↩ Reply</button>}{isTeacher&&post.isTeacherPost&&post.authorId===userId&&<button onClick={()=>setEditing(value=>!value)}>Edit</button>}{post.locked && <span>🔒 Locked</span>}{isTeacher && <details className="reddit-moderation-menu"><summary>Moderate</summary><div><button onClick={() => void moderatePost(post.$id,userId,post.moderationStatus==='hidden'?'show':'hide')}>{post.moderationStatus==='hidden'?'Show':'Hide'}</button><button onClick={() => void moderatePost(post.$id,userId,post.locked?'unlock':'lock')}>{post.locked?'Unlock':'Lock'}</button><button className="text-red-600" onClick={() => { if(confirm('Permanently delete this post?')) void moderatePost(post.$id,userId,'delete'); }}>Delete</button></div></details>}</div>
-        {replyOpen && <div className="reddit-reply-composer"><textarea rows={3} value={reply} onChange={event => setReply(event.target.value)} placeholder="Write a reply…"/><div><button onClick={() => setReplyOpen(false)}>Cancel</button><Button size="sm" disabled={!reply.trim()} onClick={() => void submitReply()}>Reply</Button></div></div>}
+      <div className="reddit-vote-rail"><DiscussionVote score={post.score} value={mine} disabled={readOnly||post.moderationStatus==='hidden'} allowDownvote onVote={value=>voteOnPost(post.$id,userId,value as -1|0|1)}/></div>
+      <div className="reddit-post-main"><div className="reddit-post-meta"><span className={post.isTeacherPost ? 'reddit-teacher-author' : ''}>{post.isTeacherPost ? 'Teacher' : post.authorId === userId ? 'You' : post.anonymousLabel}</span><time dateTime={post.createdAt}>{formatDiscussionTime(post.createdAt)}</time></div>{editing?<div className="reddit-reply-composer"><DiscussionTextInput label="Edit post" value={editContent} onChange={setEditContent}/><div><button onClick={()=>setEditing(false)}>Cancel</button><Button size="sm" disabled={!editContent.trim()} onClick={()=>void editDiscussionPost(post.$id,userId,editContent).then(()=>setEditing(false))}>Save</Button></div></div>:<Markdown className="reddit-post-content" content={post.content}/>}
+        <div className="reddit-post-actions">{descendantCount > 0 && <span><ChatIcon/> {descendantCount} {descendantCount === 1 ? 'reply' : 'replies'}</span>}{!readOnly && post.depth < 3 && !locked && <button onClick={() => setReplyOpen(value => !value)}>↩ Reply</button>}{isTeacher&&post.isTeacherPost&&post.authorId===userId&&<button onClick={()=>setEditing(value=>!value)}>Edit</button>}{post.locked && <span>🔒 Locked</span>}{isTeacher && <DiscussionModeration actions={[{label:post.moderationStatus==='hidden'?'Show':'Hide',run:()=>moderatePost(post.$id,userId,post.moderationStatus==='hidden'?'show':'hide')},{label:post.locked?'Unlock':'Lock',run:()=>moderatePost(post.$id,userId,post.locked?'unlock':'lock')},{label:'Delete',confirm:'Permanently delete this post?',run:()=>moderatePost(post.$id,userId,'delete')}]}/>} </div>
+        {replyOpen&&!readOnly&&!locked && <SimpleDiscussionComposer storageKey={`discussion-draft:${userId}:${post.classSessionId}:reply:${post.$id}`} label="Your reply" submitLabel="Reply" onCancel={()=>setReplyOpen(false)} onSubmit={content=>addDiscussionPost({sessionId:post.classSessionId,textId:post.textId,classId:post.classId,parentId:post.$id,authorId:userId,content,isTeacher})}/>}
       </div>
     </article>
-    {children.length > 0 && <div className="reddit-children">{children.map(child => <Thread key={child.$id} post={child} all={all} votes={votes} userId={userId} isTeacher={isTeacher} readOnly={readOnly} sort={sort}/>)}</div>}
+    {children.length > 0 && <div className="reddit-children">{children.map(child => <Thread key={child.$id} post={child} all={all} votes={votes} userId={userId} isTeacher={isTeacher} readOnly={readOnly} ancestorLocked={locked} sort={sort}/>)}</div>}
   </div>;
 }
 

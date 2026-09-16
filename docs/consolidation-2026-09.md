@@ -19,3 +19,11 @@ No collections, saved submissions, reviews, annotations, file uploads, or backen
 
 ## Verification
 Run npm test and npm run build. Added coverage checks shared creation defaults, weekly assignment context, concurrent sync coalescing, manual refresh, failure recovery, and account/class isolation.
+
+## Follow-up consolidation
+- Shared discussion text input, supporting-link fields, voting and moderation UI. Text discussions retain upvotes only; general discussions retain their existing downvotes and delete permissions. Existing reporting remains unchanged.
+- General discussion replies now keep local drafts on cancel/failure. Finished discussions and locked parent threads do not show contribution controls; the existing server remains authoritative.
+- Shared resource title/link inputs across text creation, editing and the private weekly resource editor.
+- Resource propagation uses an explicit content-field list; placement IDs and completion status are never overwritten. Distinct copywork/reading flags are not silently merged.
+- Publishing projection resolves the weekly bank before deriving materials, deduplicates repeated resource/date entries, and keeps distinct due dates. This changes future save/preview/publish behavior only; no stored plans are batch-rewritten.
+- Removed the unreferenced PlannerCourseEditor component. Historical data, snapshots, archives and backend collections are retained.

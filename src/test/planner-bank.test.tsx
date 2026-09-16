@@ -139,3 +139,19 @@ describe('released weekly core vocabulary',()=>{
     expect(groups.get('2026-08-31')).toHaveLength(1);
   });
 });
+
+it('does not merge otherwise identical resources with different reading purposes',()=>{
+  const plan=fixture();
+  plan.lessons[0].slots![0].isCopywork=true;
+  plan.lessons[1].slots![0].isCopywork=false;
+  expect(prepareWeeklyBank(plan).weeklyResources).toHaveLength(3);
+});
+it('retains completion status, source snapshot and other weeks when editing shared content',()=>{
+  const original=prepareWeeklyBank(fixture()),snapshot=structuredClone(original);
+  const slot=original.lessons[0].slots![0];slot.status='completed';
+  const next=editWeeklyResource(original,slot.planningItemId!,{title:'Updated',existingTextId:'existing-text',status:'planned',id:'wrong'});
+  expect(next.lessons[0].slots![0]).toMatchObject({id:slot.id,status:'completed',title:'Updated',existingTextId:'existing-text'});
+  expect(next.lessons[1].slots![0].existingTextId).toBe('existing-text');
+  expect(original.lessons[0].slots![0].title).toBe(snapshot.lessons[0].slots![0].title);
+  expect(next.week).toEqual(snapshot.week);
+});
