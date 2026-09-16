@@ -1,7 +1,6 @@
-import { PublicReadingChoice } from '@/components/texts/TextPublicSharing';
-import { TextPurposeLabels, type TextPurpose } from '@/components/texts/TextPurpose';
+import { CreateTextModal } from '@/components/texts/CreateTextModal';
+import { TextPurposeLabels } from '@/components/texts/TextPurpose';
 import { CopyTextLinkButton } from '@/components/texts/CopyTextLinkButton';
-import { ClassReadingDate } from '@/components/texts/ClassReadingDate';
 import { textAssignmentAvailable } from '@/services/text-schedule';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -11,13 +10,8 @@ import { db } from '@/db/schema';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
 import { EmptyState } from '@/components/common/EmptyState';
-import { Modal } from '@/components/common/Modal';
-import { Markdown } from '@/components/common/Markdown';
-import { MarkdownPasteEditor } from '@/components/common/MarkdownPasteEditor';
 import { TextEditorModal } from '@/components/texts/TextEditorModal';
-import { TextFileUpload } from '@/components/texts/TextFileUpload';
 import { classLabel } from '@/utils/helpers';
-import { createText, splitParagraphs } from '@/services/text.service';
 import type { Class, LearningText } from '@/types';
 
 export function TextsPage() {
@@ -41,16 +35,3 @@ function TextsByWeek({rows,classes,isTeacher,onEdit}:{rows:Array<{text:LearningT
   return <div className="space-y-3">{weeks.map(([week,items])=>{const isOpen=open.has(week);return <div key={week}><button className="w-full rounded-lg border bg-white p-3 text-left font-semibold" onClick={()=>setOpen(current=>{const next=new Set(current);if(next.has(week))next.delete(week);else next.add(week);return next})}>{isOpen?'▾':'▸'} Week of {new Date(`${week}T00:00:00`).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})} <span className="text-sm font-normal text-gray-500">({items.length})</span></button>{isOpen&&<div className="mt-2 space-y-2">{items.map(({text,assignments})=><Card key={text.$id}><div className="flex justify-between gap-3"><Link to={`/texts/${text.$id}`}><h2 className="font-semibold">{text.title}</h2><p className="text-sm text-gray-500">{text.author||'Unknown author'} · {assignments.map(a=>classLabel(classes.find(c=>c?.$id===a.classId))).join(', ')||'Not assigned'}</p><span className="mt-2 flex flex-wrap gap-2">{assignments.map(a=><span key={a.classId} className="text-xs">{assignments.length>1&&`${classLabel(classes.find(c=>c?.$id===a.classId))}: `}<TextPurposeLabels value={a}/></span>)}</span></Link>{isTeacher&&<div className="flex flex-wrap gap-2"><CopyTextLinkButton textId={text.$id} title={text.title}/><Link to={`/texts/${text.$id}/present`}><Button size="sm">Present</Button></Link><Button size="sm" variant="secondary" onClick={()=>onEdit(text)}>Edit text & access</Button></div>}</div></Card>)}</div>}</div>})}</div>;
 }
 function weekKey(value:string){const d=new Date(value),day=(d.getDay()+6)%7;d.setDate(d.getDate()-day);return d.toISOString().slice(0,10)}
-
-
-function CreateTextModal({teacherId,classes,onClose}:{teacherId:string;classes:Array<{id:string;name:string}>;onClose:()=>void}) {
-  const [title,setTitle]=useState(''); const [author,setAuthor]=useState(''); const [mode,setMode]=useState<'full'|'link'>('full'); const [externalUrl,setExternalUrl]=useState(''); const [raw,setRaw]=useState(''); const [paragraphs,setParagraphs]=useState<string[]>([]); const [selected,setSelected]=useState(new Set<string>()); const [busy,setBusy]=useState(false); const preview=paragraphs.length?paragraphs:splitParagraphs(raw);
-  const [publicReadEnabled,setPublicReadEnabled]=useState(true);
-  const [purposes,setPurposes]=useState<Record<string,TextPurpose>>({});
-  const [dates,setDates]=useState<Record<string,string>>({});
-  const [originalPdf,setOriginalPdf]=useState<File>(); const [saveError,setSaveError]=useState('');
-  const valid = title.trim() && (!externalUrl.trim()||/^https?:\/\//i.test(externalUrl.trim())) && (mode==='link' ? /^https?:\/\//i.test(externalUrl) : (preview.length > 0 || Boolean(originalPdf)));
-  const saveButton=<Button loading={busy} disabled={!valid} onClick={()=>{setBusy(true);void createText({teacherId,publicReadEnabled,title:title.trim(),author:author.trim(),source:'',paragraphs:mode==='full'?preview:[],originalPdf:mode==='full'?originalPdf:undefined,classIds:[...selected],classDates:dates,classPurposes:purposes,contentMode:mode,externalUrl:externalUrl.trim()}).then(onClose).catch(cause=>setSaveError(cause instanceof Error?cause.message:'Could not save the text.')).finally(()=>setBusy(false))}}>Save text</Button>;
-  return <Modal open onClose={()=>!busy&&onClose()} title="Add text"><div className="space-y-3 max-h-[75vh] overflow-auto">{saveError&&<p role="alert" className="text-sm text-red-700">{saveError}</p>}<div className="grid grid-cols-2 gap-2 rounded-lg bg-gray-100 p-1"><button className={`rounded-md px-3 py-2 text-sm font-medium ${mode==='full'?'bg-white shadow-sm':''}`} onClick={()=>setMode('full')}>Full text</button><button className={`rounded-md px-3 py-2 text-sm font-medium ${mode==='link'?'bg-white shadow-sm':''}`} onClick={()=>setMode('link')}>Link only</button></div><PublicReadingChoice enabled={publicReadEnabled} onChange={setPublicReadEnabled}/><input className={input} placeholder="Title" value={title} onChange={e=>setTitle(e.target.value)}/><input className={input} placeholder="Author" value={author} onChange={e=>setAuthor(e.target.value)}/><div className="space-y-3">{classes.map(c=><div key={c.id} className="flex flex-wrap items-start justify-between gap-2 rounded-lg border p-3"><label className="flex gap-2 text-sm"><input type="checkbox" checked={selected.has(c.id)} onChange={()=>setSelected(current=>{const next=new Set(current);if(next.has(c.id))next.delete(c.id);else next.add(c.id);return next})}/>{c.name}</label><ClassReadingDate purpose={purposes[c.id]} onPurposeChange={value=>setPurposes(current=>({...current,[c.id]:value}))} name={c.name} value={dates[c.id]||''} onChange={value=>setDates(current=>({...current,[c.id]:value}))} disabled={!selected.has(c.id)}/></div>)}</div>{mode==='link'?<label className="block text-sm font-medium">Source (optional link)<input className={input} type="url" placeholder="https://…" value={externalUrl} onChange={e=>setExternalUrl(e.target.value)}/></label>:<><label className="block text-sm font-medium">Source (optional link)<input type="url" className={input} placeholder="https://…" value={externalUrl} onChange={e=>setExternalUrl(e.target.value)}/></label><TextFileUpload onBusyChange={setBusy} onImport={(content,file)=>{setRaw(content);setParagraphs([]);setOriginalPdf(file)}}/>{saveButton}<MarkdownPasteEditor value={raw} onChange={value=>{setRaw(value);setParagraphs([])}} rows={10}/><details><summary className="cursor-pointer text-sm font-medium">Paragraph preview ({preview.length})</summary><div className="mt-2 space-y-2">{preview.map((p,i)=><div key={i} className="rounded-lg border bg-white p-3"><p className="mb-2 text-xs text-gray-400">Paragraph {i+1}</p><Markdown content={p}/></div>)}</div></details></>}{mode==='link'&&saveButton}</div></Modal>;
-}
-const input='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm';

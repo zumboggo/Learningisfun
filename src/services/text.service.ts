@@ -96,7 +96,7 @@ export async function createText(params: { publicReadEnabled?: boolean; teacherI
   }
   });
   await setTextClasses(text.$id, params.classIds, params.teacherId, params.schedule);
-  if(params.classDates||params.classPurposes) await updateTextAssignments(text.$id,params.teacherId,params.classIds.map(classId=>({classId,...textSchedule(params.classDates?.[classId]||'',now),isCopywork:params.classPurposes?.[classId]?.isCopywork||false,isAssignedReading:params.classPurposes?.[classId]?.isAssignedReading||false})));
+  if(params.classDates||params.classPurposes) await updateTextAssignments(text.$id,params.teacherId,params.classIds.map(classId=>({classId,...textSchedule(params.classDates?.[classId]||'',params.schedule?.assignedAt || now),isCopywork:params.classPurposes?.[classId]?.isCopywork||false,isAssignedReading:params.classPurposes?.[classId]?.isAssignedReading||false})));
   return text;
 }
 

@@ -1,15 +1,10 @@
+import { syncClassMaterials, type ContentDomain } from '@/services/class-material-refresh.service';
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { User, UserRole } from '@/types';
 import * as authService from '@/services/auth.service';
 import * as syncService from '@/services/sync.service';
 import * as classService from '@/services/class.service';
-import * as classSessionService from '@/services/class-session.service';
 
-import * as flashcardService from '@/services/flashcard.service';
-import * as quizService from '@/services/quiz.service';
-import * as writingService from '@/services/writing.service';
-import * as textService from '@/services/text.service';
-import * as presentationService from '@/services/presentation.service';
 import { client, DATABASE_ID, COLLECTIONS } from '@/lib/appwrite';
 import { db } from '@/db/schema';
 import { runCachedSync, SYNC_WINDOWS } from '@/services/sync-policy';
@@ -54,14 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const classIds = [...new Set([...memberships.map(m => m.classId), ...taught.map(c => c.$id)])];
     const cachedUser = await authService.getCachedUser();
     const isTeacher = cachedUser?.role === 'teacher' || cachedUser?.role === 'admin';
-    const tasks: Promise<void>[] = [];
-    if (domains.has('sessions')) tasks.push(runCachedSync(`sessions:${userId}`, SYNC_WINDOWS.catalog, () => classSessionService.syncClassSessionsFromServer(classIds), force));
-    if (domains.has('flashcards')) tasks.push(runCachedSync(`flashcards:v2:${userId}`, SYNC_WINDOWS.stableContent, () => flashcardService.syncDecksFromServer(classIds, userId), force));
-    if (domains.has('quizzes')) tasks.push(runCachedSync(`quizzes:${userId}`, SYNC_WINDOWS.catalog, () => quizService.syncQuizzesFromServer(classIds), force));
-    if (domains.has('writing')) tasks.push(runCachedSync(`writing:${userId}`, SYNC_WINDOWS.catalog, () => writingService.syncWritingFromServer(classIds), force));
-    if (domains.has('texts')) tasks.push(runCachedSync(`texts:${userId}`, SYNC_WINDOWS.catalog, () => textService.syncTextsFromServer(classIds, userId, isTeacher), force));
-    if (domains.has('presentations')) tasks.push(runCachedSync(`presentations:${userId}`, SYNC_WINDOWS.catalog, async () => { await presentationService.syncPresentationLinks(classIds); }, force));
-    await Promise.all(tasks);
+    await syncClassMaterials(classIds, userId, isTeacher, force, [...domains].filter((domain): domain is ContentDomain => domain !== 'account'));
   }, []);
 
   const refreshUser = useCallback(async () => {

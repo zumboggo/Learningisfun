@@ -39,14 +39,13 @@ import { buildQuizCopyText, buildQtiZip, downloadBlob } from '@/services/qti-exp
 import { addPresentationLinks, createWritingPrompt, deletePresentationLink, finishWritingPrompt, setPresentationWatched, updateWritingPrompt, type WritingPromptSize } from '@/services/presentation.service';
 import { AddDecksToClassModal } from '@/components/common/AddDecksToClassModal';
 import { listFlashcardReports, resolveFlashcardReport, unassignDeck } from '@/services/flashcard.service';
-import { createText, updateTextAssignments, setTextAssignmentDueDate, splitParagraphs } from '@/services/text.service';
+import { updateTextAssignments, setTextAssignmentDueDate } from '@/services/text.service';
 import { RandomStudentModal } from '@/components/teacher/RandomStudentModal';
 import { CreateGroupsModal } from '@/components/teacher/CreateGroupsModal';
 import type { Class, ClassLink, ClassSession, LearningText, PresentationLink, Quiz, QuizAttempt, TextAssignment } from '@/types';
 import { classLabel } from '@/utils/helpers';
 import { Markdown } from '@/components/common/Markdown';
-import { MarkdownPasteEditor } from '@/components/common/MarkdownPasteEditor';
-import { TextFileUpload } from '@/components/texts/TextFileUpload';
+import { CreateTextModal } from '@/components/texts/CreateTextModal';
 import { TextEditorModal } from '@/components/texts/TextEditorModal';
 import { createPeerReviewActivity, listPeerReviewActivities, setPeerReviewActivityStatus } from '@/services/presentation-peer-review.service';
 import type { PeerReviewActivity } from '@/types';
@@ -55,7 +54,6 @@ import { refreshClassMaterials } from '@/services/class-material-refresh.service
 import { AssignedCopywork } from '@/components/student/AssignedCopywork';
 import { buildClassFlashcardCsv, buildQuizletImportText, type ClassFlashcardExportRow } from '@/utils/csv-parser';
 
-import { PublicReadingChoice } from '@/components/texts/TextPublicSharing';
 const PRESENTATION_FOLDER_URL = 'https://lifeplusworldwide-my.sharepoint.com/:f:/g/personal/david_hepting_cdischina_com/IgCKVDp4qOqzR5itb7Q70yDbAb7A95ZN6fG4XHD74ghu3lU?e=1W9www';
 
 type WeeklyMaterial =
@@ -411,73 +409,6 @@ export function ClassDetailPage() {
 
       <WeeklyClassMaterials classId={cls.$id} materials={weeklyMaterials || []} isOwner={Boolean(isOwner)} onOpenQuizResults={quiz => setResultsQuiz(quiz)} />
 
-      {isOwner && (
-        <details className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-          <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 font-semibold text-gray-900 hover:bg-gray-50"><span>People &amp; access</span><span className="text-xs font-medium text-gray-500">{students?.length || 0} students · {parents?.length || 0} parents <span className="ml-2" aria-hidden="true">▾</span></span></summary>
-        <Card className="rounded-none border-x-0 border-b-0 shadow-none">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div>
-              <h3 className="font-semibold">Class join code</h3>
-              <div className="text-2xl font-mono bg-gray-100 px-4 py-2 rounded-lg inline-block mt-1">
-                {newCode || cls.joinCode}
-              </div>
-              <div className="mt-3">
-                <p className="text-sm text-gray-500">
-                  Or send students this link — they can sign up and join in one step:
-                </p>
-                <div className="mt-1 flex flex-wrap items-center gap-2">
-                  <code className="rounded bg-gray-100 px-2 py-1 text-xs break-all">{joinLink}</code>
-                  <CopyButton text={joinLink} label="Copy link" copiedLabel="Link copied" />
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col gap-3 md:items-end">
-              <Button onClick={() => void handleRegenerateCode()} size="sm" variant="secondary">
-                Regenerate
-              </Button>
-              <label className="inline-flex cursor-pointer items-center justify-center rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-200">
-                {rosterImporting ? 'Importing...' : 'Import roster CSV'}
-                <input
-                  type="file"
-                  accept=".csv,.txt"
-                  className="hidden"
-                  onChange={event => {
-                    const file = event.target.files?.[0];
-                    if (file) void handleRosterFile(file);
-                    event.currentTarget.value = '';
-                  }}
-                />
-              </label>
-            </div>
-          </div>
-          <div className="mt-5 border-t pt-4">
-            <h3 className="font-semibold">Parent observer code</h3>
-            <p className="text-sm text-gray-500">Parents use this code on the same Join Class page. Their account is read-only.</p>
-            <div className="mt-2 flex flex-wrap items-center gap-2"><code className="rounded bg-violet-50 px-4 py-2 text-xl font-mono">{parentCode || cls.parentCode || 'Creating…'}</code><CopyButton text={parentCode || cls.parentCode || ''} label="Copy code" copiedLabel="Code copied"/><Button size="sm" variant="secondary" onClick={()=>void regenerateParentCode(cls.$id,user!.$id).then(setParentCode)}>Regenerate</Button></div>
-            <p className="mt-3 text-sm text-gray-600">{parents?.length||0} parent observer{parents?.length===1?'':'s'} joined</p>
-            {parents?.map(parent=><p key={parent.$id} className="text-xs text-gray-500">{parent.name} · {parent.email}</p>)}
-          </div>
-          <div className="mt-5 border-t pt-4">
-            <h3 className="font-semibold">Temporary substitute access</h3>
-            <p className="text-sm text-gray-500">A substitute can view and post in this class until the code expires. They cannot edit or delete existing content, manage students, or access teacher planning.</p>
-            <div className="mt-2 flex flex-wrap items-center gap-2"><select className="rounded-lg border px-3 py-2 text-sm" value={substituteHours} onChange={event=>setSubstituteHours(Number(event.target.value))}><option value={8}>8 hours</option><option value={24}>1 day</option><option value={48}>2 days</option><option value={168}>1 week</option></select><Button size="sm" variant="secondary" onClick={()=>void createSubstituteCode(cls.$id,substituteHours).then(setSubstituteAccess)}>Generate substitute code</Button>{(substituteAccess||cls.substituteCodeActive)&&<Button size="sm" variant="danger" onClick={()=>void revokeSubstituteCode(cls.$id).then(()=>setSubstituteAccess(null))}>End access now</Button>}</div>
-            {(substituteAccess?.code||cls.substituteCodeActive&&cls.substituteCode)&&<div className="mt-3 flex flex-wrap items-center gap-2"><code className="rounded bg-amber-50 px-4 py-2 text-xl font-mono">{substituteAccess?.code||cls.substituteCode}</code><CopyButton text={substituteAccess?.code||cls.substituteCode||''} label="Copy code" copiedLabel="Code copied"/><span className="text-xs text-gray-500">Expires {new Date(substituteAccess?.expiresAt||cls.substituteExpiresAt||'').toLocaleString()}</span></div>}
-          </div>
-          {rosterResult && (
-            <div className="mt-4 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <span>
-                  {rosterResult.created} created, {rosterResult.existing} existing, {rosterResult.added} enrolled, {rosterResult.skipped} skipped
-                </span>
-                <Button onClick={downloadRosterCredentials} size="sm" variant="secondary">
-                  Download logins
-                </Button>
-              </div>
-            </div>
-          )}
-        </Card>
-        </details>
-      )}
 
       {!isOwner && !isParent && <Link to="/writing" className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 hover:border-blue-300"><span><strong className="block">Writing Feedback</strong><span className="text-sm text-gray-500">Get private AI feedback on any piece of writing.</span></span><span aria-hidden="true">→</span></Link>}
 
@@ -490,7 +421,7 @@ export function ClassDetailPage() {
         </summary>
         <div className="space-y-5 border-t bg-gray-50/60 p-3 sm:p-4">
       <ClassLinksPanel cls={cls} isOwner={Boolean(isOwner)} teacherId={user?.$id || ''} />
-      {!isParent && <ClassNicknamesPanel classId={cls.$id} userId={user?.$id || ''} isOwner={Boolean(isOwner)} />}
+      {!isParent && !isOwner && <ClassNicknamesPanel classId={cls.$id} userId={user?.$id || ''} isOwner={false} />}
       {isOwner && <SimplePresentationLinksPanel links={presentationLinks || []} isOwner />}
 
       {!isOwner && !isParent && <section className="rounded-xl border border-blue-100 bg-blue-50 p-4"><h2 className="font-semibold text-blue-950">Practice this class</h2><p className="mt-1 text-sm text-blue-800">Create a temporary practice quiz from this class&apos;s flashcards.</p><Button className="mt-3" size="sm" loading={generatingPracticeQuiz} onClick={() => void generatePracticeQuiz()}>Generate Practice Quiz</Button>{practiceQuizError && <p className="mt-3 text-sm text-amber-800">{practiceQuizError}</p>}</section>}
@@ -638,8 +569,71 @@ export function ClassDetailPage() {
         </div>
       </details>
 
-      {isOwner && <details className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-        <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 font-semibold hover:bg-gray-50"><span>Student roster</span><span className="text-sm font-medium text-gray-500">{students?.length || 0} students <span className="ml-2" aria-hidden="true">▾</span></span></summary>
+      {isOwner && (
+        <details className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+          <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 font-semibold text-gray-900 hover:bg-gray-50"><span>Manage class</span><span className="text-xs font-medium text-gray-500">{students?.length || 0} students · {parents?.length || 0} parents <span className="ml-2" aria-hidden="true">▾</span></span></summary>
+        <Card className="rounded-none border-x-0 border-b-0 shadow-none">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <h3 className="font-semibold">Class join code</h3>
+              <div className="text-2xl font-mono bg-gray-100 px-4 py-2 rounded-lg inline-block mt-1">
+                {newCode || cls.joinCode}
+              </div>
+              <div className="mt-3">
+                <p className="text-sm text-gray-500">
+                  Or send students this link — they can sign up and join in one step:
+                </p>
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  <code className="rounded bg-gray-100 px-2 py-1 text-xs break-all">{joinLink}</code>
+                  <CopyButton text={joinLink} label="Copy link" copiedLabel="Link copied" />
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3 md:items-end">
+              <Button onClick={() => void handleRegenerateCode()} size="sm" variant="secondary">
+                Regenerate
+              </Button>
+              <label className="inline-flex cursor-pointer items-center justify-center rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-200">
+                {rosterImporting ? 'Importing...' : 'Import roster CSV'}
+                <input
+                  type="file"
+                  accept=".csv,.txt"
+                  className="hidden"
+                  onChange={event => {
+                    const file = event.target.files?.[0];
+                    if (file) void handleRosterFile(file);
+                    event.currentTarget.value = '';
+                  }}
+                />
+              </label>
+            </div>
+          </div>
+          <div className="mt-5 border-t pt-4">
+            <h3 className="font-semibold">Parent observer code</h3>
+            <p className="text-sm text-gray-500">Parents use this code on the same Join Class page. Their account is read-only.</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2"><code className="rounded bg-violet-50 px-4 py-2 text-xl font-mono">{parentCode || cls.parentCode || 'Creating…'}</code><CopyButton text={parentCode || cls.parentCode || ''} label="Copy code" copiedLabel="Code copied"/><Button size="sm" variant="secondary" onClick={()=>void regenerateParentCode(cls.$id,user!.$id).then(setParentCode)}>Regenerate</Button></div>
+            <p className="mt-3 text-sm text-gray-600">{parents?.length||0} parent observer{parents?.length===1?'':'s'} joined</p>
+            {parents?.map(parent=><p key={parent.$id} className="text-xs text-gray-500">{parent.name} · {parent.email}</p>)}
+          </div>
+          <div className="mt-5 border-t pt-4">
+            <h3 className="font-semibold">Temporary substitute access</h3>
+            <p className="text-sm text-gray-500">A substitute can view and post in this class until the code expires. They cannot edit or delete existing content, manage students, or access teacher planning.</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2"><select className="rounded-lg border px-3 py-2 text-sm" value={substituteHours} onChange={event=>setSubstituteHours(Number(event.target.value))}><option value={8}>8 hours</option><option value={24}>1 day</option><option value={48}>2 days</option><option value={168}>1 week</option></select><Button size="sm" variant="secondary" onClick={()=>void createSubstituteCode(cls.$id,substituteHours).then(setSubstituteAccess)}>Generate substitute code</Button>{(substituteAccess||cls.substituteCodeActive)&&<Button size="sm" variant="danger" onClick={()=>void revokeSubstituteCode(cls.$id).then(()=>setSubstituteAccess(null))}>End access now</Button>}</div>
+            {(substituteAccess?.code||cls.substituteCodeActive&&cls.substituteCode)&&<div className="mt-3 flex flex-wrap items-center gap-2"><code className="rounded bg-amber-50 px-4 py-2 text-xl font-mono">{substituteAccess?.code||cls.substituteCode}</code><CopyButton text={substituteAccess?.code||cls.substituteCode||''} label="Copy code" copiedLabel="Code copied"/><span className="text-xs text-gray-500">Expires {new Date(substituteAccess?.expiresAt||cls.substituteExpiresAt||'').toLocaleString()}</span></div>}
+          </div>
+          {rosterResult && (
+            <div className="mt-4 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <span>
+                  {rosterResult.created} created, {rosterResult.existing} existing, {rosterResult.added} enrolled, {rosterResult.skipped} skipped
+                </span>
+                <Button onClick={downloadRosterCredentials} size="sm" variant="secondary">
+                  Download logins
+                </Button>
+              </div>
+            </div>
+          )}
+        </Card>
       <section className="border-t p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Students ({students?.length || 0})</h2>
@@ -698,7 +692,9 @@ export function ClassDetailPage() {
           />
         )}
       </section>
-      </details>}
+      <ClassNicknamesPanel classId={cls.$id} userId={user?.$id || ''} isOwner />
+        </details>
+      )}
 
       <Modal
         open={Boolean(pendingRemoval)}
@@ -952,22 +948,15 @@ function ClassNicknamesPanel({ classId, userId, isOwner }: { classId: string; us
 function AssignTextsToClassModal({ open, classId, teacherId, onClose }: { open: boolean; classId: string; teacherId: string; onClose: () => void }) {
   const texts = useLiveQuery(() => db.texts.where('teacherId').equals(teacherId).and(text => text.status !== 'archived').toArray(), [teacherId]);
   const assignments = useLiveQuery(() => db.text_assignments.where('classId').equals(classId).toArray(), [classId]);
-  const [publicReadEnabled,setPublicReadEnabled]=useState(true);
+  const classes = useLiveQuery(() => db.classes.where('teacherId').equals(teacherId).toArray(), [teacherId]);
   const [mode, setMode] = useState<'existing' | 'new'>('new');
-  const [contentMode, setContentMode] = useState<'full' | 'link'>('full');
   const [chosen, setChosen] = useState<Set<string> | null>(null);
   const [dueDate, setDueDate] = useState('');
-  const [title, setTitle] = useState('');
-  const [author, setAuthor] = useState('');
-  const [externalUrl, setExternalUrl] = useState('');
-  const [copiedText, setCopiedText] = useState('');
-  const [originalPdf, setOriginalPdf] = useState<File>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const selected = chosen || new Set(assignments?.map(assignment => assignment.textId) || []);
   const toggle = (textId: string) => { const next = new Set(selected); if (next.has(textId)) next.delete(textId); else next.add(textId); setChosen(next); };
   const [purpose,setPurpose]=useState<TextPurpose>();
-  const schedule = {...textSchedule(dueDate),...purpose};
   const save = async () => {
     setBusy(true); setError('');
     try {
@@ -981,17 +970,9 @@ function AssignTextsToClassModal({ open, classId, teacherId, onClose }: { open: 
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not assign texts.'); }
     finally { setBusy(false); }
   };
-  const createAndAssign = async () => {
-    setBusy(true); setError('');
-    try {
-      await createText({ teacherId, publicReadEnabled, title: title.trim(), author: author.trim(), source: '', paragraphs: contentMode === 'full' ? splitParagraphs(copiedText) : [], classIds: [classId], originalPdf: contentMode === 'full' ? originalPdf : undefined, contentMode, externalUrl: externalUrl.trim(), schedule });
-      onClose();
-    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not add this text.'); }
-    finally { setBusy(false); }
-  };
   const close = () => { if (busy) return; setChosen(null); setError(''); onClose(); };
-  const newTextValid = Boolean(title.trim()) && (!externalUrl.trim()||/^https?:\/\//i.test(externalUrl.trim())) && (contentMode === 'link' ? /^https?:\/\//i.test(externalUrl) : (splitParagraphs(copiedText).length > 0 || Boolean(originalPdf)));
-  return <Modal open={open} onClose={close} title="Assign Text"><div className="space-y-4"><div className="grid grid-cols-2 gap-1 rounded-lg bg-gray-100 p-1"><button className={`rounded-md px-3 py-2 text-sm font-medium ${mode==='existing'?'bg-white shadow-sm':''}`} onClick={()=>setMode('existing')}>Choose existing</button><button className={`rounded-md px-3 py-2 text-sm font-medium ${mode==='new'?'bg-white shadow-sm':''}`} onClick={()=>setMode('new')}>Add new text</button></div>{error&&<p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}<ClassReadingDate purpose={purpose} onPurposeChange={setPurpose} name="this class" value={dueDate} onChange={setDueDate}/>{mode==='existing'?<><p className="text-sm text-gray-500">Choose from texts you have already added.</p><div className="max-h-72 space-y-2 overflow-auto">{texts?.length ? texts.map(text => <label key={text.$id} className="flex items-start gap-3 rounded-lg border p-3"><input type="checkbox" className="mt-1" checked={selected.has(text.$id)} onChange={() => toggle(text.$id)} /><span><strong className="block text-sm">{text.title}</strong><span className="text-xs text-gray-500">{text.author || 'Unknown author'}{text.contentMode==='link'?' · Link':''}</span></span></label>) : <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No saved texts yet. Choose “Add new text” above.</p>}</div><Button className="w-full" loading={busy} onClick={() => void save()}>Save text assignments</Button></>:<><div className="grid grid-cols-2 gap-1 rounded-lg border p-1"><button className={`rounded-md px-3 py-2 text-sm ${contentMode==='full'?'bg-blue-50 font-semibold text-blue-700':''}`} onClick={()=>setContentMode('full')}>Paste or upload</button><button className={`rounded-md px-3 py-2 text-sm ${contentMode==='link'?'bg-blue-50 font-semibold text-blue-700':''}`} onClick={()=>setContentMode('link')}>Post a link</button></div><PublicReadingChoice enabled={publicReadEnabled} onChange={setPublicReadEnabled}/><input className="w-full rounded-lg border px-3 py-2" placeholder="Text title" value={title} onChange={e=>setTitle(e.target.value)}/><div className="grid grid-cols-2 gap-3"><input className="w-full rounded-lg border px-3 py-2" placeholder="Author (optional)" value={author} onChange={e=>setAuthor(e.target.value)}/></div>{contentMode==='link'?<label className="block text-sm font-medium">Source (optional link)<input type="url" className="w-full rounded-lg border px-3 py-2" placeholder="https://…" value={externalUrl} onChange={e=>setExternalUrl(e.target.value)}/></label>:<><label className="block text-sm font-medium">Source (optional link)<input type="url" className="mt-1 w-full rounded-lg border px-3 py-2" value={externalUrl} onChange={event=>setExternalUrl(event.target.value)} placeholder="https://…"/></label><TextFileUpload onBusyChange={setBusy} onImport={(content,file)=>{setCopiedText(content);setOriginalPdf(file)}}/><MarkdownPasteEditor value={copiedText} onChange={setCopiedText} rows={10}/><p className="text-xs text-gray-500">{splitParagraphs(copiedText).length} paragraph{splitParagraphs(copiedText).length===1?'':'s'} detected</p></>}<Button className="w-full" loading={busy} disabled={!newTextValid} onClick={()=>void createAndAssign()}>Add and assign text</Button></>}</div></Modal>;
+  if (open && mode === 'new') return <CreateTextModal teacherId={teacherId} classes={(classes || []).map(c=>({id:c.$id,name:classLabel(c)}))} initialClassIds={[classId]} onClose={close} onChooseExisting={()=>setMode('existing')}/>;
+  return <Modal open={open} onClose={close} title="Assign Text"><div className="space-y-4"><div className="grid grid-cols-2 gap-1 rounded-lg bg-gray-100 p-1"><button className={`rounded-md px-3 py-2 text-sm font-medium ${mode==='existing'?'bg-white shadow-sm':''}`} onClick={()=>setMode('existing')}>Choose existing</button><button className={`rounded-md px-3 py-2 text-sm font-medium ${mode==='new'?'bg-white shadow-sm':''}`} onClick={()=>setMode('new')}>Add new text</button></div>{error&&<p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}{mode==='existing'&&<ClassReadingDate purpose={purpose} onPurposeChange={setPurpose} name="this class" value={dueDate} onChange={setDueDate}/>}{mode==='existing'?<><p className="text-sm text-gray-500">Choose from texts you have already added.</p><div className="max-h-72 space-y-2 overflow-auto">{texts?.length ? texts.map(text => <label key={text.$id} className="flex items-start gap-3 rounded-lg border p-3"><input type="checkbox" className="mt-1" checked={selected.has(text.$id)} onChange={() => toggle(text.$id)} /><span><strong className="block text-sm">{text.title}</strong><span className="text-xs text-gray-500">{text.author || 'Unknown author'}{text.contentMode==='link'?' · Link':''}</span></span></label>) : <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No saved texts yet. Choose “Add new text” above.</p>}</div><Button className="w-full" loading={busy} onClick={() => void save()}>Save text assignments</Button></>:null}</div></Modal>;
 }
 
 function SimplePresentationLinksPanel({ links, isOwner }: { links: PresentationLink[]; isOwner: boolean }) {
@@ -1061,7 +1042,6 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
     localStorage.setItem(`class-open-weeks:${classId}`, JSON.stringify([...openWeeks]));
     localStorage.setItem(`class-open-sections:${classId}`, JSON.stringify([...openSections]));
   }, [classId, isOwner, openWeeks, openSections]);
-  const [quickPublic,setQuickPublic]=useState(true);
   const [quickAdd, setQuickAdd] = useState<{ kind: 'text' | 'link'; week: string } | null>(null);
   const [title, setTitle] = useState('');
   const [url, setUrl] = useState('');
@@ -1082,7 +1062,7 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
   }, [user?.$id, isOwner, isParent, weeklyQuizIdsKey]);
 
   const openQuickAdd = (kind: 'text' | 'link', week: string) => {
-    setQuickPublic(true); setTitle(''); setUrl(''); setItemDate(''); setAddError(''); setQuickAdd({ kind, week });
+    setTitle(''); setUrl(''); setItemDate(''); setAddError(''); setQuickAdd({ kind, week });
   };
   const saveQuickAdd = async () => {
     if (!quickAdd || !user || !title.trim()) return;
@@ -1092,11 +1072,7 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
     try {
       const assignedDate = itemDate || quickAdd.week;
       const assignedAt = new Date(`${assignedDate}T12:00:00`).toISOString();
-      if (quickAdd.kind === 'link') {
-        await addPresentationLinks({ title: title.trim(), url: url.trim(), classIds: [classId], assignedAt });
-      } else {
-        await createText({ publicReadEnabled:quickPublic, teacherId: user.$id, title: title.trim(), author: '', source: '', paragraphs: [], classIds: [classId], contentMode: 'link', externalUrl: url.trim(), schedule: { assignedAt } });
-      }
+      await addPresentationLinks({ title: title.trim(), url: url.trim(), classIds: [classId], assignedAt });
       setOpenSections(current => new Set(current).add(`${quickAdd.week}-${quickAdd.kind === 'text' ? 'texts' : 'presentations'}`));
       setQuickAdd(null);
     } catch (cause) { setAddError(cause instanceof Error ? cause.message : `Could not add this ${quickAdd.kind}.`); }
@@ -1145,12 +1121,12 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
         })}
       </div>}
     </section>
-    {quickAdd && <Modal open onClose={() => !adding && setQuickAdd(null)} title={`Add ${quickAdd.kind} · ${formatWeek(quickAdd.week)}`}><div className="space-y-4">
+    {quickAdd?.kind==='text' && user && <CreateTextModal teacherId={user.$id} classes={(teacherClasses||[]).map(cls=>({id:cls.$id,name:classLabel(cls)}))} initialClassIds={[classId]} initialMode="link" allowTitleOnly assignedAt={new Date(`${quickAdd.week}T12:00:00`).toISOString()} onClose={()=>setQuickAdd(null)}/>}
+    {quickAdd?.kind==='link' && <Modal open onClose={() => !adding && setQuickAdd(null)} title={`Add link · ${formatWeek(quickAdd.week)}`}><div className="space-y-4">
       {addError && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{addError}</p>}
-      {quickAdd.kind==='text'&&<PublicReadingChoice enabled={quickPublic} onChange={setQuickPublic}/>}<label className="block text-sm font-medium">Name<input autoFocus className="mt-1 w-full rounded-lg border px-3 py-2" value={title} onChange={event => setTitle(event.target.value)} placeholder={quickAdd.kind === 'link' ? 'Link title' : 'Text title'} /></label>
-      <label className="block text-sm font-medium">Link {quickAdd.kind==='text'&&<span className="font-normal text-gray-500">(optional)</span>}<input type="url" className="mt-1 w-full rounded-lg border px-3 py-2" value={url} onChange={event => setUrl(event.target.value)} placeholder="https://…" /></label>
+      <label className="block text-sm font-medium">Name<input autoFocus className="mt-1 w-full rounded-lg border px-3 py-2" value={title} onChange={event => setTitle(event.target.value)} placeholder="Link title" /></label>
+      <label className="block text-sm font-medium">Link<input type="url" className="mt-1 w-full rounded-lg border px-3 py-2" value={url} onChange={event => setUrl(event.target.value)} placeholder="https://…" /></label>
       {quickAdd.kind === 'link' && <p className="rounded-lg bg-fuchsia-50 p-3 text-sm text-fuchsia-900">Add any website, slide deck, video, or other resource. Students can open it from this week’s Links.</p>}
-      {quickAdd.kind === 'text' && <p className="text-sm text-gray-500">This quick entry is for a title or link. Use “Add a Text” at the top of the class to paste the complete text for annotation.</p>}
       <label className="block text-sm font-medium">Specific date <span className="font-normal text-gray-500">(optional)</span><input type="date" min={quickAdd.week} max={addDays(quickAdd.week, 6)} className="mt-1 w-full rounded-lg border px-3 py-2" value={itemDate} onChange={event => setItemDate(event.target.value)} /></label>
       <Button className="w-full" loading={adding} disabled={!title.trim() || (quickAdd.kind==='link'&&!/^https?:\/\//i.test(url.trim()))} onClick={() => void saveQuickAdd()}>Add to this week</Button>
     </div></Modal>}

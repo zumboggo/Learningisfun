@@ -23,20 +23,19 @@ export async function runCachedSync(
   const existing = inFlight.get(key);
   if (existing) return existing;
 
-  if (!force) {
-    const last = await db.app_metadata.get(`sync:${key}`);
-    const timestamp = Number(last?.value || 0);
-    if (Number.isFinite(timestamp) && Date.now() - timestamp < maxAgeMs) return;
-    const lastAttempt = await db.app_metadata.get(`sync-attempt:${key}`);
-    const attemptTimestamp = Number(lastAttempt?.value || 0);
-    if (Number.isFinite(attemptTimestamp) && Date.now() - attemptTimestamp < FAILED_RETRY_BACKOFF_MS) return;
-  }
-
-  await db.app_metadata.put({ key: `sync-attempt:${key}`, value: String(Date.now()) });
-  const promise = task()
-    .then(result => result === false ? undefined : db.app_metadata.put({ key: `sync:${key}`, value: String(Date.now()) }))
-    .then(() => undefined)
-    .finally(() => inFlight.delete(key));
+  // Register before the first asynchronous cache read: simultaneous callers
+  // must share the entire operation, not only the eventual network request.
+  const promise = (async () => {
+    if (!force) {
+      const last = await db.app_metadata.get(`sync:${key}`);
+      if (Date.now() - Number(last?.value || 0) < maxAgeMs) return;
+      const attempt = await db.app_metadata.get(`sync-attempt:${key}`);
+      if (Date.now() - Number(attempt?.value || 0) < FAILED_RETRY_BACKOFF_MS) return;
+    }
+    await db.app_metadata.put({ key: `sync-attempt:${key}`, value: String(Date.now()) });
+    const result = await task();
+    if (result !== false) await db.app_metadata.put({ key: `sync:${key}`, value: String(Date.now()) });
+  })().finally(() => inFlight.delete(key));
   inFlight.set(key, promise);
   return promise;
 }

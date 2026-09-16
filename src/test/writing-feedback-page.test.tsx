@@ -6,7 +6,7 @@ import { MemoryRouter } from 'react-router-dom';
 const generate = vi.fn();
 const append = vi.fn();
 vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: { $id: 'student-1' }, isParent: false }) }));
-vi.mock('@/services/writing.service', () => ({ generatePersonalWritingFeedback: (...args: unknown[]) => generate(...args) }));
+vi.mock('@/services/writing-feedback.service', () => ({ generatePersonalWritingFeedback: (...args: unknown[]) => generate(...args) }));
 vi.mock('@/services/error-log.service', () => ({ appendErrorLogSuggestions: (...args: unknown[]) => append(...args) }));
 
 describe('Writing feedback page', () => {

@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
 import { MarkdownPasteEditor } from '@/components/common/MarkdownPasteEditor';
-import { generatePersonalWritingFeedback } from '@/services/writing.service';
+import { generatePersonalWritingFeedback } from '@/services/writing-feedback.service';
 import { appendErrorLogSuggestions, type WritingErrorLogSuggestion } from '@/services/error-log.service';
 
 interface PersonalFeedback {

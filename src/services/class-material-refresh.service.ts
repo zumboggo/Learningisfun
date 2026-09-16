@@ -15,21 +15,34 @@ export interface ClassMaterialRefreshResult {
  * Each content area is independent, so one temporary failure does not prevent
  * a newly published quiz or note from reaching the device.
  */
-export async function refreshClassMaterials(classId: string, userId: string, isTeacher: boolean): Promise<ClassMaterialRefreshResult> {
-  const tasks: Array<[string, () => Promise<unknown>]> = [
-    ['notes and discussions', () => syncClassSessionsFromServer([classId])],
-    ['quizzes', () => syncQuizzesFromServer([classId])],
-    ['texts', () => syncTextsFromServer([classId], userId, isTeacher)],
-    ['presentations', () => syncPresentationLinks([classId])],
-    ['writing prompts', () => syncWritingFromServer([classId])],
-    ['card decks', () => syncDecksFromServer([classId], userId)],
+export type ContentDomain = 'sessions' | 'quizzes' | 'texts' | 'presentations' | 'writing' | 'flashcards';
+
+export async function syncClassMaterials(classIds: string[], userId: string, isTeacher: boolean, force = false, domains?: ContentDomain[]): Promise<ClassMaterialRefreshResult> {
+  const tasks: Array<[ContentDomain, string, () => Promise<unknown>]> = [
+    ['sessions', 'notes and discussions', () => syncClassSessionsFromServer(classIds)],
+    ['quizzes', 'quizzes', () => syncQuizzesFromServer(classIds)],
+    ['texts', 'texts', () => syncTextsFromServer(classIds, userId, isTeacher)],
+    ['presentations', 'presentations', () => syncPresentationLinks(classIds)],
+    ['writing', 'writing prompts', () => syncWritingFromServer(classIds)],
+    ['flashcards', 'card decks', () => syncDecksFromServer(classIds, userId)],
   ];
-  const outcomes = await Promise.allSettled(tasks.map(([, task]) => task()));
+  const selected = tasks.filter(([domain]) => !domains || domains.includes(domain));
+  const scope = [...new Set(classIds)].sort().join(',');
+  const outcomes = await Promise.allSettled(selected.map(([domain,, task]) => runCachedSync(
+    `class-content:${userId}:${isTeacher?'teacher':'member'}:${scope}:${domain}`,
+    domain === 'flashcards' ? SYNC_WINDOWS.stableContent : SYNC_WINDOWS.catalog,
+    async () => { if (await task() === false) throw new Error('Content refresh failed'); }, force,
+  )));
   const refreshed: string[] = [], failed: string[] = [];
   outcomes.forEach((outcome, index) => {
-    const name = tasks[index][0];
-    if (outcome.status === 'fulfilled' && outcome.value !== false) refreshed.push(name);
+    const name = selected[index][1];
+    if (outcome.status === 'fulfilled') refreshed.push(name);
     else failed.push(name);
   });
   return { refreshed, failed };
 }
+
+export function refreshClassMaterials(classId: string, userId: string, isTeacher: boolean) {
+  return syncClassMaterials([classId], userId, isTeacher, true);
+}
+import { runCachedSync, SYNC_WINDOWS } from './sync-policy';
