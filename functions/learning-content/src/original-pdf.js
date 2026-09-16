@@ -27,6 +27,9 @@ export async function authorizeTextMutation({ collection, id, data, userId, db, 
   try { prior = await db.getDocument(databaseId, collection, id); }
   catch (error) { if (error.code !== 404) throw error; }
   if (collection === 'texts') {
+    // A stale offline text edit must never re-enable a revoked public link.
+    if(prior) delete data.publicReadEnabled;
+    else data.publicReadEnabled = data.publicReadEnabled === true;
     if (prior && prior.teacherId !== userId) throw new Error('Only the text owner can change this text.');
     data.teacherId = userId;
     if (data.originalPdfId && !ownsPdf(userId, data.originalPdfId)) throw new Error('This PDF belongs to another teacher.');

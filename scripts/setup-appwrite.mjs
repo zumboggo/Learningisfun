@@ -583,7 +583,7 @@ const COLLECTIONS = [
   },
   {
     id: 'texts', name: 'Texts',
-    attributes: [ENUM('annotationMode', ['tqe','regular'], { required: false }), ENUM('tqeStage', ['thought','full'], { required: false }), S('teacherId', { required: true }), S('title', { required: true }), S('author', { required: false }), TXT('source', { required: false }), ENUM('contentMode', ['full','link'], { required: false }), TXT('externalUrl', { required: false }), S('originalPdfId', { required: false }), ENUM('status', ['draft','published','archived'], { required: true }), DATE('createdAt', { required: true }), DATE('updatedAt', { required: true })],
+    attributes: [BOOL('publicReadEnabled', { required: false }), ENUM('annotationMode', ['tqe','regular'], { required: false }), ENUM('tqeStage', ['thought','full'], { required: false }), S('teacherId', { required: true }), S('title', { required: true }), S('author', { required: false }), TXT('source', { required: false }), ENUM('contentMode', ['full','link'], { required: false }), TXT('externalUrl', { required: false }), S('originalPdfId', { required: false }), ENUM('status', ['draft','published','archived'], { required: true }), DATE('createdAt', { required: true }), DATE('updatedAt', { required: true })],
     indexes: [{ key: 'idx_teacherId', type: 'key', attributes: ['teacherId'] }, { key: 'idx_status', type: 'key', attributes: ['status'] }],
   },
   {

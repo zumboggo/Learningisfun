@@ -502,6 +502,7 @@ export type TqeType = 'thought' | 'question' | 'epiphany';
 export type AnnotationMode = 'tqe' | 'regular';
 
 export interface LearningText {
+  publicReadEnabled?: boolean;
   annotationMode?: AnnotationMode;
   tqeStage?: 'thought' | 'full';
   $id: string;

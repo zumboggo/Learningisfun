@@ -22,6 +22,7 @@ const functions = new Functions(client);
 const root = resolve(import.meta.dirname, '..');
 
 const allDefinitions = [
+  { id:'public-reading', name:'Public Reading (opt-in only)', directory:'functions/learning-content', entrypoint:'src/public-reading.js', execute:['any'], timeout:60, variables:{} },
   { id:'planning-release', name:'Planning Release', directory:'functions/learning-content', entrypoint:'src/release.js', schedule:'*/15 * * * *', execute:[], timeout:900, variables:{} },
   {
     id: 'learning-content',

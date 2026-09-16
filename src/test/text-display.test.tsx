@@ -3,14 +3,14 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { TextPresentPage } from '@/pages/teacher/TextPresentPage';
 import { TextViewControls } from '@/components/texts/TextViewControls';
 
-vi.mock('react-router-dom', () => ({ useParams: () => ({ textId: 'text' }), useNavigate: () => vi.fn() }));
-vi.mock('dexie-react-hooks', () => ({ useLiveQuery: (query: () => unknown) => query() }));
-vi.mock('@/db/schema', () => ({ db: {
-  texts: { get: () => ({ title: 'Reading', author: 'Author' }) },
-  text_paragraphs: { where: () => ({ equals: () => ({ sortBy: () => [
-    { $id: 'a', content: '**First** passage.' }, { $id: 'b', content: 'Second passage.' },
-  ] }) }) },
-} }));
+vi.mock('react-router-dom', () => ({ useParams: () => ({ textId: 'text' }), useSearchParams:()=>[new URLSearchParams(),vi.fn()], Link:({children,to}:{children:import('react').ReactNode;to:string})=><a href={to}>{children}</a> }));
+vi.mock('@/contexts/AuthContext',()=>({useAuth:()=>({user:{$id:'teacher'},isTeacher:true,isParent:false})}));
+vi.mock('dexie-react-hooks',()=>({useLiveQuery:(query:()=>unknown)=>{
+  const code=query.toString();
+  if(code.includes('db.texts.get'))return {$id:'text',title:'Reading',author:'Author',status:'published'};
+  if(code.includes('db.text_paragraphs'))return [{$id:'a',content:'**First** passage.'},{$id:'b',content:'Second passage.'}];
+  return [];
+}}));
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe('article text display', () => {
@@ -20,7 +20,7 @@ describe('article text display', () => {
     expect(screen.getByText('Second passage.')).toBeInTheDocument();
     expect(screen.queryByLabelText('Next paragraph')).not.toBeInTheDocument();
     fireEvent.click(screen.getByLabelText('Larger text'));
-    expect(screen.getByRole('article')).toHaveStyle({ fontSize: '34px' });
+    expect(screen.getByRole('main',{name:'Reading text'})).toHaveStyle({ fontSize: '24px' });
     expect(screen.queryByText('Cell Phone Mode')).not.toBeInTheDocument();
   });
   it('does not intercept Space in article mode', () => {

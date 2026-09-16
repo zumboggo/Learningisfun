@@ -18,7 +18,7 @@ import { QuizTakingPage } from '@/pages/QuizTakingPage';
 import { WritingPage } from '@/pages/WritingPage';
 import { LivePresentationPage } from '@/pages/LivePresentationPage';
 import { TextsPage } from '@/pages/TextsPage';
-import { TextReaderPage } from '@/pages/TextReaderPage';
+import { TextReaderPage, TextPublicReaderPage } from '@/pages/TextReaderPage';
 import { ReadingDiscussionPage } from '@/pages/ReadingDiscussionPage';
 import { TextLegacyArchivePage } from '@/pages/TextLegacyArchivePage';
 import { PeerReviewPage } from '@/pages/PeerReviewPage';
@@ -64,6 +64,12 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   }
 
   return <AppLayout>{children}</AppLayout>;
+}
+
+function ReadingRoute() {
+  const {user,loading}=useAuth();
+  if(loading)return <p className="p-6">Loading…</p>;
+  return user?<AppLayout><TextReaderPage/></AppLayout>:<TextPublicReaderPage/>;
 }
 
 function TeacherRoute({ children }: { children: ReactNode }) {
@@ -124,7 +130,7 @@ export default function App() {
           <Route path="/writing" element={<ProtectedRoute><WritingPage /></ProtectedRoute>} />
           <Route path="/presentations/:sessionId/live" element={<ProtectedRoute><LivePresentationPage /></ProtectedRoute>} />
           <Route path="/texts" element={<ProtectedRoute><TextsPage /></ProtectedRoute>} />
-          <Route path="/texts/:textId" element={<ProtectedRoute><TextReaderPage /></ProtectedRoute>} />
+          <Route path="/texts/:textId" element={<ReadingRoute />} />
           <Route path="/texts/:textId/legacy" element={<ProtectedRoute><TextLegacyArchivePage /></ProtectedRoute>} />
           <Route path="/texts/:textId/present" element={<FullscreenTeacherRoute><TextPresentPage /></FullscreenTeacherRoute>} />
           <Route path="/peer-reviews/:activityId" element={<ProtectedRoute><PeerReviewPage /></ProtectedRoute>} />

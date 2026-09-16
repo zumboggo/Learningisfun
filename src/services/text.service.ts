@@ -74,7 +74,7 @@ export async function paragraphsFromFile(file: File): Promise<string[]> {
   return paragraphs;
 }
 
-export async function createText(params: { teacherId: string; title: string; author: string; source: string; paragraphs: string[]; classIds: string[]; contentMode?: 'full' | 'link'; externalUrl?: string; originalPdf?: File; classPurposes?: Record<string,{isCopywork?:boolean;isAssignedReading?:boolean}>; classDates?: Record<string,string>; schedule?: { assignedAt: string; dueClassNumber?: number; dueDate?: string; isCopywork?:boolean; isAssignedReading?:boolean } }): Promise<LearningText> {
+export async function createText(params: { publicReadEnabled?: boolean; teacherId: string; title: string; author: string; source: string; paragraphs: string[]; classIds: string[]; contentMode?: 'full' | 'link'; externalUrl?: string; originalPdf?: File; classPurposes?: Record<string,{isCopywork?:boolean;isAssignedReading?:boolean}>; classDates?: Record<string,string>; schedule?: { assignedAt: string; dueClassNumber?: number; dueDate?: string; isCopywork?:boolean; isAssignedReading?:boolean } }): Promise<LearningText> {
   let originalPdfId: string | undefined;
   if (params.originalPdf) {
     const file = params.originalPdf;
@@ -87,7 +87,7 @@ export async function createText(params: { teacherId: string; title: string; aut
   }
   const now = getTimestamp();
   const text: LearningText = { $id: ID.unique(), teacherId: params.teacherId, title: params.title, author: params.author,
-    annotationMode: 'tqe', source: params.source, ...(originalPdfId ? { originalPdfId } : {}), contentMode: params.contentMode || 'full', externalUrl: params.externalUrl || '', status: 'published', createdAt: now, updatedAt: now, syncStatus: 'local' };
+    publicReadEnabled: params.publicReadEnabled ?? true, annotationMode: 'tqe', source: params.source, ...(originalPdfId ? { originalPdfId } : {}), contentMode: params.contentMode || 'full', externalUrl: params.externalUrl || '', status: 'published', createdAt: now, updatedAt: now, syncStatus: 'local' };
   await db.transaction('rw', db.texts, db.text_paragraphs, db.sync_queue, async () => {
   await db.texts.put(text); await addToQueue(params.teacherId, 'text', text.$id, 'create', text);
   for (let i = 0; i < params.paragraphs.length; i++) {

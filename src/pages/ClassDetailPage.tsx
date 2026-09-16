@@ -55,6 +55,7 @@ import { refreshClassMaterials } from '@/services/class-material-refresh.service
 import { AssignedCopywork } from '@/components/student/AssignedCopywork';
 import { buildClassFlashcardCsv, buildQuizletImportText, type ClassFlashcardExportRow } from '@/utils/csv-parser';
 
+import { PublicReadingChoice } from '@/components/texts/TextPublicSharing';
 const PRESENTATION_FOLDER_URL = 'https://lifeplusworldwide-my.sharepoint.com/:f:/g/personal/david_hepting_cdischina_com/IgCKVDp4qOqzR5itb7Q70yDbAb7A95ZN6fG4XHD74ghu3lU?e=1W9www';
 
 type WeeklyMaterial =
@@ -951,6 +952,7 @@ function ClassNicknamesPanel({ classId, userId, isOwner }: { classId: string; us
 function AssignTextsToClassModal({ open, classId, teacherId, onClose }: { open: boolean; classId: string; teacherId: string; onClose: () => void }) {
   const texts = useLiveQuery(() => db.texts.where('teacherId').equals(teacherId).and(text => text.status !== 'archived').toArray(), [teacherId]);
   const assignments = useLiveQuery(() => db.text_assignments.where('classId').equals(classId).toArray(), [classId]);
+  const [publicReadEnabled,setPublicReadEnabled]=useState(true);
   const [mode, setMode] = useState<'existing' | 'new'>('new');
   const [contentMode, setContentMode] = useState<'full' | 'link'>('full');
   const [chosen, setChosen] = useState<Set<string> | null>(null);
@@ -982,14 +984,14 @@ function AssignTextsToClassModal({ open, classId, teacherId, onClose }: { open: 
   const createAndAssign = async () => {
     setBusy(true); setError('');
     try {
-      await createText({ teacherId, title: title.trim(), author: author.trim(), source: '', paragraphs: contentMode === 'full' ? splitParagraphs(copiedText) : [], classIds: [classId], originalPdf: contentMode === 'full' ? originalPdf : undefined, contentMode, externalUrl: externalUrl.trim(), schedule });
+      await createText({ teacherId, publicReadEnabled, title: title.trim(), author: author.trim(), source: '', paragraphs: contentMode === 'full' ? splitParagraphs(copiedText) : [], classIds: [classId], originalPdf: contentMode === 'full' ? originalPdf : undefined, contentMode, externalUrl: externalUrl.trim(), schedule });
       onClose();
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not add this text.'); }
     finally { setBusy(false); }
   };
   const close = () => { if (busy) return; setChosen(null); setError(''); onClose(); };
   const newTextValid = Boolean(title.trim()) && (!externalUrl.trim()||/^https?:\/\//i.test(externalUrl.trim())) && (contentMode === 'link' ? /^https?:\/\//i.test(externalUrl) : (splitParagraphs(copiedText).length > 0 || Boolean(originalPdf)));
-  return <Modal open={open} onClose={close} title="Assign Text"><div className="space-y-4"><div className="grid grid-cols-2 gap-1 rounded-lg bg-gray-100 p-1"><button className={`rounded-md px-3 py-2 text-sm font-medium ${mode==='existing'?'bg-white shadow-sm':''}`} onClick={()=>setMode('existing')}>Choose existing</button><button className={`rounded-md px-3 py-2 text-sm font-medium ${mode==='new'?'bg-white shadow-sm':''}`} onClick={()=>setMode('new')}>Add new text</button></div>{error&&<p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}<ClassReadingDate purpose={purpose} onPurposeChange={setPurpose} name="this class" value={dueDate} onChange={setDueDate}/>{mode==='existing'?<><p className="text-sm text-gray-500">Choose from texts you have already added.</p><div className="max-h-72 space-y-2 overflow-auto">{texts?.length ? texts.map(text => <label key={text.$id} className="flex items-start gap-3 rounded-lg border p-3"><input type="checkbox" className="mt-1" checked={selected.has(text.$id)} onChange={() => toggle(text.$id)} /><span><strong className="block text-sm">{text.title}</strong><span className="text-xs text-gray-500">{text.author || 'Unknown author'}{text.contentMode==='link'?' · Link':''}</span></span></label>) : <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No saved texts yet. Choose “Add new text” above.</p>}</div><Button className="w-full" loading={busy} onClick={() => void save()}>Save text assignments</Button></>:<><div className="grid grid-cols-2 gap-1 rounded-lg border p-1"><button className={`rounded-md px-3 py-2 text-sm ${contentMode==='full'?'bg-blue-50 font-semibold text-blue-700':''}`} onClick={()=>setContentMode('full')}>Paste or upload</button><button className={`rounded-md px-3 py-2 text-sm ${contentMode==='link'?'bg-blue-50 font-semibold text-blue-700':''}`} onClick={()=>setContentMode('link')}>Post a link</button></div><input className="w-full rounded-lg border px-3 py-2" placeholder="Text title" value={title} onChange={e=>setTitle(e.target.value)}/><div className="grid grid-cols-2 gap-3"><input className="w-full rounded-lg border px-3 py-2" placeholder="Author (optional)" value={author} onChange={e=>setAuthor(e.target.value)}/></div>{contentMode==='link'?<label className="block text-sm font-medium">Source (optional link)<input type="url" className="w-full rounded-lg border px-3 py-2" placeholder="https://…" value={externalUrl} onChange={e=>setExternalUrl(e.target.value)}/></label>:<><label className="block text-sm font-medium">Source (optional link)<input type="url" className="mt-1 w-full rounded-lg border px-3 py-2" value={externalUrl} onChange={event=>setExternalUrl(event.target.value)} placeholder="https://…"/></label><TextFileUpload onBusyChange={setBusy} onImport={(content,file)=>{setCopiedText(content);setOriginalPdf(file)}}/><MarkdownPasteEditor value={copiedText} onChange={setCopiedText} rows={10}/><p className="text-xs text-gray-500">{splitParagraphs(copiedText).length} paragraph{splitParagraphs(copiedText).length===1?'':'s'} detected</p></>}<Button className="w-full" loading={busy} disabled={!newTextValid} onClick={()=>void createAndAssign()}>Add and assign text</Button></>}</div></Modal>;
+  return <Modal open={open} onClose={close} title="Assign Text"><div className="space-y-4"><div className="grid grid-cols-2 gap-1 rounded-lg bg-gray-100 p-1"><button className={`rounded-md px-3 py-2 text-sm font-medium ${mode==='existing'?'bg-white shadow-sm':''}`} onClick={()=>setMode('existing')}>Choose existing</button><button className={`rounded-md px-3 py-2 text-sm font-medium ${mode==='new'?'bg-white shadow-sm':''}`} onClick={()=>setMode('new')}>Add new text</button></div>{error&&<p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}<ClassReadingDate purpose={purpose} onPurposeChange={setPurpose} name="this class" value={dueDate} onChange={setDueDate}/>{mode==='existing'?<><p className="text-sm text-gray-500">Choose from texts you have already added.</p><div className="max-h-72 space-y-2 overflow-auto">{texts?.length ? texts.map(text => <label key={text.$id} className="flex items-start gap-3 rounded-lg border p-3"><input type="checkbox" className="mt-1" checked={selected.has(text.$id)} onChange={() => toggle(text.$id)} /><span><strong className="block text-sm">{text.title}</strong><span className="text-xs text-gray-500">{text.author || 'Unknown author'}{text.contentMode==='link'?' · Link':''}</span></span></label>) : <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No saved texts yet. Choose “Add new text” above.</p>}</div><Button className="w-full" loading={busy} onClick={() => void save()}>Save text assignments</Button></>:<><div className="grid grid-cols-2 gap-1 rounded-lg border p-1"><button className={`rounded-md px-3 py-2 text-sm ${contentMode==='full'?'bg-blue-50 font-semibold text-blue-700':''}`} onClick={()=>setContentMode('full')}>Paste or upload</button><button className={`rounded-md px-3 py-2 text-sm ${contentMode==='link'?'bg-blue-50 font-semibold text-blue-700':''}`} onClick={()=>setContentMode('link')}>Post a link</button></div><PublicReadingChoice enabled={publicReadEnabled} onChange={setPublicReadEnabled}/><input className="w-full rounded-lg border px-3 py-2" placeholder="Text title" value={title} onChange={e=>setTitle(e.target.value)}/><div className="grid grid-cols-2 gap-3"><input className="w-full rounded-lg border px-3 py-2" placeholder="Author (optional)" value={author} onChange={e=>setAuthor(e.target.value)}/></div>{contentMode==='link'?<label className="block text-sm font-medium">Source (optional link)<input type="url" className="w-full rounded-lg border px-3 py-2" placeholder="https://…" value={externalUrl} onChange={e=>setExternalUrl(e.target.value)}/></label>:<><label className="block text-sm font-medium">Source (optional link)<input type="url" className="mt-1 w-full rounded-lg border px-3 py-2" value={externalUrl} onChange={event=>setExternalUrl(event.target.value)} placeholder="https://…"/></label><TextFileUpload onBusyChange={setBusy} onImport={(content,file)=>{setCopiedText(content);setOriginalPdf(file)}}/><MarkdownPasteEditor value={copiedText} onChange={setCopiedText} rows={10}/><p className="text-xs text-gray-500">{splitParagraphs(copiedText).length} paragraph{splitParagraphs(copiedText).length===1?'':'s'} detected</p></>}<Button className="w-full" loading={busy} disabled={!newTextValid} onClick={()=>void createAndAssign()}>Add and assign text</Button></>}</div></Modal>;
 }
 
 function SimplePresentationLinksPanel({ links, isOwner }: { links: PresentationLink[]; isOwner: boolean }) {
@@ -1059,6 +1061,7 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
     localStorage.setItem(`class-open-weeks:${classId}`, JSON.stringify([...openWeeks]));
     localStorage.setItem(`class-open-sections:${classId}`, JSON.stringify([...openSections]));
   }, [classId, isOwner, openWeeks, openSections]);
+  const [quickPublic,setQuickPublic]=useState(true);
   const [quickAdd, setQuickAdd] = useState<{ kind: 'text' | 'link'; week: string } | null>(null);
   const [title, setTitle] = useState('');
   const [url, setUrl] = useState('');
@@ -1079,7 +1082,7 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
   }, [user?.$id, isOwner, isParent, weeklyQuizIdsKey]);
 
   const openQuickAdd = (kind: 'text' | 'link', week: string) => {
-    setTitle(''); setUrl(''); setItemDate(''); setAddError(''); setQuickAdd({ kind, week });
+    setQuickPublic(true); setTitle(''); setUrl(''); setItemDate(''); setAddError(''); setQuickAdd({ kind, week });
   };
   const saveQuickAdd = async () => {
     if (!quickAdd || !user || !title.trim()) return;
@@ -1092,7 +1095,7 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
       if (quickAdd.kind === 'link') {
         await addPresentationLinks({ title: title.trim(), url: url.trim(), classIds: [classId], assignedAt });
       } else {
-        await createText({ teacherId: user.$id, title: title.trim(), author: '', source: '', paragraphs: [], classIds: [classId], contentMode: 'link', externalUrl: url.trim(), schedule: { assignedAt } });
+        await createText({ publicReadEnabled:quickPublic, teacherId: user.$id, title: title.trim(), author: '', source: '', paragraphs: [], classIds: [classId], contentMode: 'link', externalUrl: url.trim(), schedule: { assignedAt } });
       }
       setOpenSections(current => new Set(current).add(`${quickAdd.week}-${quickAdd.kind === 'text' ? 'texts' : 'presentations'}`));
       setQuickAdd(null);
@@ -1144,7 +1147,7 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
     </section>
     {quickAdd && <Modal open onClose={() => !adding && setQuickAdd(null)} title={`Add ${quickAdd.kind} · ${formatWeek(quickAdd.week)}`}><div className="space-y-4">
       {addError && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{addError}</p>}
-      <label className="block text-sm font-medium">Name<input autoFocus className="mt-1 w-full rounded-lg border px-3 py-2" value={title} onChange={event => setTitle(event.target.value)} placeholder={quickAdd.kind === 'link' ? 'Link title' : 'Text title'} /></label>
+      {quickAdd.kind==='text'&&<PublicReadingChoice enabled={quickPublic} onChange={setQuickPublic}/>}<label className="block text-sm font-medium">Name<input autoFocus className="mt-1 w-full rounded-lg border px-3 py-2" value={title} onChange={event => setTitle(event.target.value)} placeholder={quickAdd.kind === 'link' ? 'Link title' : 'Text title'} /></label>
       <label className="block text-sm font-medium">Link {quickAdd.kind==='text'&&<span className="font-normal text-gray-500">(optional)</span>}<input type="url" className="mt-1 w-full rounded-lg border px-3 py-2" value={url} onChange={event => setUrl(event.target.value)} placeholder="https://…" /></label>
       {quickAdd.kind === 'link' && <p className="rounded-lg bg-fuchsia-50 p-3 text-sm text-fuchsia-900">Add any website, slide deck, video, or other resource. Students can open it from this week’s Links.</p>}
       {quickAdd.kind === 'text' && <p className="text-sm text-gray-500">This quick entry is for a title or link. Use “Add a Text” at the top of the class to paste the complete text for annotation.</p>}
