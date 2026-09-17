@@ -5,7 +5,7 @@ function harness() {
   const storage={
     classes:[{$id:'blue',teacherId:'teacher',courseName:'Literature',name:'Blue'},{$id:'red',teacherId:'teacher',courseName:'Literature',name:'Red'}],
     texts:[{$id:'text',title:'A reading',status:'published'}],
-    text_assignments:[{$id:'ab',textId:'text',classId:'blue',assignedAt:'2026-09-01',dueDate:'2026-09-15'},{$id:'ar',textId:'text',classId:'red',assignedAt:'2026-09-01',dueDate:'2026-09-16'}],
+    text_assignments:[{$id:'ab',textId:'text',classId:'blue',isAssignedReading:true,assignedAt:'2026-09-01',dueDate:'2026-09-15'},{$id:'ar',textId:'text',classId:'red',isAssignedReading:true,assignedAt:'2026-09-01',dueDate:'2026-09-16'}],
     class_members:[{$id:'mb',userId:'student',classId:'blue',role:'student'},{$id:'mr',userId:'peer',classId:'red',role:'student'}],
     users:[{$id:'student',name:'Student'},{$id:'peer',name:'Peer'}],reading_posts:[],reading_votes:[],reading_reports:[],
   };
@@ -102,4 +102,13 @@ test('hidden ancestor hides replies, and legacy collections are never queried or
   await call(post('reply','thought',{parentId:postId}));await call({action:'moderateReadingDiscussion',postId,operation:'hide'},teacher);
   expect((await call({action:'readReadingDiscussion'})).posts).toHaveLength(0);
   for(const method of ['listDocuments','createDocument','updateDocument','deleteDocument'])expect(db[method].mock.calls.some(args=>['text_annotations','tqe_records'].includes(args[1]))).toBe(false);
+});
+
+test('optional readings are excluded without deleting saved contributions',async()=>{
+ const {call,storage,teacher}=harness();await call(post('saved'));
+ storage.text_assignments.forEach(a=>a.isAssignedReading=false);
+ expect((await call({action:'listReadingDiscussions'},teacher)).readings).toHaveLength(0);
+ await expect(call(post('blocked'))).rejects.toThrow('Assigned Readings');
+ expect((await call({action:'readReadingDiscussion'},teacher)).canWrite).toBe(false);
+ expect(storage.reading_posts).toHaveLength(1);
 });

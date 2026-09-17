@@ -32,6 +32,7 @@ function GroupSession({students,onClose}:{students:Pickable[];onClose:()=>void})
     setAbsent(current=>{const next=new Set(current);next.delete(id);return next;});
     setGroups(null);
   };
+  const [sides,setSides]=useState(false);
   const [targetSize, setTargetSize] = useState(4);
   const [groups, setGroups] = useState<Pickable[][] | null>(null);
 
@@ -47,7 +48,7 @@ function GroupSession({students,onClose}:{students:Pickable[];onClose:()=>void})
 
   const asText = () =>
     (groups || [])
-      .map((group, i) => `Group ${i + 1}: ${group.map(s => s.name).join(', ')}`)
+      .map((group, i) => sides ? `Group ${i + 1}\nA: ${group.slice(0,Math.ceil(group.length/2)).map(s=>s.name).join(', ')}\nB: ${group.slice(Math.ceil(group.length/2)).map(s=>s.name).join(', ')}` : `Group ${i + 1}: ${group.map(s => s.name).join(', ')}`)
       .join('\n');
 
   return (
@@ -88,6 +89,7 @@ function GroupSession({students,onClose}:{students:Pickable[];onClose:()=>void})
               </p>
             </div>
 
+            <label className="flex min-h-11 items-center gap-2 text-sm font-medium"><input type="checkbox" checked={sides} onChange={e=>setSides(e.target.checked)}/> A and B sides</label>
             <Button disabled={!present.length} onClick={() => setGroups(makeRandomGroups(present, targetSize))} className="w-full">
               {groups ? 'Shuffle again' : 'Make groups'}
             </Button>
@@ -102,8 +104,8 @@ function GroupSession({students,onClose}:{students:Pickable[];onClose:()=>void})
                         <span className="ml-1 font-normal text-gray-400">({group.length})</span>
                       </h3>
                       <ul className="space-y-0.5 text-sm text-gray-600">
-                        {group.map(student => (
-                          <li key={student.id} className="flex items-center justify-between gap-2"><span>{student.name}</span><button type="button" aria-label={`Mark ${student.name} absent`} title="Exclude from these groups" className="min-h-10 min-w-10 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-700" onClick={()=>exclude(student.id)}>×</button></li>
+                        {group.map((student,index) => (
+                          <li key={student.id} className="flex items-center justify-between gap-2"><span>{sides&&<strong className="mr-2 text-blue-700">{index<Math.ceil(group.length/2)?'A':'B'}</strong>}{student.name}</span><button type="button" aria-label={`Mark ${student.name} absent`} title="Exclude from these groups" className="min-h-10 min-w-10 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-700" onClick={()=>exclude(student.id)}>×</button></li>
                         ))}
                       </ul>
                     </div>

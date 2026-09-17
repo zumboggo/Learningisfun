@@ -11,6 +11,7 @@ vi.mock('dexie-react-hooks',()=>({useLiveQuery:(fn:()=>unknown)=>{
   if(code.includes('db.texts.get'))return {$id:'text',title:'The road beyond the window',author:'A reading sample',annotationMode:'regular',contentMode:'full',status:'published'};
   if(code.includes('db.text_paragraphs'))return [{$id:'p1',textId:'text',sortOrder:0,content:'There was a **quiet light** over the hills that morning. The path curved away from the house, towards a place she had only imagined. She stood at the window and wondered whether leaving was another way of coming home.'},{$id:'p2',textId:'text',sortOrder:1,content:'Outside, the trees moved slowly in the wind. Nothing hurried her, and yet everything seemed to be waiting. She opened the door.'}];
   if(code.includes('db.classes.bulkGet'))return [{$id:'class',courseName:'Literature',name:'Blue'}];
+  if(code.includes('[textId+classId]'))return {isAssignedReading:true};
   if(code.includes('const assigned'))return 'class';
   if(code.includes('canSeePeerAnnotations'))return notes;
   return [];

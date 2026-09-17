@@ -32,3 +32,15 @@ it('disables grouping when everyone is absent and resets attendance on reopening
   expect(screen.getByRole('button',{name:'Make groups'})).not.toBeDisabled();
   expect(screen.getByRole('button',{name:'Exclude Alex from groups'})).toBeInTheDocument();
 });
+
+it('splits odd groups into A/B without reshuffling and includes sides in copy',()=>{
+ render(<CreateGroupsModal open students={students} onClose={()=>{}}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Make groups'}));
+ const original=screen.getByTestId('copy').textContent!;
+ fireEvent.click(screen.getByRole('checkbox',{name:'A and B sides'}));
+ const copied=screen.getByTestId('copy').textContent!;
+ expect(copied).toMatch(/A: [^\n]+, [^\n]+\nB: [^\n]+/);
+ for(const student of students)expect(copied).toContain(student.name);
+ fireEvent.click(screen.getByRole('checkbox',{name:'A and B sides'}));
+ expect(screen.getByTestId('copy').textContent).toBe(original);
+});

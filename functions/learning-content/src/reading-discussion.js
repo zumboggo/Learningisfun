@@ -25,7 +25,7 @@ export async function readingDiscussionAction({ body, profile, userId, memberCla
       : memberClassIds.size ? await list('classes', [Query.equal('$id', [...memberClassIds])]) : [];
     if (!classes.length) return { readings: [] };
     const assignments = await list('text_assignments', [Query.equal('classId', classes.map(c => c.$id))]);
-    const available = assignments.filter(a => profile.role === 'teacher' || textAssignmentAvailable(a));
+    const available = assignments.filter(a => a.isAssignedReading === true && (profile.role === 'teacher' || textAssignmentAvailable(a)));
     const ids = [...new Set(available.map(a => a.textId))];
     const texts = ids.length ? await list('texts', [Query.equal('$id', ids)]) : [];
     const seen = new Set();
@@ -43,6 +43,9 @@ export async function readingDiscussionAction({ body, profile, userId, memberCla
   const text = await db.getDocument(databaseId, 'texts', body.textId);
   const assigned = await list('text_assignments', [Query.equal('textId', text.$id), Query.equal('classId', cls.$id)]);
   if (!assigned.some(a => teacher || textAssignmentAvailable(a)) || (!teacher && text.status !== 'published')) fail('This reading is not available to this class yet');
+  const eligible = assigned.some(a => a.isAssignedReading === true);
+  if (!eligible && !teacher) fail('Only Assigned Readings have text discussions');
+  if (!eligible && !['readReadingDiscussion','moderateReadingDiscussion'].includes(body.action)) fail('Mark this text as Assigned Reading to contribute');
   const workspaceId = discussionKey(text.$id, cls.$id);
   const queries = [Query.equal('workspaceId', workspaceId)];
   const rows = await list('reading_posts', queries);
@@ -65,7 +68,7 @@ export async function readingDiscussionAction({ body, profile, userId, memberCla
     const studentIds = [...new Set(members.map(m => m.userId))];
     const people = studentIds.length ? await list('users', [Query.equal('$id', studentIds)]) : [];
     return {
-      title: text.title, className: `${cls.courseName || ''} · ${cls.name}`, teacher, canWrite: teacher || profile.role === 'student',
+      title: text.title, className: `${cls.courseName || ''} · ${cls.name}`, teacher, canWrite: eligible && (teacher || profile.role === 'student'),
       posts: posts.filter(visible).map(p => {
         const { authorId, ...safe } = p;
         return { ...safe, mine: authorId === userId, ...(teacher ? { authorId } : {}),

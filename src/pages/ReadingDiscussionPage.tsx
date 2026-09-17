@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/common/Button';
-import { Markdown } from '@/components/common/Markdown';
+import { ExpandableContribution } from '@/components/discussions/ExpandableContribution';
 import { readingCategories, readingDiscussion, sortedReadingPosts, type ReadingCategory, type ReadingDiscussion, type ReadingDiscussionPost } from '@/services/reading-discussion.service';
 
 export function ReadingDiscussionPage() {
@@ -29,7 +29,7 @@ function DiscussionWorkspace({textId,classId}:{textId:string;classId:string}) {
     {!present&&data.canWrite&&<DiscussionComposer key={`${user?.$id}:${category}`} storageKey={`reading-draft:${user?.$id}:${textId}:${classId}:${category}`} category={category} busy={busy} onSubmit={fields=>mutate('postReadingDiscussion',{...fields,category})}/>}
     <div className="my-4 flex flex-wrap gap-3"><label className="text-sm">Show <select className="ml-2 rounded-lg border bg-white p-2" value={sort} onChange={e=>setSort(e.target.value as typeof sort)}><option value="new">New</option><option value="top">Top</option>{category==='question'&&<option value="unanswered">Unanswered questions</option>}</select></label>{category==='question'&&<p className="self-center text-sm text-slate-500">An upvote means “I’d like us to discuss this.”</p>}</div>
     {present&&selected&&<Button variant="secondary" onClick={()=>setSelected(null)}>Show all contributions</Button>}
-    <div className="space-y-4">{shown.map(post=><ReadingThread key={post.id} post={post} posts={visiblePosts} teacher={data.teacher} canWrite={data.canWrite&&!present} busy={busy} mutate={mutate} readUrl={readUrl} draftPrefix={`reading-draft:${user?.$id}:${textId}:${classId}`} present={present} onSelect={()=>setSelected(post.id)}/>)}{!shown.length&&<p className="rounded-2xl bg-slate-50 p-5 text-slate-600">{sort==='unanswered'?'No unanswered questions.':'No contributions here yet. What stood out to you?'}</p>}</div>
+    <div className="space-y-2">{shown.map(post=><ReadingThread key={post.id} post={post} posts={visiblePosts} teacher={data.teacher} canWrite={data.canWrite&&!present} busy={busy} mutate={mutate} readUrl={readUrl} draftPrefix={`reading-draft:${user?.$id}:${textId}:${classId}`} present={present} onSelect={()=>setSelected(post.id)}/>)}{!shown.length&&<p className="rounded-2xl bg-slate-50 p-5 text-slate-600">{sort==='unanswered'?'No unanswered questions.':'No contributions here yet. What stood out to you?'}</p>}</div>
     {!present&&data.teacher&&<details className="mt-6 rounded-xl border p-4"><summary className="cursor-pointer font-semibold">Participation by category</summary><p className="my-2 text-sm text-slate-500">Votes help choose what to discuss; they are not grades.</p><div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr>{['Student','Thoughts','Questions','Connections & Insights','Replies'].map(t=><th className="p-2" key={t}>{t}</th>)}</tr></thead><tbody>{data.participation.map(p=><tr key={p.id}><td className="p-2">{p.name}</td><td>{p.thought}</td><td>{p.question}</td><td>{p.connection}</td><td>{p.replies}</td></tr>)}</tbody></table></div></details>}
   </div>;
 }
@@ -52,12 +52,12 @@ function ReadingThread({post,posts,teacher,canWrite,busy,mutate,readUrl,draftPre
   const [reply,setReply]=useState(false),[report,setReport]=useState(false),[reason,setReason]=useState('');
   const send=(action:string,fields:Record<string,unknown>)=>void mutate(action,{postId:post.id,...fields}).catch(()=>{});
   const locked=ancestorLocked||post.locked||post.hidden;
-  return <article className={`rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 ${post.hidden?'opacity-60':''}`}>
+  return <article className={`rounded-xl border border-slate-200 bg-white p-3 ${post.hidden?'opacity-60':''}`}>
     <div className="mb-2 flex flex-wrap gap-2 text-xs text-slate-500"><strong>{post.mine&&!present?'You':post.label}</strong><time>{new Date(post.createdAt).toLocaleString()}</time>{post.pinned&&<span>📌 Pinned</span>}{post.locked&&<span>Locked</span>}{post.hidden&&<span>Hidden</span>}</div>
-    {post.quotation&&<blockquote className="mb-3 whitespace-pre-wrap border-l-2 border-slate-300 bg-slate-50 p-3 font-serif text-slate-600">{post.quotation}</blockquote>}
+    {post.quotation&&<blockquote className="mb-3 whitespace-pre-wrap border-l-2 border-slate-300 bg-slate-50 p-3 font-serif text-slate-600"><ExpandableContribution content={post.quotation} present={present} quote/></blockquote>}
     {post.paragraph&&<Link className="mb-2 inline-block text-sm text-blue-700 underline" to={`${readUrl}&paragraph=${post.paragraph}`}>Read paragraph {post.paragraph} ↗</Link>}
-    <Markdown content={post.content} className={present?'text-2xl leading-relaxed':'text-base leading-relaxed'}/>
-    <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+    <ExpandableContribution content={post.content} present={present}/>
+    <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
       <DiscussionVote announceScore score={post.score} value={post.voted?1:0} disabled={!canWrite||busy||post.hidden} upvoteTitle={post.category==='question'?'I’d like us to discuss this':'Upvote'} onVote={value=>mutate('voteReadingDiscussion',{postId:post.id,upvoted:value===1})}/>
       {canWrite&&!locked&&depth<3&&<Button size="sm" variant="secondary" onClick={()=>setReply(!reply)}>{reply?'Cancel reply':'Reply'}</Button>}
       {canWrite&&<button className="min-h-11 px-2 text-slate-500" onClick={()=>setReport(!report)}>{report?'Cancel report':'Report'}</button>}
@@ -67,6 +67,6 @@ function ReadingThread({post,posts,teacher,canWrite,busy,mutate,readUrl,draftPre
     {report&&<form onSubmit={e=>{e.preventDefault();void mutate('reportReadingDiscussion',{postId:post.id,reason}).then(()=>{setReport(false);setReason('');}).catch(()=>{});}}><label className="block text-sm">What concerns you?<textarea required minLength={3} maxLength={1000} className="mt-2 w-full rounded border p-2" value={reason} onChange={e=>setReason(e.target.value)}/></label><Button type="submit" disabled={busy}>Send report privately to teacher</Button></form>}
     {teacher&&!present&&Boolean(post.reports?.length)&&<div className="my-3 rounded-lg bg-amber-50 p-3"><h3 className="font-medium">Reported concerns</h3>{post.reports?.map(r=><p key={r.id} className="text-sm">{r.reason}</p>)}<Button size="sm" variant="secondary" disabled={busy} onClick={()=>send('moderateReadingDiscussion',{operation:'dismissReports'})}>Dismiss reports</Button></div>}
     {reply&&canWrite&&!locked&&<DiscussionComposer storageKey={`${draftPrefix}:reply:${post.id}`} category={post.category} busy={busy} onCancel={()=>setReply(false)} onSubmit={fields=>mutate('postReadingDiscussion',{...fields,parentId:post.id}).then(()=>setReply(false))}/>}
-    <div className="mt-3 space-y-3 border-l border-slate-200 pl-2 sm:pl-4">{posts.filter(p=>p.parentId===post.id).sort((a,b)=>a.createdAt.localeCompare(b.createdAt)).map(child=><ReadingThread key={child.id} {...{posts,teacher,canWrite,busy,mutate,readUrl,draftPrefix,present,onSelect}} post={child} depth={depth+1} ancestorLocked={locked}/>)}</div>
+    <div className="mt-2 space-y-2 border-l border-slate-200 pl-2 sm:pl-4">{posts.filter(p=>p.parentId===post.id).sort((a,b)=>a.createdAt.localeCompare(b.createdAt)).map(child=><ReadingThread key={child.id} {...{posts,teacher,canWrite,busy,mutate,readUrl,draftPrefix,present,onSelect}} post={child} depth={depth+1} ancestorLocked={locked}/>)}</div>
   </article>;
 }
