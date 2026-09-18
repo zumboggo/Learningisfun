@@ -1,7 +1,7 @@
 import type { WeeklyPlanData } from './planner.service';
 import { courseCode, type LessonSlot } from './unit-planning';
 
-export interface WeeklyResource extends LessonSlot { course: string }
+export interface WeeklyResource extends LessonSlot { course: string; sourceWeek?: string }
 
 // Only content belongs to the resource. Placement ID, source ID and completion
 // stay with the individual lesson, including historical completed placements.

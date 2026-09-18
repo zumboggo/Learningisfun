@@ -78,6 +78,7 @@ export function WeeklySlots({ data: suppliedData, units, onChange, preferenceKey
     if(!resourceId || !window.confirm('Delete this planning resource and remove it from every lesson in this week? Published class materials will remain.'))return;
     const next=structuredClone(data);
     if(next.weeklyResources!.some(item=>item.id===resourceId&&item.existingTextId))next.dismissedAssignedTexts=[...(next.dismissedAssignedTexts||[]),resourceId];
+    if(resourceId.startsWith('starter:'))next.dismissedStarterResources=[...(next.dismissedStarterResources||[]),resourceId];
     next.weeklyResources=next.weeklyResources!.filter(item=>item.id!==resourceId);
     for(const lesson of next.lessons){
       lesson.slots=lesson.slots?.filter(slot=>slot.planningItemId!==resourceId);

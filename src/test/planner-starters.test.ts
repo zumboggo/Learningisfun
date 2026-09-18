@@ -1,0 +1,50 @@
+import {expect,it} from 'vitest';
+import {preparePlannerStarters} from '@/services/planner-starters';
+import {createWeeklyPlan} from '@/services/planner.service';
+import {routineNames} from '@/services/planner-routines';
+import {placePlannerCard} from '@/services/planner-cards';
+import type {PlannerWeekSource} from '@/services/planner-parser';
+const week:PlannerWeekSource={key:'week',header:'',startDate:'2026-09-21',calendar:'',blocks:['WL-B','WL-R','AP'].map(code=>({code,title:code,label:code,unit:'Unit 1',goal:'Read',std:'',diff:'',presentationCandidates:[],textQueue:['Reading one','Reading two','Reading three','Reading four','COPY · Copy model'],days:[{date:'Tuesday',iso:'2026-09-22',daytype:'',I:'',W:'',Y:'',C:'',due:[]}]}))};
+const fixture=()=>createWeeklyPlan(structuredClone(week),{});
+it('provides a bare vocab presentation, main routines, and four readings plus copywork per course',()=>{
+ const plan=preparePlannerStarters(fixture());
+ const wl=plan.weeklyResources!.filter(r=>r.course==='WL');
+ expect(wl.filter(r=>r.kind==='presentation')).toMatchObject([{title:'Vocab Presentation',content:'',url:''}]);
+ expect(wl.filter(r=>r.isRoutine)).toHaveLength(routineNames.length);
+ expect(wl.filter(r=>r.assignedReading)).toHaveLength(4);
+ expect(wl.filter(r=>r.isCopywork)).toMatchObject([{title:'Copy model'}]);
+ expect(plan.courses.every(c=>c.texts.length===0)).toBe(true);
+ expect(plan.lessons.every(l=>!l.slots?.length&&!l.overflow?.length)).toBe(true);
+ expect(preparePlannerStarters(plan)).toEqual(plan);
+});
+it('uses current source choices without overwriting saved lessons or their source snapshot',()=>{
+ const plan=fixture();plan.week.blocks[0].textQueue=['Old saved source'];
+ plan.lessons[0].privateNotes='My edits';
+ const snapshot=structuredClone(plan);
+ const updated=preparePlannerStarters(plan,week);
+ expect(updated.week).toEqual(snapshot.week);
+ expect(updated.lessons).toEqual(snapshot.lessons);
+ expect(updated.weeklyResources!.some(r=>r.title==='Reading four')).toBe(true);
+ expect(plan).toEqual(snapshot);
+});
+it('keeps starter edits and dismissals, and supports placing the same option in either section',()=>{
+ let plan=preparePlannerStarters(fixture());
+ const item=plan.weeklyResources!.find(r=>r.title==='Vocab Presentation'&&r.course==='WL')!;
+ item.title='My vocabulary talk';item.content='Teacher edit';
+ expect(preparePlannerStarters(plan).weeklyResources!.find(r=>r.id===item.id)?.title).toBe('My vocabulary talk');
+ const slot={...item,planningItemId:item.id};
+ plan=placePlannerCard(plan,{slot},plan.lessons[0].id,0);
+ plan=placePlannerCard(plan,{slot},plan.lessons[1].id,0);
+ expect(plan.lessons[0].slots![0].id).not.toBe(plan.lessons[1].slots![0].id);
+ plan.dismissedStarterResources=[item.id];
+ plan.weeklyResources=plan.weeklyResources!.filter(r=>r.id!==item.id);
+ plan.lessons.forEach(l=>{l.slots=[];});
+ expect(preparePlannerStarters(plan).weeklyResources!.some(r=>r.id===item.id)).toBe(false);
+});
+it('combines reading and copywork labels when the same text is suggested for both',()=>{
+ const source=structuredClone(week);
+ source.blocks.forEach(b=>{b.textQueue=['Essay','COPY · Essay'];});
+ const items=preparePlannerStarters(createWeeklyPlan(source,{})).weeklyResources!.filter(r=>r.kind==='text'&&r.course==='WL');
+ expect(items).toHaveLength(1);
+ expect(items[0]).toMatchObject({assignedReading:true,isCopywork:true});
+});

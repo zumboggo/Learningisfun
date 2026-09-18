@@ -1,3 +1,5 @@
+import { preparePlannerStarters } from '@/services/planner-starters';
+import type { PlannerWeekSource } from '@/services/planner-parser';
 import { normalizePlan } from '@/services/planner-layout';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
@@ -15,9 +17,9 @@ import { PlannerPreparation } from './PlannerPreparation';
 import { PlannerSharePreview } from './PlannerSharePreview';
 import { WeeklySlots } from './WeeklySlots';
 
-export function WeeklyPlannerEditor({ initial, record, sourceId, userId, units, onUnitsChange, onSaved }: { initial: WeeklyPlanData; record?: WeeklyPlanRecord; sourceId: string; userId: string; units: UnitPlan[]; onUnitsChange: (units: UnitPlan[]) => void; onSaved: (record: WeeklyPlanRecord) => void }) {
+export function WeeklyPlannerEditor({ initial, suggestedWeek, record, sourceId, userId, units, onUnitsChange, onSaved }: { initial: WeeklyPlanData; suggestedWeek?: PlannerWeekSource; record?: WeeklyPlanRecord; sourceId: string; userId: string; units: UnitPlan[]; onUnitsChange: (units: UnitPlan[]) => void; onSaved: (record: WeeklyPlanRecord) => void }) {
   const [, redraw] = useReducer(value => value + 1, 0);
-  const [writer] = useState(() => new PlannerAutosave(`planner-draft:${userId}:${sourceId}:${initial.week.key}`, { data: prepareWeeklyBank(migrateCardEditor(initial)), ready: record?.status === 'ready' || record?.status === 'published' }, record, localStorage, async (draft, id) => { const saved = (await saveWeeklyPlan(sourceId, projectCardMaterials(draft.data), draft.ready ? 'ready' : 'draft', id)).plan; onSaved(saved); return saved; }));
+  const [writer] = useState(() => new PlannerAutosave(`planner-draft:${userId}:${sourceId}:${initial.week.key}`, { data: preparePlannerStarters(prepareWeeklyBank(migrateCardEditor(initial)),suggestedWeek), ready: record?.status === 'ready' || record?.status === 'published' }, record, localStorage, async (draft, id) => { const saved = (await saveWeeklyPlan(sourceId, projectCardMaterials(draft.data), draft.ready ? 'ready' : 'draft', id)).plan; onSaved(saved); return saved; }));
   const classIdsKey = [...new Set(initial.lessons.map(lesson=>lesson.classId).filter(Boolean))].sort().join('|');
   const assignedReadings = useLiveQuery(async () => {
     if(!classIdsKey)return {texts:[],assignments:[]};
@@ -45,7 +47,7 @@ export function WeeklyPlannerEditor({ initial, record, sourceId, userId, units, 
     window.addEventListener('online', online); window.addEventListener('beforeunload', leaving);
     return () => { window.removeEventListener('online', online); window.removeEventListener('beforeunload', leaving); };
   }, [writer]);
-  const data = normalizePlan(writer.draft.data);
+  const data = preparePlannerStarters(normalizePlan(writer.draft.data),suggestedWeek);
   const change = (next: WeeklyPlanData) => writer.update({ ...writer.draft, data: next });
   const action = async (publish: boolean) => {
     setBusy(true); setMessage(''); setShareError('');
