@@ -22,11 +22,15 @@ export function parsePlannerSource(source:string):ParsedPlannerSource {
     for(const line of segment){
       const block=line.match(/^\s*\[BLOCK\]\s+(\S+)\s+(.*)$/);if(block){current={code:block[1],title:block[2].trim(),label:LABELS[block[1]]||block[1],unit:'',std:'',goal:'',diff:'',days:[],presentationCandidates:presentations.get(key)?.get(PRES_KEY[block[1]])||[],textQueue:[]};blocks.push(current);currentDay=null;continue;}
       if(!current)continue;
+      const textItem=line.match(/^\s*\[TEXT\]\s+(.*)$/);
+      if(textItem){current.textQueue.push(textItem[1].trim());continue;}
+      const presentation=line.match(/^\s*\[PRESENT\]\s+(.*)$/);
+      if(presentation){current.presentationCandidates.push(presentation[1].trim());continue;}
       for(const [prefix,field] of [['UNIT','unit'],['STD','std'],['GOAL','goal'],['DIFF','diff']] as const){const match=line.match(new RegExp(`^\\s*${prefix}\\s+(.*)$`));if(match)current[field]=match[1].trim();}
       const day=line.match(/^\s*\[DAY\]\s+(.*)$/);if(day){currentDay={date:day[1].trim(),iso:isoDate(day[1],year),daytype:'',I:'',W:'',Y:'',C:'',due:[]};current.days.push(currentDay);continue;}
       const activity=line.match(/^\s*([IWYC]):\s+(.*)$/);if(activity&&currentDay){let text=activity[2].trim();if(text.includes('‣ DUE:')){const parts=text.split('‣ DUE:');text=parts[0].trim();currentDay.due=parts[1].split('•').map(value=>value.trim()).filter(Boolean);}currentDay[activity[1] as 'I'|'W'|'Y'|'C']=text;if(activity[1]==='I')currentDay.daytype=text.includes('·')?text.split('·')[0].trim():'';}
     }
-    for(const block of blocks)block.textQueue=queues.get(PRES_KEY[block.code])?.get(unitNumber(block.unit))||[];
+    for(const block of blocks)if(!block.textQueue.length)block.textQueue=queues.get(PRES_KEY[block.code])?.get(unitNumber(block.unit))||[];
     if(blocks.length)weeks.push({key,header,startDate,calendar,blocks});
   }
   if(weeks.length===0)warnings.push('No [WEEK] sections were found.');
