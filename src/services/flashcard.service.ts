@@ -482,6 +482,7 @@ export async function buildFlashcardQueue(
   deckId: string,
   mode: FlashcardQueueMode = 'mixed',
   limit = 30,
+  allowedCardIds?: ReadonlySet<string>,
 ): Promise<FlashcardCard[]> {
   const [cards, states, preferences, settings] = await Promise.all([
     getDeckCards(deckId),
@@ -491,7 +492,7 @@ export async function buildFlashcardQueue(
   ]);
   const now = Date.now();
   const preferenceByCard = new Map(preferences.map(row => [row.cardId,row]));
-  const availableCards = cards.filter(card => { const preference=preferenceByCard.get(card.$id);return !preference?.suspended && (!preference?.buriedUntil || Date.parse(preference.buriedUntil) <= now); });
+  const availableCards = cards.filter(card => { if(allowedCardIds&&!allowedCardIds.has(card.$id))return false;const preference=preferenceByCard.get(card.$id);return !preference?.suspended && (!preference?.buriedUntil || Date.parse(preference.buriedUntil) <= now); });
   if (mode === 'all') return (settings.order === 'random' ? [...availableCards].sort(()=>Math.random()-.5) : availableCards).slice(0, limit);
 
   const stateByCard = new Map(states.map(s => [s.cardId, s]));

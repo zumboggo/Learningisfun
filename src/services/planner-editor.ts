@@ -45,6 +45,9 @@ export function projectCardMaterials(data: WeeklyPlanData): WeeklyPlanData {
     }
     const classId=next.lessons.find(lesson=>lesson.classCode===course.classCode)?.classId;
     for(const item of next.weeklyResources||[])if(item.kind==='presentation'&&classId&&item.publishClassIds?.includes(classId)){
+      const cancelledPlacement=next.cancelledLessons?.some(l=>l.classCode===course.classCode&&[...(l.slots||[]),...(l.overflow||[])].some(s=>s.planningItemId===item.id));
+      const activePlacement=next.lessons.some(l=>l.classCode===course.classCode&&[...(l.slots||[]),...(l.overflow||[])].some(s=>s.planningItemId===item.id));
+      if(cancelledPlacement&&!activePlacement)continue;
       const resourceId=item.resourceId||item.id;
       if(!course.presentations.some(p=>p.resourceId===resourceId))course.presentations.push({resourceId,title:item.title,date:item.dueDate||next.week.startDate,url:item.url,publish:item.publish!==false,givenBy:item.givenBy||'teacher'});
     }

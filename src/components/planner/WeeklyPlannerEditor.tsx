@@ -1,3 +1,4 @@
+import { normalizePlan } from '@/services/planner-layout';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
 import { addAssignedTexts } from '@/services/planner-assigned-texts';
@@ -44,7 +45,7 @@ export function WeeklyPlannerEditor({ initial, record, sourceId, userId, units, 
     window.addEventListener('online', online); window.addEventListener('beforeunload', leaving);
     return () => { window.removeEventListener('online', online); window.removeEventListener('beforeunload', leaving); };
   }, [writer]);
-  const data = writer.draft.data;
+  const data = normalizePlan(writer.draft.data);
   const change = (next: WeeklyPlanData) => writer.update({ ...writer.draft, data: next });
   const action = async (publish: boolean) => {
     setBusy(true); setMessage(''); setShareError('');

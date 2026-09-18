@@ -1,3 +1,4 @@
+import { StudentVocabularyChooser } from '@/components/StudentVocabularyChooser';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -255,7 +256,9 @@ export function DecksListPage() {
 
       {actionError && <p className="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{actionError}</p>}
 
+      {!isTeacher && user && decks && <StudentVocabularyChooser userId={user.$id} decks={decks} limit={sessionSize}/>}
       {!isTeacher && decks && decks.length > 0 && (
+        <details className="mb-6"><summary className="cursor-pointer text-sm text-slate-500">Advanced: individual decks and custom study</summary>
         <section className="mb-6 rounded-2xl border border-blue-100 bg-blue-50/70 p-4 pb-24 sm:pb-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div><p className="text-xs font-bold uppercase tracking-wider text-blue-700">Recommended session</p><h2 className="mt-1 text-xl font-semibold text-slate-900">Choose what to study</h2><p className="mt-1 text-sm text-slate-500">Due decks are selected first. Your choices are remembered.</p></div>
@@ -280,9 +283,9 @@ export function DecksListPage() {
           </div>
           <div className="sticky bottom-20 z-10 mt-4 rounded-2xl border border-blue-200 bg-white/95 p-3 shadow-xl backdrop-blur sm:bottom-3">
             <div className="mb-2 flex items-center justify-between gap-4 text-sm text-slate-600"><span>{selectedDeckIds?.size ?? 0} {selectedDeckIds?.size === 1 ? 'deck' : 'decks'} selected</span><span>{sessionSize} cards</span></div>
-            <div className="grid grid-cols-2 gap-2"><Button size="lg" variant="secondary" disabled={(selectedDeckIds?.size ?? 0) === 0} onClick={() => setShowCustomStudy(true)}>Custom study</Button><Button size="lg" className="w-full bg-blue-600" disabled={(selectedDeckIds?.size ?? 0) === 0} onClick={beginCombinedStudy}>Study {sessionSize} cards</Button></div>
+            <div className="grid grid-cols-2 gap-2"><Button size="lg" variant="secondary" disabled={(selectedDeckIds?.size ?? 0) === 0} onClick={() => setShowCustomStudy(true)}>Custom study</Button><Button size="lg" className="w-full bg-blue-600" disabled={(selectedDeckIds?.size ?? 0) === 0} onClick={beginCombinedStudy}>Study Now</Button></div>
           </div>
-        </section>
+        </section></details>
       )}
 
       {isTeacher && teacherDecks.length > 0 && (

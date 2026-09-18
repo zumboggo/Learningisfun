@@ -33,21 +33,21 @@ describe('simplified weekly planner', () => {
     data.preparation.push({ id: 'quiz-results-WL-B', label: 'Update Quiz results in Canvas', kind: 'quiz', status: 'todo' }, { id: 'add-cards-WL-B', label: 'Add flashcards', kind: 'other', status: 'ready' }, { id: 'manual', label: 'Print handout', kind: 'handout', status: 'ready' });
     data.preparation[0].status = 'ready';
     const next = normalizePlan(data);
-    expect(next.preparation).toHaveLength(5);
+    expect(next.preparation).toHaveLength(4);
     expect(next.preparation[0].status).toBe('ready');
     expect(next.preparation.find(task => task.id === 'manual')?.status).toBe('ready');
     expect(normalizePlan(next)).toEqual(next);
     expect(next.lessons).toEqual(data.lessons);
   });
-  it('cycles each section independently and saves presentation checks', () => {
+  it('toggles cancelled lessons independently and saves presentation checks', () => {
     function Harness() { const [data, setData] = useState(fixture); return <PlannerPreparation data={data} units={[]} onChange={setData}/>; }
     render(<Harness/>);
-    const blue = screen.getByRole('button', { name: /World Lit Blue: On Track/ });
-    fireEvent.click(blue); expect(blue).toHaveTextContent('1 Class Behind');
-    fireEvent.click(blue); expect(blue).toHaveTextContent('2 Classes Behind');
-    expect(screen.getByRole('button', { name: /World Lit Red: On Track/ })).toBeInTheDocument();
-    fireEvent.click(blue); expect(blue).toHaveTextContent('On Track');
-    expect(screen.getAllByLabelText('Flashcards Updated')).toHaveLength(1);
+    const days=screen.getAllByRole('checkbox').filter(box=>box.closest('section')?.getAttribute('aria-label')==='Class days');
+    expect(days).toHaveLength(4);
+    fireEvent.click(days[0]);expect(days[0]).not.toBeChecked();
+    expect(days[1]).toBeChecked();
+    fireEvent.click(days[0]);expect(days[0]).toBeChecked();
+    expect(screen.queryByLabelText('Flashcards Updated')).not.toBeInTheDocument();
     fireEvent.click(screen.getAllByLabelText('Presentation done and link posted')[0]);
     expect(screen.getAllByLabelText('Presentation done and link posted')[0]).toBeChecked();
     expect(screen.getAllByLabelText('Presentation done and link posted')).toHaveLength(3);

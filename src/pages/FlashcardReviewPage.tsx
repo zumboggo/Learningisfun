@@ -1,3 +1,4 @@
+import { selectedVocabularyCards, type VocabularySelection } from '@/services/student-vocabulary';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -118,18 +119,24 @@ export function FlashcardReviewPage() {
 
   const startSession = async (mode: StudyMode) => {
     if (!combinedDeckIds.length || !user) return;
+    let selection:VocabularySelection|null=null;
+    if(searchParams.get('selection')==='vocabulary'){
+      try{selection=JSON.parse(sessionStorage.getItem('vocabulary-session:'+user.$id)||'null');}catch{/* fail closed */}
+      if(!selection||selection.userId!==user.$id||!Array.isArray(selection.cardIds)||!Array.isArray(selection.deckIds)){setEmptyMessage('This selection expired. Return to Cards and choose what to study again.');return;}
+    }
     const existingStates = await db.student_card_state.where('userId').equals(user.$id).and(state => combinedDeckIds.includes(state.deckId)).toArray();
     const stateByCard = new Map(existingStates.map(state => [state.cardId, state]));
     const customMode: FlashcardQueueMode = customFilter === 'due' || customFilter === 'new' ? customFilter : 'all';
     const requiresFullPool = Boolean(customFilter || customTags.length);
     // Unlimited practice runs over the whole deck, shuffled, with no cap.
     const queues = await Promise.all(combinedDeckIds.map(id => buildFlashcardQueue(
-      user.$id, id, mode === 'unlimited' ? 'all' : requiresFullPool ? customMode : mode, mode === 'unlimited' || requiresFullPool ? Number.MAX_SAFE_INTEGER : sessionLimit,
+      user.$id, id, mode === 'unlimited' ? 'all' : requiresFullPool ? customMode : mode, mode === 'unlimited' || requiresFullPool ? Number.MAX_SAFE_INTEGER : sessionLimit, selection?new Set(selection.cardIds):undefined,
     )));
     const matchingCards = customFilter || customTags.length
       ? filterCustomStudyCards(queues.flat(), existingStates, customTags, customFilter || 'all')
       : queues.flat();
-    const sessionCards = shuffle(matchingCards).slice(0, mode === 'unlimited' ? Number.MAX_SAFE_INTEGER : sessionLimit);
+    const scopedCards=selection?selectedVocabularyCards(matchingCards,selection):matchingCards;
+    const sessionCards = shuffle(scopedCards).slice(0, mode === 'unlimited' ? Number.MAX_SAFE_INTEGER : sessionLimit);
     if (sessionCards.length === 0) {
       setEmptyMessage(
         mode === 'due' ? 'No due cards right now.'
@@ -168,7 +175,7 @@ export function FlashcardReviewPage() {
   useEffect(() => {
     if (searchParams.get('autostart') !== '1' || !user || !combinedDeckIds.length || autoStartedRef.current) return;
     autoStartedRef.current = true;
-    void startSession('mixed');
+    void startSession(searchParams.get('mode')==='unlimited'?'unlimited':'mixed');
   }, [combinedDeckIds, searchParams, user]);
 
   const finishSession = async () => {
