@@ -4,10 +4,10 @@ import { resourceSlot, type LessonSlot, type UnitResource, type ResourceKind } f
 import type { LessonPlan } from '@/services/planner.service';
 import { shortWords, type WeeklyResource } from '@/services/planner-bank';
 
-export function PlannerResourceTray({resources,week,lessons,onSelect,onAdd,items=[],onEdit,onPlace,onDelete,onAddRoutine,onUpload,courseLabel='Weekly resource bank'}:{
+export function PlannerResourceTray({resources,week,lessons,onSelect,onAdd,items=[],onPreview,onEdit,onPlace,onDelete,onAddRoutine,onUpload,courseLabel='Weekly resource bank'}:{
   resources:UnitResource[];week:string;lessons:LessonPlan[];
   onSelect:(slot:LessonSlot)=>void;onAdd:(kind:ResourceKind)=>void;
-  onUpload?:()=>void;courseLabel?:string;onAddRoutine?:()=>void;items?:WeeklyResource[];onEdit?:(id:string)=>void;onPlace?:(slot:LessonSlot)=>void;onDelete?:(id:string)=>void;
+  onPreview?:(slot:LessonSlot)=>void;onUpload?:()=>void;courseLabel?:string;onAddRoutine?:()=>void;items?:WeeklyResource[];onEdit?:(id:string)=>void;onPlace?:(slot:LessonSlot)=>void;onDelete?:(id:string)=>void;
 }) {
   const icon='inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border bg-white text-base text-slate-700 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-blue-600';
   const [category,setCategory]=useState<string>('all');
@@ -16,7 +16,7 @@ export function PlannerResourceTray({resources,week,lessons,onSelect,onAdd,items
   const matching=resources.filter(resource=>`${resource.title} ${resource.content} ${resource.kind}`.toLowerCase().includes(search.trim().toLowerCase()));
   const renderResource=(resource:UnitResource)=>{
     const dates=[...new Set(lessons.filter(lesson=>lesson.slots?.some(slot=>slot.resourceId===resource.id)).map(lesson=>lesson.date))];
-    return <button key={resource.id} draggable onDragStart={e=>e.dataTransfer.setData('application/planning-slot',JSON.stringify({slot:resourceSlot(resource)}))} onClick={()=>onSelect(resourceSlot(resource))} className="block w-full rounded-lg border bg-white px-2 py-2 text-left text-xs"><span className="font-medium">{resource.title}</span><span className="block text-[10px] text-slate-500">{resource.kind}{dates.length?` · Placed: ${dates.join(', ')}`:''}</span></button>;
+    return <button key={resource.id} draggable onDragStart={e=>e.dataTransfer.setData('application/planning-slot',JSON.stringify({slot:resourceSlot(resource)}))} onClick={()=>onPreview&&resourceCategory(resourceSlot(resource))==='text'?onPreview(resourceSlot(resource)):onSelect(resourceSlot(resource))} className="block w-full rounded-lg border bg-white px-2 py-2 text-left text-xs"><span className="font-medium">{resource.title}</span><span className="block text-[10px] text-slate-500">{resource.kind}{dates.length?` · Placed: ${dates.join(', ')}`:''}</span></button>;
   };
   const primaryRoutine=(item:WeeklyResource)=>/^(TQE|Pop[ -]?up Debate)$/i.test(item.title.trim());
   const visibleItems=(kind:string)=>items.filter(item=>resourceCategory(item)===kind&&(resourceTitle(item)+' '+item.content).toLowerCase().includes(weeklySearch.trim().toLowerCase())).sort((a,b)=>Number(b.sourceWeek===week)-Number(a.sourceWeek===week)||resourcePriority(a)-resourcePriority(b));
@@ -25,7 +25,7 @@ export function PlannerResourceTray({resources,week,lessons,onSelect,onAdd,items
           const slot={...item,planningItemId:item.id};
           const count=lessons.filter(lesson=>lesson.slots?.some(s=>s.planningItemId===item.id)).length;
           return <div key={item.id} draggable onDragStart={e=>e.dataTransfer.setData('application/planning-slot',JSON.stringify({slot}))} className={"flex min-h-12 items-center gap-1 rounded-lg border px-2 py-1 "+resourceColor(item)}>
-            <div className="min-w-0 flex-1"><button title={resourceTitle(item)} className="block w-full truncate text-left text-xs font-medium" onClick={()=>onSelect(slot)}>{isCopywork(item)&&<span aria-label="Copywork" className="mr-1 rounded border px-1 font-bold">C</span>}{shortWords(resourceTitle(item)==='Popup Debate'?'Pop-up Debate':resourceTitle(item),6)}</button>
+            <div className="min-w-0 flex-1"><button title={resourceTitle(item)} className="block w-full truncate text-left text-xs font-medium" onClick={()=>onPreview&&resourceCategory(slot)==='text'?onPreview(slot):onSelect(slot)}>{isCopywork(item)&&<span aria-label="Copywork" className="mr-1 rounded border px-1 font-bold">C</span>}{shortWords(resourceTitle(item)==='Popup Debate'?'Pop-up Debate':resourceTitle(item),6)}</button>
             {item.sourceWeek===week&&<p className="text-[10px] opacity-75">Suggested this week · {isCopywork(item)?'Copywork':'Assigned reading'}</p>}
             {!isQuiz(item)&&item.content&&<p className="truncate text-xs opacity-70">{shortWords(item.content,12)}</p>}
             </div><div className="flex shrink-0 items-center gap-1 text-xs"><span className="sr-only">{count ? `In ${count} lesson${count===1?'':'s'}` : 'Not placed'}</span><div className="flex gap-0.5"><button aria-label={'Add '+item.title+' to a lesson'} title="Add to a lesson" className={icon} onClick={()=>onPlace?onPlace(slot):onSelect(slot)}>+</button>{kind==='presentation'&&<button aria-label={'Attach PowerPoint to '+item.title} title="Attach or replace PowerPoint" className={icon} onClick={()=>onEdit?.(item.id)}>↑</button>}<button aria-label={'Edit resource '+item.title} title="Edit resource" className={icon} onClick={()=>onEdit?.(item.id)}>✎</button>{onDelete&&<button aria-label={'Delete resource '+item.title} title="Delete resource" className={icon} onClick={()=>onDelete(item.id)}>×</button>}</div></div>

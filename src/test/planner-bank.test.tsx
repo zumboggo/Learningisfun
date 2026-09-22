@@ -114,17 +114,20 @@ describe('central weekly resource bank',()=>{
     fireEvent.change(screen.getByLabelText('Details'),{target:{value:'Read the opening stanza'}});
     fireEvent.click(screen.getByText('Done'));
     fireEvent.click(screen.getByText('Shared poem'));
-    fireEvent.click(within(screen.getByRole('region',{name:'World Lit Blue lessons'})).getByText('+ Place Shared poem here'));
+    expect(screen.getByRole('dialog')).toHaveTextContent('Read the opening stanza');
+    fireEvent.click(screen.getByRole('button',{name:'Add to a lesson'}));
+    const picker=within(screen.getByRole('dialog'));
+    fireEvent.click(picker.getByText('World Lit Blue'));
+    fireEvent.click(picker.getByText('World Lit Red'));
+    fireEvent.click(picker.getByText('Done'));
     fireEvent.click(screen.getByRole('button',{name:'World Lit Red'}));
-    fireEvent.click(screen.getByText('Shared poem'));
-    fireEvent.click(screen.getByText('+ Place Shared poem here'));
     fireEvent.click(screen.getByLabelText('Edit resource Shared poem'));
     fireEvent.change(screen.getByLabelText('Details'),{target:{value:'Read the entire poem'}});
     fireEvent.click(screen.getByText('Done'));
     expect(latest!.lessons.slice(0,2).map(l=>l.slots!.find(s=>s.title==='Shared poem')?.content)).toEqual(['Read the entire poem','Read the entire poem']);
     fireEvent.click(screen.getByLabelText('Open Shared poem details'));
     expect(screen.queryByLabelText('Details')).not.toBeInTheDocument();
-    expect(screen.getByText('Edit in planning area')).toBeInTheDocument();
+    expect(screen.getByText('Edit card')).toBeInTheDocument();
   });
   it('limits display words without destroying the original content',()=>{
     expect(shortWords('one two three four five six seven',6)).toBe('one two three four five six…');

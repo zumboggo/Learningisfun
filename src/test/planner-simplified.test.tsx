@@ -84,7 +84,7 @@ describe('simplified weekly planner', () => {
     fireEvent.click(within(screen.getByRole('region', {name:'World Lit Blue lessons'})).getByText('+ Place QFT here'));
     fireEvent.click(screen.getByLabelText('Open QFT details'));
     expect(screen.queryByLabelText('Details')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('Edit in planning area'));
+    fireEvent.click(screen.getByText('Edit card'));
     fireEvent.change(screen.getByLabelText('Details'), {target:{value:'Generate questions about the opening image.'}});
     fireEvent.click(screen.getByText('Done'));
     expect(screen.getAllByText('Generate questions about the opening image.')[0]).toBeInTheDocument();
