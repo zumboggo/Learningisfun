@@ -6,7 +6,7 @@ const fixture=vi.hoisted(()=>({teacher:false,canWrite:true,score:2}));
 vi.mock('@/contexts/AuthContext',()=>({useAuth:()=>({user:{$id:'student'}})}));
 vi.mock('@/services/learning-content.service',()=>({executeLearningContent:vi.fn(async()=>({
   title:'Reading example',className:'Literature · Blue',teacher:fixture.teacher,canWrite:fixture.canWrite,
-  posts:[{id:'q',parentId:null,category:'question',content:'Why does the narrator change?',quotation:'The world changed.',paragraph:3,label:'Reader 123ABC',teacher:false,mine:false,createdAt:'2026-09-15T01:00:00Z',hidden:false,locked:false,pinned:false,score:fixture.score,voted:false}],participation:[],
+  posts:[{id:'q',parentId:null,category:'question',content:'Why does the narrator change?',quotation:'The world changed.',paragraph:3,username:'Student name',label:'Reader 123ABC',teacher:false,mine:false,createdAt:'2026-09-15T01:00:00Z',hidden:false,locked:false,pinned:false,score:fixture.score,voted:false}],participation:[],
 }))}));
 beforeEach(()=>{fixture.teacher=false;fixture.canWrite=true;fixture.score=2;localStorage.clear();});afterEach(cleanup);
 const mount=()=>render(<MemoryRouter initialEntries={['/discussions/texts/text/blue']}><Routes><Route path="/discussions/texts/:textId/:classId" element={<ReadingDiscussionPage/>}/></Routes></MemoryRouter>);
@@ -33,4 +33,13 @@ it('parent has read-only access and teacher has moderation/presentation controls
   fixture.teacher=true;fixture.canWrite=true;mount();await screen.findByRole('button',{name:'Present'});
   fireEvent.click(screen.getByRole('button',{name:'Questions 1'}));expect(screen.getByRole('button',{name:'hide'})).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button',{name:'Present'}));await waitFor(()=>expect(screen.queryByRole('textbox',{name:'Your contribution'})).not.toBeInTheDocument());expect(screen.getByRole('button',{name:'Exit presentation'})).toBeInTheDocument();
+});
+
+it('teachers see usernames by default and can switch back to anonymous labels',async()=>{
+ fixture.teacher=true;mount();await screen.findByRole('button',{name:'Present'});
+ fireEvent.click(screen.getByRole('button',{name:'Questions 1'}));
+ expect(screen.getByText('Student name')).toBeInTheDocument();
+ fireEvent.click(screen.getByRole('checkbox',{name:'Anonymous names in my view'}));
+ expect(screen.getByText('Reader 123ABC')).toBeInTheDocument();
+ expect(screen.queryByText('Student name')).not.toBeInTheDocument();
 });

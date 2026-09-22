@@ -66,17 +66,18 @@ export async function readingDiscussionAction({ body, profile, userId, memberCla
     const reports = teacher ? await list('reading_reports', queries) : [];
     const members = teacher ? await list('class_members', [Query.equal('classId', cls.$id), Query.equal('role', 'student')]) : [];
     const studentIds = [...new Set(members.map(m => m.userId))];
-    const people = studentIds.length ? await list('users', [Query.equal('$id', studentIds)]) : [];
+    const nameIds=teacher?[...new Set([...studentIds,...posts.map(p=>p.authorId)])]:[];
+    const people = nameIds.length ? await list('users', [Query.equal('$id', nameIds)]) : [];
     return {
       title: text.title, className: `${cls.courseName || ''} · ${cls.name}`, teacher, canWrite: eligible && (teacher || profile.role === 'student'),
       posts: posts.filter(visible).map(p => {
         const { authorId, ...safe } = p;
-        return { ...safe, mine: authorId === userId, ...(teacher ? { authorId } : {}),
+        return { ...safe, mine: authorId === userId, ...(teacher ? { authorId, username:people.find(person=>person.$id===authorId)?.name||p.label } : {}),
           score: votes.filter(v => v.postId === p.id).length,
           voted: votes.some(v => v.postId === p.id && v.userId === userId),
           ...(teacher ? { reports: reports.filter(r => r.postId === p.id).map(r => ({ id: r.$id, reason: r.reason })) } : {}) };
       }),
-      participation: people.map(person => ({ id: person.$id, name: person.name,
+      participation: people.filter(person=>studentIds.includes(person.$id)).map(person => ({ id: person.$id, name: person.name,
         ...Object.fromEntries(categories.map(category => [category, posts.filter(p => p.authorId === person.$id && !p.parentId && p.category === category).length])),
         replies: posts.filter(p => p.authorId === person.$id && p.parentId).length })),
     };
@@ -103,6 +104,18 @@ export async function readingDiscussionAction({ body, profile, userId, memberCla
     return { ok: true };
   }
   if (!selected || !visible(selected)) fail('Contribution is not available');
+  if (body.action === 'editReadingDiscussion') {
+    if(selected.authorId!==userId)fail('Only your own contributions can be edited');
+    if(ancestors(selected).some(p=>p.hidden||p.locked))fail('This thread is hidden or locked');
+    if(body.expectedUpdatedAt!==(selected.updatedAt||selected.createdAt))throw Object.assign(new Error('This post changed. Refresh before editing again.'),{code:409});
+    const content=short(body.content,10000),quotation=short(body.quotation,3000);
+    if(!content)fail('Write a contribution before saving');
+    const paragraph=body.paragraph===''||body.paragraph==null?null:Number(body.paragraph);
+    if(paragraph!==null&&(!Number.isInteger(paragraph)||paragraph<1||paragraph>10000))fail('Use a paragraph number between 1 and 10000');
+    const {id,authorId,...saved}=selected;
+    await db.updateDocument(databaseId,'reading_posts',id,{dataJson:JSON.stringify({...saved,content,quotation,paragraph,updatedAt:new Date().toISOString()})});
+    return {ok:true};
+  }
   if (body.action === 'voteReadingDiscussion') {
     if (ancestors(selected).some(p => p.hidden)) fail('Contribution is hidden');
     if (typeof body.upvoted !== 'boolean') fail('Choose upvote or neutral');

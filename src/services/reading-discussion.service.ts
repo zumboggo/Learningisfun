@@ -3,7 +3,7 @@ export type ReadingCategory = 'thought'|'question'|'connection';
 export const readingCategories: Record<ReadingCategory, string> = { thought: 'Thoughts', question: 'Questions', connection: 'Connections & Insights' };
 export interface ReadingDiscussionPost {
   id: string; parentId: string|null; category: ReadingCategory; content: string; quotation: string; paragraph: number|null;
-  label: string; teacher: boolean; mine: boolean; authorId?: string; createdAt: string;
+  label: string; teacher: boolean; mine: boolean; authorId?: string; username?: string; createdAt: string; updatedAt?: string;
   hidden: boolean; locked: boolean; pinned: boolean; score: number; voted: boolean; reports?: {id:string;reason:string}[];
 }
 export interface ReadingDiscussion {

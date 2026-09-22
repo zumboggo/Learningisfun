@@ -25,6 +25,22 @@ function harness() {
   return {storage,db,call,teacher};
 }
 const post=(requestId,category='thought',extra={})=>({action:'postReadingDiscussion',requestId,category,content:'I noticed something.',...extra});
+test('teacher usernames are private and authors can edit without changing ownership',async()=>{
+ const {call,storage,teacher}=harness();await call(post('editable'));
+ const own=(await call({action:'readReadingDiscussion'})).posts[0];
+ expect(own).not.toHaveProperty('username');
+ expect((await call({action:'readReadingDiscussion'},teacher)).posts[0].username).toBe('Student');
+ const change={action:'editReadingDiscussion',postId:own.id,content:'Updated thought',quotation:'Quoted words',paragraph:3,expectedUpdatedAt:own.createdAt,authorId:'teacher',category:'question'};
+ await expect(call(change,teacher)).rejects.toThrow('own');
+ await expect(call({...change,content:''})).rejects.toThrow('Write');
+ await call(change);
+ const saved=(await call({action:'readReadingDiscussion'})).posts[0];
+ expect(saved).toMatchObject({content:'Updated thought',category:'thought',paragraph:3});
+ expect(storage.reading_posts[0].authorId).toBe('student');
+ await expect(call({...change,expectedUpdatedAt:'old'})).rejects.toThrow('changed');
+ await call({action:'moderateReadingDiscussion',postId:own.id,operation:'lock'},teacher);
+ await expect(call({...change,expectedUpdatedAt:saved.updatedAt})).rejects.toThrow('locked');
+});
 test('listing is automatic, grouped data is section specific, deduplicated and read-only',async()=>{
   const {call,storage,db,teacher}=harness();
   storage.text_assignments.push({...storage.text_assignments[0],$id:'duplicate'});

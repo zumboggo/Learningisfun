@@ -116,6 +116,11 @@ input, textarea, select, button {
   padding-top: clamp(0.75rem, 2vw, 1.15rem);
 }
 
+/* Article width and padding match the shared teacher reader. */
+.student-main.student-main-article { max-width: 72rem; padding: 0 0 calc(7rem + var(--safe-area-bottom)); }
+.student-main-article > .reader-shell { padding: 1rem; }
+@media (min-width: 640px) { .student-main-article > .reader-shell { padding: 1.5rem; } }
+
 /* ---------------------------------------------------------------------------
    Focused flashcard study
 --------------------------------------------------------------------------- */

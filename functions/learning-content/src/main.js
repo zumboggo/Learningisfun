@@ -146,7 +146,7 @@ export default async ({ req, res, error }) => {
     if (body.action === 'saveTqe' || ['flagTextAnnotation','moderateTextAnnotation','setAnnotationMode'].includes(body.action) || (body.action === 'mutate' && body.collection === 'text_annotations')) {
       return res.json({ error: 'Legacy annotations and TQE are read-only. Your existing work is preserved; use Discussions → Texts for new contributions.' }, 403);
     }
-    if (['listReadingDiscussions','readReadingDiscussion','postReadingDiscussion','voteReadingDiscussion','reportReadingDiscussion','moderateReadingDiscussion'].includes(body.action)) {
+    if (['listReadingDiscussions','readReadingDiscussion','postReadingDiscussion','editReadingDiscussion','voteReadingDiscussion','reportReadingDiscussion','moderateReadingDiscussion'].includes(body.action)) {
       try { return res.json(await readingDiscussionAction({ body, profile, userId, memberClassIds, db, databaseId })); }
       catch (cause) { if(cause.code===403)return res.json({error:cause.message},403);throw cause; }
     }
@@ -1149,6 +1149,26 @@ export default async ({ req, res, error }) => {
       return res.json({ assignments: assignments.map(clean), texts: textResult.documents.map(clean), paragraphs: paragraphResult.documents.map(clean), versions: currentVersions.map(clean), versionParagraphs: versionParagraphResult.documents.map(clean), annotations });
     }
 
+    if (body.action === 'editDiscussionComment') {
+      const post = await db.getDocument(databaseId, 'text_discussion_posts', body.postId);
+      const cls = await db.getDocument(databaseId, 'classes', post.classId);
+      const ownsClass = profile.role === 'teacher' && cls.teacherId === userId;
+      if (post.authorId !== userId || (!ownsClass && (profile.role !== 'student' || !memberClassIds.has(post.classId)))) return res.json({error:'Only your own contributions can be edited'},403);
+      const session = await db.getDocument(databaseId, 'class_sessions', post.classSessionId);
+      if (session.status !== 'active') return res.json({error:'This discussion is finished'},403);
+      let ancestor = post;
+      const seen = new Set();
+      while (ancestor) {
+        if (seen.has(ancestor.$id) || ancestor.classId !== post.classId || ancestor.locked || ancestor.moderationStatus !== 'visible') return res.json({error:'This thread is hidden or locked'},403);
+        seen.add(ancestor.$id);
+        ancestor = ancestor.parentId ? await db.getDocument(databaseId,'text_discussion_posts',ancestor.parentId) : null;
+      }
+      const content = typeof body.content === 'string' ? body.content.trim() : '';
+      if (!content || content.length > 10000) return res.json({error:'Write between 1 and 10,000 characters'},400);
+      const updatedAt = new Date().toISOString();
+      await db.updateDocument(databaseId,'text_discussion_posts',post.$id,{content,updatedAt});
+      return res.json({content,updatedAt});
+    }
     if (body.action === 'readDiscussion') {
       const session = await db.getDocument(databaseId, 'class_sessions', body.sessionId);
       if (!memberClassIds.has(session.classId)) return res.json({ error: 'Not enrolled' }, 403);

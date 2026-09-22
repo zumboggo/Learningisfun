@@ -15,6 +15,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const location = useLocation();
   const syncState = useSyncStatus(user?.$id);
   const online = useOnlineStatus();
+  const isArticleRoute = /^\/texts\/[^/]+(?:\/present)?$/.test(location.pathname);
   const isStudyRoute = /\/decks\/[^/]+\/review$/.test(location.pathname);
 
   const isActualTeacher = user?.role === 'teacher' || user?.role === 'admin';
@@ -74,7 +75,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           </button>
         </div>
 
-        <main className={`student-main ${isStudyRoute ? 'student-main-study' : ''}`}>
+        <main className={`student-main ${isArticleRoute ? 'student-main-article' : ''} ${isStudyRoute ? 'student-main-study' : ''}`}>
           {children}
         </main>
 
