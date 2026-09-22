@@ -139,3 +139,20 @@ export function populateSlots(data: WeeklyPlanData, units: UnitPlan[]): WeeklyPl
   }
   return next;
 }
+
+/** Seed new weeks only; never reinsert a default into a saved or edited plan. */
+export function addWeeklyLessonDefaults(data: WeeklyPlanData): WeeklyPlanData {
+  const next = structuredClone(data);
+  for (const code of new Set(next.lessons.map(lesson=>lesson.classCode))) {
+    const lessons = next.lessons.filter(lesson=>lesson.classCode===code).sort((a,b)=>a.date.localeCompare(b.date));
+    const defaults = [{title:'Vocab Presentation',kind:'presentation' as const},{title:'Quiz',kind:'quiz' as const}];
+    defaults.forEach((item,index)=>{
+      const lesson=lessons[index];if(!lesson)return;
+      const existing=[...(lesson.slots||[]),...(lesson.overflow||[])];
+      if(existing.some(slot=>item.kind==='quiz'?slot.kind==='quiz':slot.kind==='presentation'&&slot.title.trim().toLowerCase()===item.title.toLowerCase()))return;
+      lesson.slots ||= [];
+      lesson.slots.unshift({id:crypto.randomUUID(),...item,content:'',url:'',minutes:10,optional:false,status:'planned',publish:true});
+    });
+  }
+  return next;
+}
