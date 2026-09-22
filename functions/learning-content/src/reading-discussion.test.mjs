@@ -7,7 +7,7 @@ function harness() {
     texts:[{$id:'text',title:'A reading',status:'published'}],
     text_assignments:[{$id:'ab',textId:'text',classId:'blue',isAssignedReading:true,assignedAt:'2026-09-01',dueDate:'2026-09-15'},{$id:'ar',textId:'text',classId:'red',isAssignedReading:true,assignedAt:'2026-09-01',dueDate:'2026-09-16'}],
     class_members:[{$id:'mb',userId:'student',classId:'blue',role:'student'},{$id:'mr',userId:'peer',classId:'red',role:'student'}],
-    users:[{$id:'student',name:'Student'},{$id:'peer',name:'Peer'}],reading_posts:[],reading_votes:[],reading_reports:[],
+    reading_settings:[],users:[{$id:'student',name:'Student'},{$id:'peer',name:'Peer'}],reading_posts:[],reading_votes:[],reading_reports:[],
   };
   const db={
     getDocument:vi.fn(async(_,collection,id)=>{const doc=storage[collection].find(r=>r.$id===id);if(!doc)throw Object.assign(Error('Missing'),{code:404});return doc;}),
@@ -127,4 +127,20 @@ test('optional readings are excluded without deleting saved contributions',async
  await expect(call(post('blocked'))).rejects.toThrow('Assigned Readings');
  expect((await call({action:'readReadingDiscussion'},teacher)).canWrite).toBe(false);
  expect(storage.reading_posts).toHaveLength(1);
+});
+
+test('class owner controls student names, scoped to text/class without leaking identifiers',async()=>{
+ const {call,teacher}=harness();await call(post('root'));
+ const read=()=>call({action:'readReadingDiscussion'});
+ expect((await read()).posts[0]).not.toHaveProperty('username');
+ await expect(call({action:'setReadingDiscussionIdentity',showStudentNames:true})).rejects.toThrow('teacher');
+ await call({action:'setReadingDiscussionIdentity',showStudentNames:true},teacher);
+ const named=await read();expect(named.showStudentNames).toBe(true);
+ expect(named.posts[0].username).toBe('Student');expect(named.posts[0]).not.toHaveProperty('authorId');
+ expect(named.participation).toEqual([]);
+ expect((await call({action:'readReadingDiscussion',classId:'red'},teacher)).showStudentNames).toBe(false);
+ const parent=await call({action:'readReadingDiscussion'},{userId:'parent',role:'parent',classIds:['blue']});
+ expect(parent.posts[0]).not.toHaveProperty('username');
+ await call({action:'setReadingDiscussionIdentity',showStudentNames:false},teacher);
+ expect((await read()).posts[0]).not.toHaveProperty('username');
 });

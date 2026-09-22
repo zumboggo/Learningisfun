@@ -39,6 +39,7 @@ const ENUM = (key, elements, opts = {}) => ({ type: 'enum', key, elements, ...op
 const DATE = (key, opts = {}) => S(key, { size: 64, ...opts });
 
 const COLLECTIONS = [
+  { id:'reading_settings', name:'Text Discussion Settings', attributes:[S('workspaceId',{required:true}),TXT('dataJson',{required:true})], indexes:[] },
   { id: 'reading_posts', name: 'Text Discussion Contributions', attributes: [S('workspaceId',{required:true}),S('authorId',{required:true}),TXT('dataJson',{required:true})], indexes:[{key:'idx_workspace',type:'key',attributes:['workspaceId']}] },
   { id: 'reading_votes', name: 'Text Discussion Upvotes', attributes: [S('workspaceId',{required:true}),S('postId',{required:true}),S('userId',{required:true})], indexes:[{key:'idx_workspace',type:'key',attributes:['workspaceId']},{key:'unique_voter',type:'unique',attributes:['postId','userId']}] },
   { id: 'reading_reports', name: 'Text Discussion Reports', attributes: [S('workspaceId',{required:true}),S('postId',{required:true}),S('userId',{required:true}),S('reason',{size:1000,required:true})], indexes:[{key:'idx_workspace',type:'key',attributes:['workspaceId']},{key:'idx_post',type:'key',attributes:['postId']}] },

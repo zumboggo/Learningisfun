@@ -146,7 +146,7 @@ export default async ({ req, res, error }) => {
     if (body.action === 'saveTqe' || ['flagTextAnnotation','moderateTextAnnotation','setAnnotationMode'].includes(body.action) || (body.action === 'mutate' && body.collection === 'text_annotations')) {
       return res.json({ error: 'Legacy annotations and TQE are read-only. Your existing work is preserved; use Discussions → Texts for new contributions.' }, 403);
     }
-    if (['listReadingDiscussions','readReadingDiscussion','postReadingDiscussion','editReadingDiscussion','voteReadingDiscussion','reportReadingDiscussion','moderateReadingDiscussion'].includes(body.action)) {
+    if (['setReadingDiscussionIdentity','listReadingDiscussions','readReadingDiscussion','postReadingDiscussion','editReadingDiscussion','voteReadingDiscussion','reportReadingDiscussion','moderateReadingDiscussion'].includes(body.action)) {
       try { return res.json(await readingDiscussionAction({ body, profile, userId, memberClassIds, db, databaseId })); }
       catch (cause) { if(cause.code===403)return res.json({error:cause.message},403);throw cause; }
     }

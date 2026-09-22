@@ -47,6 +47,22 @@ export async function readingDiscussionAction({ body, profile, userId, memberCla
   if (!eligible && !teacher) fail('Only Assigned Readings have text discussions');
   if (!eligible && !['readReadingDiscussion','moderateReadingDiscussion'].includes(body.action)) fail('Mark this text as Assigned Reading to contribute');
   const workspaceId = discussionKey(text.$id, cls.$id);
+  let settings;
+  try { settings = await db.getDocument(databaseId,'reading_settings',workspaceId); }
+  catch (error) { if(error.code!==404)throw error; }
+  const showStudentNames = settings ? JSON.parse(settings.dataJson).showStudentNames === true : false;
+  if(body.action==='setReadingDiscussionIdentity') {
+    if(!teacher)fail('Only the class teacher may change name visibility');
+    if(typeof body.showStudentNames!=='boolean')fail('Choose a name visibility setting');
+    const data={workspaceId,dataJson:JSON.stringify({showStudentNames:body.showStudentNames,updatedBy:userId,updatedAt:new Date().toISOString()})};
+    if(settings)await db.updateDocument(databaseId,'reading_settings',workspaceId,data);
+    else {
+      try { await db.createDocument(databaseId,'reading_settings',workspaceId,data,[]); }
+      catch(error) { if(error.code!==409)throw error;await db.updateDocument(databaseId,'reading_settings',workspaceId,data); }
+    }
+    return {ok:true};
+  }
+  const showNames = teacher || (profile.role==='student' && showStudentNames);
   const queries = [Query.equal('workspaceId', workspaceId)];
   const rows = await list('reading_posts', queries);
   const unpack = r => ({ ...JSON.parse(r.dataJson), id: r.$id, authorId: r.authorId });
@@ -66,13 +82,13 @@ export async function readingDiscussionAction({ body, profile, userId, memberCla
     const reports = teacher ? await list('reading_reports', queries) : [];
     const members = teacher ? await list('class_members', [Query.equal('classId', cls.$id), Query.equal('role', 'student')]) : [];
     const studentIds = [...new Set(members.map(m => m.userId))];
-    const nameIds=teacher?[...new Set([...studentIds,...posts.map(p=>p.authorId)])]:[];
+    const nameIds=showNames?[...new Set([...studentIds,...posts.filter(visible).map(p=>p.authorId)])]:[];
     const people = nameIds.length ? await list('users', [Query.equal('$id', nameIds)]) : [];
     return {
-      title: text.title, className: `${cls.courseName || ''} · ${cls.name}`, teacher, canWrite: eligible && (teacher || profile.role === 'student'),
+      title: text.title, className: `${cls.courseName || ''} · ${cls.name}`, teacher, showStudentNames, canWrite: eligible && (teacher || profile.role === 'student'),
       posts: posts.filter(visible).map(p => {
         const { authorId, ...safe } = p;
-        return { ...safe, mine: authorId === userId, ...(teacher ? { authorId, username:people.find(person=>person.$id===authorId)?.name||p.label } : {}),
+        return { ...safe, mine: authorId === userId, ...(teacher ? {authorId} : {}), ...(showNames ? {username:people.find(person=>person.$id===authorId)?.name||p.label} : {}),
           score: votes.filter(v => v.postId === p.id).length,
           voted: votes.some(v => v.postId === p.id && v.userId === userId),
           ...(teacher ? { reports: reports.filter(r => r.postId === p.id).map(r => ({ id: r.$id, reason: r.reason })) } : {}) };

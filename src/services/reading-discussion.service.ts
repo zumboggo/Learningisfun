@@ -7,7 +7,7 @@ export interface ReadingDiscussionPost {
   hidden: boolean; locked: boolean; pinned: boolean; score: number; voted: boolean; reports?: {id:string;reason:string}[];
 }
 export interface ReadingDiscussion {
-  title:string; className:string; teacher:boolean; canWrite:boolean; posts:ReadingDiscussionPost[];
+  title:string; className:string; teacher:boolean; showStudentNames?:boolean; canWrite:boolean; posts:ReadingDiscussionPost[];
   participation:{id:string;name:string;thought:number;question:number;connection:number;replies:number}[];
 }
 export interface ReadingDiscussionListing { id:string;textId:string;classId:string;title:string;className:string;date:string;available:boolean }
