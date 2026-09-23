@@ -29,6 +29,7 @@ it('nests texts within weeks within distinct collapsed classes',async()=>{
  expect(links).toHaveLength(2);
  const week=links[0].closest('details')!;
  expect(week.querySelector('summary')).toHaveTextContent('Week of 2026-09-14');
- expect(week.parentElement!.closest('details')!.querySelector('summary')).toHaveTextContent('Blue');
+ expect(week.parentElement!.closest('details')!.querySelector('summary')).toHaveTextContent('Previous Weeks');
+ expect(screen.getAllByText('Current Week')).toHaveLength(2);
  expect(week.parentElement!.closest('details')).not.toHaveAttribute('open');
 });

@@ -144,3 +144,16 @@ test('class owner controls student names, scoped to text/class without leaking i
  await call({action:'setReadingDiscussionIdentity',showStudentNames:false},teacher);
  expect((await read()).posts[0]).not.toHaveProperty('username');
 });
+
+test('students can upvote many questions and replies once each without a vote budget',async()=>{
+ const {call,storage}=harness();
+ for(let i=0;i<8;i++) await call(post(`question-${i}`,'question'));
+ const parentId=storage.reading_posts[0].$id;
+ for(let i=0;i<5;i++) await call(post(`reply-${i}`,'question',{parentId}));
+ for(const row of storage.reading_posts) {
+  await call({action:'voteReadingDiscussion',postId:row.$id,upvoted:true});
+  await call({action:'voteReadingDiscussion',postId:row.$id,upvoted:true});
+ }
+ expect(storage.reading_votes).toHaveLength(13);
+ expect((await call({action:'readReadingDiscussion'})).posts.every(p=>p.score===1&&p.voted)).toBe(true);
+});

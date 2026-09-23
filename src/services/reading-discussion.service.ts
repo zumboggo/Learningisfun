@@ -19,5 +19,16 @@ export function readingWeek(date:string):string {
 }
 export function sortedReadingPosts(posts:ReadingDiscussionPost[], category:ReadingCategory, sort:'new'|'top'|'unanswered') {
   return posts.filter(p=>!p.parentId&&p.category===category&&(sort!=='unanswered'||!posts.some(reply=>reply.parentId===p.id&&!reply.hidden)))
-    .sort((a,b)=>Number(b.pinned)-Number(a.pinned)||(sort==='top'?b.score-a.score:0)||b.createdAt.localeCompare(a.createdAt));
+    .sort((a,b)=>(sort==='top'?b.score-a.score:0)||Number(b.pinned)-Number(a.pinned)||b.createdAt.localeCompare(a.createdAt));
+}
+
+export function topReadingReplies(posts: ReadingDiscussionPost[], parentId: string) {
+  return posts.filter(post => post.parentId === parentId)
+    .sort((a, b) => b.score - a.score || a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
+}
+
+export function currentReadingWeek(now = new Date()) {
+  // Match the school calendar, rather than the browser's timezone.
+  const schoolDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+  return readingWeek(schoolDate);
 }

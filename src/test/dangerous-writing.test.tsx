@@ -19,12 +19,12 @@ describe('Dangerous Writing', () => {
     expect(screen.getByLabelText('Writing duration')).toHaveValue('5');
     expect(screen.getAllByRole('option').map(option => option.getAttribute('value'))).toEqual(['1', '3', '5', '8', '10', '15', '20']);
     advance(60_000);
-    expect(screen.getByRole('timer')).toHaveTextContent('5:00');
+    expect(screen.getByRole('timer')).toHaveTextContent('05:00');
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     write('First thought');
     expect(screen.getByLabelText('Writing duration')).toBeDisabled();
     advance(1000);
-    expect(screen.getByRole('timer')).toHaveTextContent('4:59');
+    expect(screen.getByRole('timer')).toHaveTextContent('04:59');
   });
 
   it('warns progressively, clears warnings on edits, and locks the editor at five seconds', () => {
@@ -52,7 +52,7 @@ describe('Dangerous Writing', () => {
     expect(screen.getByText('Copied!')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(input()).toHaveValue('');
-    expect(screen.getByRole('timer')).toHaveTextContent('5:00');
+    expect(screen.getByRole('timer')).toHaveTextContent('05:00');
   });
 
   it('unlocks Copy Text at the goal and stops penalizing inactivity', async () => {
@@ -62,7 +62,7 @@ describe('Dangerous Writing', () => {
     for (let second = 4; second < 60; second += 4) { advance(4000); write(`Draft at ${second}`); }
     expect(screen.queryByRole('button', { name: 'Copy Text' })).not.toBeInTheDocument();
     advance(4000);
-    expect(screen.getByRole('timer')).toHaveTextContent('0:00');
+    expect(screen.getByRole('timer')).toHaveTextContent('00:00');
     advance(60_000);
     write('Finished and revised');
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Copy Text' })));
@@ -105,4 +105,19 @@ describe('Dangerous Writing', () => {
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Copy text so far' })));
     expect(screen.getByLabelText('Text to copy manually')).toHaveValue('Keep this');
   });
+  it('enters distraction-free mode, keeps text and timing, and exits with Escape', async () => {
+    render(<DangerousWriting />);
+    write('Keep my words');
+    advance(1000);
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Enter full screen' })));
+    expect(screen.getByRole('region', { name: 'Dangerous Writing' })).toHaveClass('dangerous-writing-focus');
+    expect(input()).toHaveValue('Keep my words');
+    expect(input()).toHaveFocus();
+    advance(1000);
+    expect(screen.getByRole('timer')).toHaveTextContent('04:58');
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.getByRole('region', { name: 'Dangerous Writing' })).not.toHaveClass('dangerous-writing-focus');
+    expect(input()).toHaveValue('Keep my words');
+  });
+
 });

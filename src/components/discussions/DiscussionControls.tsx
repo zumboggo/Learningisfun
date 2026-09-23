@@ -3,10 +3,10 @@ import { useState } from 'react';
 import { Button } from '@/components/common/Button';
 import { LinkToggle, SourceLinkFields } from './SourceLink';
 
-export function DiscussionTextInput({value,onChange,label,placeholder,rows=3}:{value:string;onChange:(value:string)=>void;label:string;placeholder?:string;rows?:number}) {
+export function DiscussionTextInput({value,onChange,label,placeholder,rows=3,compact=false}:{compact?:boolean;value:string;onChange:(value:string)=>void;label:string;placeholder?:string;rows?:number}) {
   const [linkOpen,setLinkOpen]=useState(false),[title,setTitle]=useState(''),[url,setUrl]=useState('');
-  return <div className="space-y-2"><label className="block text-sm font-medium">{label}<textarea aria-label={label} className="mt-2 w-full rounded-xl border bg-white p-3 text-base text-slate-900" rows={rows} maxLength={10000} value={value} placeholder={placeholder} onChange={e=>onChange(e.target.value)}/></label>
-    <LinkToggle open={linkOpen} onClick={()=>setLinkOpen(!linkOpen)}/>
+  return <div className="space-y-2"><label className="block text-sm font-medium"><span className={compact?'sr-only':''}>{label}</span><textarea aria-label={label} className={`${compact?'':'mt-2'} w-full rounded-xl border border-slate-200 bg-white p-3 text-base text-slate-900`} rows={rows} maxLength={10000} value={value} placeholder={placeholder} onChange={e=>onChange(e.target.value)}/></label>
+    {!compact&&<LinkToggle open={linkOpen} onClick={()=>setLinkOpen(!linkOpen)}/>}
     {linkOpen&&<div><SourceLinkFields title={title} url={url} onTitleChange={setTitle} onUrlChange={setUrl}/><Button type="button" size="sm" variant="secondary" disabled={!title.trim()||!validOptionalSourceLink(title,url)} onClick={()=>{const name=title.trim().replace(/[[\]\\]/g,'');onChange(value+(value?'\n':'')+'['+name+']('+encodeURI(url.trim()).replace(/[()]/g,c=>c==='('?'%28':'%29')+')');setTitle('');setUrl('');setLinkOpen(false);}}>Insert link</Button></div>}
   </div>;
 }

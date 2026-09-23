@@ -7,6 +7,8 @@ const IDLE_LIMIT = 5000;
 type Phase = 'ready' | 'writing' | 'lost' | 'complete';
 
 export function DangerousWriting() {
+  const [focused, setFocused] = useState(false);
+  const page = useRef<HTMLElement>(null);
   const [minutes, setMinutes] = useState(5);
   const [phase, setPhase] = useState<Phase>('ready');
   const [text, setText] = useState('');
@@ -15,6 +17,48 @@ export function DangerousWriting() {
   const [copyMessage, setCopyMessage] = useState('');
   const session = useRef({ phase: 'ready' as Phase, end: 0, lastInput: 0 });
   const editor = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (!focused) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setFocused(false);
+        if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
+      }
+    };
+    const onFullscreen = () => { if (!document.fullscreenElement) setFocused(false); };
+    document.addEventListener('keydown', onEscape);
+    document.addEventListener('fullscreenchange', onFullscreen);
+    editor.current?.focus();
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', onEscape);
+      document.removeEventListener('fullscreenchange', onFullscreen);
+    };
+  }, [focused]);
+
+  async function toggleFullscreen() {
+    if (focused) {
+      setFocused(false);
+      if (document.fullscreenElement) await document.exitFullscreen().catch(() => {});
+    } else {
+      setFocused(true);
+      // The full-window layout also works on browsers without the Fullscreen API.
+      try { await page.current?.requestFullscreen?.(); } catch { /* Keep focus mode. */ }
+      editor.current?.focus();
+    }
+  }
+
+  function downloadText() {
+    const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `writing-${new Date().toISOString().slice(0, 10)}.txt`;
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
 
   // Compare deadlines, not interval counts: background tabs may throttle timers.
   function advance(now: number): Phase {
@@ -98,29 +142,32 @@ export function DangerousWriting() {
   const seconds = Math.ceil(remaining / 1000);
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
 
-  return <section className="dangerous-writing overflow-hidden rounded-2xl border border-gray-200 bg-white" aria-label="Dangerous Writing">
-    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 p-5">
+  return <section ref={page} className={`dangerous-writing overflow-hidden rounded-2xl border border-gray-200 bg-white ${focused ? 'dangerous-writing-focus' : ''} ${phase === 'complete' || phase === 'lost' ? 'writing-finished' : ''}`} aria-label="Dangerous Writing">
+    <button type="button" className="writing-fullscreen-button" aria-label={focused ? 'Exit full screen' : 'Enter full screen'} title={focused ? 'Exit full screen (Esc)' : 'Full screen'} onClick={() => void toggleFullscreen()}>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d={focused ? 'M4 9h5V4m6 0v5h5M4 15h5v5m6 0v-5h5' : 'M9 4H4v5m11-5h5v5M4 15v5h5m6 0h5v-5'} /></svg>
+    </button>
+    <div className="writing-toolbar flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 p-5 pr-16">
       <div><h2 className="text-lg font-bold">Dangerous Writing</h2><p className="mt-1 text-sm text-gray-500">Keep writing. A five-second pause ends your attempt.</p></div>
-      {phase === 'complete' ? <Button onClick={() => void copyText()}>Copy Text</Button> :
+      {phase === 'complete' ? <div className="flex gap-2"><Button onClick={() => void copyText()}>Copy Text</Button><Button variant="secondary" onClick={downloadText}>Download text</Button></div> :
         <label className="text-sm font-medium text-gray-600">Write for <select aria-label="Writing duration" value={minutes} disabled={phase !== 'ready'} onChange={event => { const value = Number(event.target.value); setMinutes(value); setRemaining(value * 60_000); }} className="ml-2 rounded-lg border border-gray-300 bg-white px-3 py-2 disabled:opacity-60">
           {DURATIONS.map(value => <option key={value} value={value}>{value} {value === 1 ? 'minute' : 'minutes'}</option>)}
         </select></label>}
     </div>
-    <div className="flex items-center justify-between px-5 pt-4 text-sm text-gray-500">
-      <span role="status">{phase === 'ready' ? 'Your first keystroke starts the timer.' : phase === 'complete' ? 'You made it! Your writing is safe to edit and copy.' : phase === 'lost' ? 'Session ended' : idle >= 3000 ? 'Keep typing!' : 'Keep going — one thought at a time.'}</span>
-      <span role="timer" aria-label="Time remaining" className="ml-3 shrink-0 font-mono text-lg tabular-nums">{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</span>
+    <div className="writing-clock-row flex items-center justify-between px-5 pt-4 text-sm text-gray-500">
+      <span role="status" className="writing-status">{phase === 'ready' ? 'Your first keystroke starts the timer.' : phase === 'complete' ? 'You made it! Your writing is safe to edit and copy.' : phase === 'lost' ? 'Session ended' : idle >= 3000 ? 'Keep typing!' : 'Keep going — one thought at a time.'}</span>
+      <span role="timer" aria-label="Time remaining" className="writing-clock ml-3 shrink-0 font-sans text-3xl font-light leading-none tracking-[-0.07em] tabular-nums">{String(Math.floor(seconds / 60)).padStart(2, '0')}<span className="mx-[0.02em] text-gray-300">:</span>{String(seconds % 60).padStart(2, '0')}</span>
     </div>
-    <div className="mx-5 mt-3 h-1 overflow-hidden rounded-full bg-gray-100" aria-hidden="true"><div className="h-full bg-red-500 transition-[width] duration-75" style={{ width: `${danger * 100}%` }} /></div>
+    <div className="writing-warning mx-5 mt-3 h-1 overflow-hidden rounded-full bg-gray-100" aria-hidden="true"><div className="h-full bg-red-500 transition-[width] duration-75" style={{ width: `${danger * 100}%` }} /></div>
     {phase === 'lost' ? <div className="flex min-h-80 flex-col items-center justify-center gap-5 px-5 py-12 text-center">
       <h3 role="alert" className="text-3xl font-extrabold sm:text-4xl">You lost your progress!</h3>
       <Button variant="secondary" onClick={restart}>Try again</Button>
       <button type="button" onClick={() => void copyText()} className="text-[10px] text-gray-300 hover:text-gray-500 focus-visible:text-gray-600 focus-visible:outline-2 focus-visible:outline-blue-500">Copy text so far</button>
-    </div> : <div className="p-5">
+    </div> : <div className="writing-paper p-5">
       <textarea ref={editor} aria-label="Dangerous writing text" value={text} onChange={event => changeText(event.target.value)} rows={14} spellCheck={false}
         placeholder="Stuck on what to say next? Start writing and don't stop — you might be surprised by what you come up with."
         className={`dangerous-writing-editor w-full resize-y rounded-xl border border-gray-200 p-4 text-lg leading-relaxed placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100 ${danger > 0.55 ? 'dangerous-writing-shake' : ''}`}
         style={{ color: danger > 0 ? `rgb(${Math.round(31 + 189 * danger)}, ${Math.round(41 - 3 * danger)}, ${Math.round(55 - 17 * danger)})` : undefined, opacity: 1 - danger * 0.8, animationDuration: `${0.35 - danger * 0.23}s` }} />
-      <div className="mt-3 flex items-center justify-between gap-3"><span className="text-xs text-gray-400">{wordCount} {wordCount === 1 ? 'word' : 'words'}</span>{phase === 'complete' && <Button variant="secondary" onClick={restart}>Start another session</Button>}</div>
+      <div className="writing-footer mt-3 flex items-center justify-between gap-3"><span className="text-xs text-gray-400">{wordCount} {wordCount === 1 ? 'word' : 'words'}</span>{phase === 'complete' && <Button variant="secondary" onClick={restart}>Start another session</Button>}</div>
     </div>}
     {copyMessage && <p role="status" className="px-5 pb-4 text-sm text-gray-500">{copyMessage}</p>}
     {copyMessage.startsWith('Select') && <textarea aria-label="Text to copy manually" readOnly value={text} onFocus={event => event.target.select()} className="mx-5 mb-5 w-[calc(100%-2.5rem)] rounded-lg border p-3" rows={6} />}

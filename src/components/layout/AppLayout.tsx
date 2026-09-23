@@ -15,7 +15,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const location = useLocation();
   const syncState = useSyncStatus(user?.$id);
   const online = useOnlineStatus();
-  const isArticleRoute = /^\/texts\/[^/]+(?:\/present)?$/.test(location.pathname);
+  const isArticleRoute = /^\/texts\/[^/]+(?:\/present)?$/.test(location.pathname) || location.pathname.startsWith('/discussions/texts/');
   const isStudyRoute = /\/decks\/[^/]+\/review$/.test(location.pathname);
 
   const isActualTeacher = user?.role === 'teacher' || user?.role === 'admin';

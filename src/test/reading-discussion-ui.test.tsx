@@ -6,13 +6,13 @@ import { ParagraphCard } from '@/pages/TextReaderPage';
 import { readingWeek, sortedReadingPosts, type ReadingDiscussionPost } from '@/services/reading-discussion.service';
 beforeEach(()=>localStorage.clear());afterEach(cleanup);
 it('preserves draft, quote and reference across unmounts and category-specific storage',()=>{
-  const props={storageKey:'user:text:blue:thought',category:'thought' as const,busy:false,onSubmit:vi.fn()};
+  const props={storageKey:'user:text:blue:thought',category:'thought' as const,busy:false,onSubmit:vi.fn(),onCancel:vi.fn()};
   const {unmount}=render(<DiscussionComposer {...props}/>);
-  fireEvent.change(screen.getByRole('textbox',{name:'Your contribution'}),{target:{value:'My thought'}});
+  fireEvent.change(screen.getByRole('textbox',{name:'Your reply'}),{target:{value:'My thought'}});
   fireEvent.change(screen.getByRole('textbox',{name:'Quotation'}),{target:{value:'Exact words'}});
   fireEvent.change(screen.getByRole('spinbutton',{name:/Paragraph/}),{target:{value:'3'}});
   unmount();render(<DiscussionComposer {...props}/>);
-  expect(screen.getByRole('textbox',{name:'Your contribution'})).toHaveValue('My thought');
+  expect(screen.getByRole('textbox',{name:'Your reply'})).toHaveValue('My thought');
   expect(screen.getByRole('textbox',{name:'Quotation'})).toHaveValue('Exact words');
   expect(screen.getByRole('spinbutton')).toHaveValue(3);
   expect(localStorage.getItem('user:text:red:thought')).toBeNull();
@@ -21,8 +21,8 @@ it('retains the input node/focus on updates and clears the draft only on success
   const onSubmit=vi.fn().mockRejectedValueOnce(Error('Offline')).mockResolvedValueOnce({});
   const props={storageKey:'draft',category:'question' as const,busy:false,onSubmit};
   const {rerender}=render(<DiscussionComposer {...props}/>);
-  const input=screen.getByRole('textbox',{name:'Your contribution'});input.focus();fireEvent.change(input,{target:{value:'Why?'}});
-  rerender(<DiscussionComposer {...props} busy/>);expect(screen.getByRole('textbox',{name:'Your contribution'})).toBe(input);expect(input).toHaveFocus();
+  const input=screen.getByRole('textbox',{name:'Your question'});input.focus();fireEvent.change(input,{target:{value:'Why?'}});
+  rerender(<DiscussionComposer {...props} busy/>);expect(screen.getByRole('textbox',{name:'Your question'})).toBe(input);expect(input).toHaveFocus();
   rerender(<DiscussionComposer {...props}/>);
   fireEvent.submit(input.closest('form')!);await waitFor(()=>expect(onSubmit).toHaveBeenCalledTimes(1));expect(input).toHaveValue('Why?');expect(localStorage.getItem('draft')).toContain('Why?');
   fireEvent.submit(input.closest('form')!);await waitFor(()=>expect(input).toHaveValue(''));expect(localStorage.getItem('draft')).toBeNull();

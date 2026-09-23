@@ -67,7 +67,7 @@ function Thread({ post, all, votes, userId, isTeacher, readOnly, sort, ancestorL
   </div>;
 }
 
-function discussionTypeLabel(session:ClassSession){if(session.discussionType==='text')return'Text discussion';if(session.discussionType==='question')return'Open question';return'QFT prompt';}
+function discussionTypeLabel(session:ClassSession){if(session.discussionType==='text')return'Text discussion';if(session.discussionType==='question')return'QFT discussion';return'QFT prompt';}
 function countDescendants(parentId:string,posts:TextDiscussionPost[]):number{const children=posts.filter(post=>post.parentId===parentId);return children.length+children.reduce((total,child)=>total+countDescendants(child.$id,posts),0);}
 function formatDiscussionTime(value:string){const date=new Date(value),now=new Date(),sameDay=date.toDateString()===now.toDateString();return sameDay?`Today, ${date.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}`:date.toLocaleDateString([],{month:'short',day:'numeric'});}
 function ChatIcon(){return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-7l-4.5 3v-3H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Z"/></svg>;}

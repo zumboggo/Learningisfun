@@ -8,3 +8,19 @@
 @media (prefers-reduced-motion: reduce) {
   .dangerous-writing-shake { animation: none; }
 }
+
+.dangerous-writing { position: relative; }
+.writing-fullscreen-button { position: absolute; top: 1.1rem; right: 1rem; z-index: 2; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: .6rem; color: #64748b; }
+.writing-fullscreen-button:hover, .writing-fullscreen-button:focus-visible { background: #f1f5f9; color: #0f172a; }
+.dangerous-writing-focus { position: fixed; inset: 0; z-index: 100; width: 100vw; height: 100dvh; border: 0; border-radius: 0; overflow: auto; background: #fdfcf9; display: flex; flex-direction: column; }
+.dangerous-writing-focus:not(.writing-finished) .writing-toolbar,
+.dangerous-writing-focus .writing-status,
+.dangerous-writing-focus .writing-warning,
+.dangerous-writing-focus:not(.writing-finished) .writing-footer { display: none; }
+.dangerous-writing-focus .writing-clock-row { justify-content: center; padding: clamp(2rem, 7vh, 5rem) 1rem 1.5rem; }
+.dangerous-writing-focus .writing-clock { margin: 0; font-size: clamp(3.5rem, 8vw, 6rem); color: #26323d; }
+.dangerous-writing-focus .writing-paper { width: min(100%, 54rem); margin: 0 auto; display: flex; flex: 1; flex-direction: column; min-height: 14rem; padding: 1rem clamp(1.5rem, 5vw, 4rem) 3rem; }
+.dangerous-writing-focus .dangerous-writing-editor { flex: 1; min-height: 10rem; resize: none; border: 0; border-radius: 0; padding: 0; background: transparent; box-shadow: none; font-family: Charter, 'Iowan Old Style', Georgia, serif; font-size: clamp(1.2rem, 2vw, 1.5rem); line-height: 1.85; }
+.dangerous-writing-focus .writing-fullscreen-button { opacity: 0; }
+.dangerous-writing-focus .writing-fullscreen-button:hover, .dangerous-writing-focus .writing-fullscreen-button:focus-visible { opacity: 1; }
+@media (hover: none) { .dangerous-writing-focus .writing-fullscreen-button { opacity: .35; } }

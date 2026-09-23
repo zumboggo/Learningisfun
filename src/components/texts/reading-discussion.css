@@ -1,0 +1,30 @@
+.reading-discussion { max-width: 56rem; color: #243240; }
+.reading-discussion.reading-parallel { max-width: 90rem; }
+.reading-settings { border: 1px solid #e2e8f0; border-radius: .8rem; padding: .7rem 1rem; font-size: .875rem; }
+.reading-settings > summary { cursor: pointer; color: #64748b; }
+.reading-columns { display: grid; gap: 1.5rem; align-items: start; }
+.reading-conversation { min-width: 0; }
+.reading-feed-heading { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding: .7rem 0 1rem; }
+.reading-feed-heading h2 { font-weight: 650; font-size: 1.1rem; }
+.reading-feed-heading h2 span { color: #94a3b8; font-size: .85rem; margin-left: .4rem; }
+.reading-top { border-radius: 1rem; background: #eef2f6; color: #475569; padding: .35rem .85rem; font-size: .8rem; font-weight: 600; }
+.reading-thread { padding: 1.25rem; background: white; overflow-wrap: anywhere; }
+.reading-question { border: 1px solid #e2e8f0; border-radius: 1rem; }
+.reading-reply { padding: 1rem 0 1rem 1rem; border-bottom: 1px solid #f1f5f9; }
+.reading-quote { margin: .8rem 0 1rem; padding: .85rem 1.1rem; border-left: 3px solid #99b6bd; border-radius: 0 .5rem .5rem 0; background: #f4f7f6; color: #50636a; font-family: Charter, 'Iowan Old Style', Georgia, serif; font-size: 1rem; line-height: 1.7; white-space: pre-wrap; }
+.reading-see-replies { min-height: 2.75rem; color: #476577; font-size: .8rem; font-weight: 600; padding: .5rem .25rem; }
+.reading-see-replies span { color: #94a3b8; margin-left: .25rem; }
+.reading-replies { margin: .2rem 0 0 .4rem; border-left: 2px solid #dce5e9; }
+.parallel-reading { min-width: 0; border: 1px solid #e2e8f0; border-radius: 1rem; background: #fdfcf9; overflow: auto; }
+.parallel-reading-heading { padding: 1rem 1.5rem; border-bottom: 1px solid #e7e8e5; }
+.parallel-reading-heading span { color: #7a8588; font-size: .65rem; font-weight: 700; letter-spacing: .16em; }
+.parallel-reading-heading p { color: #8b9597; font-size: .75rem; margin-top: .3rem; }
+.parallel-reading-content { padding: 2rem 2.5rem; }
+@media (min-width: 900px) {
+  .reading-parallel .reading-columns { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .reading-parallel .parallel-reading { position: sticky; top: 1rem; max-height: calc(100dvh - 2rem); }
+}
+@media (max-width: 899px) {
+  .reading-parallel .parallel-reading { max-height: 45dvh; }
+  .parallel-reading-content { padding: 1.5rem 2rem; }
+}
