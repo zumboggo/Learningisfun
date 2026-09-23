@@ -1,0 +1,10 @@
+.dangerous-writing-editor { transition: color 100ms linear, opacity 100ms linear; }
+.dangerous-writing-shake { animation: dangerous-writing-shake 200ms linear infinite; }
+@keyframes dangerous-writing-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px) rotate(-0.15deg); }
+  75% { transform: translateX(2px) rotate(0.15deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dangerous-writing-shake { animation: none; }
+}

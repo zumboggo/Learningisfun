@@ -413,7 +413,7 @@ export function ClassDetailPage() {
       <WeeklyClassMaterials classId={cls.$id} materials={weeklyMaterials || []} isOwner={Boolean(isOwner)} onOpenQuizResults={quiz => setResultsQuiz(quiz)} />
 
 
-      {!isOwner && !isParent && <Link to="/writing" className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 hover:border-blue-300"><span><strong className="block">Writing Feedback</strong><span className="text-sm text-gray-500">Get private AI feedback on any piece of writing.</span></span><span aria-hidden="true">→</span></Link>}
+      {!isOwner && !isParent && <Link to="/writing" className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 hover:border-blue-300"><span><strong className="block">Writing</strong><span className="text-sm text-gray-500">Try Dangerous Writing to find your flow, or get private AI feedback.</span></span><span aria-hidden="true">→</span></Link>}
 
       <PeerReviewClassPanel classId={cls.$id} isOwner={Boolean(isOwner)} isParent={Boolean(isParent)} />
 

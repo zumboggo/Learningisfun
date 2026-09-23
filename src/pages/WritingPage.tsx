@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
 import { MarkdownPasteEditor } from '@/components/common/MarkdownPasteEditor';
+import { DangerousWriting } from '@/components/writing/DangerousWriting';
 import { generatePersonalWritingFeedback } from '@/services/writing-feedback.service';
 import { appendErrorLogSuggestions, type WritingErrorLogSuggestion } from '@/services/error-log.service';
 
@@ -21,6 +22,7 @@ function suggestionKey(suggestion: WritingErrorLogSuggestion): string {
 export function WritingPage() {
   const { user, isParent } = useAuth();
   const [text, setText] = useState('');
+  const [mode, setMode] = useState<'feedback' | 'dangerous'>('feedback');
   const [request, setRequest] = useState('');
   const [feedback, setFeedback] = useState<PersonalFeedback | null>(null);
   const [busy, setBusy] = useState(false);
@@ -52,7 +54,13 @@ export function WritingPage() {
   };
 
   return <div className="student-page mx-auto max-w-4xl space-y-5 p-4">
-    <header><h1 className="text-2xl font-bold">Writing Feedback</h1><p className="text-sm text-gray-500">Bring any writing and get private, specific ideas for revision.</p></header>
+    <header><h1 className="text-2xl font-bold">Writing</h1><p className="text-sm text-gray-500">Find your flow, or get private, specific ideas for revision.</p></header>
+    <div className="flex flex-wrap gap-2" aria-label="Writing options">
+      <Button variant={mode === 'feedback' ? 'primary' : 'secondary'} aria-pressed={mode === 'feedback'} onClick={() => setMode('feedback')}>Writing Feedback</Button>
+      <Button variant={mode === 'dangerous' ? 'primary' : 'secondary'} aria-pressed={mode === 'dangerous'} onClick={() => setMode('dangerous')}>Dangerous Writing</Button>
+    </div>
+    <div hidden={mode !== 'dangerous'}><DangerousWriting /></div>
+    <div hidden={mode !== 'feedback'}>
     <Card className="border-gray-300"><div className="space-y-4">
       <div><p className="mb-1 text-sm font-medium text-gray-700">Your writing</p><MarkdownPasteEditor value={text} onChange={setText} rows={14} maxLength={30000} placeholder="Paste or write anything you would like feedback on…" /></div>
       <label className="block text-sm font-medium text-gray-700">What would you especially like feedback on? <span className="font-normal text-gray-400">(optional)</span><input value={request} onChange={event => setRequest(event.target.value)} maxLength={1000} className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100" placeholder="For example: Is my argument clear? Focus on sentence variety." /></label>
@@ -73,5 +81,6 @@ export function WritingPage() {
         <p className="text-xs text-gray-400">Fresh feedback generated {new Date(feedback.generatedAt).toLocaleString()}</p>
       </div>}
     </div></Card>
+    </div>
   </div>;
 }
