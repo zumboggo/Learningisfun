@@ -42,7 +42,6 @@ jobs:
           VITE_APPWRITE_ENDPOINT: ${{ secrets.VITE_APPWRITE_ENDPOINT }}
           VITE_APPWRITE_PROJECT_ID: ${{ secrets.VITE_APPWRITE_PROJECT_ID }}
           VITE_APPWRITE_DATABASE_ID: ${{ secrets.VITE_APPWRITE_DATABASE_ID }}
-          VITE_TEACHER_CODE: ${{ secrets.VITE_TEACHER_CODE }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v6
