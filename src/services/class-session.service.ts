@@ -31,7 +31,7 @@ export async function createClassSession(
     $id: generateId(),
     classId,
     assignmentId: input.assignmentId || undefined,
-    discussionType: input.discussionType || 'qft',
+    discussionType: input.discussionType || 'text',
     textId: input.textId || null,
     promptMarkdown: input.promptMarkdown || '',
     title: input.title.trim() || 'Class discussion',

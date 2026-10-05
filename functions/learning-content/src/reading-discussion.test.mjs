@@ -1,29 +1,7 @@
+import {harness} from './reading-discussion-test-harness.mjs';
 import { test, expect, vi, afterEach } from 'vitest';
-import { readingDiscussionAction, discussionKey } from './reading-discussion.js';
+import { discussionKey } from './reading-discussion.js';
 afterEach(()=>vi.useRealTimers());
-function harness() {
-  const storage={
-    classes:[{$id:'blue',teacherId:'teacher',courseName:'Literature',name:'Blue'},{$id:'red',teacherId:'teacher',courseName:'Literature',name:'Red'}],
-    texts:[{$id:'text',title:'A reading',status:'published'}],
-    text_assignments:[{$id:'ab',textId:'text',classId:'blue',isAssignedReading:true,assignedAt:'2026-09-01',dueDate:'2026-09-15'},{$id:'ar',textId:'text',classId:'red',isAssignedReading:true,assignedAt:'2026-09-01',dueDate:'2026-09-16'}],
-    class_members:[{$id:'mb',userId:'student',classId:'blue',role:'student'},{$id:'mr',userId:'peer',classId:'red',role:'student'}],
-    reading_settings:[],users:[{$id:'student',name:'Student'},{$id:'peer',name:'Peer'}],reading_posts:[],reading_votes:[],reading_reports:[],
-  };
-  const db={
-    getDocument:vi.fn(async(_,collection,id)=>{const doc=storage[collection].find(r=>r.$id===id);if(!doc)throw Object.assign(Error('Missing'),{code:404});return doc;}),
-    listDocuments:vi.fn(async(_,collection,queries)=>{
-      let rows=[...storage[collection]];let limit=100;
-      for(const raw of queries){const q=JSON.parse(raw);if(q.method==='equal')rows=rows.filter(r=>q.values.includes(r[q.attribute]));if(q.method==='cursorAfter')rows=rows.slice(rows.findIndex(r=>r.$id===q.values[0])+1);if(q.method==='limit')limit=q.values[0];}
-      return {documents:rows.slice(0,limit),total:rows.length};
-    }),
-    createDocument:vi.fn(async(_,collection,id,data)=>{if(storage[collection].some(r=>r.$id===id))throw Object.assign(Error('Conflict'),{code:409});const doc={$id:id,...data};storage[collection].push(doc);return doc;}),
-    updateDocument:vi.fn(async(_,collection,id,data)=>Object.assign(storage[collection].find(r=>r.$id===id),data)),
-    deleteDocument:vi.fn(async(_,collection,id)=>{storage[collection]=storage[collection].filter(r=>r.$id!==id);}),
-  };
-  const call=(body,identity={userId:'student',role:'student',classIds:['blue']})=>readingDiscussionAction({body:{textId:'text',classId:'blue',...body},profile:{role:identity.role},userId:identity.userId,memberClassIds:new Set(identity.classIds),db,databaseId:'main'});
-  const teacher={userId:'teacher',role:'teacher',classIds:[]};
-  return {storage,db,call,teacher};
-}
 const post=(requestId,category='thought',extra={})=>({action:'postReadingDiscussion',requestId,category,content:'I noticed something.',...extra});
 test('teacher usernames are private and authors can edit without changing ownership',async()=>{
  const {call,storage,teacher}=harness();await call(post('editable'));
@@ -146,8 +124,8 @@ test('class owner controls student names, scoped to text/class without leaking i
 });
 
 test('students can upvote many questions and replies once each without a vote budget',async()=>{
- const {call,storage}=harness();
- for(let i=0;i<8;i++) await call(post(`question-${i}`,'question'));
+ const {call,storage,teacher}=harness();
+ for(let i=0;i<8;i++) await call(post(`question-${i}`,'question'),teacher);
  const parentId=storage.reading_posts[0].$id;
  for(let i=0;i<5;i++) await call(post(`reply-${i}`,'question',{parentId}));
  for(const row of storage.reading_posts) {
@@ -156,4 +134,36 @@ test('students can upvote many questions and replies once each without a vote bu
  }
  expect(storage.reading_votes).toHaveLength(13);
  expect((await call({action:'readReadingDiscussion'})).posts.every(p=>p.score===1&&p.voted)).toBe(true);
+});
+
+test('listing reports visible questions and replies by class without leaking posts or authors',async()=>{
+ const {call,storage,teacher}=harness();
+ await call(post('thought','thought'));
+ let listing=await call({action:'listReadingDiscussions'});
+ expect(listing.readings[0]).toMatchObject({questionCount:0,replyCount:0});
+ const parentId=storage.reading_posts[0].$id;
+ await call(post('reply','thought',{parentId}));
+ await call(post('question','question'));
+ await call(post('red-question','question',{classId:'red'}),{userId:'peer',role:'student',classIds:['red']});
+ listing=await call({action:'listReadingDiscussions'});
+ expect(listing.readings).toHaveLength(1);
+ expect(listing.readings[0]).toMatchObject({classId:'blue',questionCount:1,replyCount:1});
+ expect(listing.readings[0]).not.toHaveProperty('posts');expect(listing.readings[0]).not.toHaveProperty('authorId');
+ const all=(await call({action:'listReadingDiscussions'},teacher)).readings;
+ expect(all.find(row=>row.classId==='red')).toMatchObject({questionCount:1,replyCount:0});
+});
+test('hidden questions and replies beneath hidden ancestors do not make a listing active',async()=>{
+ const {call,storage,teacher}=harness();
+ await call(post('root','question'));const parentId=storage.reading_posts[0].$id;
+ await call(post('reply','thought',{parentId}));
+ await call({action:'moderateReadingDiscussion',postId:parentId,operation:'hide'},teacher);
+ expect((await call({action:'listReadingDiscussions'})).readings[0]).toMatchObject({questionCount:0,replyCount:0});
+ await call({action:'moderateReadingDiscussion',postId:parentId,operation:'show'},teacher);
+ expect((await call({action:'listReadingDiscussions'})).readings[0]).toMatchObject({questionCount:1,replyCount:1});
+});
+test('listing counts beyond a page of contributions and ignores unassigned workspaces',async()=>{
+ const {call,storage}=harness();
+ for(let i=0;i<105;i++)storage.reading_posts.push({$id:`post-${i}`,workspaceId:discussionKey('text','blue'),authorId:'student',dataJson:JSON.stringify({parentId:null,category:'question',hidden:false})});
+ storage.reading_posts.push({$id:'other',workspaceId:discussionKey('other-text','blue'),authorId:'student',dataJson:JSON.stringify({category:'question'})});
+ expect((await call({action:'listReadingDiscussions'})).readings[0].questionCount).toBe(105);
 });

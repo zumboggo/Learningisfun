@@ -1,3 +1,5 @@
+import {StartTextDiscussionModal} from './DiscussionsListPage';
+import {ReadingDiscussionsList} from '@/components/texts/ReadingDiscussionsList';
 import { PowerPointUpload } from '@/components/common/PowerPointUpload';
 import { PresentationDownload } from '@/components/common/PresentationDownload';
 import { TextPurposeLabels, type TextPurpose } from '@/components/texts/TextPurpose';
@@ -25,7 +27,7 @@ import {
   syncClassRosterFromServer,
   type RosterImportResult,
 } from '@/services/class.service';
-import { createClassSession, finishClassDiscussion, todayKey } from '@/services/class-session.service';
+import { finishClassDiscussion, todayKey } from '@/services/class-session.service';
 import { downloadCsv } from '@/services/report.service';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
@@ -76,11 +78,6 @@ export function ClassDetailPage() {
   const [pendingMove, setPendingMove] = useState<{ id: string; name: string } | null>(null);
   const [moveTargetClassId, setMoveTargetClassId] = useState('');
   const [showDiscussionModal, setShowDiscussionModal] = useState(false);
-  const [discussionTitle, setDiscussionTitle] = useState('Class discussion');
-  const [discussionFocus, setDiscussionFocus] = useState('');
-  const [discussionDate, setDiscussionDate] = useState(todayKey());
-  const [votesPerStudent, setVotesPerStudent] = useState(4);
-  const [allowStackedVotes, setAllowStackedVotes] = useState(false);
   const [rosterImporting, setRosterImporting] = useState(false);
   const [rosterResult, setRosterResult] = useState<RosterImportResult | null>(null);
   const [showAddDecks, setShowAddDecks] = useState(false);
@@ -214,7 +211,7 @@ export function ClassDetailPage() {
 
   const discussions = useLiveQuery(async () => {
     if (!classId) return [];
-    const sessions = (await db.class_sessions.where('classId').equals(classId).reverse().sortBy('sessionDate')).filter(session => session.discussionType !== 'notes' && session.discussionType !== 'presentation');
+    const sessions = (await db.class_sessions.where('classId').equals(classId).reverse().sortBy('sessionDate')).filter(session => session.discussionType === 'text');
     const rows = await Promise.all(sessions.map(async session => ({
       session,
       questionCount: await db.discussion_questions.where('classSessionId').equals(session.$id).count(),
@@ -237,7 +234,7 @@ export function ClassDetailPage() {
   const weeklyMaterials = useLiveQuery(async (): Promise<WeeklyMaterial[]> => {
     if (!classId) return [];
     const sessions = await db.class_sessions.where('classId').equals(classId).toArray();
-    const sessionMaterials: WeeklyMaterial[] = sessions
+    const sessionMaterials: WeeklyMaterial[] = sessions.filter(session=>['text','notes','presentation'].includes(session.discussionType||''))
       .filter(session => session.discussionType === 'presentation' ? session.status === 'published' : session.status === 'published' || (session.discussionType !== 'notes' && session.status === 'active'))
       .map(session => ({ kind: session.discussionType === 'presentation' ? 'writingPrompt' : session.discussionType === 'notes' ? 'notes' : 'discussion', date: session.sessionDate, session }));
     const assignments = await db.text_assignments.where('classId').equals(classId).toArray();
@@ -264,21 +261,6 @@ export function ClassDetailPage() {
     if (!classId || !pendingRemoval) return;
     await removeStudent(classId, pendingRemoval.id);
     setPendingRemoval(null);
-  };
-
-  const handleCreateDiscussion = async () => {
-    if (!classId || !user) return;
-    const session = await createClassSession(classId, user.$id, {
-      title: discussionTitle,
-      sessionDate: discussionDate,
-      assignmentId: null,
-      votesPerStudent,
-      allowStackedVotes,
-      discussionType: 'qft',
-      promptMarkdown: discussionFocus,
-    });
-    setShowDiscussionModal(false);
-    navigate(`/discussions/${session.$id}`);
   };
 
   const handleRosterFile = async (file: File) => {
@@ -438,7 +420,7 @@ export function ClassDetailPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold">Discussions ({discussions?.length || 0})</h2>
+            <h2 className="text-lg font-semibold">Discussions</h2>
             {isOwner && (
               <Button
                 onClick={() => setShowDiscussionModal(true)}
@@ -450,35 +432,8 @@ export function ClassDetailPage() {
               </Button>
             )}
           </div>
-          {discussions && discussions.length > 0 ? (
-            <div className="space-y-2">
-              {discussions.slice(0, 5).map(({ session, questionCount }) => (
-                <Link key={session.$id} to={`/discussions/${session.$id}`}>
-                  <Card>
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <h3 className="font-medium text-sm">{session.title}</h3>
-                        <p className="text-xs text-gray-500">{session.sessionDate}</p>
-                      </div>
-                      <StatusBadge status={session.status} />
-                    </div>
-                    <p className="text-xs text-gray-400 mt-1">{questionCount} questions</p>
-                  </Card>
-                </Link>
-              ))}
-              {discussions.length > 5 && (
-                <Link to="/discussions" className="text-sm text-blue-600 hover:underline block">
-                  +{discussions.length - 5} more discussions
-                </Link>
-              )}
-            </div>
-          ) : (
-            <EmptyState
-              title="No discussions yet"
-              message="Start a discussion to collect questions and votes."
-              action={isOwner && <Button onClick={() => setShowDiscussionModal(true)} size="sm" variant="secondary">Start discussion</Button>}
-            />
-          )}
+          <ReadingDiscussionsList classId={classId}/>
+          <Link to="/discussions?archived=1" className="block text-sm text-blue-700">View archived Discussions</Link>
         </section>
 
         <section>
@@ -737,53 +692,7 @@ export function ClassDetailPage() {
 
       {isOwner && resultsQuiz && classId && <QuizResultsModal quiz={resultsQuiz} classId={classId} onClose={() => setResultsQuiz(null)} />}
 
-      <Modal open={showDiscussionModal} onClose={() => setShowDiscussionModal(false)} title="Start discussion">
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Discussion topic</label>
-            <input
-              value={discussionTitle}
-              onChange={e => setDiscussionTitle(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg"
-            />
-          </div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">Overall focus or context</label><textarea value={discussionFocus} onChange={e => setDiscussionFocus(e.target.value)} rows={3} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg" placeholder="Give the class a broad topic or focus. Teachers and students can add multiple questions underneath it." /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-              <input
-                type="date"
-                value={discussionDate}
-                onChange={e => setDiscussionDate(e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Votes each</label>
-              <input
-                type="number"
-                min={0}
-                max={20}
-                value={votesPerStudent}
-                onChange={e => setVotesPerStudent(Number(e.target.value))}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg"
-              />
-            </div>
-          </div>
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={allowStackedVotes}
-              onChange={e => setAllowStackedVotes(e.target.checked)}
-              className="rounded"
-            />
-            <span>Allow students to put multiple votes on one question</span>
-          </label>
-          <Button onClick={() => void handleCreateDiscussion()} className="w-full">
-            Create discussion
-          </Button>
-        </div>
-      </Modal>
+      {showDiscussionModal&&isOwner&&user&&<StartTextDiscussionModal teacherId={user.$id} initialClassId={classId} onClose={()=>setShowDiscussionModal(false)}/>}
 
       {isOwner && user && (
         <><AddDecksToClassModal

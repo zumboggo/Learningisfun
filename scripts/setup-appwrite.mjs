@@ -39,6 +39,9 @@ const ENUM = (key, elements, opts = {}) => ({ type: 'enum', key, elements, ...op
 const DATE = (key, opts = {}) => S(key, { size: 64, ...opts });
 
 const COLLECTIONS = [
+  {id:'reading_question_state',name:'Discussion Transaction Guards',attributes:[S('workspaceId',{required:true}),TXT('dataJson',{required:true})],indexes:[]},
+  {id:'reading_question_drafts',name:'Private Question Notebooks',attributes:[S('workspaceId',{required:true}),S('authorId',{required:true}),TXT('dataJson',{required:true})],indexes:[{key:'idx_owner_workspace',type:'key',attributes:['workspaceId','authorId']}]},
+  {id:'reading_reply_rounds',name:'Teacher Reply Rounds',attributes:[S('workspaceId',{required:true}),TXT('dataJson',{required:true})],indexes:[{key:'idx_workspace',type:'key',attributes:['workspaceId']}]},
   { id:'reading_settings', name:'Text Discussion Settings', attributes:[S('workspaceId',{required:true}),TXT('dataJson',{required:true})], indexes:[] },
   { id: 'reading_posts', name: 'Text Discussion Contributions', attributes: [S('workspaceId',{required:true}),S('authorId',{required:true}),TXT('dataJson',{required:true})], indexes:[{key:'idx_workspace',type:'key',attributes:['workspaceId']}] },
   { id: 'reading_votes', name: 'Text Discussion Upvotes', attributes: [S('workspaceId',{required:true}),S('postId',{required:true}),S('userId',{required:true})], indexes:[{key:'idx_workspace',type:'key',attributes:['workspaceId']},{key:'unique_voter',type:'unique',attributes:['postId','userId']}] },
@@ -732,6 +735,7 @@ async function main() {
       console.log(`Created collection ${col.id}`);
     }
 
+    if(col.id.startsWith('reading_'))await databases.updateCollection(DATABASE_ID,col.id,col.name,[],false);
     for (const attr of col.attributes) {
       await createAttribute(col.id, attr);
     }

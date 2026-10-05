@@ -4,13 +4,15 @@ export const readingCategories: Record<ReadingCategory, string> = { thought: 'Th
 export interface ReadingDiscussionPost {
   id: string; parentId: string|null; category: ReadingCategory; content: string; quotation: string; paragraph: number|null;
   label: string; teacher: boolean; mine: boolean; authorId?: string; username?: string; createdAt: string; updatedAt?: string;
-  hidden: boolean; locked: boolean; pinned: boolean; score: number; voted: boolean; reports?: {id:string;reason:string}[];
+  everReplied?:boolean; withdrawn?:boolean; hidden: boolean; locked: boolean; pinned: boolean; score: number; voted: boolean; reports?: {id:string;reason:string}[];
 }
+export interface ReplyAssignment {studentId:string;questionId:string|null;status:'pending'|'completed'|'cancelled'|'gap';roundId?:string;createdAt?:string;replyId?:string;cancelledReason?:string}
 export interface ReadingDiscussion {
+  curatedReady?:boolean;notebook?:{id:string;draftId:string;content:string;updatedAt:string}[];publishedCount?:number;remainingSpaces?:number;assignments?:ReplyAssignment[];rounds?:{id:string;createdAt:string;assignments:ReplyAssignment[]}[];awaitingReplies?:string[];
   title:string; className:string; teacher:boolean; showStudentNames?:boolean; canWrite:boolean; posts:ReadingDiscussionPost[];
   participation:{id:string;name:string;thought:number;question:number;connection:number;replies:number}[];
 }
-export interface ReadingDiscussionListing { id:string;textId:string;classId:string;title:string;className:string;date:string;available:boolean }
+export interface ReadingDiscussionListing { id:string;textId:string;classId:string;title:string;className:string;date:string;available:boolean;questionCount?:number;replyCount?:number }
 export const readingDiscussion = <T>(action:string, textId:string, classId:string, fields:Record<string,unknown>={}) => executeLearningContent<T>({action,textId,classId,...fields});
 export function readingWeek(date:string):string {
   const d = new Date(`${date.slice(0,10)}T12:00:00Z`);
@@ -32,3 +34,5 @@ export function currentReadingWeek(now = new Date()) {
   const schoolDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
   return readingWeek(schoolDate);
 }
+
+export const hasReadingDiscussionActivity=(row:ReadingDiscussionListing)=>(row.questionCount||0)+(row.replyCount||0)>0;

@@ -358,7 +358,7 @@ function StudentDashboard() {
   const doNow = useLiveQuery(async () => {
     if (!user || classIds.length === 0) return { sessions: [], decks: [] };
     const [sessions, deckAssignments] = await Promise.all([
-      db.class_sessions.where('classId').anyOf(classIds).and(s => s.status === 'active').toArray(),
+      db.class_sessions.where('classId').anyOf(classIds).and(s => s.status === 'active' && (s.discussionType==='text'||s.discussionType==='presentation')).toArray(),
       db.deck_assignments.where('classId').anyOf(classIds).toArray(),
     ]);
     const decks: DeckAction[] = [];
@@ -944,7 +944,7 @@ function calculateLongestStreak(heatmap: Array<{ date: string; activityCount: nu
 async function buildActiveSessionRows(classIds: string[]): Promise<Array<{
   session: ClassSession; cls: Class | undefined; questionCount: number; deckCount: number;
 }>> {
-  const sessions = await db.class_sessions.where('classId').anyOf(classIds).and(s => s.status === 'active').toArray();
+  const sessions = await db.class_sessions.where('classId').anyOf(classIds).and(s => s.status === 'active' && (s.discussionType==='text'||s.discussionType==='presentation')).toArray();
   const rows = [];
   for (const session of sessions) {
     const [cls, questionCount, deckCount] = await Promise.all([

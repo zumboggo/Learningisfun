@@ -152,9 +152,9 @@ export default async ({ req, res, error }) => {
     if (body.action === 'saveTqe' || ['flagTextAnnotation','moderateTextAnnotation','setAnnotationMode'].includes(body.action) || (body.action === 'mutate' && body.collection === 'text_annotations')) {
       return res.json({ error: 'Legacy annotations and TQE are read-only. Your existing work is preserved; use Discussions → Texts for new contributions.' }, 403);
     }
-    if (['setReadingDiscussionIdentity','listReadingDiscussions','readReadingDiscussion','postReadingDiscussion','editReadingDiscussion','voteReadingDiscussion','reportReadingDiscussion','moderateReadingDiscussion'].includes(body.action)) {
+    if (['saveReadingQuestionDraft','deleteReadingQuestionDraft','publishReadingQuestions','withdrawReadingQuestion','previewReadingAssignments','publishReadingAssignments','setReadingDiscussionIdentity','listReadingDiscussions','readReadingDiscussion','postReadingDiscussion','editReadingDiscussion','voteReadingDiscussion','reportReadingDiscussion','moderateReadingDiscussion'].includes(body.action)) {
       try { return res.json(await readingDiscussionAction({ body, profile, userId, memberClassIds, db, databaseId })); }
-      catch (cause) { if(cause.code===403)return res.json({error:cause.message},403);throw cause; }
+      catch (cause) { if([403,409].includes(cause.code))return res.json({error:cause.message},cause.code);throw cause; }
     }
     if (['uploadPresentationFile','downloadPresentationFile','uploadPlannerPresentation'].includes(body.action)) return res.json(await presentationFileAction({body,profile,userId,memberClassIds,db,databaseId,storage:new Storage(client),tokens:new Tokens(client),endpoint:process.env.APPWRITE_ENDPOINT,projectId:process.env.APPWRITE_FUNCTION_PROJECT_ID}));
     if (['uploadOriginalPdf', 'readOriginalPdf'].includes(body.action)) return res.json(await originalPdfAction({ body, profile, userId, memberClassIds, db, databaseId, storage: new Storage(client), tokens: new Tokens(client), endpoint: process.env.APPWRITE_ENDPOINT, projectId: process.env.APPWRITE_FUNCTION_PROJECT_ID }));

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { executeLearningContent } from '@/services/learning-content.service';
-import { currentReadingWeek, readingWeek, type ReadingDiscussionListing } from '@/services/reading-discussion.service';
+import { hasReadingDiscussionActivity, currentReadingWeek, readingWeek, type ReadingDiscussionListing } from '@/services/reading-discussion.service';
 import { Button } from '@/components/common/Button';
 
-export function ReadingDiscussionsList() {
+export function ReadingDiscussionsList({classId}:{classId?:string}={}) {
+  const [filter,setFilter]=useState<'all'|'active'>('all');
   const [rows, setRows] = useState<ReadingDiscussionListing[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -17,8 +18,10 @@ export function ReadingDiscussionsList() {
     finally { setLoading(false); }
   }, []);
   useEffect(() => { void Promise.resolve().then(refresh); }, [refresh]);
+  const availableRows=rows.filter(row=>!classId||row.classId===classId);
+  const visibleRows=availableRows.filter(row=>filter==='all'||hasReadingDiscussionActivity(row));
   const classes = new Map<string, { name: string; weeks: Map<string, ReadingDiscussionListing[]> }>();
-  for (const row of [...rows].sort((a, b) => a.className.localeCompare(b.className) || b.date.localeCompare(a.date))) {
+  for (const row of [...visibleRows].sort((a, b) => a.className.localeCompare(b.className) || b.date.localeCompare(a.date))) {
     const group = classes.get(row.classId) || { name: row.className, weeks: new Map<string, ReadingDiscussionListing[]>() };
     const week = readingWeek(row.date);
     group.weeks.set(week, [...(group.weeks.get(week) || []), row]);
@@ -27,9 +30,10 @@ export function ReadingDiscussionsList() {
   const currentWeek = currentReadingWeek();
   return <section aria-label="Text discussions" className="mb-6 space-y-4">
     <div className="flex items-center justify-between"><h2 className="text-lg font-semibold">Classes</h2><Button size="sm" variant="secondary" loading={loading} onClick={() => void refresh()}>Refresh texts</Button></div>
+    <div className="flex gap-2" role="group" aria-label="Discussion filter">{(['all','active'] as const).map(value=><Button key={value} size="sm" aria-pressed={filter===value} variant={filter===value?'primary':'secondary'} onClick={()=>setFilter(value)}>{value==='all'?'All':'Active Discussions'}</Button>)}</div>
     <p className="text-sm text-slate-500">Choose a class and a reading. Ask a question, then explore the answers together.</p>
     {error && <p role="alert" className="text-red-700">{error}</p>}
-    {!loading && !error && !rows.length && <p className="text-slate-500">Your available assigned texts will appear here.</p>}
+    {!loading && !error && !visibleRows.length && <p className="text-slate-500">{filter==='active'?'No discussions have posted questions or replies yet.':'Your available assigned texts will appear here.'}</p>}
     {[...classes].map(([id, group]) => {
       const previous = [...group.weeks].filter(([week]) => week < currentWeek || week === 'Unscheduled');
       const upcoming = [...group.weeks].filter(([week]) => week > currentWeek && week !== 'Unscheduled');
