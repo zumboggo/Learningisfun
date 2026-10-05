@@ -50,7 +50,7 @@ export async function createLivePresentation(classId: string, title: string, que
   return result.sessionId;
 }
 
-export async function createWritingPrompt(classId: string, prompt: string, allowResubmission = false, promptSize: WritingPromptSize = 'large', exampleResponse = ''): Promise<string> {
+export async function createWritingPrompt(classId: string, prompt: string, allowResubmission = true, promptSize: WritingPromptSize = 'large', exampleResponse = ''): Promise<string> {
   const result = await executeLearningContent<{ sessionId: string }>({ action: 'createLivePresentation', classId, title: 'Writing Prompt', questions: [{ type: 'paragraph', text: prompt.trim(), options: [], answer: '' }], allowResubmission, promptSize, exampleResponse: exampleResponse.trim() });
   return result.sessionId;
 }

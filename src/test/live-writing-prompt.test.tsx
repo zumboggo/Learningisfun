@@ -43,8 +43,8 @@ describe('Live writing prompt', () => {
     await act(async () => { await Promise.resolve(); });
     expect(read.mock.calls.length).toBeGreaterThan(callsWhileFocused);
   });
-  it('lets a student replace a submitted response when the teacher enables resubmission', async () => {
-    read.mockResolvedValue({...state,ownAnswer:'First response',allowResubmission:true});
+  it('lets a student replace a submitted response while an existing writing prompt is open', async () => {
+    read.mockResolvedValue({...state,ownAnswer:'First response',allowResubmission:false});
     const { LivePresentationPage } = await import('@/pages/LivePresentationPage');
     render(<MemoryRouter initialEntries={['/presentations/session-1/live']}><Routes><Route path="/presentations/:sessionId/live" element={<LivePresentationPage />}/></Routes></MemoryRouter>);
     await act(async()=>{await vi.advanceTimersByTimeAsync(1)});
@@ -56,4 +56,27 @@ describe('Live writing prompt', () => {
     await act(async()=>{await Promise.resolve()});
     expect(submit).toHaveBeenCalledWith('session-1','Improved response');
   });
+  it('keeps a revision available after a failed submission', async () => {
+    read.mockResolvedValue({...state,ownAnswer:'First response'});
+    submit.mockRejectedValue(new Error('Network unavailable'));
+    const { LivePresentationPage } = await import('@/pages/LivePresentationPage');
+    render(<MemoryRouter initialEntries={['/presentations/session-1/live']}><Routes><Route path="/presentations/:sessionId/live" element={<LivePresentationPage />}/></Routes></MemoryRouter>);
+    await act(async()=>{await vi.advanceTimersByTimeAsync(1)});
+    fireEvent.click(screen.getByRole('button',{name:/revise and resubmit/i}));
+    fireEvent.change(screen.getByPlaceholderText(/paragraph response/i),{target:{value:'My revised response'}});
+    fireEvent.click(screen.getByRole('button',{name:/update response/i}));
+    await act(async()=>{await Promise.resolve()});
+    expect(screen.getByPlaceholderText(/paragraph response/i)).toHaveValue('My revised response');
+    expect(screen.getByText('Network unavailable')).toBeInTheDocument();
+  });
+  it('does not offer submission or revision after the prompt is finished', async () => {
+    read.mockResolvedValue({...state,session:{...state.session,status:'published'},ownAnswer:'Saved response',allowResubmission:true});
+    const { LivePresentationPage } = await import('@/pages/LivePresentationPage');
+    render(<MemoryRouter initialEntries={['/presentations/session-1/live']}><Routes><Route path="/presentations/:sessionId/live" element={<LivePresentationPage />}/></Routes></MemoryRouter>);
+    await act(async()=>{await vi.advanceTimersByTimeAsync(1)});
+    expect(screen.getByText(/writing prompt is finished/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button',{name:/resubmit|submit response/i})).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+  });
+
 });

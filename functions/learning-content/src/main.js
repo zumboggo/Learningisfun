@@ -496,7 +496,7 @@ export default async ({ req, res, error }) => {
       const normalizedQuestions = questions.map(q => ({ ...q, options: q.type === 'mc' ? (Array.isArray(q.options) ? q.options.slice(0, 4).map(value => String(value).trim()) : []) : [] }));
       if (normalizedQuestions.some(q => q.type === 'mc' && (q.options.length < 2 || q.options.some(value => !value)))) return res.json({ error: 'Multiple-choice questions need at least two choices' }, 400);
       const now = new Date().toISOString();
-      const allowResubmission = Boolean(body.allowResubmission);
+      const allowResubmission = normalizedQuestions.some(q => q.type === 'paragraph') || Boolean(body.allowResubmission);
       const promptSize = ['standard', 'large', 'extra-large'].includes(body.promptSize) ? body.promptSize : 'large';
       const exampleResponse = String(body.exampleResponse || '').trim().slice(0, 10000);
       const session = await db.createDocument(databaseId, 'class_sessions', ID.unique(), { classId: body.classId, assignmentId: null, discussionType: 'presentation', textId: null, promptMarkdown: String(normalizedQuestions[0].text).trim(), title: String(body.title || '').trim() || 'Writing Prompt', sessionDate: now.slice(0, 10), status: 'active', votesPerStudent: 0, allowStackedVotes: false, notesMarkdown: JSON.stringify({ reveal: false, allowResubmission, promptSize, exampleResponse }), publishedNotesMarkdown: '', publishedAt: null, createdAt: now, updatedAt: now });
@@ -524,7 +524,7 @@ export default async ({ req, res, error }) => {
       const questionResult = await db.listDocuments(databaseId, 'discussion_questions', [Query.equal('classSessionId', session.$id), Query.limit(1)]);
       if (questionResult.total) await db.updateDocument(databaseId, 'discussion_questions', questionResult.documents[0].$id, { questionText: prompt });
       const now = new Date().toISOString();
-      const notesMarkdown = JSON.stringify({ ...priorState, allowResubmission: Boolean(body.allowResubmission), promptSize, exampleResponse });
+      const notesMarkdown = JSON.stringify({ ...priorState, allowResubmission: true, promptSize, exampleResponse });
       let publishedNotesMarkdown = session.publishedNotesMarkdown || '';
       if (session.status === 'published' && questionResult.total) {
         const answers = await db.listDocuments(databaseId, 'discussion_answers', [Query.equal('questionId', questionResult.documents[0].$id), Query.limit(5000)]);
@@ -586,7 +586,7 @@ export default async ({ req, res, error }) => {
         if (config.type === 'mc' && (!/^\d+$/.test(answer) || Number(answer) < 0 || Number(answer) >= config.options.length)) return res.json({ error: 'Choose a valid answer' }, 400);
         const promptState = (() => { try { return JSON.parse(session.notesMarkdown || '{}'); } catch { return {}; } })();
         const prior = await db.listDocuments(databaseId, 'discussion_answers', [Query.equal('questionId', active.$id), Query.equal('authorId', userId), Query.limit(1)]), now = new Date().toISOString();
-        if (prior.total && !promptState.allowResubmission) return res.json({ error: 'This prompt accepts one response per student' }, 409);
+        if (prior.total && config.type !== 'paragraph' && !promptState.allowResubmission) return res.json({ error: 'This prompt accepts one response per student' }, 409);
         const data = { questionId: active.$id, authorId: userId, authorName: '', answerText: answer, createdAt: prior.documents[0]?.createdAt || now, updatedAt: now };
         if (prior.total) await db.updateDocument(databaseId, 'discussion_answers', prior.documents[0].$id, data); else await db.createDocument(databaseId, 'discussion_answers', ID.unique(), data);
         return res.json({ ok: true });
@@ -601,7 +601,7 @@ export default async ({ req, res, error }) => {
       const roster = owns ? await db.listDocuments(databaseId, 'class_members', [Query.equal('classId', session.classId), Query.equal('role', 'student'), Query.limit(100)]) : { total: 0 };
       const projectQuestion = q => { let c = {}; try { c = JSON.parse(q.selectedPassage || '{}'); } catch { /* invalid */ } return { id: q.$id, text: q.questionText, sortOrder: q.voteCount, type: c.type || 'short', options: c.options || [], answer: owns || reveal ? c.answer || '' : '' }; };
       const promptState = (() => { try { return JSON.parse(session.notesMarkdown || '{}'); } catch { return {}; } })();
-      const allowResubmission = Boolean(promptState.allowResubmission);
+      const allowResubmission = config.type === 'paragraph' || Boolean(promptState.allowResubmission);
       const promptSize = ['standard', 'large', 'extra-large'].includes(promptState.promptSize) ? promptState.promptSize : 'large';
       return res.json({ session: clean(session), questions: owns ? questions.map(projectQuestion) : [], activeQuestion: active ? projectQuestion(active) : null, ownAnswer: myAnswer, answeredCount: answerResult.documents.length, enrolledCount: roster.total, mcCounts: owns || myAnswer ? mcCounts : [], reveal, responses: owns && active ? answerResult.documents.map((row, i) => ({ id: row.$id, answer: row.answerText, label: `Response ${i + 1}` })) : [], isTeacher: owns, allowResubmission, promptSize, exampleResponse: String(promptState.exampleResponse || '') });
     }
