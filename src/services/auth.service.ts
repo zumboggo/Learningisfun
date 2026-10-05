@@ -1,50 +1,23 @@
-import { account, databases, DATABASE_ID, COLLECTIONS } from '@/lib/appwrite';
+import { account } from '@/lib/appwrite';
+import { executeLearningContent } from './learning-content.service';
 import { db } from '@/db/schema';
 import { generateDeviceId, getTimestamp } from '@/utils/helpers';
 import type { User, UserRole } from '@/types';
-import { ID, Query } from 'appwrite';
+import { ID } from 'appwrite';
 
 export async function register(email: string, password: string, name: string, role: UserRole = 'student'): Promise<User> {
-  // A stale session left over from a previous student on a shared device makes
-  // createEmailPasswordSession fail below, which used to abandon a brand-new
-  // account halfway through signing up.
+  if (role !== 'student') throw new Error('Teacher accounts must be provisioned by an administrator.');
   await clearAnyExistingSession();
-
-  const appwriteUser = await account.create(ID.unique(), email, password, name);
-
-  // account.create() registers the account but does not sign it in. Without a
-  // session the profile write below arrives as a guest, and the users
-  // collection only grants create to authenticated users.
+  await account.create(ID.unique(), email, password, name);
   await account.createEmailPasswordSession(email, password);
+  return loadSelfProfile();
+}
 
-  const userDoc: User = {
-    $id: appwriteUser.$id,
-    email,
-    name,
-    role,
-    deviceId: generateDeviceId(),
-    lastSyncAt: getTimestamp(),
-    createdAt: getTimestamp(),
-  };
-
-  try {
-    await databases.createDocument(DATABASE_ID, COLLECTIONS.users, appwriteUser.$id, {
-      email,
-      name,
-      role,
-      deviceId: userDoc.deviceId,
-      lastSyncAt: userDoc.lastSyncAt,
-      createdAt: userDoc.createdAt,
-    });
-  } catch {
-    // The account and its session are real even if the profile document could
-    // not be written. Throwing here would strand the student with an account
-    // they cannot use — and login() recreates a missing profile anyway.
-  }
-
-  await db.users.put(userDoc);
-  await db.app_metadata.put({ key: 'currentUserId', value: userDoc.$id });
-  return userDoc;
+async function loadSelfProfile(): Promise<User> {
+  const { profile } = await executeLearningContent<{ profile: User }>({ action: 'selfProfile' });
+  await db.users.put(profile);
+  await db.app_metadata.put({ key: 'currentUserId', value: profile.$id });
+  return profile;
 }
 
 /** Drop whatever session the browser is holding, if any. Never throws. */
@@ -53,48 +26,6 @@ async function clearAnyExistingSession(): Promise<void> {
     await account.deleteSession('current');
   } catch {
     // No session to clear, or offline.
-  }
-}
-
-export async function createStudentAccount(email: string, password: string, name: string): Promise<User> {
-  const existing = await findUserByEmail(email);
-  if (existing) return existing;
-
-  try {
-    return await register(email, password, name, 'student');
-  } catch {
-    const remoteExisting = await findUserByEmail(email);
-    if (remoteExisting) return remoteExisting;
-    throw new Error(`Could not create account for ${email}`);
-  }
-}
-
-export async function findUserByEmail(email: string): Promise<User | null> {
-  const local = await db.users.where('email').equals(email).first();
-  if (local) return local;
-
-  try {
-    const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.users, [
-      Query.equal('email', email),
-      Query.limit(1),
-    ]);
-    const doc = result.documents[0];
-    if (!doc) return null;
-    const user: User = {
-      $id: doc.$id,
-      email: doc.email,
-      name: doc.name,
-      role: doc.role as UserRole,
-      deviceId: doc.deviceId,
-      lastSyncAt: doc.lastSyncAt,
-      createdAt: doc.createdAt,
-      nicknameUpdatedAt: doc.nicknameUpdatedAt,
-      nicknameModerationStatus: doc.nicknameModerationStatus,
-    };
-    await db.users.put(user);
-    return user;
-  } catch {
-    return null;
   }
 }
 
@@ -109,49 +40,7 @@ export async function login(email: string, password: string): Promise<User> {
     if (localTeacher) return localTeacher;
     throw err;
   }
-  const appwriteUser = await account.get();
-
-  let user: User;
-  try {
-    const doc = await databases.getDocument(DATABASE_ID, COLLECTIONS.users, appwriteUser.$id);
-    user = {
-      $id: doc.$id,
-      email: doc.email,
-      name: doc.name,
-      role: doc.role as UserRole,
-      deviceId: doc.deviceId,
-      lastSyncAt: doc.lastSyncAt,
-      createdAt: doc.createdAt,
-      nicknameUpdatedAt: doc.nicknameUpdatedAt,
-      nicknameModerationStatus: doc.nicknameModerationStatus,
-    };
-  } catch {
-    user = {
-      $id: appwriteUser.$id,
-      email: appwriteUser.email,
-      name: appwriteUser.name,
-      role: 'student',
-      deviceId: generateDeviceId(),
-      lastSyncAt: getTimestamp(),
-      createdAt: getTimestamp(),
-    };
-    try {
-      await databases.createDocument(DATABASE_ID, COLLECTIONS.users, appwriteUser.$id, {
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        deviceId: user.deviceId,
-        lastSyncAt: user.lastSyncAt,
-        createdAt: user.createdAt,
-      });
-    } catch {
-      // Document may already exist
-    }
-  }
-
-  await db.users.put(user);
-  await db.app_metadata.put({ key: 'currentUserId', value: user.$id });
-  return user;
+  return loadSelfProfile();
 }
 
 export function passwordRecoveryRedirectUrl(origin = window.location.origin, baseUrl = import.meta.env.BASE_URL): string {
@@ -240,33 +129,15 @@ export async function logout(): Promise<void> {
 
 export async function getCurrentUser(): Promise<User | null> {
   try {
-    const appwriteUser = await account.get();
-    const localUser = await db.users.get(appwriteUser.$id);
-    try {
-      const doc = await databases.getDocument(DATABASE_ID, COLLECTIONS.users, appwriteUser.$id);
-      const user: User = {
-        $id: doc.$id,
-        email: doc.email,
-        name: doc.name,
-        role: doc.role as UserRole,
-        deviceId: doc.deviceId,
-        lastSyncAt: doc.lastSyncAt,
-        createdAt: doc.createdAt,
-        nicknameUpdatedAt: doc.nicknameUpdatedAt,
-        nicknameModerationStatus: doc.nicknameModerationStatus,
-      };
-      await db.users.put(user);
-      return user;
-    } catch {
-      return localUser || null;
+    await account.get();
+    return await loadSelfProfile();
+  } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error && (error.code === 401 || error.code === 403)) {
+      await db.app_metadata.delete('currentUserId');
+      return null;
     }
-  } catch {
-    const meta = await db.app_metadata.get('currentUserId');
-    if (meta?.value) {
-      const localUser = await db.users.get(meta.value);
-      return localUser || null;
-    }
-    return null;
+    // Preserve offline access, but never fabricate a new role/profile.
+    return getCachedUser();
   }
 }
 

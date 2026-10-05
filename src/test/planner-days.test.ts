@@ -16,5 +16,5 @@ it('cancels and restores a lesson with all notes and cards intact',()=>{
 });
 it('drops obsolete automatic flashcard tasks but preserves manual preparation',()=>{
  const plan={week:{key:'week',header:'',calendar:'',startDate:'2026-09-21',blocks:[]},flags:[],weekNote:'',extras:[],publishAgenda:false,includeIntentionsInPrint:false,courses:[],lessons:[],preparation:[{id:'flashcards-updated',label:'Flashcards Updated',kind:'other',status:'todo'},{id:'manual',label:'Print handout',kind:'other',status:'ready'}]} as Parameters<typeof normalizePlan>[0];
- expect(normalizePlan(plan).preparation.map(t=>t.id)).toEqual(['manual']);
+ expect(normalizePlan(plan).preparation.map(t=>t.id)).toEqual(['prepare-vocab-presentations','prepare-readings-copywork','prepare-upload-lesson-plans','manual']);
 });

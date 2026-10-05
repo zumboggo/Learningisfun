@@ -48,17 +48,19 @@ describe('simplified weekly planner', () => {
     expect(days[1]).toBeChecked();
     fireEvent.click(days[0]);expect(days[0]).toBeChecked();
     expect(screen.queryByLabelText('Flashcards Updated')).not.toBeInTheDocument();
-    fireEvent.click(screen.getAllByLabelText('Presentation done and link posted')[0]);
-    expect(screen.getAllByLabelText('Presentation done and link posted')[0]).toBeChecked();
-    expect(screen.getAllByLabelText('Presentation done and link posted')).toHaveLength(3);
+    fireEvent.click(screen.getByLabelText('Vocab Presentations'));
+    expect(screen.getByLabelText('Vocab Presentations')).toBeChecked();
+    expect(screen.getByLabelText('Choose Assigned Readings and Copywork')).not.toBeChecked();
+    fireEvent.click(screen.getByLabelText('Upload Lesson Plans'));
+    expect(screen.getByLabelText('Upload Lesson Plans')).toBeChecked();
   });
   it('merges old World Lit preparation checks without losing completion', () => {
     const plan = fixture();
-    plan.preparation = plan.preparation.filter(task => task.id !== 'prepare-presentation-WL');
+    plan.preparation = plan.preparation.filter(task => task.id !== 'prepare-vocab-presentations');
     plan.preparation.push({id:'prepare-presentation-WL-R',label:'Red',kind:'presentation',status:'ready'}, {id:'prepare-presentation-WL-B',label:'Blue',kind:'presentation',status:'todo'});
     const next = normalizePlan(plan);
-    expect(next.preparation.find(task => task.id === 'prepare-presentation-WL')?.status).toBe('ready');
-    expect(next.preparation.filter(task => task.id.includes('prepare-presentation-WL'))).toHaveLength(1);
+    expect(next.preparation.find(task => task.id === 'prepare-vocab-presentations')?.status).toBe('ready');
+    expect(next.preparation.filter(task => task.id.includes('prepare-presentation-WL'))).toHaveLength(0);
   });
   it('prints write-back lines, a check for every card and lesson requirement lines', () => {
     const plan = fixture();

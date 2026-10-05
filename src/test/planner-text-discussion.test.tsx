@@ -1,0 +1,93 @@
+import {useState} from 'react';
+import {afterEach,expect,it} from 'vitest';
+import {cleanup,fireEvent,render,screen,within} from '@testing-library/react';
+import {createWeeklyPlan,type WeeklyPlanData} from '@/services/planner.service';
+import {addWeeklyLessonDefaults,type LessonSlot} from '@/services/unit-planning';
+import {routineSlot} from '@/services/planner-routines';
+import {prepareWeeklyBank} from '@/services/planner-bank';
+import {placePlannerCard,orderedLessonSlots,removeLessonCard,undoPlannerPlacement} from '@/services/planner-cards';
+import {copyLessonCards} from '@/services/planner-compare';
+import {preparePlannerStarters} from '@/services/planner-starters';
+import {WeeklySlots} from '@/components/planner/WeeklySlots';
+afterEach(cleanup);
+const text=(id:string,title:string):LessonSlot=>({id,title,kind:'text',assignedReading:true,content:'',url:'',minutes:10,optional:false,status:'planned'});
+function fixture(){
+ const data=createWeeklyPlan({key:'week',header:'',startDate:'2026-10-05',calendar:'',blocks:['WL-B','WL-R'].map(code=>({code,title:code,label:code,unit:'1',goal:'',std:'',diff:'',presentationCandidates:[],textQueue:[],days:['2026-10-05','2026-10-07','2026-10-09'].map(iso=>({date:iso,iso,daytype:'',I:'',W:'',Y:'',C:'',due:[]}))}))},{});
+ data.lessons.forEach(lesson=>{lesson.slots=[];});
+ data.lessons[0].slots=[text('a','First essay'),text('b','Second essay')];
+ return data;
+}
+it('merges both legacy routine resources without losing placements or notes',()=>{
+ const data=fixture();
+ data.weeklyResources=[{...routineSlot('Text Discussion'),id:'old-tqe',title:'TQE',content:'Questions',course:'WL'},{...routineSlot('Text Discussion'),id:'old-written',title:'Written Discussion',content:'Written response',course:'WL'}];
+ data.lessons[0].slots!.push({...data.weeklyResources[0],id:'discussion-1',planningItemId:'old-tqe',status:'completed'}, {...data.weeklyResources[1],id:'discussion-2',planningItemId:'old-written'});
+ const result=prepareWeeklyBank(data),routines=result.weeklyResources!.filter(item=>item.title==='Text Discussion');
+ expect(routines).toHaveLength(1);
+ expect(routines[0].content).toContain('Questions');expect(routines[0].content).toContain('Written response');
+ expect(result.lessons[0].slots!.slice(2).map(slot=>slot.planningItemId)).toEqual([routines[0].id,routines[0].id]);
+ expect(result.lessons[0].slots![2].status).toBe('completed');
+ expect(prepareWeeklyBank(result)).toEqual(result);
+ expect(data.weeklyResources[0].title).toBe('TQE');
+});
+it('attaches discussion only to its chosen text and restores the attachment with undo',()=>{
+ const data=fixture(),lesson=data.lessons[0];
+ const attached=placePlannerCard(data,{slot:routineSlot('Text Discussion')},lesson.id,0,'b');
+ const discussion=attached.lessons[0].slots![2];
+ expect(discussion.parentTextId).toBe('b');
+ expect(orderedLessonSlots(attached.lessons[0].slots!).map(row=>row.slot.title)).toEqual(['First essay','Second essay','Text Discussion']);
+ const detached=placePlannerCard(attached,{slot:discussion,from:lesson.id,index:2},data.lessons[1].id,0);
+ expect(detached.lessons[1].slots![0].parentTextId).toBeUndefined();
+ expect(undoPlannerPlacement(detached,attached).lessons[0].slots![2].parentTextId).toBe('b');
+ const removed=removeLessonCard(attached.lessons[0].slots!,'b');
+ expect(removed.find(slot=>slot.id===discussion.id)?.parentTextId).toBeUndefined();
+});
+it('moves and copies a text with its discussion, remapping copied attachments',()=>{
+ let data=fixture(); const source=data.lessons[0],destination=data.lessons[1];
+ data=placePlannerCard(data,{slot:routineSlot('Text Discussion')},source.id,0,'a');
+ const original=data.lessons[0].slots![0];
+ const moved=placePlannerCard(data,{slot:original,from:source.id,index:0},destination.id,0);
+ expect(moved.lessons[0].slots!.map(slot=>slot.id)).toEqual(['b']);
+ expect(moved.lessons[1].slots![1].parentTextId).toBe('a');
+ const reordered=placePlannerCard(data,{slot:original,from:source.id,index:0},source.id,3);
+ expect(reordered.lessons[0].slots!.map(slot=>slot.title)).toEqual(['Second essay','First essay','Text Discussion']);
+ const copied=placePlannerCard(data,{slot:original},destination.id,0);
+ expect(copied.lessons[1].slots![1].parentTextId).toBe(copied.lessons[1].slots![0].id);
+ const red=data.lessons.find(lesson=>lesson.classCode==='WL-R')!;
+ const sectionCopy=copyLessonCards(data,source.id,red.id,'replace');
+ const slots=sectionCopy.lessons.find(lesson=>lesson.id===red.id)!.slots!;
+ expect(slots[1].parentTextId).toBe(slots[0].id);
+ expect(slots[0].id).not.toBe('a');
+});
+it('seeds older weeks once and respects later removal of a default',()=>{
+ const data=addWeeklyLessonDefaults(fixture());
+ expect(data.lessons[0].slots![0]).toMatchObject({title:'Vocab Presentation',content:'',url:''});
+ expect(data.lessons[1].slots![0]).toMatchObject({title:'Quiz',content:'',url:''});
+ data.lessons[1].slots=[];
+ expect(preparePlannerStarters(data).lessons[1].slots).toEqual([]);
+});
+it('drops onto a scheduled text, renders an indent, and supports keyboard placement',()=>{
+ let latest:WeeklyPlanData;
+ function Harness(){const[data,setData]=useState(()=>preparePlannerStarters(fixture()));latest=data;return <WeeklySlots data={data} units={[]} onChange={setData}/>;}
+ render(<Harness/>);
+ const bank=within(screen.getByRole('complementary',{name:'Planning resources'}));
+ expect(bank.getByRole('button',{name:'Text Discussion'}).closest('details')).toBeNull();
+ expect(bank.queryByRole('button',{name:'TQE'})).not.toBeInTheDocument();
+ expect(bank.queryByLabelText('Edit resource Vocab Presentation')).not.toBeInTheDocument();
+ expect(bank.queryByLabelText('Edit resource Quiz')).not.toBeInTheDocument();
+ const resource=latest!.weeklyResources!.find(item=>item.title==='Text Discussion')!;
+ const target=screen.getByLabelText('Open Second essay details').closest('[draggable]')!;
+ fireEvent.drop(target,{dataTransfer:{getData:()=>JSON.stringify({slot:{...resource,planningItemId:resource.id}})}});
+ const row=screen.getByLabelText('Open Text Discussion details').closest('[draggable]')!;
+ expect(row).toHaveClass('ml-5');expect(target.nextElementSibling).toBe(row);
+ expect(latest!.lessons[0].slots!.find(slot=>slot.title==='Text Discussion')?.parentTextId).toBe('b');
+ fireEvent.click(bank.getByRole('button',{name:'Text Discussion'}));
+ fireEvent.click(screen.getByLabelText('Discuss First essay'));
+ expect(latest!.lessons[0].slots!.filter(slot=>slot.title==='Text Discussion').map(slot=>slot.parentTextId)).toEqual(['a','b']);
+ fireEvent.click(screen.getByLabelText('Copy First essay'));
+ const destination=latest!.lessons[1];
+ fireEvent.click(within(screen.getByLabelText(destination.date+' '+destination.classLabel)).getByRole('button',{name:'+ Place First essay here'}));
+ const copies=latest!.lessons[1].slots!.filter(slot=>slot.kind==='text'||slot.title==='Text Discussion');
+ expect(copies).toHaveLength(2);
+ expect(copies[1].parentTextId).toBe(copies[0].id);
+ expect(copies[0].id).not.toBe('a');
+});

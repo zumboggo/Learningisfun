@@ -2,16 +2,6 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/common/Button';
-import type { UserRole } from '@/types';
-
-/**
- * Set from the VITE_TEACHER_CODE repository secret at build time. There is
- * deliberately no fallback value: a literal here would sit in a public repo and
- * a default would silently keep working if the secret went missing.
- */
-const TEACHER_CODE = (import.meta.env.VITE_TEACHER_CODE || '').trim();
-const TEACHER_SIGNUP_ENABLED = TEACHER_CODE.length > 0;
-
 export function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -19,8 +9,6 @@ export function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('student');
-  const [teacherCode, setTeacherCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -36,20 +24,9 @@ export function RegisterPage() {
       setError('Password must be at least 8 characters');
       return;
     }
-    if (role === 'teacher') {
-      if (!TEACHER_SIGNUP_ENABLED) {
-        setError('Teacher signup is not configured on this build. Ask your administrator.');
-        return;
-      }
-      if (teacherCode !== TEACHER_CODE) {
-        setError('Invalid teacher code');
-        return;
-      }
-    }
-
     setLoading(true);
     try {
-      await register(email, password, name, role);
+      await register(email, password, name, 'student');
       navigate('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
@@ -132,50 +109,7 @@ export function RegisterPage() {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">I am a...</label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setRole('student')}
-                className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
-                  role === 'student'
-                    ? 'bg-blue-50 border-blue-300 text-blue-700'
-                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                Student
-              </button>
-              <button
-                type="button"
-                onClick={() => setRole('teacher')}
-                className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
-                  role === 'teacher'
-                    ? 'bg-blue-50 border-blue-300 text-blue-700'
-                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                Teacher
-              </button>
-            </div>
-          </div>
-
-          {role === 'teacher' && (
-            <div>
-              <label htmlFor="teacher-code" className="block text-sm font-medium text-gray-700 mb-1">
-                Teacher code
-              </label>
-              <input
-                id="teacher-code"
-                type="text"
-                value={teacherCode}
-                onChange={e => setTeacherCode(e.target.value)}
-                required
-                placeholder="Enter teacher access code"
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-              />
-            </div>
-          )}
+          <p className="text-sm text-gray-500">New accounts are student accounts. Ask your administrator for teacher access.</p>
 
           <Button type="submit" loading={loading} className="w-full">
             Create account

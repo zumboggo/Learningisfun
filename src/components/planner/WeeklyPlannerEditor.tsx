@@ -20,6 +20,10 @@ import { WeeklySlots } from './WeeklySlots';
 export function WeeklyPlannerEditor({ initial, suggestedWeek, record, sourceId, userId, units, onUnitsChange, onSaved }: { initial: WeeklyPlanData; suggestedWeek?: PlannerWeekSource; record?: WeeklyPlanRecord; sourceId: string; userId: string; units: UnitPlan[]; onUnitsChange: (units: UnitPlan[]) => void; onSaved: (record: WeeklyPlanRecord) => void }) {
   const [, redraw] = useReducer(value => value + 1, 0);
   const [writer] = useState(() => new PlannerAutosave(`planner-draft:${userId}:${sourceId}:${initial.week.key}`, { data: preparePlannerStarters(prepareWeeklyBank(migrateCardEditor(initial)),suggestedWeek), ready: record?.status === 'ready' || record?.status === 'published' }, record, localStorage, async (draft, id) => { const saved = (await saveWeeklyPlan(sourceId, projectCardMaterials(draft.data), draft.ready ? 'ready' : 'draft', id)).plan; onSaved(saved); return saved; }));
+  useEffect(()=>{
+    const next=preparePlannerStarters(writer.draft.data,suggestedWeek);
+    if(JSON.stringify(next)!==JSON.stringify(writer.draft.data) || record && JSON.parse(record.planJson).plannerInteractionVersion!==1 && !writer.pending)writer.update({...writer.draft,data:next});
+  },[writer,suggestedWeek,record]);
   const classIdsKey = [...new Set(initial.lessons.map(lesson=>lesson.classId).filter(Boolean))].sort().join('|');
   const assignedReadings = useLiveQuery(async () => {
     if(!classIdsKey)return {texts:[],assignments:[]};

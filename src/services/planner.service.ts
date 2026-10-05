@@ -5,7 +5,7 @@ import type { PlannerWeekSource,ParsedPlannerSource } from './planner-parser';
 
 export type PlannerProgress='on_track'|'partial'|'behind';
 export interface LessonPlan { slots?: LessonSlot[]; overflow?: LessonSlot[] }
-export interface WeeklyPlanData { cancelledLessons?: LessonPlan[]; dismissedStarterResources?: string[]; lessonRequirements?: { qualities?: string; eal?: string; learning?: string }; unitSnapshot?: UnitPlan[]; cardEditorVersion?: number; dismissedAssignedTexts?: string[]; weeklyResources?: import('./planner-bank').WeeklyResource[] }
+export interface WeeklyPlanData { weeklyDefaultsApplied?: boolean; plannerInteractionVersion?: number; cancelledLessons?: LessonPlan[]; dismissedStarterResources?: string[]; lessonRequirements?: { qualities?: string; eal?: string; learning?: string }; unitSnapshot?: UnitPlan[]; cardEditorVersion?: number; dismissedAssignedTexts?: string[]; weeklyResources?: import('./planner-bank').WeeklyResource[] }
 export type PlannerTaskStatus='todo'|'ready'|'unused';
 export interface PlannerSourceRecord{$id:string;teacherId:string;filename:string;schoolYear:string;version:number;sourceText:string;parsedJson:string;mappingJson:string;active:boolean;createdAt:string}
 export interface PlannerSourceVersion{sourceId:string;version:number;createdAt:string;changedWeeks:string[]}

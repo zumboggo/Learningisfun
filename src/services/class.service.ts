@@ -3,10 +3,9 @@ import { db } from '@/db/schema';
 import { generateId, generateJoinCode, getTimestamp } from '@/utils/helpers';
 import { addToQueue } from './sync.service';
 import { executeLearningContent } from './learning-content.service';
-import { createStudentAccount, findUserByEmail } from './auth.service';
 import { parseCsvLine, readFileAsText } from '@/utils/csv-parser';
 import { Query } from 'appwrite';
-import type { Class, ClassLink, ClassMember } from '@/types';
+import type { Class, ClassLink, ClassMember, User } from '@/types';
 
 export const MAX_CLASS_LINKS = 14;
 
@@ -207,13 +206,12 @@ export async function importClassRoster(
     }
 
     const password = row.password || generateTemporaryPassword();
-    const existedBefore = Boolean(await findUserByEmail(row.email));
     try {
-      const student = await createStudentAccount(row.email, password, row.name);
+      const { student, membership, existed: existedBefore } = await executeLearningContent<{ student: User; membership: ClassMember; existed: boolean }>({ action: 'importRosterStudent', classId, email: row.email, password, name: row.name });
+      await db.users.put(student);
       const existingMember = await db.class_members.where('[classId+userId]').equals([classId, student.$id]).first();
       if (!existingMember) {
-        const membershipResult = await executeLearningContent<{ membership: ClassMember }>({ action: 'addStudentToClass', classId, studentId: student.$id });
-        await db.class_members.put(membershipResult.membership);
+        await db.class_members.put(membership);
         result.added++;
       }
       if (existedBefore) result.existing++;
@@ -460,7 +458,7 @@ export async function syncTaughtClassRosters(teacherId: string): Promise<void> {
 async function cacheUserProfile(userId: string): Promise<void> {
   if (await db.users.get(userId)) return;
   try {
-    const doc = await databases.getDocument(DATABASE_ID, COLLECTIONS.users, userId);
+    const { profile: doc } = await executeLearningContent<{ profile: User }>({ action: 'readUserProfile', userId });
     await db.users.put({
       $id: doc.$id,
       email: doc.email,

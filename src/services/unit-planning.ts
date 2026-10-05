@@ -8,7 +8,7 @@ export interface PlanningCard { id: string; front: string; back: string; tags: s
 export interface UnitResource { id: string; kind: ResourceKind; title: string; content: string; url: string; week: string; date: string; minutes: number; optional: boolean; approved: boolean; paragraphs: number; targets: string[]; skills: string; }
 export interface UnitPlan { id: string; course: string; number: string; title: string; startDate: string; endDate: string; knowledge: string; skills: string; essentialQuestion: string; classIds: string[]; cards: PlanningCard[]; resources: UnitResource[]; vocabularyApproved: boolean; }
 export interface UnitRecord { $id: string; teacherId: string; dataJson: string; updatedAt: string }
-export interface LessonSlot { publishClassIds?: string[]; planningItemId?: string; existingTextId?: string; isRoutine?: boolean; isCopywork?: boolean; assignedReading?: boolean; activityType?: string; publish?: boolean; givenBy?: string; dueDate?: string; id: string; resourceId?: string; title: string; kind: ResourceKind; content: string; url: string; minutes: number; optional: boolean; status: 'planned' | 'completed' | 'partial' | 'skipped'; }
+export interface LessonSlot { parentTextId?: string; publishClassIds?: string[]; planningItemId?: string; existingTextId?: string; isRoutine?: boolean; isCopywork?: boolean; assignedReading?: boolean; activityType?: string; publish?: boolean; givenBy?: string; dueDate?: string; id: string; resourceId?: string; title: string; kind: ResourceKind; content: string; url: string; minutes: number; optional: boolean; status: 'planned' | 'completed' | 'partial' | 'skipped'; }
 export const courseCode = (value: string) => value.startsWith('WL') ? 'WL' : value;
 export interface PlanningRelease { $id:string; unitId:string; releaseAt:string; status:string; lastError:string }
 export const readUnits = () => executeLearningContent<{ units: UnitRecord[]; releases:PlanningRelease[] }>({ action: 'readPlanningUnits' });
@@ -140,9 +140,11 @@ export function populateSlots(data: WeeklyPlanData, units: UnitPlan[]): WeeklyPl
   return next;
 }
 
-/** Seed new weeks only; never reinsert a default into a saved or edited plan. */
+/** Seed each week once, including older saved weeks; respect subsequent manual edits. */
 export function addWeeklyLessonDefaults(data: WeeklyPlanData): WeeklyPlanData {
+  if (data.weeklyDefaultsApplied) return data;
   const next = structuredClone(data);
+  next.weeklyDefaultsApplied = true;
   for (const code of new Set(next.lessons.map(lesson=>lesson.classCode))) {
     const lessons = next.lessons.filter(lesson=>lesson.classCode===code).sort((a,b)=>a.date.localeCompare(b.date));
     const defaults = [{title:'Vocab Presentation',kind:'presentation' as const},{title:'Quiz',kind:'quiz' as const}];

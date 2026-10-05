@@ -3,10 +3,10 @@ import {render,screen,fireEvent,cleanup} from '@testing-library/react';
 import {PlannerResourceTray} from '@/components/planner/PlannerResourceTray';
 import {routineNames,routineSlot} from '@/services/planner-routines';
 afterEach(cleanup);
-it('keeps TQE and debate visible and other routines collapsed, draggable and placeable',()=>{
+it('keeps Text Discussion and debate visible and other routines collapsed, draggable and placeable',()=>{
  const place=vi.fn();
  render(<PlannerResourceTray resources={[]} week="2026-09-21" lessons={[]} onSelect={()=>{}} onAdd={()=>{}} onPlace={place} items={routineNames.map(name=>({...routineSlot(name),course:'WL'}))}/>);
- expect(screen.getByRole('button',{name:'TQE'})).toBeVisible();
+ expect(screen.getByRole('button',{name:'Text Discussion'})).toBeVisible();
  expect(screen.getByRole('button',{name:'Pop-up Debate'})).toBeVisible();
  const other=screen.getByText('Text Rendering',{exact:true});
  const details=other.closest('details')!;

@@ -1,15 +1,17 @@
 import type { LessonSlot } from './unit-planning';
+import { isDatedQuiz,quizDateLabel } from './planner-quizzes';
 import { routineNames } from './planner-routines';
 
 export const isCopywork = (slot:LessonSlot) => slot.isCopywork ?? (slot.kind==='copywork' || slot.kind==='activity' && /\bcopywork\b/i.test(slot.title+' '+slot.content));
 export const isAssignedReading = (slot:LessonSlot) => slot.assignedReading ?? Boolean(slot.existingTextId);
-export const isQuiz = (slot:LessonSlot) => slot.kind==='quiz' || /^quiz$/i.test(slot.title.trim());
+export const isQuiz = (slot:LessonSlot) => slot.kind==='quiz' || /^quiz$/i.test(slot.title.trim()) || isDatedQuiz(slot);
+export const isTitleOnly = (slot:LessonSlot) => isQuiz(slot) || slot.kind==='presentation' && /^vocab presentation$/i.test(slot.title.trim());
 export function resourceCategory(slot:LessonSlot):'presentation'|'routine'|'text'|'activity' {
   if(isCopywork(slot) || slot.kind==='text')return 'text';
   if(slot.isRoutine || slot.kind==='activity' && routineNames.some(name=>name===slot.title))return 'routine';
   return slot.kind==='presentation'?'presentation':'activity';
 }
-export const resourceTitle = (slot:LessonSlot) => isQuiz(slot) ? 'Quiz' : isCopywork(slot) && /^(I do|We do|They do|Check)$/i.test(slot.title) ? 'Copywork' : slot.title;
+export const resourceTitle = (slot:LessonSlot) => isQuiz(slot) ? (quizDateLabel(slot)?'Quiz '+quizDateLabel(slot):'Quiz') : isCopywork(slot) && /^(I do|We do|They do|Check)$/i.test(slot.title) ? 'Copywork' : slot.title;
 export function resourceColor(slot:LessonSlot) {
   if(isQuiz(slot))return 'border-rose-300 bg-rose-50 text-rose-950';
   const category=resourceCategory(slot);

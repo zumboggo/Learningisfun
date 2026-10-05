@@ -11,16 +11,17 @@ it('provides a bare vocab presentation, main routines, and four readings plus co
  const wl=plan.weeklyResources!.filter(r=>r.course==='WL');
  expect(wl.filter(r=>r.kind==='presentation')).toMatchObject([{title:'Vocab Presentation',content:'',url:''}]);
  expect(wl.filter(r=>r.isRoutine)).toHaveLength(routineNames.length);
- expect(wl.filter(r=>r.assignedReading)).toHaveLength(4);
+ expect(wl.filter(r=>r.assignedReading)).toHaveLength(0);
+ expect(wl.filter(r=>r.kind==='text')).toHaveLength(5);
  expect(wl.filter(r=>r.isCopywork)).toMatchObject([{title:'Copy model'}]);
  expect(plan.courses.every(c=>c.texts.length===0)).toBe(true);
- expect(plan.lessons.every(l=>!l.slots?.length&&!l.overflow?.length)).toBe(true);
+ expect(plan.lessons.every(l=>l.slots?.[0].title==='Vocab Presentation'&&!l.overflow?.length)).toBe(true);
  expect(preparePlannerStarters(plan)).toEqual(plan);
 });
 it('uses current source choices without overwriting saved lessons or their source snapshot',()=>{
  const plan=fixture();plan.week.blocks[0].textQueue=['Old saved source'];
  plan.lessons[0].privateNotes='My edits';
- const snapshot=structuredClone(plan);
+ plan.weeklyDefaultsApplied=true; const snapshot=structuredClone(plan);
  const updated=preparePlannerStarters(plan,week);
  expect(updated.week).toEqual(snapshot.week);
  expect(updated.lessons).toEqual(snapshot.lessons);
@@ -46,5 +47,5 @@ it('combines reading and copywork labels when the same text is suggested for bot
  source.blocks.forEach(b=>{b.textQueue=['Essay','COPY · Essay'];});
  const items=preparePlannerStarters(createWeeklyPlan(source,{})).weeklyResources!.filter(r=>r.kind==='text'&&r.course==='WL');
  expect(items).toHaveLength(1);
- expect(items[0]).toMatchObject({assignedReading:true,isCopywork:true});
+ expect(items[0]).toMatchObject({assignedReading:false,isCopywork:true});
 });

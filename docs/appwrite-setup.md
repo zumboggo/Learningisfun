@@ -484,3 +484,20 @@ Check that collection permissions match the schema above. The most common issue 
 
 ### Function Timeouts
 Appwrite Functions have a 15-second timeout by default. For large datasets, consider pagination.
+
+
+## Profile security rollout (October 2026)
+
+The browser must not have direct read/create/update/delete access to the users collection. The learning-content function now provides selfProfile (authenticated caller only, missing profiles always become students), readUserProfile (self or a teacher of the target), and importRosterStudent (owned class only). Teacher registration codes have been removed; existing profile roles are preserved.
+
+Before deployment, independently verify every existing teacher account against the school's authorized staff list. The old signup path allowed caller-selected roles, so existing role strings are not proof of authorization. Correct unauthorized roles through the Appwrite administrator console and review privileged activity. To grant a legitimate new teacher access, have them register as a student, verify their account identity, then change that profile's role to teacher in the administrator console. Never restore browser write permission to do this.
+
+Use the existing private .env.setup.local credentials, never committed:
+
+1. Deploy the backend: `node --env-file=.env.setup.local scripts/deploy-appwrite-functions.mjs learning-content`.
+2. Publish the matching frontend and verify that self-profile loading succeeds for an existing teacher and a new student.
+3. Revoke all users collection browser permissions with document security disabled: `node --env-file=.env.setup.local scripts/setup-appwrite.mjs users`. This is the step that closes direct profile creation and enumeration. Existing old browser builds must reload. A frontend-only deployment does not close either vulnerability.
+4. With disposable test accounts, verify that direct database list/get/create/update requests are rejected, teacher role injection during signup fails, own-profile reads succeed, authorized teacher roster reads succeed, and student or foreign-teacher profile reads fail.
+5. Verify class roster import leaves the teacher signed in. Existing accounts outside the teacher's classes must join by class code; the import endpoint does not disclose or claim unrelated accounts.
+
+Do not roll back to broad users permissions. Keep the secured backend and repair forward if an older client cannot load profiles. Database backups and existing student documents should be retained. This migration changes permissions; it does not delete student work.

@@ -1,3 +1,4 @@
+import { selfProfile, canReadProfile, projectProfile } from './profiles.js';
 import { presentationFileAction, ownsPlannerPresentation } from './presentation-files.js';
 import { textAssignmentAvailable } from './text-schedule.js';
 import { Client, Databases, ID, Query, Users, Storage, Tokens } from 'node-appwrite';
@@ -134,7 +135,12 @@ export default async ({ req, res, error }) => {
     const body = JSON.parse(req.bodyText || '{}');
     const client = new Client().setEndpoint(process.env.APPWRITE_ENDPOINT).setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID).setKey(process.env.APPWRITE_API_KEY);
     const db = new Databases(client), users = new Users(client), databaseId = process.env.APPWRITE_DATABASE_ID || 'main';
+    if (body.action === 'selfProfile') return res.json({ profile: await selfProfile({ db, users, databaseId, userId }) });
     const profile = await db.getDocument(databaseId, 'users', userId);
+    if (body.action === 'readUserProfile') {
+      if (!await canReadProfile({ db, databaseId, userId, profile, targetId: body.userId })) return res.json({ error: 'Profile unavailable' }, 403);
+      return res.json({ profile: projectProfile(await db.getDocument(databaseId, 'users', body.userId)) });
+    }
     if(['readTextPublicSharing','setTextPublicSharing'].includes(body.action)) {
       try{return res.json(await publicSharingAction({body,profile,userId,db,databaseId}));}
       catch{return res.json({error:'Only the text owner can manage public sharing'},403);}
@@ -156,6 +162,23 @@ export default async ({ req, res, error }) => {
       return res.json(await planningAction({body,profile,userId,memberClassIds,db,databaseId}));
     }
 
+    if (body.action === 'importRosterStudent') {
+      const cls = await db.getDocument(databaseId, 'classes', body.classId);
+      if (profile.role !== 'teacher' || cls.teacherId !== userId) return res.json({ error: 'Not the class owner' }, 403);
+      const email = String(body.email || '').trim().toLowerCase();
+      const matches = await users.list({ queries: [Query.equal('email', email), Query.limit(1)] });
+      let target = matches.users[0];
+      const existed = Boolean(target);
+      if (target && !await canReadProfile({ db, databaseId, userId, profile, targetId: target.$id })) {
+        return res.json({ error: 'Account cannot be imported. Ask the student to join with the class code.' }, 403);
+      }
+      if (!target) target = await users.create({ userId: ID.unique(), email, password: String(body.password || ''), name: String(body.name || '').trim() });
+      const student = await selfProfile({ db, users, databaseId, userId: target.$id });
+      if (student.role !== 'student') return res.json({ error: 'Only student accounts can be imported' }, 403);
+      const membership = await ensureSingleMembership(db, databaseId, cls.$id, target.$id, 'student');
+      return res.json({ student, membership: clean(membership), existed });
+    }
+
     if (body.action === 'listManagedUsers') {
       if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
       const [profiles, memberRows, classes, accounts] = await Promise.all([
@@ -166,7 +189,7 @@ export default async ({ req, res, error }) => {
       ]);
       const owned = new Map(classes.documents.map(row=>[row.$id, row.name===row.courseName?row.name:`${row.courseName} · ${row.name}`]));
       const accountById = new Map(accounts.users.map(row=>[row.$id,row]));
-      const rows = profiles.documents.filter(row=>row.role!=='teacher').map(row=>{
+      const rows = profiles.documents.filter(row=>row.role!=='teacher' && memberRows.documents.some(member=>member.userId===row.$id && owned.has(member.classId))).map(row=>{
         const account=accountById.get(row.$id),classNames=memberRows.documents.filter(member=>member.userId===row.$id&&owned.has(member.classId)).map(member=>owned.get(member.classId));
         return {$id:row.$id,name:row.name,email:row.email,role:row.role,classNames:[...new Set(classNames)],hasLogin:Boolean(account),verified:Boolean(account?.emailVerification)};
       });

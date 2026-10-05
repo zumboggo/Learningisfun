@@ -1,3 +1,5 @@
+import { mergePlannerQuizzes } from './planner-quizzes';
+import { isTextDiscussion } from './planner-routines';
 import type { WeeklyPlanData } from './planner.service';
 import { courseCode, type LessonSlot } from './unit-planning';
 
@@ -15,8 +17,11 @@ function signature(slot: LessonSlot) {
 
 /** One bank per course/week. Existing divergent edits remain distinct resources. */
 export function prepareWeeklyBank(data: WeeklyPlanData): WeeklyPlanData {
-  const next = structuredClone(data);
+  const next = mergePlannerQuizzes(data);
   next.weeklyResources ||= [];
+  for (const lesson of next.lessons) for (const slot of [...(lesson.slots||[]),...(lesson.overflow||[])]) {
+    if(isTextDiscussion(slot)){slot.title='Text Discussion';slot.isRoutine=true;}
+  }
   for (const lesson of next.lessons) {
     for (const slot of [...(lesson.slots || []), ...(lesson.overflow || [])]) {
       const course = courseCode(lesson.classCode);
@@ -27,11 +32,24 @@ export function prepareWeeklyBank(data: WeeklyPlanData): WeeklyPlanData {
       }
       let item = next.weeklyResources.find(item => item.course === course && signature(item) === signature(slot));
       if (!item) {
-        item = { ...slot, id: `bank-${slot.id}`, course };
+        item = { ...slot, parentTextId: undefined, id: `bank-${slot.id}`, course };
         next.weeklyResources.push(item);
       }
       slot.planningItemId = item.id;
       Object.assign(slot, resourceContent(item));
+    }
+  }
+  // Merge old routine names while retaining lesson IDs, completion and notes.
+  for (const course of new Set(next.weeklyResources.map(item=>item.course))) {
+    const discussions: WeeklyResource[] = next.weeklyResources.filter(item=>item.course===course && isTextDiscussion(item));
+    const canonical = discussions.find(item=>item.title==='Text Discussion') || discussions[0];
+    if (!canonical) continue;
+    canonical.title='Text Discussion'; canonical.isRoutine=true;
+    canonical.content=[...new Set(discussions.flatMap(item=>[item.content,item.url!==canonical.url?item.url:'']).filter(Boolean))].join('\n\n');
+    const ids: Set<string>=new Set(discussions.map(item=>item.id));
+    next.weeklyResources=next.weeklyResources.filter(item=>!ids.has(item.id)||item.id===canonical.id);
+    for (const lesson of next.lessons) for (const slot of [...(lesson.slots||[]),...(lesson.overflow||[])]) {
+      if (slot.planningItemId && ids.has(slot.planningItemId) && courseCode(lesson.classCode)===course) {slot.planningItemId=canonical.id;Object.assign(slot,resourceContent(canonical));}
     }
   }
   return next;

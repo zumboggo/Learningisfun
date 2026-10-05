@@ -1,12 +1,17 @@
 import type {WeeklyPlanData} from './planner.service';
 import type {PlannerWeekSource} from './planner-parser';
-import {courseCode} from './unit-planning';
+import {normalizePlan} from './planner-layout';
+import {addWeeklyLessonDefaults,courseCode} from './unit-planning';
 import {routineNames,routineSlot} from './planner-routines';
 import {prepareWeeklyBank,type WeeklyResource} from './planner-bank';
 
-/** Add choices to the bank only. Never place them or rewrite saved lessons. */
+/** Seed weekly defaults once and add reusable bank choices. */
 export function preparePlannerStarters(data:WeeklyPlanData,source:PlannerWeekSource=data.week){
- const next=prepareWeeklyBank(data);
+ const next=prepareWeeklyBank(addWeeklyLessonDefaults(normalizePlan(data)));
+ if(data.plannerInteractionVersion!==1) {
+   for(const item of next.weeklyResources||[])if(item.id.startsWith('starter:')&&item.kind==='text'&&item.sourceWeek&&!item.existingTextId)item.assignedReading=false;
+ }
+ next.plannerInteractionVersion=1;
  const clean=(title:string)=>title.replace(/^COPY\s*·\s*/i,'').trim();
  const add=(course:string,title:string,kind:WeeklyResource['kind'],extra:Partial<WeeklyResource>={})=>{
   const id='starter:'+course+':'+kind+':'+encodeURIComponent(title);
@@ -29,7 +34,7 @@ export function preparePlannerStarters(data:WeeklyPlanData,source:PlannerWeekSou
     prior.copy ||= copy;prior.reading ||= !copy;readings.set(key,prior);
    }
   }
-  for(const item of readings.values())add(course,item.title,'text',{isCopywork:item.copy,assignedReading:item.reading,sourceWeek:week.startDate});
+  for(const item of readings.values())add(course,item.title,'text',{isCopywork:item.copy,assignedReading:false,sourceWeek:week.startDate});
  }
- return next;
+ return prepareWeeklyBank(next);
 }

@@ -7,7 +7,7 @@
 // which enforce role, ownership, assignment, and class-membership checks.
 // Existing collections are not changed by this provisioning pass.
 
-import { Client, Databases, Permission, Role, ID } from 'node-appwrite';
+import { Client, Databases, ID } from 'node-appwrite';
 
 const ENDPOINT = process.env.APPWRITE_ENDPOINT;
 const PROJECT_ID = process.env.APPWRITE_PROJECT_ID;
@@ -740,17 +740,12 @@ async function main() {
     }
   }
 
-  // Profile names are changed only through the authenticated function, which
-  // enforces nickname filtering and the 24-hour cooldown. Registration still
-  // needs create access and class rosters still need read access.
+  // Profiles contain trusted roles and private email addresses. All browser
+  // access must go through authenticated, scoped server endpoints.
   if (!requested.length || requested.includes('users')) await databases.updateCollection(
-    DATABASE_ID,
-    'users',
-    'Users',
-    [Permission.read(Role.users()), Permission.create(Role.users())],
-    false,
+    DATABASE_ID, 'users', 'Users', [], false,
   );
-  if (!requested.length || requested.includes('users')) console.log('Hardened users collection: authenticated read/create only');
+  if (!requested.length || requested.includes('users')) console.log('Users collection is server-only');
 
   console.log('\nDone. Database ID:', DATABASE_ID);
 }

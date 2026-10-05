@@ -13,13 +13,15 @@ export function normalizePlan(value: WeeklyPlanData): WeeklyPlanData {
   data.preparation = data.preparation.filter(task =>
     !/^(flashcards-updated$|quiz-results-|add-cards-|cards-)/.test(task.id) &&
     !/^(Check quiz|Remind students:|Prepare presentation:)/i.test(task.label));
-  const oldWorldLit = data.preparation.filter(task => ['prepare-presentation-WL-B', 'prepare-presentation-WL-R'].includes(task.id));
-  data.preparation = data.preparation.filter(task => !oldWorldLit.includes(task));
-  for (const block of data.week.blocks) {
-    const code = preparationCode(block.code);
-    if (!data.preparation.some(task => task.id === `prepare-presentation-${code}`)) {
-      data.preparation.push({ id: `prepare-presentation-${code}`, label: `Prepare Presentation · ${code === 'WL' ? 'World Lit' : plannerLabel[code] || block.label}`, kind: 'presentation', classCode: code, status: code === 'WL' && oldWorldLit.some(task => task.status === 'ready') ? 'ready' : 'todo' });
-    }
-  }
+  const oldPresentations=data.preparation.filter(task=>task.id.startsWith('prepare-presentation-'));
+  const courses=[...new Set(oldPresentations.map(task=>preparationCode(task.classCode||task.id.replace('prepare-presentation-',''))))];
+  const vocabReady=courses.length>0&&courses.every(code=>oldPresentations.some(task=>preparationCode(task.classCode||task.id.replace('prepare-presentation-',''))===code&&task.status==='ready'));
+  data.preparation=data.preparation.filter(task=>!oldPresentations.includes(task));
+  const defaults=[
+    {id:'prepare-vocab-presentations',label:'Vocab Presentations',kind:'presentation' as const,status:vocabReady?'ready' as const:'todo' as const},
+    {id:'prepare-readings-copywork',label:'Choose Assigned Readings and Copywork',kind:'text' as const,status:'todo' as const},
+    {id:'prepare-upload-lesson-plans',label:'Upload Lesson Plans',kind:'other' as const,status:'todo' as const},
+  ];
+  data.preparation=[...defaults.map(task=>({...task,...data.preparation.find(item=>item.id===task.id),label:task.label})),...data.preparation.filter(task=>!defaults.some(item=>item.id===task.id))];
   return data;
 }

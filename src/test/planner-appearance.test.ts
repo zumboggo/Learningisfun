@@ -19,8 +19,8 @@ describe('planner resource distinctions',()=>{
     expect(resourceTitle(slot({kind:'activity',title:'We do',content:'Copywork'}))).toBe('Copywork');
     expect(resourceCategory(slot({kind:'copywork'}))).toBe('text');
     expect(routineNames).not.toContain('Copywork');
-    expect(resourceCategory(routineSlot('TQE'))).toBe('routine');
-    expect(resourceColor(routineSlot('TQE'))).toContain('amber');
+    expect(resourceCategory(routineSlot('Text Discussion'))).toBe('routine');
+    expect(resourceColor(routineSlot('Text Discussion'))).toContain('amber');
   });
   it('supports copywork and assigned reading together, including explicit label changes',()=>{
     const text=slot({existingTextId:'original',isCopywork:true});
