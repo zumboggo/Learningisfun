@@ -53,6 +53,8 @@ it('only shows the simple quote input on reply and preserves it after cancelling
 });
 it('loads the actual reading beside the discussion without replacing the question draft', async () => {
   mount(); await screen.findByRole('heading', { name: 'The reading', level: 1 });
+  expect(screen.getByRole('button', { name: 'Parallel' })).toHaveAttribute('aria-pressed', 'true');
+  expect(await screen.findByRole('complementary', { name: 'Reading text' })).toBeVisible();
   const input = screen.getByRole('textbox', { name: 'Your question' });
   fireEvent.change(input, { target: { value: 'My unfinished question' } });
   fireEvent.click(screen.getByRole('button', { name: 'Parallel' }));
