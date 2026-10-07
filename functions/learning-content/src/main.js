@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto';
 import { validateObservations } from './copywork.js';
 import { planningAction, slotAgenda } from './planning.js';
 import { importLegacyWord } from './document-import.js';
+import { readingImageAction } from './reading-images.js';
 import { originalPdfAction, authorizeTextMutation, readEditableParagraphs } from './original-pdf.js';
 import { handleTqe } from './tqe.js';
 import { publicSharingAction } from './public-reading.js';
@@ -157,6 +158,7 @@ export default async ({ req, res, error }) => {
       catch (cause) { if([403,409].includes(cause.code))return res.json({error:cause.message},cause.code);throw cause; }
     }
     if (['uploadPresentationFile','downloadPresentationFile','uploadPlannerPresentation'].includes(body.action)) return res.json(await presentationFileAction({body,profile,userId,memberClassIds,db,databaseId,storage:new Storage(client),tokens:new Tokens(client),endpoint:process.env.APPWRITE_ENDPOINT,projectId:process.env.APPWRITE_FUNCTION_PROJECT_ID}));
+    if (['importReadingImage','readReadingImage'].includes(body.action)) return res.json(await readingImageAction({body,profile,userId,memberClassIds,db,databaseId,storage:new Storage(client),tokens:new Tokens(client),endpoint:process.env.APPWRITE_ENDPOINT,projectId:process.env.APPWRITE_FUNCTION_PROJECT_ID}));
     if (['uploadOriginalPdf', 'readOriginalPdf'].includes(body.action)) return res.json(await originalPdfAction({ body, profile, userId, memberClassIds, db, databaseId, storage: new Storage(client), tokens: new Tokens(client), endpoint: process.env.APPWRITE_ENDPOINT, projectId: process.env.APPWRITE_FUNCTION_PROJECT_ID }));
     if (['readPlanningUnits','savePlanningUnit','readPlanningMaterials','consolidatePlanningDecks'].includes(body.action)) {
       return res.json(await planningAction({body,profile,userId,memberClassIds,db,databaseId}));

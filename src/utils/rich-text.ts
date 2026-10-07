@@ -1,8 +1,13 @@
 const BLOCK_TAGS = new Set(['P', 'DIV', 'SECTION', 'ARTICLE', 'HEADER', 'FOOTER', 'ASIDE']);
 
-export function htmlToMarkdown(html: string): string {
+export function htmlToMarkdown(html: string, baseUrl?: string, includeImages = false): string {
   if (!html.trim() || typeof DOMParser === 'undefined') return '';
   const document = new DOMParser().parseFromString(html, 'text/html');
+  for (const image of document.querySelectorAll('img')) {
+    const source = image.getAttribute('data-src') || image.getAttribute('data-original') || image.getAttribute('src') || image.getAttribute('srcset')?.split(',')[0]?.trim().split(/\s+/)[0] || '';
+    if(!includeImages){image.remove();continue;}
+    try { if(!source)throw new Error('Missing image'); image.setAttribute('src', new URL(source, baseUrl || document.querySelector('base')?.getAttribute('href') || undefined).href); } catch { image.setAttribute('src', ''); }
+  }
   const markdown = [...document.body.childNodes].map(node => nodeToMarkdown(node)).join('');
   return cleanupMarkdown(markdown);
 }
@@ -51,7 +56,16 @@ function nodeToMarkdown(node: Node): string {
   if (node.tagName === 'HR') return '\n\n---\n\n';
   if (node.tagName === 'UL' || node.tagName === 'OL') return listToMarkdown(node);
   if (node.tagName === 'TABLE') return tableToMarkdown(node);
-  if (node.tagName === 'IMG') return '';
+  if (node.tagName === 'IMG') {
+    const src = node.getAttribute('src') || '';
+    const alt = (node.getAttribute('alt') || 'Article image').replace(/[[\]\r\n]/g, ' ');
+    return /^(https?:\/\/|data:image\/(?:png|jpeg|gif|webp);base64,)/i.test(src)
+      ? ` ![${alt}](${src.replace(/ /g, '%20').replace(/\(/g, '%28').replace(/\)/g, '%29')}) `
+      : ' [Image could not be copied — upload it using Add picture.] ';
+  }
+  if (node.tagName === 'FIGURE') return `\n\n${trimmed}\n\n`;
+  if (node.tagName === 'FIGCAPTION') return `\n*${trimmed}*`;
+  if (['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(node.tagName)) return '';
   if (BLOCK_TAGS.has(node.tagName)) return trimmed ? `\n\n${trimmed}\n\n` : '';
   return content;
 }
@@ -90,6 +104,6 @@ function cleanupMarkdown(value: string): string {
     .replace(/[ \t]+\n/g, '\n')
     .replace(/\n[ \t]+/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
-    .replace(/ +([,.;:!?])/g, '$1')
+    .replace(/ +([,.;:?]|!(?!\[))/g, '$1')
     .trim();
 }

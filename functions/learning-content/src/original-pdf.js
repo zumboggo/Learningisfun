@@ -1,3 +1,4 @@
+import { ownsImage } from './reading-images.js';
 import { textAssignmentAvailable, textReleaseAt } from './text-schedule.js';
 import { createHash } from 'node:crypto';
 import { Query } from 'node-appwrite';
@@ -39,6 +40,12 @@ export async function authorizeTextMutation({ collection, id, data, userId, db, 
     for (const textId of parents) {
       const text = await db.getDocument(databaseId, 'texts', textId);
       if (text.teacherId !== userId) throw new Error('Only the text owner can change its content or assignments.');
+      if(collection==='text_paragraphs' && typeof data.content==='string') {
+        for(const match of data.content.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g)) {
+          const image=/^reading-image:([\w-]+):(img_[a-f0-9]{10}_[a-f0-9]{20})$/.exec(match[1]);
+          if(!image || image[1]!==textId || !ownsImage(userId,image[2]))throw new Error('Save reading images in app storage before publishing.');
+        }
+      }
     }
   }
 }

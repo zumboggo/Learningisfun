@@ -1,4 +1,5 @@
 /* eslint-disable react-refresh/only-export-components -- this shared renderer also exposes its matching word counter */
+import { ReadingImage } from './ReadingImage';
 import type { ReactNode } from 'react';
 import { anchorHighlights, type PassageHighlight } from '@/components/texts/anchored-highlights';
 
@@ -9,7 +10,7 @@ interface MarkdownProps {
   onHighlightClick?: (id: string) => void;
 }
 
-const INLINE_TOKEN = /(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\)|\*[^*]+\*)/g;
+const INLINE_TOKEN = /(!\[[^\]]*\]\([^)]+\)|\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\)|\*[^*]+\*)/g;
 
 export function Markdown({ content, className = '', highlights, onHighlightClick }: MarkdownProps) {
   return (
@@ -21,6 +22,7 @@ export function Markdown({ content, className = '', highlights, onHighlightClick
 
 export function countMarkdownWords(markdown: string): number {
   const plain = markdown
+    .replace(/!\[[^\]]*\]\([^)]+\)/g, ' ')
     .replace(/```[\s\S]*?```/g, ' ')
     .replace(/`([^`]+)`/g, '$1')
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
@@ -156,7 +158,10 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
     const index = match.index ?? 0;
     if (index > lastIndex) nodes.push(text.slice(lastIndex, index));
 
-    if (token.startsWith('**') && token.endsWith('**')) {
+    if (token.startsWith('![')) {
+      const image = /^!\[([^\]]*)\]\(([^)]+)\)$/.exec(token);
+      if(image) nodes.push(<ReadingImage key={`${keyPrefix}-${index}`} source={image[2]} alt={image[1]}/>);
+    } else if (token.startsWith('**') && token.endsWith('**')) {
       nodes.push(<strong key={`${keyPrefix}-${index}`}>{token.slice(2, -2)}</strong>);
     } else if (token.startsWith('`') && token.endsWith('`')) {
       nodes.push(<code key={`${keyPrefix}-${index}`} className="rounded bg-gray-100 px-1 py-0.5 text-sm">{token.slice(1, -1)}</code>);
