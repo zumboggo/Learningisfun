@@ -7,7 +7,14 @@ export interface ReadingDiscussionPost {
   everReplied?:boolean; withdrawn?:boolean; hidden: boolean; locked: boolean; pinned: boolean; score: number; voted: boolean; reports?: {id:string;reason:string}[];
 }
 export interface ReplyAssignment {studentId:string;questionId:string|null;status:'pending'|'completed'|'cancelled'|'gap';roundId?:string;createdAt?:string;replyId?:string;cancelledReason?:string}
+export interface QuestionVoting {
+  sessionId: string; active: boolean; questionsPerRound: number;
+  roundCount?: number; totalRounds?: number; completedRounds?: number; completed?: boolean;
+  choices?: string[]; questionIds?: string[];
+  progress?: {studentId:string;completedRounds:number;totalRounds:number;completed:boolean}[];
+}
 export interface ReadingDiscussion {
+  voting?: QuestionVoting;
   curatedReady?:boolean;notebook?:{id:string;draftId:string;content:string;updatedAt:string}[];publishedCount?:number;remainingSpaces?:number;assignments?:ReplyAssignment[];rounds?:{id:string;createdAt:string;assignments:ReplyAssignment[]}[];awaitingReplies?:string[];
   title:string; className:string; teacher:boolean; showStudentNames?:boolean; canWrite:boolean; posts:ReadingDiscussionPost[];
   participation:{id:string;name:string;thought:number;question:number;connection:number;replies:number}[];

@@ -4,9 +4,10 @@ const storage=new Storage(new Client().setEndpoint(process.env.APPWRITE_ENDPOINT
 try {
   const bucket=await storage.getBucket({bucketId:PRESENTATION_BUCKET});
   if(bucket.$permissions.length || bucket.fileSecurity) throw new Error('Presentation bucket must remain private.');
-  console.log('Private presentation bucket ready');
+  if(bucket.maximumFileSize !== 10*1024*1024) await storage.updateBucket({bucketId:PRESENTATION_BUCKET,name:bucket.name,maximumFileSize:10*1024*1024});
+  console.log('Private presentation bucket ready (10 MB per file)');
 } catch(error) {
   if(error.code!==404) throw error;
-  await storage.createBucket({bucketId:PRESENTATION_BUCKET,name:'Class PowerPoints',permissions:[],fileSecurity:false,enabled:true,maximumFileSize:5*1024*1024,allowedFileExtensions:['ppt','pptx'],encryption:true,antivirus:true});
-  console.log('Created private PowerPoint storage (5 MB per file)');
+  await storage.createBucket({bucketId:PRESENTATION_BUCKET,name:'Class PowerPoints',permissions:[],fileSecurity:false,enabled:true,maximumFileSize:10*1024*1024,allowedFileExtensions:['ppt','pptx'],encryption:true,antivirus:true});
+  console.log('Created private PowerPoint storage (10 MB per file)');
 }

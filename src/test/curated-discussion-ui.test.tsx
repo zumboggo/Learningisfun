@@ -9,17 +9,19 @@ import type {ReadingDiscussion} from '@/services/reading-discussion.service';
 vi.mock('@/services/learning-content.service',()=>({executeLearningContent:vi.fn()}));
 beforeEach(()=>localStorage.clear());afterEach(cleanup);
 const data:ReadingDiscussion={title:'Text',className:'Blue',teacher:false,canWrite:true,curatedReady:true,posts:[],participation:[],publishedCount:2,remainingSpaces:1,notebook:[{id:'d1',draftId:'original1',content:'Why this image?',updatedAt:'now'},{id:'d2',draftId:'original2',content:'Why this ending?',updatedAt:'now'}]};
-it('compares account drafts, limits selection to remaining spaces, and explicitly publishes',async()=>{
+it('recovers older saved questions with direct posting',async()=>{
  const mutate=vi.fn().mockResolvedValue(undefined);render(<QuestionNotebook data={data} storageKey="notebook" busy={false} mutate={mutate}/>);
- expect(screen.getByText('2 of 3 questions published')).toBeInTheDocument();
- fireEvent.click(screen.getByRole('checkbox',{name:'Select Why this image?'}));expect(screen.getByRole('checkbox',{name:'Select Why this ending?'})).toBeDisabled();
- fireEvent.click(screen.getByRole('button',{name:'Publish selected questions (1)'}));await waitFor(()=>expect(mutate).toHaveBeenCalledWith('publishReadingQuestions',{draftIds:['d1']}));
+ fireEvent.click(screen.getByText('Previously saved questions (2)'));
+ expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+ fireEvent.click(screen.getAllByRole('button',{name:'Post question to class'})[0]);
+ await waitFor(()=>expect(mutate).toHaveBeenCalledWith('publishReadingQuestions',{draftIds:['d1']}));
 });
-it('retains unsaved draft after a failed save and recovers it after reopening',async()=>{
- const mutate=vi.fn().mockRejectedValue(Error('offline'));const props={data,storageKey:'notebook',busy:false,mutate};const {unmount}=render(<QuestionNotebook {...props}/>);
- fireEvent.change(screen.getByRole('textbox',{name:'Draft question'}),{target:{value:'My best idea'}});fireEvent.click(screen.getByRole('button',{name:'Save private draft'}));await waitFor(()=>expect(mutate).toHaveBeenCalled());
- unmount();render(<QuestionNotebook {...props}/>);expect(screen.getByRole('textbox',{name:'Draft question'})).toHaveValue('My best idea');
- fireEvent.click(screen.getAllByRole('button',{name:'Edit draft'})[0]);expect(screen.getByRole('textbox',{name:'Draft question'})).toHaveValue('My best idea');expect(screen.getByRole('alert')).toHaveTextContent('Save your current draft');
+it('retains an unsent question after a failed post and recovers it after reopening',async()=>{
+ const onSubmit=vi.fn().mockRejectedValue(Error('offline'));const props={storageKey:'question',category:'question' as const,busy:false,onSubmit};
+ const {unmount}=render(<DiscussionComposer {...props}/>);
+ fireEvent.change(screen.getByRole('textbox',{name:'Your question'}),{target:{value:'My best idea'}});
+ fireEvent.click(screen.getByRole('button',{name:'Post question'}));await waitFor(()=>expect(onSubmit).toHaveBeenCalled());
+ unmount();render(<DiscussionComposer {...props}/>);expect(screen.getByRole('textbox',{name:'Your question'})).toHaveValue('My best idea');
 });
 it('inserts exact quote and reference without replacing reply writing, and does not duplicate on refresh',()=>{
  const props={storageKey:'reply',category:'question' as const,busy:false,onSubmit:vi.fn(),onCancel:vi.fn()};const {rerender}=render(<DiscussionComposer {...props}/>);

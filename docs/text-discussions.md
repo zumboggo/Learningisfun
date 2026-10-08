@@ -32,10 +32,56 @@ visible to their author. No legacy record is migrated into a shared contribution
 Unsent legacy notes are retained locally and shown to their author in the archive.
 Old clients receive an explicit read-only error rather than silently losing work.
 
-New drafts are device-local, scoped by user/text/class/category or reply parent.
+Unsent composer drafts are device-local, scoped by user/text/class/category or reply parent.
 Only confirmed successful posts clear a draft. Refresh and focus updates do not
 replace the writing component. Discussion refreshes are manual, on focus (at most
-once per minute), and every two visible minutes to limit Appwrite traffic.
+once per ten seconds), and every fifteen visible seconds so a teacher-started
+voting activity reaches students who already have the discussion open.
+
+## Direct question posting
+
+Students use **Post question** to share immediately with all classmates who can access
+this assigned reading, including classmates who have posted nothing. New questions
+never enter a private notebook. Existing saved notebook questions remain available
+under **Previously saved questions**, with a direct posting button for each.
+The shared question feed and composer remain visible during voting.
+
+## Question voting and assignment preferences
+
+The teacher's **Vote on Questions** control appears before **Assign questions**.
+It starts a class/text voting activity, with three rounds of three options by
+default. Teachers can choose 1–10 rounds and 2–10 questions per round, view
+student progress, and end the activity. Only one activity can be open at a time.
+
+Students see one ballot round at a time while voting. Options are stable across
+refreshes and devices, exclude their own/hidden/locked/withdrawn questions, and
+spread across the snapshot of questions available when the activity started.
+With enough questions, options do not repeat between rounds. With a small pool,
+unchosen options may reappear, but chosen questions never repeat; the number of
+rounds and options is reduced when necessary. Each choice records one ordinary
+upvote and persists in the student's private ballot. Teacher projections expose
+completion counts; peers and parents cannot read another student's choices.
+
+Voting activities use tagged JSON records in the existing server-only
+`reading_reply_rounds` collection. They are kept separate from reply-assignment
+rounds. No schema migration or data deletion is required. The authenticated
+actions are `startReadingQuestionVoting`, `endReadingQuestionVoting`, and
+`chooseReadingQuestionVote`; choices and votes commit in one guarded transaction.
+Request IDs and round indices make retries safe and prevent double choices.
+
+Question-assignment previews use the latest nonempty ballot for each student.
+The allocator maximizes distinct question coverage, then distinct unanswered
+coverage, then the number of students assigned one of their chosen questions.
+It still excludes self-answers and preserves pending/completed work when filling
+gaps. Coverage can prevent a preference match; preferences are not a guarantee.
+
+Student Texts and weekly class materials share the purple Discussion button.
+Available discussions are light purple without activity and dark purple with
+any visible question or reply. A text assigned in multiple classes gets separate
+class-labelled buttons in Texts. Availability/counts refresh every thirty visible
+seconds and on return to the page.
+
+Roll out the updated learning-content function before the frontend.
 
 ## Provisioning and rollout
 

@@ -27,3 +27,11 @@ it('reuses an existing quiz instead of adding a duplicate',()=>{
  second.slots!.push({id:'q',title:'Weekly quiz',kind:'quiz',content:'',url:'',minutes:5,optional:false,status:'planned'});
  expect(addWeeklyLessonDefaults(plan).lessons.find(l=>l.id===second.id)!.slots!.filter(s=>s.kind==='quiz')).toHaveLength(1);
 });
+it('adds the AP chapter only to the first AP lesson as an ordinary text',()=>{
+ const plan=addWeeklyLessonDefaults(fixture());
+ const matches=plan.lessons.flatMap(lesson=>lesson.slots!.filter(s=>s.title==='Clarity and Style Chapter').map(slot=>({lesson,slot})));
+ expect(matches).toHaveLength(1);
+ expect(matches[0].lesson).toMatchObject({classCode:'AP',date:'2026-09-21'});
+ expect(matches[0].slot).toMatchObject({kind:'text',assignedReading:false,isCopywork:false});
+ expect(addWeeklyLessonDefaults(plan)).toEqual(plan);
+});

@@ -14,7 +14,7 @@ export function PlannerVocabUploads({ data, onChange }: { data: WeeklyPlanData; 
     if (!file) return;
     setBusy(course); setError(''); setMessage('');
     try {
-      if (!/\.pptx?$/i.test(file.name) || file.size > 5 * 1024 * 1024) throw new Error('Choose a .ppt or .pptx file up to 5 MB.');
+      if (!/\.pptx?$/i.test(file.name) || file.size > 10 * 1024 * 1024) throw new Error('Choose a .ppt or .pptx file up to 10 MB.');
       const encoded = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(String(reader.result).split(',')[1]);
@@ -36,7 +36,7 @@ export function PlannerVocabUploads({ data, onChange }: { data: WeeklyPlanData; 
         <input ref={element => { inputs.current[course.code] = element; }} type="file" className="hidden" accept=".ppt,.pptx" aria-label={`Upload ${course.label} presentation`} disabled={Boolean(busy) || !mapped} onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; void upload(course.code, course.label, file); }}/>
       </span>;
     })}</div>
-    <p className="text-xs text-slate-500">PowerPoint files up to 5 MB. Shared presentations stay available in each class’s weekly materials. World Lit uploads cover both mapped sections.</p>
+    <p className="text-xs text-slate-500">PowerPoint files up to 10 MB. Shared presentations stay available in each class’s weekly materials. World Lit uploads cover both mapped sections.</p>
     {message && <p role="status" className="text-xs text-purple-900">{message}</p>}
     {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
   </div>;

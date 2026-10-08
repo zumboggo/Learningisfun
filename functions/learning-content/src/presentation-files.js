@@ -17,10 +17,10 @@ export async function presentationFileAction({body,profile,userId,memberClassIds
     const title=String(body.title||'').trim();
     const name=String(body.name||'').replace(/[\r\n\\/]/g,'_');
     if(!title || title.length>255 || !/\.pptx?$/i.test(name) || name.length>180) throw new Error('Choose a PowerPoint (.ppt or .pptx) and a title.');
-    if(typeof body.data!=='string' || body.data.length>7000000 || !/^[A-Za-z0-9+/]*={0,2}$/.test(body.data)) throw new Error('PowerPoints must be 5 MB or smaller.');
+    if(typeof body.data!=='string' || body.data.length>Math.ceil(10*1024*1024/3)*4 || !/^[A-Za-z0-9+/]*={0,2}$/.test(body.data)) throw new Error('PowerPoints must be 10 MB or smaller.');
     const bytes=Buffer.from(body.data,'base64');
     const valid=/\.pptx$/i.test(name)?bytes.subarray(0,4).equals(Buffer.from([80,75,3,4])):bytes.subarray(0,8).equals(Buffer.from([208,207,17,224,161,177,26,225]));
-    if(!valid || bytes.length>5*1024*1024) throw new Error('Choose a valid PowerPoint of 5 MB or smaller.');
+    if(!valid || bytes.length>10*1024*1024) throw new Error('Choose a valid PowerPoint of 10 MB or smaller.');
     const assignedAt=String(body.assignedAt||new Date().toISOString());
     if(!Number.isFinite(Date.parse(assignedAt))) throw new Error('Choose a valid date.');
     const fileId=privatePlan?ownerPrefix(userId)+createHash('sha256').update(bytes).digest('hex').slice(0,20):ID.unique();

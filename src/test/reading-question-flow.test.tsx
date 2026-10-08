@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { ReadingDiscussionPage } from '@/pages/ReadingDiscussionPage';
 import { currentReadingWeek, type ReadingDiscussionPost } from '@/services/reading-discussion.service';
-const state = vi.hoisted(() => ({ posts: [] as ReadingDiscussionPost[], voteGate: null as Promise<void> | null, readGate: null as Promise<void> | null }));
+const state = vi.hoisted(() => ({ activeVoting: false, posts: [] as ReadingDiscussionPost[], voteGate: null as Promise<void> | null, readGate: null as Promise<void> | null }));
 vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: { $id: 'student' } }) }));
 vi.mock('@/services/learning-content.service', () => ({ executeLearningContent: vi.fn(async (request) => {
   if (request.action === 'readTexts') return { texts: [{ $id: 'text', title: 'The reading', author: 'Author', contentMode: 'full' }], paragraphs: [{ $id: 'p', textId: 'text', content: 'An exact paragraph from the reading.', sortOrder: 0 }] };
@@ -12,17 +12,18 @@ vi.mock('@/services/learning-content.service', () => ({ executeLearningContent: 
     await state.readGate;
     return { title: 'The reading', className: 'Ethics', teacher: false, canWrite: true, posts: snapshot, participation: [] };
   }
+  if (request.action === 'postReadingDiscussion') state.posts.push({...makePost('posted',0),content:request.content,mine:true});
   if (request.action === 'voteReadingDiscussion') {
     if (state.voteGate) await state.voteGate;
     const post = state.posts.find(p => p.id === request.postId)!;
     if (request.upvoted !== post.voted) post.score += request.upvoted ? 1 : -1;
     post.voted = request.upvoted;
   }
-  return { title: 'The reading', className: 'Ethics', teacher: false, canWrite: true, posts: state.posts.map(p => ({ ...p })), participation: [] };
+  return { title: 'The reading', className: 'Ethics', teacher: false, canWrite: true, curatedReady:true, notebook:[], ...(state.activeVoting ? {voting:{sessionId:'v',active:true,completed:false,totalRounds:3,completedRounds:0,questionIds:['First question?'],choices:[]}} : {}), posts: state.posts.map(p => ({ ...p })), participation: [] };
 }) }));
 const makePost = (id: string, score: number, parentId: string | null = null): ReadingDiscussionPost => ({ id, score, parentId, content: id, category: 'question', quotation: '', paragraph: null, label: 'Reader', teacher: false, mine: false, createdAt: '2026-09-22T12:00:00Z', hidden: false, locked: false, pinned: false, voted: false });
 beforeEach(() => {
-  localStorage.clear(); state.voteGate = null; state.readGate = null;
+  localStorage.clear(); state.activeVoting=false; state.voteGate = null; state.readGate = null;
   state.posts = [makePost('First question?', 3), makePost('Second question?', 3), makePost('Low reply', 1, 'First question?'), makePost('High reply', 4, 'First question?'), { ...makePost('Earlier thought', 0), category: 'thought' }];
 });
 afterEach(cleanup);
@@ -53,6 +54,8 @@ it('only shows the simple quote input on reply and preserves it after cancelling
 });
 it('loads the actual reading beside the discussion without replacing the question draft', async () => {
   mount(); await screen.findByRole('heading', { name: 'The reading', level: 1 });
+  expect(screen.getByRole('button', { name: 'Parallel' })).toHaveAttribute('aria-pressed', 'true');
+  expect(await screen.findByRole('complementary', { name: 'Reading text' })).toBeVisible();
   const input = screen.getByRole('textbox', { name: 'Your question' });
   fireEvent.change(input, { target: { value: 'My unfinished question' } });
   fireEvent.click(screen.getByRole('button', { name: 'Parallel' }));
@@ -121,4 +124,15 @@ it('preserves a saved vote and newly loaded posts when an older refresh finishes
   await act(async () => finishRead());
   expect(screen.getByText('A newly posted question')).toBeInTheDocument();
   expect(within(post).getByRole('button', { name: 'Remove upvote: 4' })).toBeEnabled();
+});
+
+it('posts directly to the shared feed without a private notebook, including during voting',async()=>{
+ state.activeVoting=true;mount();await screen.findByRole('heading',{name:'The reading',level:1});
+ expect(screen.queryByText('Your private question notebook')).not.toBeInTheDocument();
+ expect(screen.getByRole('heading',{name:'Vote on Questions · Round 1 of 3'})).toBeVisible();
+ expect(screen.getByText('Second question?')).toBeVisible();
+ fireEvent.change(screen.getByRole('textbox',{name:'Your question'}),{target:{value:'A directly shared question?'}});
+ fireEvent.click(screen.getByRole('button',{name:'Post question'}));
+ expect(await screen.findByText('A directly shared question?')).toBeVisible();
+ await waitFor(()=>expect(screen.getByRole('textbox',{name:'Your question'})).toHaveValue(''));
 });

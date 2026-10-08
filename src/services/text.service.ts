@@ -1,3 +1,4 @@
+import { hostReadingImages } from './reading-image.service';
 import { textSchedule } from './text-schedule';
 import { ID } from 'appwrite';
 import mammoth from 'mammoth';
@@ -56,7 +57,7 @@ export async function paragraphsFromFile(file: File): Promise<string[]> {
   let content: string;
   if (extension === 'docx') {
     const result = await mammoth.convertToHtml({ arrayBuffer: await file.arrayBuffer() });
-    content = htmlToMarkdown(result.value);
+    content = htmlToMarkdown(result.value, undefined, true);
   } else if (extension === 'pdf') {
     const { textFromPdf } = await import('./pdf-import');
     content = await textFromPdf(file);
@@ -85,13 +86,15 @@ export async function createText(params: { publicReadEnabled?: boolean; teacherI
     const uploaded = await executeLearningContent<{fileId:string}>({ action: 'uploadOriginalPdf', name: file.name, data: btoa(binary) });
     originalPdfId = uploaded.fileId;
   }
+  const textId = ID.unique();
+  const hostedParagraphs = splitParagraphs(await hostReadingImages(params.paragraphs.join('\n\n'), textId));
   const now = getTimestamp();
-  const text: LearningText = { $id: ID.unique(), teacherId: params.teacherId, title: params.title, author: params.author,
+  const text: LearningText = { $id: textId, teacherId: params.teacherId, title: params.title, author: params.author,
     publicReadEnabled: params.publicReadEnabled ?? true, annotationMode: 'tqe', source: params.source, ...(originalPdfId ? { originalPdfId } : {}), contentMode: params.contentMode || 'full', externalUrl: params.externalUrl || '', status: 'published', createdAt: now, updatedAt: now, syncStatus: 'local' };
   await db.transaction('rw', db.texts, db.text_paragraphs, db.sync_queue, async () => {
   await db.texts.put(text); await addToQueue(params.teacherId, 'text', text.$id, 'create', text);
-  for (let i = 0; i < params.paragraphs.length; i++) {
-    const paragraph: TextParagraph = { $id: `p_${text.$id}_${i}`, textId: text.$id, sortOrder: i, content: params.paragraphs[i] };
+  for (let i = 0; i < hostedParagraphs.length; i++) {
+    const paragraph: TextParagraph = { $id: `p_${text.$id}_${i}`, textId: text.$id, sortOrder: i, content: hostedParagraphs[i] };
     await db.text_paragraphs.put(paragraph); await addToQueue(params.teacherId, 'text_paragraph', paragraph.$id, 'create', paragraph);
   }
   });
@@ -105,8 +108,10 @@ export async function updateTextMetadata(textId:string,teacherId:string,updates:
 export async function updateTextParagraphs(textId:string,teacherId:string,contents:string[]):Promise<void>{
   const text=await db.texts.get(textId); if(!text||text.teacherId!==teacherId)throw new Error('Only the text creator can edit it');
   await loadTextForEditing(textId);
+  contents = splitParagraphs(await hostReadingImages(contents.join('\n\n'), textId));
   await db.transaction('rw', db.text_paragraphs, db.text_annotations, db.sync_queue, async () => {
   const existing=await db.text_paragraphs.where('textId').equals(textId).sortBy('sortOrder');
+  if(existing.length!==contents.length && contents.some(content=>/!\[[^\]]*\]\(/.test(content)) && await db.text_annotations.where('textId').equals(textId).count())throw new Error('This reading has student annotations. Add pictures inside existing paragraphs, without adding blank-line paragraph breaks, so the notes stay attached to the right passages.');
   const removed=existing.slice(contents.length); if(removed.length){const annotatedIds=new Set((await db.text_annotations.where('textId').equals(textId).toArray()).map(row=>row.paragraphId));const blocked=removed.find(row=>annotatedIds.has(row.$id));if(blocked)throw new Error(`Paragraph ${blocked.sortOrder+1} has student annotations and cannot be removed. You can still rewrite it.`);}
   for(let index=0;index<contents.length;index++){const content=contents[index].trim();const current=existing[index];if(current){if(current.content===content&&current.sortOrder===index)continue;const updated={...current,content,sortOrder:index};await db.text_paragraphs.put(updated);await addToQueue(teacherId,'text_paragraph',current.$id,'update',updated);}else{const paragraph:TextParagraph={$id:`p_${textId}_${index}`,textId,sortOrder:index,content};await db.text_paragraphs.put(paragraph);await addToQueue(teacherId,'text_paragraph',paragraph.$id,'create',paragraph);}}
   for(const paragraph of removed){await db.text_paragraphs.delete(paragraph.$id);await addToQueue(teacherId,'text_paragraph',paragraph.$id,'delete',paragraph);}

@@ -35,7 +35,18 @@ describe('class PowerPoint files',()=>{
   });
   it('rejects invalid and oversized files',async()=>{
     const c=context();c.body.data=btoa('not a powerpoint');await expect(presentationFileAction(c)).rejects.toThrow('valid PowerPoint');
-    c.body.data='A'.repeat(7000001);await expect(presentationFileAction(c)).rejects.toThrow('5 MB');
+    c.body.data='A'.repeat(Math.ceil(10*1024*1024/3)*4+1);await expect(presentationFileAction(c)).rejects.toThrow('10 MB');
+  });
+  it('accepts exactly 10 MB and rejects one byte over for class and planner uploads',async()=>{
+    for(const action of ['uploadPresentationFile','uploadPlannerPresentation']) {
+      const c=context();c.body.action=action;
+      const bytes=Buffer.alloc(10*1024*1024);bytes.set([80,75,3,4]);
+      c.body.data=bytes.toString('base64');await presentationFileAction(c);
+      expect(c.storage.createFile).toHaveBeenCalledTimes(1);
+      c.body.data=Buffer.concat([bytes,Buffer.from([0])]).toString('base64');
+      await expect(presentationFileAction(c)).rejects.toThrow('10 MB');
+      expect(c.storage.createFile).toHaveBeenCalledTimes(1);
+    }
   });
   it('cleans up an uploaded file when its class entry cannot be saved',async()=>{
     const c=context();c.db.createDocument.mockRejectedValue(new Error('save failed'));await expect(presentationFileAction(c)).rejects.toThrow('save failed');expect(c.storage.deleteFile).toHaveBeenCalled();

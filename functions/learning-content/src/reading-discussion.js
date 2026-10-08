@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { Query } from 'node-appwrite';
 import { atomicDiscussion, guardWorkspace, curatedActions, allocateQuestions } from './curated-questions.js';
+import { votingBallot, allocatePreferredQuestions } from './question-voting.js';
 import { textAssignmentAvailable } from './text-schedule.js';
 
 export const discussionKey = (textId, classId) => createHash('sha256').update(JSON.stringify([textId, classId])).digest('hex').slice(0, 32);
@@ -106,12 +107,55 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
   const draftRows=profile.role==='student'?await list('reading_question_drafts',[...queries,Query.equal('authorId',userId)]):[];
   const drafts=draftRows.map(unpack);
   const roundRows=await list('reading_reply_rounds',queries);
-  const rounds=roundRows.map(r=>({...JSON.parse(r.dataJson),id:r.$id}));
+  const allRounds=roundRows.map(r=>({...JSON.parse(r.dataJson),id:r.$id}));
+  const rounds=allRounds.filter(r=>r.type!=='voting');
+  const votingSessions=allRounds.filter(r=>r.type==='voting').sort((a,b)=>b.createdAt.localeCompare(a.createdAt)||b.id.localeCompare(a.id));
+  const activeVoting=votingSessions.find(r=>r.active);
   const writeRound=round=>{const {id,...saved}=round;return db.updateDocument(databaseId,'reading_reply_rounds',id,{dataJson:JSON.stringify(saved)});};
   const questionCandidates=async()=>{
     const votes=await list('reading_votes',queries);
     return posts.filter(p=>!p.parentId&&p.category==='question'&&!p.withdrawn&&!p.hidden&&!p.locked).map(p=>({...p,unanswered:!posts.some(r=>r.parentId===p.id),score:votes.filter(v=>v.postId===p.id).length}));
   };
+  if (body.action === 'startReadingQuestionVoting') {
+    if (!teacher) fail('Only the class teacher may start question voting');
+    const roundCount = body.roundCount ?? 3, questionsPerRound = body.questionsPerRound ?? 3;
+    if (!Number.isInteger(roundCount) || roundCount < 1 || roundCount > 10 || !Number.isInteger(questionsPerRound) || questionsPerRound < 2 || questionsPerRound > 10) fail('Choose 1–10 rounds and 2–10 questions per round');
+    const requestId = short(body.requestId,100); if (!requestId) fail('A voting request ID is required');
+    const id = key(workspaceId,'voting',userId,requestId);
+    if (votingSessions.some(r=>r.id===id)) return {ok:true};
+    if (activeVoting) fail('End the current voting activity before starting another');
+    const questions = await questionCandidates();
+    if (questions.length < 2) fail('Publish at least two available questions before voting');
+    const members = await list('class_members',[Query.equal('classId',cls.$id),Query.equal('role','student')]);
+    const ballots = [...new Set(members.map(m=>m.userId))].map(studentId=>({studentId,choices:[]}));
+    if (!ballots.length || ballots.length > 500) fail('Voting requires a class roster of 1–500 students');
+    const data = {type:'voting',active:true,roundCount,questionsPerRound,questionIds:questions.map(q=>q.id),ballots,createdAt:new Date().toISOString(),teacherId:userId};
+    await db.createDocument(databaseId,'reading_reply_rounds',id,{workspaceId,dataJson:JSON.stringify(data)},[]);
+    return {ok:true};
+  }
+  if (body.action === 'endReadingQuestionVoting') {
+    if (!teacher) fail('Only the class teacher may end question voting');
+    const session = votingSessions.find(r=>r.id===body.sessionId);
+    if (!session) fail('Voting activity is not available');
+    await writeRound({...session,active:false});
+    return {ok:true};
+  }
+  if (body.action === 'chooseReadingQuestionVote') {
+    if (teacher || profile.role !== 'student') fail('Only students may choose a voting question');
+    const session = votingSessions.find(r=>r.id===body.sessionId);
+    const ballot = session?.ballots.find(b=>b.studentId===userId);
+    if (!session || !ballot) fail('Voting activity is not available to you');
+    if (!Number.isInteger(body.roundIndex) || body.roundIndex < 0 || typeof body.postId !== 'string' || !body.postId) fail('Choose a voting round and question');
+    if (ballot.choices[body.roundIndex] === body.postId) return {ok:true};
+    const current = votingBallot(session,userId,await questionCandidates());
+    if (!session.active || current.completed || body.roundIndex !== ballot.choices.length || !current.questionIds.includes(body.postId)) fail('Voting questions changed. Refresh and choose from your current round');
+    const id = key(workspaceId,body.postId,userId);
+    try { await db.getDocument(databaseId,'reading_votes',id); }
+    catch(error) { if(error.code!==404)throw error;await db.createDocument(databaseId,'reading_votes',id,{workspaceId,postId:body.postId,userId},[]); }
+    ballot.choices.push(body.postId);
+    await writeRound(session);
+    return {ok:true};
+  }
   if(curatedActions.includes(body.action)) {
     if(['previewReadingAssignments','publishReadingAssignments'].includes(body.action)){
       if(!teacher)fail('Only the class teacher may assign questions');
@@ -124,7 +168,12 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
       const retained=existing?existing.assignments.filter(a=>a.status==='completed'||(a.status==='pending'&&roster.has(a.studentId))):[];
       const participants=students.filter(id=>!retained.some(a=>a.studentId===id));
       const candidates=(await questionCandidates()).map(q=>({...q,unanswered:q.unanswered&&!retained.some(a=>a.questionId===q.id)}));
-      const preview=[...retained,...allocateQuestions(participants,candidates)];
+      const preferences=new Map();
+      for(const session of [...votingSessions].reverse())for(const ballot of session.ballots){
+        if(ballot.choices.length)preferences.set(ballot.studentId,ballot.choices);
+      }
+      const allocation=preferences.size?allocatePreferredQuestions(participants,candidates,preferences):allocateQuestions(participants,candidates);
+      const preview=[...retained,...allocation];
       if(body.action==='previewReadingAssignments')return {assignments:preview};
       const requestId=short(body.requestId,100);if(!requestId)fail('A publication request ID is required');
       const id=existing?.id||key(workspaceId,'round',userId,requestId);
@@ -195,7 +244,14 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
     const studentIds = [...new Set(members.map(m => m.userId))];
     const nameIds=showNames?[...new Set([...studentIds,...posts.filter(visible).map(p=>p.authorId)])]:[];
     const people = nameIds.length ? await list('users', [Query.equal('$id', nameIds)]) : [];
+    const votingSession=activeVoting||votingSessions[0];
+    const votingQuestions=votingSession?await questionCandidates():[];
+    const studentBallot=votingSession?.ballots.find(b=>b.studentId===userId);
+    const voting=teacher&&votingSession?{sessionId:votingSession.id,active:votingSession.active,roundCount:votingSession.roundCount,questionsPerRound:votingSession.questionsPerRound,
+      progress:votingSession.ballots.filter(b=>studentIds.includes(b.studentId)).map(b=>{const ballot=votingBallot(votingSession,b.studentId,votingQuestions);return {studentId:b.studentId,completedRounds:ballot.completedRounds,totalRounds:ballot.totalRounds,completed:ballot.completed};})}
+      :profile.role==='student'&&studentBallot?votingBallot(votingSession,userId,votingQuestions):undefined;
     return {
+      ...(voting?{voting}:{}),
       curatedReady:true, ...(profile.role==='student'?{notebook:drafts.filter(d=>!d.publishedId).map(({id,content,draftId,updatedAt})=>({id,content,draftId,updatedAt})),publishedCount,remainingSpaces:Math.max(0,3-publishedCount),assignments:rounds.flatMap(r=>r.assignments.filter(a=>a.studentId===userId).map(a=>({...a,roundId:r.id,createdAt:r.createdAt})))}:{}),
       ...(teacher?{rounds:rounds.map(round=>({...round,assignments:round.assignments.map(a=>a.status==='pending'&&!studentIds.includes(a.studentId)?{...a,status:'cancelled',cancelledReason:'Student left class'}:a)})),awaitingReplies:posts.filter(p=>!p.parentId&&p.category==='question'&&!p.withdrawn&&!p.hidden&&!posts.some(r=>r.parentId===p.id)).map(p=>p.id)}:{}),
       title: text.title, className: `${cls.courseName || ''} · ${cls.name}`, teacher, showStudentNames, canWrite: eligible && (teacher || profile.role === 'student'),

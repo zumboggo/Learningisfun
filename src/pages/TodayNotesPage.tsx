@@ -10,6 +10,12 @@ const MAX_FONT = 38;
 const DEFAULT_FONT = 24;
 
 export function TodayNotesPage() {
+  const { classId, sessionId } = useParams();
+  const { user } = useAuth();
+  return <NotesEditor key={`${user?.$id}:${classId}:${sessionId || 'today'}`} />;
+}
+
+function NotesEditor() {
   const { classId, sessionId: historicalSessionId } = useParams<{ classId: string; sessionId?: string }>();
   const { user } = useAuth();
   const [sessionId, setSessionId] = useState('');
@@ -20,14 +26,19 @@ export function TodayNotesPage() {
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [noteDate, setNoteDate] = useState('');
   const [loadError, setLoadError] = useState('');
-  const initialized = useRef(false);
+  const [saveError, setSaveError] = useState('');
+  const current = useRef('');
+  const saved = useRef('');
+  const inFlight = useRef(false);
+  const recoveryKey = useRef('');
   const editorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!classId || !user || initialized.current) return;
-    initialized.current = true;
+    if (!classId || !user) return;
+    let cancelled = false;
     const sessionPromise = historicalSessionId ? db.class_sessions.get(historicalSessionId) : getOrCreateTodayNotes(classId, user.$id);
     void Promise.all([db.classes.get(classId), sessionPromise]).then(([cls, session]) => {
+      if (cancelled) return;
       if (!session || session.classId !== classId || session.discussionType !== 'notes') {
         setLoadError('These class notes could not be found.');
         return;
@@ -35,28 +46,56 @@ export function TodayNotesPage() {
       setClassName(cls?.name || cls?.courseName || 'Class');
       setSessionId(session.$id);
       setNoteDate(session.sessionDate);
-      const content = session.notesMarkdown || session.publishedNotesMarkdown || '';
+      saved.current = session.notesMarkdown || session.publishedNotesMarkdown || '';
+      recoveryKey.current = `today-notes:${user.$id}:${session.$id}`;
+      let content = saved.current;
+      try { content = localStorage.getItem(recoveryKey.current) ?? content; }
+      catch { setSaveError('Local recovery is unavailable. Use Save before closing.'); }
+      current.current = content;
       setNotes(content);
       if (editorRef.current) editorRef.current.innerHTML = markdownToEditorHtml(content);
-    });
+    }).catch(() => { if (!cancelled) setLoadError('These class notes could not be loaded. Please try again.'); });
+    return () => { cancelled = true; };
   }, [classId, historicalSessionId, user]);
 
   const save = async () => {
-    if (!sessionId || !user) return;
+    if (!sessionId || !user || inFlight.current || current.current === saved.current) return;
     const currentNotes = editorRef.current ? htmlToMarkdown(editorRef.current.innerHTML) : notes;
     setNotes(currentNotes);
+    inFlight.current = true;
     setSaving(true);
     try {
       await saveTodayNotes(sessionId, user.$id, currentNotes);
-      setSavedAt(new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }));
+      saved.current = currentNotes;
+      setSaveError('');
+      if (current.current === currentNotes) {
+        try { localStorage.removeItem(recoveryKey.current); } catch { /* Saved to IndexedDB. */ }
+      }
+      setSavedAt(current.current === currentNotes ? new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : null);
+    } catch {
+      setSaveError('Could not save yet. Your writing is kept on this device; saving will retry.');
     } finally {
+      inFlight.current = false;
       setSaving(false);
     }
   };
 
+  const saveRef = useRef(save);
+  useEffect(() => { saveRef.current = save; });
+  useEffect(() => {
+    const timer = window.setInterval(() => void saveRef.current(), 30000);
+    const flush = () => { if (document.visibilityState === 'hidden') void saveRef.current(); };
+    document.addEventListener('visibilitychange', flush);
+    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', flush); void saveRef.current(); };
+  }, []);
+
   const updateNotes = () => {
     if (!editorRef.current) return;
-    setNotes(htmlToMarkdown(editorRef.current.innerHTML));
+    const content = htmlToMarkdown(editorRef.current.innerHTML);
+    current.current = content;
+    setNotes(content);
+    try { if (recoveryKey.current) localStorage.setItem(recoveryKey.current, content); }
+    catch { setSaveError('Local recovery is unavailable. Use Save before closing.'); }
     setSavedAt(null);
   };
 
@@ -93,7 +132,7 @@ export function TodayNotesPage() {
         {loadError ? <div role="alert" className="m-6 rounded-xl bg-amber-50 p-4 text-amber-900">{loadError}</div> : <div
           ref={editorRef}
           autoFocus
-          contentEditable
+          contentEditable={Boolean(sessionId)}
           suppressContentEditableWarning
           aria-label="Today's class notes"
           className="rich-notes-editor min-h-0 flex-1 overflow-y-auto border-0 px-6 py-6 text-slate-900 outline-none sm:px-10 sm:py-8"
@@ -102,7 +141,7 @@ export function TodayNotesPage() {
           onPaste={pasteFormatted}
           data-placeholder="Write today's notes… Pasted bold, italics, paragraphs, lists, links, and tables will be preserved."
         />}
-        <footer className="h-8 px-6 text-right text-xs text-slate-400 sm:px-10">{savedAt ? `Saved at ${savedAt}` : ''}</footer>
+        <footer className="h-8 px-6 text-right text-xs text-slate-400 sm:px-10">{saveError || (savedAt ? `Saved on this device at ${savedAt} · sync queued` : 'Changes saved automatically every 30 seconds')}</footer>
       </div>
     </main>
   );

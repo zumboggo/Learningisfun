@@ -1,5 +1,6 @@
 import { QuestionNotebook } from '@/components/discussions/QuestionNotebook';
 import { ReplyAssignments } from '@/components/discussions/ReplyAssignments';
+import { QuestionVoting } from '@/components/discussions/QuestionVoting';
 import { EditReadingContribution } from '@/components/discussions/EditReadingContribution';
 import { DiscussionTextInput, DiscussionVote, DiscussionModeration } from '@/components/discussions/DiscussionControls';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -45,7 +46,7 @@ function DiscussionWorkspace({textId,classId}:{textId:string;classId:string}) {
       }
     }catch(e){if(revision===readRevision.current)setError(e instanceof Error?e.message:'Could not refresh');}
   },[textId,classId]);
-  useEffect(()=>{void Promise.resolve().then(refresh);const onFocus=()=>{if(document.visibilityState==='visible'&&Date.now()-lastRead.current>60000)void refresh();};window.addEventListener('focus',onFocus);const timer=window.setInterval(onFocus,120000);return()=>{clearInterval(timer);window.removeEventListener('focus',onFocus);};},[refresh]);
+  useEffect(()=>{void Promise.resolve().then(refresh);const onFocus=()=>{if(document.visibilityState==='visible'&&Date.now()-lastRead.current>10000)void refresh();};window.addEventListener('focus',onFocus);const timer=window.setInterval(onFocus,15000);return()=>{clearInterval(timer);window.removeEventListener('focus',onFocus);};},[refresh]);
   const vote = async (postId: string, upvoted: boolean) => {
     // Each item saves independently. Keep the interface responsive without
     // waiting for a second request to reload the entire discussion.
@@ -84,14 +85,17 @@ function DiscussionWorkspace({textId,classId}:{textId:string;classId:string}) {
     <div hidden={view==='discussion'||present}><ParallelReading textId={textId} classId={classId} onUseQuote={data.canWrite?quote=>setPendingQuote({...quote,token:crypto.randomUUID()}):undefined}/></div>
     <section hidden={view==='text'&&!present} className="reading-conversation" aria-label="Questions and replies">
     <div className="reading-feed-heading"><h2>Questions <span>{roots.length}</span></h2><span className="reading-top">↑ Top</span></div>
+    {!present&&data.curatedReady&&<QuestionVoting {...{data,busy,mutate}}/>}
+    <>
     {!present&&data.curatedReady&&<ReplyAssignments {...{data,textId,classId,busy,mutate}} onReply={openReply}/>}
     {!present&&pendingQuote&&!activeReply&&<p role="status" className="rounded-lg bg-blue-50 p-3 text-sm">Passage retained. Choose a question and select Reply to use it.</p>}
-    {!present&&data.canWrite&&!data.teacher&&data.curatedReady&&<QuestionNotebook {...{data,busy,mutate}} storageKey={`question-notebook:${user?.$id}:${textId}:${classId}`}/>}
-    {!present&&data.canWrite&&(data.teacher||!data.curatedReady)&&<DiscussionComposer key={user?.$id} storageKey={`reading-draft:${user?.$id}:${textId}:${classId}:question`} category="question" busy={busy} onSubmit={fields=>mutate('postReadingDiscussion',{...fields,category:'question'})}/>}
+    {!present&&data.canWrite&&!data.teacher&&Boolean(data.notebook?.length)&&<QuestionNotebook {...{data,busy,mutate}} storageKey={`question-notebook:${user?.$id}:${textId}:${classId}`}/>}
+    {!present&&data.canWrite&&<DiscussionComposer key={user?.$id} storageKey={`reading-draft:${user?.$id}:${textId}:${classId}:question`} category="question" busy={busy} onSubmit={fields=>mutate('postReadingDiscussion',{...fields,category:'question'})}/>}
     {!present&&<p className="mb-2 text-xs text-slate-500">An upvote means “This question could deepen our understanding.” One vote per item. Highest voted first.</p>}
     {present&&selected&&<Button variant="secondary" onClick={()=>setSelected(null)}>Show all contributions</Button>}
     <div className="space-y-2">{shown.map(post=><ReadingThread {...replyTools} key={post.id} post={showNames?{...post,label:post.username||post.label}:post} posts={visiblePosts.map(p=>showNames?{...p,label:p.username||p.label}:p)} teacher={data.teacher} canWrite={data.canWrite&&!present} busy={busy} mutate={mutate} readUrl={readUrl} draftPrefix={`reading-draft:${user?.$id}:${textId}:${classId}`} present={present} onSelect={()=>setSelected(post.id)}/>)}{!shown.length&&<p className="rounded-2xl bg-slate-50 p-5 text-slate-600">Ask the first question about this reading.</p>}</div>
     {!present&&archived.length>0&&<details className="mt-6 rounded-xl border border-slate-200 p-4"><summary className="cursor-pointer text-sm text-slate-500">Earlier contributions · {archived.length}</summary><div className="mt-4 space-y-3">{archived.map(post=><ReadingThread {...replyTools} key={post.id} post={showNames?{...post,label:post.username||post.label}:post} posts={visiblePosts.map(p=>showNames?{...p,label:p.username||p.label}:p)} teacher={data.teacher} canWrite={data.canWrite} busy={busy} mutate={mutate} readUrl={readUrl} draftPrefix={`reading-draft:${user?.$id}:${textId}:${classId}`} present={false} onSelect={()=>{}}/>)}</div></details>}
+    </>
     {!present&&data.teacher&&<details className="mt-6 rounded-xl border border-slate-200 p-4"><summary className="cursor-pointer text-sm font-semibold">Participation</summary><p className="my-2 text-sm text-slate-500">Votes help choose what to discuss; they are not grades.</p><div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr>{['Student','Questions','Replies','Earlier contributions'].map(t=><th className="p-2" key={t}>{t}</th>)}</tr></thead><tbody>{data.participation.map(p=><tr key={p.id}><td className="p-2">{p.name}</td><td>{p.question}</td><td>{p.replies}</td><td>{p.thought+p.connection}</td></tr>)}</tbody></table></div></details>}
     {!present&&<Link className="mt-6 block text-xs text-slate-400 underline" to={`/texts/${textId}/legacy?classId=${encodeURIComponent(classId)}`}>Legacy annotations & TQE archive</Link>}
     </section></div>
@@ -111,7 +115,7 @@ export function DiscussionComposer({storageKey,category,busy,onSubmit,onCancel,q
     <DiscussionTextInput label={onCancel?'Your reply':'Your question'} value={draft.content} onChange={value=>update('content',value)} placeholder={onCancel?'Share your answer or a thought…':prompts[category]} rows={2} compact={!onCancel}/>
     {onCancel&&<><input aria-label="Quotation" className="quote-input w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400" placeholder="Paste quote here" maxLength={3000} value={draft.quotation} onChange={e=>update('quotation',e.target.value)}/>{draft.quotation&&<p className="text-sm text-slate-600">Explain how this passage supports or challenges your answer.</p>}{draft.quotation&&<label className="block text-xs text-slate-500">Paragraph number (optional) <input className="ml-2 w-20 rounded-lg border bg-white p-2" type="number" min="1" max="10000" value={draft.paragraph} onChange={e=>update('paragraph',e.target.value)}/></label>}</>}
 
-    <div className="flex items-center gap-3"><Button type="submit" disabled={busy||!draft.content.trim()}>Post {onCancel?'reply':'question'}</Button>{onCancel&&<Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>}<small className="text-slate-500">Draft saved on this device</small></div>{storageError&&<p role="alert">{storageError}</p>}
+    <div className="flex items-center gap-3"><Button type="submit" disabled={busy||!draft.content.trim()}>Post {onCancel?'reply':'question'}</Button>{onCancel&&<Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>}<small className="text-slate-500">{onCancel ? 'Unsent reply saved on this device' : 'Posting shares your question with everyone in this class'}</small></div>{storageError&&<p role="alert">{storageError}</p>}
   </form>;
 }
 

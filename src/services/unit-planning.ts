@@ -148,6 +148,13 @@ export function addWeeklyLessonDefaults(data: WeeklyPlanData): WeeklyPlanData {
   for (const code of new Set(next.lessons.map(lesson=>lesson.classCode))) {
     const lessons = next.lessons.filter(lesson=>lesson.classCode===code).sort((a,b)=>a.date.localeCompare(b.date));
     const defaults = [{title:'Vocab Presentation',kind:'presentation' as const},{title:'Quiz',kind:'quiz' as const}];
+    if (courseCode(code) === 'AP' && lessons[0]) {
+      const first = lessons[0];
+      if (![...(first.slots || []), ...(first.overflow || [])].some(slot => slot.title.trim().toLowerCase() === 'clarity and style chapter')) {
+        first.slots ||= [];
+        first.slots.push({id:crypto.randomUUID(),title:'Clarity and Style Chapter',kind:'text',content:'',url:'',minutes:10,optional:false,status:'planned',assignedReading:false,isCopywork:false});
+      }
+    }
     defaults.forEach((item,index)=>{
       const lesson=lessons[index];if(!lesson)return;
       const existing=[...(lesson.slots||[]),...(lesson.overflow||[])];
