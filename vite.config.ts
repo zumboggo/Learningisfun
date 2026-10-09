@@ -45,7 +45,7 @@ export default defineConfig({
         globIgnores: ['stories/**'],
         navigateFallbackDenylist: [/\/stories\//],
         runtimeCaching: [
-          { urlPattern: /\/stories\/(own-english\/v1|shared)\//, handler: 'CacheFirst', options: { cacheName: 'own-english-v1', expiration: { maxEntries: 12 } } },
+          { urlPattern: /\/stories\/(own-english\/v[12]|shared)\//, handler: 'CacheFirst', options: { cacheName: 'own-english-assets', expiration: { maxEntries: 30 } } },
           { urlPattern: /\/stories\/teaching-stone\/v1\//, handler: 'CacheFirst', options: { cacheName: 'teaching-stone-v1', expiration: { maxEntries: 12 } } },
           {
             urlPattern: /\/assets\/pdf\.worker\.min-[^/]+\.mjs$/,

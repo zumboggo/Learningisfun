@@ -3,9 +3,38 @@
   "created": "2026-10-09",
   "processing": "Nearest-neighbor 480x270 backgrounds, four 384x160 three-expression strips; 64-color palette; lossless WebP, alpha preserved.",
   "assets": [
-    {"file":"public/stories/shared/classroom-v1.webp","source":"exec-f6b47991-4203-4d13-93b5-80687d4220fc.png","prompt":"Use case: illustration-story. Create one reusable background for a classroom visual novel, wide 16:9. Authentic 16-bit SNES pixel art with hard crisp pixels and a limited warm palette. A contemporary international-school English classroom in China, afternoon light through windows, desks pushed to sides, blank blackboard, books, a teacher desk. No people, no text or logos. Open foreground for two character sprites. Designed to read cleanly reduced to 480x270 pixels. Save output as a project art asset."},
-    {"file":"public/stories/own-english/v1/hall.webp","source":"exec-edc17b4f-9327-4de7-b74c-62a4576ed12d.png","prompt":"Use case: illustration-story. Wide 16:9 background for a 16-bit SNES pixel-art educational visual novel. An intimate university lecture hall, empty wood lecture podium and chalkboard, stepped seats to sides, warm amber and deep teal palette, crisp block pixels, no people, no lettering. Leave clear foreground for two portrait sprites. Same cozy pixel style as a classroom game, no gradients or photographic textures. Intended downsample 480x270."},
-    {"file":"public/stories/own-english/v1/room.webp","source":"exec-bea6b7a5-ffc4-4742-ae5e-1b3e2adf3924.png","prompt":"Use case: illustration-story. Wide 16:9 16-bit SNES pixel art background for educational visual novel, crisp low-resolution block pixels, limited warm amber and deep teal palette. A quiet university seminar room after a lecture: bookshelves, chairs at sides, small desk on the right with a friendly glowing desktop computer terminal, closed door at back. No people, no text, no logos. Open foreground space for two character portraits. Match cozy classroom and lecture hall visual novel style, intended 480x270 final."},
-    {"files":["lin.webp","jordan.webp","mei.webp","young.webp"],"source":"exec-6179b71f-e2dd-4055-80a3-56ae9dc30f2f.png","prompt":"Use case: illustration-story. A single pixel-art character sprite sheet with transparent background, 4 rows and 3 equal columns, evenly aligned, no text or borders. Each cell a bust portrait in authentic SNES 16-bit limited palette, crisp pixels. Rows from top: 1) fictional Chinese international school student Lin, short dark hair, green casual jacket; 2) fictional Black visiting student Jordan, short curls, blue sweater; 3) fictional magazine editor Mei, Chinese young woman, round glasses, burgundy shirt; 4) an imagined middle-aged Black male university rhetoric lecturer, closely cropped hair, glasses, dark blazer, warm expressive face. Columns same character neutral thoughtful, relieved smiling, troubled concerned. Transparent empty background in every cell; portraits separate with generous gutters. Consistent proportions and facing slightly toward viewer, downsample each cell to 128x160. These are fictionalized educational game portraits, not photographs."}
+    {
+      "file": "public/stories/shared/classroom-v1.webp",
+      "source": "exec-f6b47991-4203-4d13-93b5-80687d4220fc.png",
+      "prompt": "Use case: illustration-story. Create one reusable background for a classroom visual novel, wide 16:9. Authentic 16-bit SNES pixel art with hard crisp pixels and a limited warm palette. A contemporary international-school English classroom in China, afternoon light through windows, desks pushed to sides, blank blackboard, books, a teacher desk. No people, no text or logos. Open foreground for two character sprites. Designed to read cleanly reduced to 480x270 pixels. Save output as a project art asset."
+    },
+    {
+      "file": "public/stories/own-english/v1/hall.webp",
+      "source": "exec-edc17b4f-9327-4de7-b74c-62a4576ed12d.png",
+      "prompt": "Use case: illustration-story. Wide 16:9 background for a 16-bit SNES pixel-art educational visual novel. An intimate university lecture hall, empty wood lecture podium and chalkboard, stepped seats to sides, warm amber and deep teal palette, crisp block pixels, no people, no lettering. Leave clear foreground for two portrait sprites. Same cozy pixel style as a classroom game, no gradients or photographic textures. Intended downsample 480x270."
+    },
+    {
+      "file": "public/stories/own-english/v1/room.webp",
+      "source": "exec-bea6b7a5-ffc4-4742-ae5e-1b3e2adf3924.png",
+      "prompt": "Use case: illustration-story. Wide 16:9 16-bit SNES pixel art background for educational visual novel, crisp low-resolution block pixels, limited warm amber and deep teal palette. A quiet university seminar room after a lecture: bookshelves, chairs at sides, small desk on the right with a friendly glowing desktop computer terminal, closed door at back. No people, no text, no logos. Open foreground space for two character portraits. Match cozy classroom and lecture hall visual novel style, intended 480x270 final."
+    },
+    {
+      "files": [
+        "lin.webp",
+        "jordan.webp",
+        "mei.webp",
+        "young.webp"
+      ],
+      "source": "exec-6179b71f-e2dd-4055-80a3-56ae9dc30f2f.png",
+      "prompt": "Use case: illustration-story. A single pixel-art character sprite sheet with transparent background, 4 rows and 3 equal columns, evenly aligned, no text or borders. Each cell a bust portrait in authentic SNES 16-bit limited palette, crisp pixels. Rows from top: 1) fictional Chinese international school student Lin, short dark hair, green casual jacket; 2) fictional Black visiting student Jordan, short curls, blue sweater; 3) fictional magazine editor Mei, Chinese young woman, round glasses, burgundy shirt; 4) an imagined middle-aged Black male university rhetoric lecturer, closely cropped hair, glasses, dark blazer, warm expressive face. Columns same character neutral thoughtful, relieved smiling, troubled concerned. Transparent empty background in every cell; portraits separate with generous gutters. Consistent proportions and facing slightly toward viewer, downsample each cell to 128x160. These are fictionalized educational game portraits, not photographs."
+    },
+    {
+      "file": "public/stories/shared/classroom-v2.webp",
+      "source": "/Users/david.hepting/.codex/generated_images/01a11f03-b5dc-7153-8d66-1a78e5501075/exec-f47b40df-c2e1-4e09-bdc2-93ebb1e4a9c4.png",
+      "reference": "User-supplied classroom photo, Media (1).jpeg; original not published",
+      "generator": "Built-in image_gen",
+      "promptFile": "classroom-v2-prompt.txt",
+      "processing": "480x270 nearest-neighbor; 96-color palette; lossless WebP"
+    }
   ]
 }

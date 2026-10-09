@@ -1,12 +1,43 @@
 {
-  "checked":"2026-10-09",
-  "core":{"author":"Vershawn Ashanti Young","title":"Should Writers Use They Own English?","edition":"Iowa Journal of Cultural Studies 12 (2010), 110–118","url":"https://artsci.tamu.edu/english/_files/_documents/research/use-they-own.pdf","readingBoundary":"Full essay; embedded teaching cards are brief excerpts and paraphrased reading guides, not the complete text."},
-  "biography":{"url":"https://uwaterloo.ca/communication-arts/profiles/vershawn-young","use":"He/him and teaching/scholar identity; not additional invented positions."},
-  "classVerification":{"appClassId":"88421c66-9cda-4002-8e15-086312b7805e","label":"AP English, Section 1, 2026–2027","method":"Signed-in app Classes page"},
-  "assignedDate":"2026-10-13",
-  "releaseAt":"2026-10-09T00:00:00Z",
-  "objective":"Answer an objection while advancing the claim",
-  "episodeConcepts":["objection","concession","qualification","audience","code-meshing","evidence"],
-  "fiction":"All encounters, characters other than Young, imagined dialogue and outcomes are invented. Only explicitly labelled excerpts reproduce the article. The bathroom/computer joke is user-requested fictional dialogue. Jordan is one fictional person, not a representative of all African American English speakers.",
-  "aiScope":"Five trusted source cards, including Young’s first-person faculty statement and a fixed rubric. No claim to simulate consciousness or access to an unverified corpus. Supports revision without grades. Card references and plausible inferences are separated."
+  "checked": "2026-10-09",
+  "core": {
+    "author": "Vershawn Ashanti Young",
+    "title": "Should Writers Use They Own English?",
+    "edition": "Iowa Journal of Cultural Studies 12 (2010), 110–118",
+    "url": "https://artsci.tamu.edu/english/_files/_documents/research/use-they-own.pdf",
+    "readingBoundary": "Full essay; embedded teaching cards are brief excerpts and paraphrased reading guides, not the complete text."
+  },
+  "biography": {
+    "url": "https://uwaterloo.ca/communication-arts/profiles/vershawn-young",
+    "use": "He/him and teaching/scholar identity; not additional invented positions."
+  },
+  "classVerification": {
+    "appClassId": "88421c66-9cda-4002-8e15-086312b7805e",
+    "label": "AP English, Section 1, 2026–2027",
+    "method": "Signed-in app Classes page"
+  },
+  "assignedDate": "2026-10-13",
+  "releaseAt": "2026-10-09T00:00:00Z",
+  "objective": "Answer an objection while advancing the claim",
+  "episodeConcepts": [
+    "objection",
+    "concession",
+    "qualification",
+    "audience",
+    "code-meshing",
+    "evidence"
+  ],
+  "fiction": "All encounters, characters other than Young, imagined dialogue and outcomes are invented. Only explicitly labelled excerpts reproduce the article. The bathroom/computer joke is user-requested fictional dialogue. Jordan is one fictional person, not a representative of all African American English speakers.",
+  "aiScope": "Five trusted source cards, including Young’s first-person faculty statement and a fixed rubric. No claim to simulate consciousness or access to an unverified corpus. Supports revision without grades. Card references and plausible inferences are separated.",
+  "version": 2,
+  "scoring": {
+    "choices": 40,
+    "writing": 60,
+    "writingDomains": {
+      "attentionToIdeas": 20,
+      "answeringPrompt": 20,
+      "supportedIndependentThinking": 20
+    },
+    "revisionPolicy": "Highest assessed revision counts; first response and all feedback preserved. No gradebook posting. Version 1 retained with original scoring."
+  }
 }

@@ -3,3 +3,5 @@ export const AP_CLASS_ID:string;
 export const episodes:Episode[];
 export function assignedEpisodes(classId:string,preview?:boolean,now?:number):Episode[];
 export function requireEpisode(classId:string,id:string,version:number,preview?:boolean,now?:number):Episode;
+
+export function availableEpisodeVersions(classId:string,preview?:boolean,now?:number):Episode[];
