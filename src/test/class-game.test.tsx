@@ -26,3 +26,10 @@ it('denies nonmembers even if the class is cached',async()=>{
  await seed(STONE_CLASS_ID);auth.user={$id:'outsider',role:'student'};open(STONE_CLASS_ID);
  expect(await screen.findByRole('alert')).toHaveTextContent('Sign in with this class');expect(screen.queryByText('The Grain We Keep')).not.toBeInTheDocument();
 });
+
+it('lets the class teacher preview every available episode without assigning it to students',async()=>{
+ await seed('world-section-one');auth.user={$id:'teacher',role:'teacher'};open('world-section-one');
+ expect(await screen.findByText('The Grain We Keep')).toBeInTheDocument();
+ expect(screen.getByRole('link',{name:'Play teacher preview'})).toHaveAttribute('href','/classes/world-section-one/game/preview/teaching-stone');
+ expect(screen.getByText(/excluded from rankings/)).toBeInTheDocument();
+});

@@ -7,7 +7,7 @@ import {assess} from '../../functions/learning-content/src/stone-engine.js';
 import stoneBuild from '../../stories/teaching-stone/build.json';
 const storyUrl=import.meta.env.BASE_URL+'stories/teaching-stone/v1/index.html?build='+stoneBuild.sourceSha256.slice(0,12);
 const assets=['index.html','village-pixel.webp','scribe-pixel.webp','household-pixel.webp','worker-pixel.webp','landholder-pixel.webp'];
-export default function TeachingStonePage(){
+export default function TeachingStonePage({teacherPreview=false}:{teacherPreview?:boolean}){
  const {classId=''}=useParams(),{user}=useAuth();
  const [allowed,setAllowed]=useState(false),[error,setError]=useState(''),[status,setStatus]=useState('Checking class access…');
  const [attempt,setAttempt]=useState<StoneAttempt|null>(null),[history,setHistory]=useState<StoneAttempt[]>([]),[board,setBoard]=useState<StoneRank[]>([]);
@@ -27,13 +27,14 @@ export default function TeachingStonePage(){
  },[user,classId,refreshHistory,select]);
  useEffect(()=>{
   let cancelled=false;setAllowed(false);setPlaying(false);setError('');setAttempt(null);current.current=null;setBoard([]);setHistory([]);
-  if(!user||classId!==STONE_CLASS_ID){setError('This episode is available only in Ethics and Leadership.');return;}
+  if(!user||(!teacherPreview&&classId!==STONE_CLASS_ID)){setError('This episode is available only in Ethics and Leadership.');return;}
   void(async()=>{
    try{
     const cls=await db.classes.get(classId),members=await db.class_members.where('[classId+userId]').equals([classId,user.$id]).toArray();
     let preview=cls?.teacherId===user.$id&&['teacher','admin'].includes(user.role);
+    if(teacherPreview&&!preview)throw new Error('Only this class’s teacher can open its teacher library.');
     let access=preview||(user.role==='student'&&members.some(m=>m.role==='student'));
-    if(navigator.onLine){const data=await readStone(classId);preview=data.preview;access=true;if(!cancelled)setBoard(data.leaderboard);
+    if(navigator.onLine&&!teacherPreview){const data=await readStone(classId);preview=data.preview;access=true;if(!cancelled)setBoard(data.leaderboard);
      for(const remote of data.attempts){const existing=await stoneDb.attempts.get(remote.attemptId);if(!existing)await stoneDb.attempts.put({...remote,userId:user.$id,classId,preview:false,pending:false,createdAt:remote.createdAt||new Date().toISOString(),updatedAt:remote.updatedAt||new Date().toISOString()});}
     }
     if(!access)throw new Error('Join Ethics and Leadership to play this episode.');
@@ -41,7 +42,7 @@ export default function TeachingStonePage(){
     const rows=await localAttempts(user.$id,classId);if(cancelled)return;setHistory(rows);const active=rows.find(a=>a.status==='active'&&a.preview===preview)||newAttempt(user.$id,classId,preview);await stoneDb.attempts.put(active);if(!cancelled)select(active);
    }catch(e){if(!cancelled)setError(e instanceof Error?e.message:'Could not check class access');}
   })();return()=>{cancelled=true;};
- },[user?.$id,classId,select]);
+ },[user?.$id,user?.role,classId,teacherPreview,select]);
  const initialize=useCallback(()=>{const a=current.current;if(a)frame.current?.contentWindow?.postMessage({protocol:'teaching-stone-v1',type:'init',channel:channel.current,choices:a.choices},window.location.origin);},[]);
  useEffect(()=>{
   if(!allowed||!user)return;const owner=user.$id;
@@ -76,7 +77,7 @@ export default function TeachingStonePage(){
   {allowed&&attempt&&!playing&&<section className="rounded-2xl bg-[#f4efdf] p-6 sm:p-10"><p className="text-xs uppercase tracking-widest text-teal-800">Episode 01 · Egypt · Historical fiction</p><h2 className="my-4 font-serif text-4xl">A village needs more<br/>than good intentions.</h2><p className="max-w-xl text-gray-700">A new body. A borrowed seal. Food for today—or seed for tomorrow? Meet the people who will live with your choices.</p><p className="my-4 text-sm">10–15 minutes · Ten decisions · No timer · Unlimited replays</p><button onClick={()=>void start()} className="rounded-lg bg-teal-900 px-6 py-3 font-semibold text-white">{attempt.choices.length?'Continue this life':'Begin a new life'}</button><p className="mt-4 text-xs text-gray-600">The opening includes a brief, non-graphic traffic accident. The stone assesses decisions, not your worth as a person.</p></section>}
   {allowed&&playing&&<iframe key={frameKey} ref={frame} src={storyUrl} onLoad={initialize} title="The Teaching Stone: interactive story" sandbox="allow-scripts allow-same-origin allow-popups" className="h-[82dvh] min-h-[560px] w-full rounded-xl border border-stone-200 bg-[#efe8d9]"/>}
   {cacheStatus&&<p className="my-2 text-xs text-gray-500">{cacheStatus}</p>}
-  {allowed&&<details className="mt-6 rounded-xl border border-stone-200 p-4"><summary className="cursor-pointer font-semibold">Your lives & this episode’s leaderboard</summary><p className="my-3 text-sm text-gray-600">Best completed replay counts. Ties share a rank. No speed bonus. Teacher previews are not ranked.</p><button onClick={()=>void synchronize(true)} className="mb-4 rounded border px-3 py-2 text-sm">Refresh saved results</button>
-   <div className="grid gap-6 sm:grid-cols-2"><section><h2 className="font-semibold">Your attempts</h2>{history.length===0&&<p>No completed attempts yet.</p>}{history.map((a,i)=><div key={a.attemptId} className="my-2 flex items-center justify-between gap-2 text-sm"><span>Life {history.length-i} · {a.status==='complete'?assess(a.choices).total+'/100':a.choices.length+'/10 choices'}{a.pending?' · pending sync':''}{a.preview?' · preview':''}</span><button className="rounded border px-2 py-1" onClick={()=>{select(a);setPlaying(true);}}>Open</button></div>)}</section><section><h2 className="font-semibold">Long-term flourishing</h2>{board.length===0?<p className="mt-2 text-sm text-gray-600">No ranked results yet.</p>:<ol>{board.map((r,i)=><li key={i} className="my-2 flex justify-between text-sm"><span>{r.rank}. {r.nickname}{r.mine?' (you)':''}</span><strong>{r.score}/100</strong></li>)}</ol>}</section></div></details>}
+  {allowed&&<details className="mt-6 rounded-xl border border-stone-200 p-4"><summary className="cursor-pointer font-semibold">{teacherPreview?'Your teacher preview attempts':'Your lives & this episode’s leaderboard'}</summary><p className="my-3 text-sm text-gray-600">Best completed replay counts. Ties share a rank. No speed bonus. Teacher previews are not ranked.</p><button disabled={attempt?.preview} onClick={()=>void synchronize(true)} className="mb-4 rounded border px-3 py-2 text-sm">Refresh saved results</button>
+   <div className="grid gap-6 sm:grid-cols-2"><section><h2 className="font-semibold">Your attempts</h2>{history.length===0&&<p>No completed attempts yet.</p>}{history.map((a,i)=><div key={a.attemptId} className="my-2 flex items-center justify-between gap-2 text-sm"><span>Life {history.length-i} · {a.status==='complete'?assess(a.choices).total+'/100':a.choices.length+'/10 choices'}{a.pending?' · pending sync':''}{a.preview?' · preview':''}</span><button className="rounded border px-2 py-1" onClick={()=>{select(a);setPlaying(true);}}>Open</button></div>)}</section><section><h2 className="font-semibold">{teacherPreview?'Practice freely':'Long-term flourishing'}</h2>{teacherPreview?<p className="mt-2 text-sm text-gray-600">Your previews stay on this device. They do not create student scores or access another class’s rankings.</p>:board.length===0?<p className="mt-2 text-sm text-gray-600">No ranked results yet.</p>:<ol>{board.map((r,i)=><li key={i} className="my-2 flex justify-between text-sm"><span>{r.rank}. {r.nickname}{r.mine?' (you)':''}</span><strong>{r.score}/100</strong></li>)}</ol>}</section></div></details>}
  </main>;
 }

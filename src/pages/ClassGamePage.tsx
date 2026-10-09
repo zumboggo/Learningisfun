@@ -40,14 +40,14 @@ function EpisodeLibrary({classId,userId,role}:{classId:string;userId:string;role
   const best=completed.length?Math.max(...completed.map(a=>assess(a.choices).total)):null;
   return <main className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6">
     <nav aria-label="Class sections" className="flex gap-2 border-b pb-3"><Link className="rounded-lg px-4 py-3" to={`/classes/${classId}`}>Class materials</Link><span aria-current="page" className="rounded-lg border border-orange-300 bg-orange-50 px-4 py-3 font-semibold text-orange-950">The Game</span></nav>
-    <header><p className="text-sm text-gray-600">{access.cls?.courseName} · {access.cls?.name}</p><h1 className="mt-2 text-3xl font-bold">The Game</h1><p className="mt-2">Your assigned episodes stay here for unlimited replay.</p></header>
-    {classId===STONE_CLASS_ID?<article className="rounded-2xl border border-orange-300 bg-orange-50 p-6">
-      <p className="text-xs font-semibold uppercase tracking-wide text-orange-900">Game episode · The Teaching Stone · 01</p>
+    <header><p className="text-sm text-gray-600">{access.cls?.courseName} · {access.cls?.name}</p><h1 className="mt-2 text-3xl font-bold">The Game</h1><p className="mt-2">{access.preview?'Teacher library · All available episodes, including those not assigned to this class.':'Your assigned episodes stay here for unlimited replay.'}</p></header>
+    {(access.preview||classId===STONE_CLASS_ID)?<article className="rounded-2xl border border-orange-300 bg-orange-50 p-6">
+      <p className="text-xs font-semibold uppercase tracking-wide text-orange-900">Game episode · Ethics and Leadership · The Teaching Stone · 01</p>
       <h2 className="mt-2 font-serif text-3xl">The Grain We Keep</h2>
       <p className="my-3">A new life in ancient Egypt. Decide how a village survives a grain shortage—and what it will have left for tomorrow.</p>
       <p className="text-sm">10–15 minutes · Ten decisions · Unlimited replays</p>
       <p className="my-4 font-semibold">{access.preview?'Teacher preview · excluded from rankings':best===null?'No completed attempt yet':`Your highest score: ${best}/100`}</p>
-      <Link className="inline-flex min-h-11 items-center rounded-lg bg-orange-900 px-5 py-3 font-semibold text-white" to={`/classes/${classId}/teaching-stone`}>{access.preview?'Preview episode':attempts.length?'Play / replay':'Begin episode'}</Link>
+      <Link className="inline-flex min-h-11 items-center rounded-lg bg-orange-900 px-5 py-3 font-semibold text-white" to={access.preview?`/classes/${classId}/game/preview/teaching-stone`:`/classes/${classId}/teaching-stone`}>{access.preview?'Play teacher preview':attempts.length?'Play / replay':'Begin episode'}</Link>
       {!access.preview&&<p role="status" className="mt-3 text-xs text-gray-600">{status}{attempts.some(a=>a.pending)?' Progress pending synchronization.':''}</p>}
     </article>:<section className="rounded-2xl border border-orange-200 bg-orange-50 p-6"><h2 className="font-semibold">Your next story is still being written.</h2><p className="mt-2 text-sm">No episodes have been assigned to this class yet. They will appear here when published.</p></section>}
     <p className="text-sm text-gray-600">Each episode keeps its own highest completed score. Replaying preserves your earlier results.</p>

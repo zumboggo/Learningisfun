@@ -146,6 +146,7 @@ export default function App() {
 
           <Route path="/classes" element={<ProtectedRoute><ClassesListPage /></ProtectedRoute>} />
           <Route path="/classes/:classId/game" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening The Game…</p>}><ClassGamePage /></Suspense></ProtectedRoute>} />
+          <Route path="/classes/:classId/game/preview/teaching-stone" element={<ProtectedRoute><TeacherRoute><Suspense fallback={<p className="p-6">Opening teacher preview…</p>}><TeachingStonePage teacherPreview /></Suspense></TeacherRoute></ProtectedRoute>} />
           <Route path="/classes/:classId/teaching-stone" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening the Teaching Stone…</p>}><TeachingStonePage /></Suspense></ProtectedRoute>} />
           <Route path="/classes/:classId" element={<ProtectedRoute><ClassDetailPage /></ProtectedRoute>} />
           <Route path="/classes/:classId/cards/new" element={<ProtectedRoute><TeacherRoute><AddClassCardsPage /></TeacherRoute></ProtectedRoute>} />
