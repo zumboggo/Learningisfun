@@ -362,7 +362,6 @@ export function ClassDetailPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-5 p-4 sm:space-y-6 sm:p-6">
       <AssignedCopywork classId={cls.$id} />
-      {!isParent && <nav aria-label="Class sections" className="flex gap-2 border-b pb-3"><span aria-current="page" className="rounded-lg bg-gray-100 px-4 py-3 font-semibold">Class materials</span><Link to={`/classes/${cls.$id}/game`} className="rounded-lg border border-orange-300 bg-orange-50 px-4 py-3 font-semibold text-orange-950">The Game</Link></nav>}
       <Link to="/classes" className="inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-950"><span aria-hidden="true">←</span> All classes</Link>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>

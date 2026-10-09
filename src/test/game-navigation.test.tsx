@@ -1,0 +1,13 @@
+import {afterEach,it,expect,vi} from 'vitest';
+import {render,screen,cleanup} from '@testing-library/react';
+import {MemoryRouter} from 'react-router-dom';
+const auth=vi.hoisted(()=>({user:{$id:'u',role:'student',name:'User'},isTeacher:false,isParent:false,viewAsStudent:false,logout:vi.fn(),setViewAsStudent:vi.fn()}));
+vi.mock('@/contexts/AuthContext',()=>({useAuth:()=>auth}));
+vi.mock('@/hooks/useSyncStatus',()=>({useSyncStatus:()=>({})}));
+vi.mock('@/hooks/useOnlineStatus',()=>({useOnlineStatus:()=>true}));
+vi.mock('@/components/layout/SyncIndicator',()=>({SyncIndicator:()=>null}));
+import {AppLayout} from '@/components/layout/AppLayout';
+afterEach(cleanup);
+it('puts The Game in student floating navigation and marks it active',()=>{auth.isTeacher=false;auth.isParent=false;render(<MemoryRouter initialEntries={['/game']}><AppLayout>Library</AppLayout></MemoryRouter>);const link=screen.getByRole('link',{name:'The Game'});expect(link).toHaveAttribute('href','/game');expect(link).toHaveClass('student-floating-nav-item-active');expect(link.closest('nav')).toHaveClass('student-floating-nav');});
+it('puts The Game in the teacher sidebar and mobile menu',()=>{auth.isTeacher=true;auth.isParent=false;render(<MemoryRouter><AppLayout>Library</AppLayout></MemoryRouter>);expect(screen.getAllByRole('link',{name:'The Game'})).toHaveLength(2);});
+it('does not add game access to parent navigation',()=>{auth.isTeacher=false;auth.isParent=true;render(<MemoryRouter><AppLayout>Library</AppLayout></MemoryRouter>);expect(screen.queryByRole('link',{name:'The Game'})).not.toBeInTheDocument();});

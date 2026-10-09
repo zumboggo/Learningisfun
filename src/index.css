@@ -1576,3 +1576,7 @@ input, textarea, select, button {
   .planner-paper-page:last-child { break-after: auto; }
   .planner-print, .planner-print * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* The fullscreen player keeps its controls and text scrollable on short screens. */
+.game-display-expanded .game-display-content > main { width: 100%; max-width: 90rem; }
+.game-display-expanded iframe { height: calc(100dvh - 16rem); min-height: 22rem; }

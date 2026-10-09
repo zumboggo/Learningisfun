@@ -1,3 +1,5 @@
+import {GameDisplay} from '@/components/GameDisplay';
+import {isGamePlayerRoute} from '@/services/game-display';
 import { useEffect, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,6 +20,9 @@ export function AppLayout({ children }: AppLayoutProps) {
   const isArticleRoute = /^\/texts\/[^/]+(?:\/present)?$/.test(location.pathname) || location.pathname.startsWith('/discussions/texts/');
   const isStudyRoute = /\/decks\/[^/]+\/review$/.test(location.pathname);
 
+  const isGameRoute=isGamePlayerRoute(location.pathname);
+  const content=isGameRoute&&user?<GameDisplay key={user.$id+location.pathname} userId={user.$id}>{children}</GameDisplay>:children;
+  const navActive=(to:string)=>to==='/game'?(location.pathname==='/game'||isGameRoute||/\/classes\/[^/]+\/game$/.test(location.pathname)):to==='/classes'?location.pathname.startsWith(to)&&!isGameRoute&&!/\/game$/.test(location.pathname):location.pathname.startsWith(to)||(to==='/planner'&&location.pathname==='/planning');
   const isActualTeacher = user?.role === 'teacher' || user?.role === 'admin';
 
   useEffect(() => {
@@ -33,6 +38,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         { to: '/decks', label: 'Cards', icon: 'V' },
         { to: '/texts', label: 'Texts', icon: 'T' },
         { to: '/writing', label: 'Writing', icon: 'W' },
+        { to: '/game', label: 'The Game', icon: 'G' },
         { to: '/settings', label: 'Settings', icon: '?' },
       ]
     : isParent ? [
@@ -45,6 +51,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         { to: '/classes', label: 'Classes', icon: 'classes' },
         { to: '/decks', label: 'Cards', icon: 'cards' },
         { to: '/texts', label: 'Texts', icon: 'read' },
+        { to: '/game', label: 'The Game', icon: 'game' },
       ];
 
   if (!isTeacher) {
@@ -52,7 +59,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div className="student-shell min-h-screen">
         {/* Account controls sit in the page flow rather than floating over the
             hero, so nothing overlaps on narrow screens. */}
-        <div className={`${isStudyRoute ? 'hidden' : 'flex'} mx-auto w-full max-w-[46rem] items-center justify-end gap-3 px-[clamp(1rem,4vw,1.5rem)] pt-3`}>
+        <div data-app-chrome className={`${isStudyRoute ? 'hidden' : 'flex'} mx-auto w-full max-w-[46rem] items-center justify-end gap-3 px-[clamp(1rem,4vw,1.5rem)] pt-3`}>
           {isActualTeacher && (
             <button
               onClick={() => setViewAsStudent(!viewAsStudent)}
@@ -76,16 +83,17 @@ export function AppLayout({ children }: AppLayoutProps) {
         </div>
 
         <main className={`student-main ${isArticleRoute ? 'student-main-article' : ''} ${isStudyRoute ? 'student-main-study' : ''}`}>
-          {children}
+          {content}
         </main>
 
-        <nav className="student-floating-nav safe-area-bottom">
+        <nav data-app-chrome className="student-floating-nav safe-area-bottom">
           {navItems.map(item => (
             <Link
               key={item.to}
               to={item.to}
+              aria-current={navActive(item.to)?'page':undefined}
               className={`student-floating-nav-item ${
-                (location.pathname.startsWith(item.to) || (item.to === '/planner' && location.pathname === '/planning'))
+                navActive(item.to)
                   ? 'student-floating-nav-item-active'
                   : ''
               }`}
@@ -101,7 +109,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col md:pl-56">
-      <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
+      <header data-app-chrome className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
         <Link to="/classes" className="text-lg font-bold text-blue-700">
           Learning is Fun
         </Link>
@@ -130,24 +138,25 @@ export function AppLayout({ children }: AppLayoutProps) {
       </header>
 
       <main className="flex-1 pb-20 md:pb-4">
-        {children}
+        {content}
       </main>
 
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30 safe-area-bottom">
-        {/* Seven tabs have to share a phone's width, so each is an equal-width
+      <nav data-app-chrome className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30 safe-area-bottom">
+        {/* Navigation tabs have to share a phone's width, so each is an equal-width
             column with a clipped label rather than a fixed minimum that wraps. */}
         <div className="grid grid-flow-col auto-cols-fr">
           {navItems.map(item => (
             <Link
               key={item.to}
               to={item.to}
+              aria-current={navActive(item.to)?'page':undefined}
               className={`flex min-w-0 flex-col items-center px-0.5 py-2 ${
-                (location.pathname.startsWith(item.to) || (item.to === '/planner' && location.pathname === '/planning'))
+                navActive(item.to)
                   ? 'text-blue-600'
                   : 'text-gray-500'
               }`}
             >
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-gray-100 text-xs font-bold">
+              <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-gray-100 text-xs font-bold">
                 {item.icon}
               </span>
               <span className="mt-1 max-w-full truncate text-[10px] leading-tight">{item.label}</span>
@@ -156,19 +165,20 @@ export function AppLayout({ children }: AppLayoutProps) {
         </div>
       </nav>
 
-      <nav className="hidden md:flex fixed left-0 top-14 bottom-0 w-56 bg-white border-r border-gray-200 flex-col z-20">
+      <nav data-app-chrome className="hidden md:flex fixed left-0 top-14 bottom-0 w-56 bg-white border-r border-gray-200 flex-col z-20">
         <div className="flex-1 py-4">
           {navItems.map(item => (
             <Link
               key={item.to}
               to={item.to}
+              aria-current={navActive(item.to)?'page':undefined}
               className={`flex items-center gap-3 px-4 py-3 text-sm ${
-                (location.pathname.startsWith(item.to) || (item.to === '/planner' && location.pathname === '/planning'))
+                navActive(item.to)
                   ? 'bg-blue-50 text-blue-700 font-medium border-r-2 border-blue-600'
                   : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
-              <span className="flex h-6 w-6 items-center justify-center rounded bg-gray-100 text-xs font-bold">
+              <span aria-hidden="true" className="flex h-6 w-6 items-center justify-center rounded bg-gray-100 text-xs font-bold">
                 {item.icon}
               </span>
               <span>{item.label}</span>
@@ -184,6 +194,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 }
 
 function NavIcon({ name }: { name: string }) {
+  if (name === 'game') return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10c3 0 5 10 3 11-2 1-4-3-5-3H9c-1 0-3 4-5 3-2-1 0-11 3-11Z"/><path d="M7 9v5M4.5 11.5h5M16 10h.01M18 13h.01"/></svg>;
   if (name === 'home') {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true">
