@@ -1,3 +1,5 @@
+import { lazy, Suspense } from 'react';
+const TeachingStonePage = lazy(() => import('@/pages/TeachingStonePage'));
 import { sharedReadingDestination } from '@/utils/text-share';
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
@@ -142,6 +144,7 @@ export default function App() {
           <Route path="/decks/new" element={<ProtectedRoute><CreateDeckPage /></ProtectedRoute>} />
 
           <Route path="/classes" element={<ProtectedRoute><ClassesListPage /></ProtectedRoute>} />
+          <Route path="/classes/:classId/teaching-stone" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening the Teaching Stone…</p>}><TeachingStonePage /></Suspense></ProtectedRoute>} />
           <Route path="/classes/:classId" element={<ProtectedRoute><ClassDetailPage /></ProtectedRoute>} />
           <Route path="/classes/:classId/cards/new" element={<ProtectedRoute><TeacherRoute><AddClassCardsPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/classes/:classId/reports" element={<ProtectedRoute><TeacherRoute><ParticipationReportPage /></TeacherRoute></ProtectedRoute>} />

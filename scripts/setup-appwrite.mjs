@@ -39,6 +39,7 @@ const ENUM = (key, elements, opts = {}) => ({ type: 'enum', key, elements, ...op
 const DATE = (key, opts = {}) => S(key, { size: 64, ...opts });
 
 const COLLECTIONS = [
+  {id:'stone_attempts',name:'Teaching Stone Attempts',attributes:[S('classId',{required:true}),S('userId',{required:true}),S('attemptId',{required:true}),INT('revision',{required:true}),TXT('dataJson',{required:true})],indexes:[{key:'idx_class',type:'key',attributes:['classId']},{key:'idx_user',type:'key',attributes:['userId']}]},
   {id:'reading_question_state',name:'Discussion Transaction Guards',attributes:[S('workspaceId',{required:true}),TXT('dataJson',{required:true})],indexes:[]},
   {id:'reading_question_drafts',name:'Private Question Notebooks',attributes:[S('workspaceId',{required:true}),S('authorId',{required:true}),TXT('dataJson',{required:true})],indexes:[{key:'idx_owner_workspace',type:'key',attributes:['workspaceId','authorId']}]},
   {id:'reading_reply_rounds',name:'Teacher Reply Rounds',attributes:[S('workspaceId',{required:true}),TXT('dataJson',{required:true})],indexes:[{key:'idx_workspace',type:'key',attributes:['workspaceId']}]},

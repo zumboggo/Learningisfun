@@ -1,3 +1,4 @@
+import { stoneAction } from './stone.js';
 import { selfProfile, canReadProfile, projectProfile } from './profiles.js';
 import { presentationFileAction, ownsPlannerPresentation } from './presentation-files.js';
 import { textAssignmentAvailable } from './text-schedule.js';
@@ -150,6 +151,10 @@ export default async ({ req, res, error }) => {
     const memberships = await db.listDocuments(databaseId, 'class_members', [Query.equal('userId', userId), Query.limit(500)]);
     const nowTime = Date.now();
     const memberClassIds = new Set(memberships.documents.filter(row => row.role !== 'substitute' || (row.expiresAt && new Date(row.expiresAt).getTime() > nowTime)).map(row => row.classId));
+    if (['readStone','saveStone'].includes(body.action)) {
+      try { return res.json(await stoneAction({body,profile,userId,memberClassIds,db,databaseId})); }
+      catch(cause) { if([400,403,409].includes(cause.code)) return res.json({error:cause.message},cause.code); throw cause; }
+    }
     if (body.action === 'saveTqe' || ['flagTextAnnotation','moderateTextAnnotation','setAnnotationMode'].includes(body.action) || (body.action === 'mutate' && body.collection === 'text_annotations')) {
       return res.json({ error: 'Legacy annotations and TQE are read-only. Your existing work is preserved; use Discussions → Texts for new contributions.' }, 403);
     }

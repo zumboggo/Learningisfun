@@ -1,0 +1,25 @@
+import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+const root=new URL('../',import.meta.url),read=p=>readFileSync(new URL(p,root),'utf8');
+const episode=JSON.parse(read('stories/teaching-stone/episode.json'));
+const engine=read('functions/learning-content/src/stone-engine.js').replaceAll('export ','');
+const js=engine+'\nsetup.rules={replay,available,assess};\nsetup.responses='+JSON.stringify(episode.scenes.map(s=>s.responses))+';\n'+read('stories/teaching-stone/story.js');
+let twee=`:: StoryTitle\nThe Teaching Stone — The Grain We Keep\n\n:: StoryData\n{"ifid":"178EAFA2-7B4E-4ED4-AD2B-D39C06947EBB","format":"SugarCube","format-version":"2.37.3","start":"Start"}\n\n:: StoryScript [script]\n${js}\n\n:: StoryStylesheet [stylesheet]\n${read('stories/teaching-stone/story.css')}\n\n:: Start\n<div class="scene-banner"></div><div class="eyebrow">The Teaching Stone · Episode 01</div><h1>The Grain We Keep</h1><p>A new body. A borrowed seal. A village that needs more than good intentions.</p><p>Ten decisions · About 10–15 minutes · Read at your own pace</p><p>Open this episode from your Ethics and Leadership class to save progress. This is historical fiction; the characters, village and stone are invented.</p><<if window.parent === window>><<button "Read a standalone preview">><<run setup.ready=true; setup.refresh()>><</button>><<else>><p>Connecting to your class…</p><</if>>\n`;
+for(const [i,s] of episode.scenes.entries()){
+ twee+=`\n:: Decision${i+1}\n<div class="scene-banner"></div><div class="eyebrow">Episode 01 · Decision ${i+1} of 10</div><h1>${s.title}</h1><<stonePortrait "${s.speaker}">><p class="speaker">${episode.characters[s.speaker]}</p>${s.text.map(t=>`<p>${t}</p>`).join('')}<details><summary>${s.asideTitle}</summary><p>${s.aside}</p></details><<stoneStats>><div class="charge">The stone · ${i*10}% charged</div>${s.choices.map(([id,label])=>`<<stoneChoice ${JSON.stringify(id)} ${JSON.stringify(label)}>>`).join('\n')}\n`;
+ twee+=`\n:: Consequence${i+1}\n<div class="eyebrow">The village answers</div><h1>${i===9?'What remains':'After your decision'}</h1><<stonePortrait "${s.speaker}">><<stoneConsequence ${i}>><<stoneStats>><<button "${i===9?'Listen to the stone':'Continue'}" "${i===9?'Assessment':'Decision'+(i+2)}">><</button>>\n`;
+}
+twee+='\n:: Assessment\n<div class="eyebrow">The Teaching Stone · Fully charged</div><h1>What your choices leave behind</h1><<stoneAssessment>><p>“You are more than one attempt,” the stone says. “Carry what you have learned. Or return, and see what you could do differently.”</p><<button "Press the stone: a new life awaits." "NextLife">><<run setup.send("next")>><</button>><<button "Press the stone with a wish to try again.">><<if window.parent === window>><<run setup.choices=[]; setup.refresh()>><<else>><<run setup.send("replay")>><</if>><</button>><details><summary>History, fiction and sources</summary><p>This fictional estate village is set in Middle Kingdom Egypt, approximately 1900 BCE. Its choices simplify historical institutions for ethical discussion. The magical stone, characters, dialogue, numbers and outcomes are invented. Ma’at is not identical to our modern scoring rubric.</p><p><a target="_blank" rel="noopener" href="https://resources.metmuseum.org/resources/metpublications/pdf/The_Art_of_Ancient_Egypt_A_Resource_for_Educators.pdf">The Metropolitan Museum of Art: educator resource</a> · <a target="_blank" rel="noopener" href="https://www.britishmuseum.org/collection/object/Y_EA48998">British Museum: ma’at</a></p></details>\n\n:: NextLife\n<div class="eyebrow">A pause between lives</div><h1>The next destination is still forming.</h1><p>The stone holds the memory of this life. Your next episode will appear here when it is ready.</p><p>For now, you can return to the assessment or try this life again.</p><<button "Return to the assessment" "Assessment">><</button>>\n';
+const output='public/stories/teaching-stone/v1/index.html';
+if(process.argv.includes('--check')){
+ if(read('stories/teaching-stone/episode.twee')!==twee)throw new Error('Twine source is stale; run npm run story:build');
+ const manifest=JSON.parse(read('stories/teaching-stone/build.json'));
+ if(manifest.sourceSha256!==createHash('sha256').update(twee).digest('hex')||manifest.htmlSha256!==createHash('sha256').update(read(output)).digest('hex'))throw new Error('Compiled story is stale');
+ console.log('Teaching Stone source and compiled HTML match');
+}else{
+ writeFileSync(new URL('stories/teaching-stone/episode.twee',root),twee);
+ const compiler=process.env.TWEEGO||'tweego';
+ execFileSync(compiler,['-f','sugarcube-2','-o',output,'stories/teaching-stone/episode.twee'],{cwd:root,env:{...process.env,TWEEGO_PATH:new URL('vendor/twine',root).pathname},stdio:'inherit'});
+ writeFileSync(new URL('stories/teaching-stone/build.json',root),JSON.stringify({tweego:'2.1.1',sugarcube:'2.37.3',sourceSha256:createHash('sha256').update(twee).digest('hex'),htmlSha256:createHash('sha256').update(read(output)).digest('hex')},null,2)+'\n');
+}

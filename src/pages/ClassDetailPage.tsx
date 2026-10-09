@@ -1,3 +1,4 @@
+import { STONE_CLASS_ID } from '../../functions/learning-content/src/stone-engine.js';
 import { assignedReadingLink } from '@/utils/assigned-reading-link';
 import {StartTextDiscussionModal} from './DiscussionsListPage';
 import {ReadingDiscussionsList} from '@/components/texts/ReadingDiscussionsList';
@@ -358,6 +359,7 @@ export function ClassDetailPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-5 p-4 sm:space-y-6 sm:p-6">
       <AssignedCopywork classId={cls.$id} />
+      {cls.$id === STONE_CLASS_ID && !isParent && <Link to={`/classes/${cls.$id}/teaching-stone`} className="flex items-center justify-between rounded-xl border border-teal-200 bg-teal-50 p-4 text-teal-950"><span><strong className="block">The Teaching Stone</strong><span className="text-sm">Episode 1 · The Grain We Keep · A new life in ancient Egypt</span></span><span aria-hidden="true">→</span></Link>}
       <Link to="/classes" className="inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-950"><span aria-hidden="true">←</span> All classes</Link>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
