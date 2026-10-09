@@ -1,0 +1,22 @@
+{
+  "mode": "Built-in image_gen",
+  "background": "Use case: historical-scene. Asset type: pixel-art visual novel stage background. Create a wide 16-bit Super Nintendo era pixel-art Egyptian Middle Kingdom village granary courtyard, mudbrick storehouse on left, irrigation canal and reeds to right, distant low palms and fields, warm late afternoon, tense drought atmosphere. No people, no text, no pyramids dominating, no modern objects. Crisp square pixel clusters, restricted ochre/teal palette, no painterly blur or antialiasing. Wide horizontal composition, open foreground for two character sprites. Intended displayed resolution 480x270.",
+  "characters": [
+    {
+      "id": "scribe",
+      "prompt": "Use case: illustration-story. Asset type: one transparent character expression sprite sheet for a 16-bit Super Nintendo era visual novel. Djehu, lean middle-aged Egyptian male scribe, brown skin, short black hair, linen tunic, holds writing board and reed pen. Exactly three evenly spaced waist-up portraits of this SAME person in one horizontal row, identical scale and clothing, left NEUTRAL attentive, center HAPPY relieved small smile, right SAD worried/downcast. Clear readable expressive faces; crisp square pixel clusters and restricted ochre/teal colors, no painterly rendering. Transparent background, no labels, no text, no frames, no shadows outside figure. Each third is a separate equal-width cell; generous transparent gaps; all figures fully contained. Consistent Egyptian Middle Kingdom historical fiction, no modern objects."
+    },
+    {
+      "id": "household",
+      "prompt": "Use case: illustration-story. Asset type: one transparent character expression sprite sheet for a 16-bit Super Nintendo era visual novel. Tia, Egyptian woman household representative, brown skin, dark braided hair, plain linen dress, turquoise small bead necklace, holds empty woven basket. Exactly three evenly spaced waist-up portraits of this SAME person in one horizontal row, identical scale and clothing, left NEUTRAL attentive, center HAPPY relieved small smile, right SAD worried/downcast. Clear readable expressive faces; crisp square pixel clusters and restricted ochre/teal colors, no painterly rendering. Transparent background, no labels, no text, no frames, no shadows outside figure. Each third is a separate equal-width cell; generous transparent gaps; all figures fully contained. Consistent Egyptian Middle Kingdom historical fiction, no modern objects."
+    },
+    {
+      "id": "worker",
+      "prompt": "Use case: illustration-story. Asset type: one transparent character expression sprite sheet for a 16-bit Super Nintendo era visual novel. Hori, sturdy Egyptian male irrigation worker, dark brown skin, short curly hair, linen kilt and shoulder cloth, holds wooden spade. Exactly three evenly spaced waist-up portraits of this SAME person in one horizontal row, identical scale and clothing, left NEUTRAL attentive, center HAPPY relieved small smile, right SAD worried/downcast. Clear readable expressive faces; crisp square pixel clusters and restricted ochre/teal colors, no painterly rendering. Transparent background, no labels, no text, no frames, no shadows outside figure. Each third is a separate equal-width cell; generous transparent gaps; all figures fully contained. Consistent Egyptian Middle Kingdom historical fiction, no modern objects."
+    },
+    {
+      "id": "landholder",
+      "prompt": "Use case: illustration-story. Asset type: one transparent character expression sprite sheet for a 16-bit Super Nintendo era visual novel. Intef, prosperous older Egyptian male landholder, brown skin, neatly cut black hair, fine white linen robe, broad modest ochre collar, holds small loaf. Exactly three evenly spaced waist-up portraits of this SAME person in one horizontal row, identical scale and clothing, left NEUTRAL attentive, center HAPPY relieved small smile, right SAD worried/downcast. Clear readable expressive faces; crisp square pixel clusters and restricted ochre/teal colors, no painterly rendering. Transparent background, no labels, no text, no frames, no shadows outside figure. Each third is a separate equal-width cell; generous transparent gaps; all figures fully contained. Consistent Egyptian Middle Kingdom historical fiction, no modern objects."
+    }
+  ]
+}

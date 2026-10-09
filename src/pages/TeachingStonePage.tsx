@@ -6,7 +6,7 @@ import {STONE_CLASS_ID,stoneDb,newAttempt,extendAttempt,localAttempts,readStone,
 import {assess} from '../../functions/learning-content/src/stone-engine.js';
 import stoneBuild from '../../stories/teaching-stone/build.json';
 const storyUrl=import.meta.env.BASE_URL+'stories/teaching-stone/v1/index.html?build='+stoneBuild.sourceSha256.slice(0,12);
-const assets=['index.html','village.webp','scribe.webp','household.webp','worker.webp','landholder.webp','scribe-hopeful.webp','household-hopeful.webp'];
+const assets=['index.html','village-pixel.webp','scribe-pixel.webp','household-pixel.webp','worker-pixel.webp','landholder-pixel.webp'];
 export default function TeachingStonePage(){
  const {classId=''}=useParams(),{user}=useAuth();
  const [allowed,setAllowed]=useState(false),[error,setError]=useState(''),[status,setStatus]=useState('Checking class access…');
