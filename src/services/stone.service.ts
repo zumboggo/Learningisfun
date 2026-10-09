@@ -38,5 +38,5 @@ export async function syncStone(userId:string,classId:string,refreshResults=true
 }
 export function validStoneMessage(event:MessageEvent,source:Window|null,channel:string){
  const m=event.data;
- return event.source===source&&event.origin===window.location.origin&&m&&m.protocol==='teaching-stone-v1'&&(m.type==='ready'||(m.channel===channel&&['save','complete','replay','next'].includes(m.type)));
+ return event.source===source&&event.origin===window.location.origin&&m&&m.protocol==='teaching-stone-v1'&&(m.type==='ready'||(m.channel===channel&&['save','complete','replay','next','reflect'].includes(m.type)));
 }

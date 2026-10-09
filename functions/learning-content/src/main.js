@@ -1,3 +1,4 @@
+import {ethicsPortfolioAction} from './ethics-portfolio.js';
 import {episodeAction} from './episodes.js';
 import {saveFlashcardBatch} from './flashcard-batch.js';
 import {readFlashcardDeck} from './flashcard-read.js';
@@ -159,6 +160,10 @@ export default async ({ req, res, error }) => {
     if (['readEpisodes','saveEpisode','episodeAI','episodeBoard','episodeWriting'].includes(body.action)) {
       try { const episodeMemberships=new Set(memberships.documents.filter(row=>row.role==='student'&&(!row.expiresAt||Date.parse(row.expiresAt)>nowTime)).map(row=>row.classId)); return res.json(await episodeAction({body,profile,userId,memberClassIds:episodeMemberships,db,databaseId})); }
       catch (cause) { return res.json({error:cause.message},cause.code||500); }
+    }
+    if (['readEthicsPortfolio','saveEthicsPortfolio','setEthicsPortfolioStage'].includes(body.action)) {
+      try { const validMembers=new Set(memberships.documents.filter(row=>row.role==='student'&&(!row.expiresAt||Date.parse(row.expiresAt)>nowTime)).map(row=>row.classId)); return res.json(await ethicsPortfolioAction({body,profile,userId,memberClassIds:validMembers,db,databaseId})); }
+      catch(cause) { return res.json({error:cause.message},cause.code||500); }
     }
     if (['readStone','saveStone'].includes(body.action)) {
       try { return res.json(await stoneAction({body,profile,userId,memberClassIds,db,databaseId})); }

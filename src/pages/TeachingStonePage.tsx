@@ -1,3 +1,4 @@
+import {EpisodeReflection} from '@/components/ethics/PortfolioEditor';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {Link,useParams} from 'react-router-dom';
 import {useAuth} from '@/contexts/AuthContext';
@@ -56,6 +57,7 @@ export default function TeachingStonePage({teacherPreview=false}:{teacherPreview
     if(message.type==='replay'){
      const a=newAttempt(owner,classId,current.current.preview);await stoneDb.attempts.put(a);select(a);await refreshHistory();return;
     }
+    if(message.type==='reflect'){document.getElementById('episode-reflection')?.scrollIntoView({behavior:'auto',block:'start'});document.getElementById('episode-reflection')?.focus();return;}
     if(message.type==='next')return;
     if(!Array.isArray(message.choices)||message.choices.length>10)return;
     const next=extendAttempt(current.current,message.choices);await stoneDb.attempts.put(next);current.current=next;setAttempt(next);setStatus(next.preview?'Teacher preview · saved on this device':'Saved on this device · sync pending');await refreshHistory();void synchronize(next.status==='complete');
@@ -79,6 +81,7 @@ export default function TeachingStonePage({teacherPreview=false}:{teacherPreview
   {allowed&&playing&&<EpisodeSound key={`${user.$id}:${classId}`} trackUrl={import.meta.env.BASE_URL+'stories/teaching-stone/v1/egypt-loop-v1.mp3'} iframeRef={frame} frameKey={frameKey}/>}
   {allowed&&playing&&<iframe key={frameKey} ref={frame} src={storyUrl} onLoad={initialize} title="The Teaching Stone: interactive story" sandbox="allow-scripts allow-same-origin allow-popups" className="h-[82dvh] min-h-[560px] w-full rounded-xl border border-stone-200 bg-[#efe8d9]"/>}
   {allowed&&playing&&<details className="mt-3 text-xs text-gray-600"><summary className="cursor-pointer">About the soundtrack</summary><p className="mt-2">An imagined ancient-Egyptian-inspired game soundtrack, generated with MusicGen-Looper. It is not a reconstruction of ancient music. Sound is optional; every part of the story works silently.</p></details>}
+  {allowed&&attempt?.status==='complete'&&<div id="episode-reflection" tabIndex={-1} className="mt-6"><EpisodeReflection key={attempt.attemptId} attempt={attempt}/></div>}
   {cacheStatus&&<p className="my-2 text-xs text-gray-500">{cacheStatus}</p>}
   {allowed&&<details className="mt-6 rounded-xl border border-stone-200 p-4"><summary className="cursor-pointer font-semibold">{teacherPreview?'Your teacher preview attempts':'Your lives & this episode’s leaderboard'}</summary><p className="my-3 text-sm text-gray-600">Best completed replay counts. Ties share a rank. No speed bonus. Teacher previews are not ranked.</p><button disabled={attempt?.preview} onClick={()=>void synchronize(true)} className="mb-4 rounded border px-3 py-2 text-sm">Refresh saved results</button>
    <div className="grid gap-6 sm:grid-cols-2"><section><h2 className="font-semibold">Your attempts</h2>{history.length===0&&<p>No completed attempts yet.</p>}{history.map((a,i)=><div key={a.attemptId} className="my-2 flex items-center justify-between gap-2 text-sm"><span>Life {history.length-i} · {a.status==='complete'?assess(a.choices).total+'/100':a.choices.length+'/10 choices'}{a.pending?' · pending sync':''}{a.preview?' · preview':''}</span><button className="rounded border px-2 py-1" onClick={()=>{select(a);setPlaying(true);}}>Open</button></div>)}</section><section><h2 className="font-semibold">{teacherPreview?'Practice freely':'Long-term flourishing'}</h2>{teacherPreview?<p className="mt-2 text-sm text-gray-600">Your previews stay on this device. They do not create student scores or access another class’s rankings.</p>:board.length===0?<p className="mt-2 text-sm text-gray-600">No ranked results yet.</p>:<ol>{board.map((r,i)=><li key={i} className="my-2 flex justify-between text-sm"><span>{r.rank}. {r.nickname}{r.mine?' (you)':''}</span><strong>{r.score}/100</strong></li>)}</ol>}</section></div></details>}
