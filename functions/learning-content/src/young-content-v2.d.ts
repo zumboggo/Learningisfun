@@ -11,5 +11,4 @@ export const scenes: {title:string;choices:{id:string;label:string;response:stri
 export const driverQuestions: {prompt:string;options:string[];answer:number;note:string}[];
 export function assessDriver(attempts?:number[][]):{passed:boolean;score:number};
 
-export function publicationEvent(attemptId?:string):number;
 export function ending(choices:string[],attemptId?:string):{title:string;paragraphs:string[]};

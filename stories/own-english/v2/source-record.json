@@ -27,9 +27,9 @@
     "code-meshing",
     "evidence"
   ],
-  "fiction": "All encounters, characters other than Young, imagined dialogue and outcomes are invented. Only explicitly labelled excerpts reproduce the article. The bathroom/computer joke is user-requested fictional dialogue. Jordan is one fictional person, not a representative of all African American English speakers. The Chicago university workshop in 2011 is an invented setting, not a claim that Young gave this lecture there.",
+  "fiction": "All encounters, characters other than Young, imagined dialogue and outcomes are invented. Only explicitly labelled excerpts reproduce the article. The bathroom/computer joke is user-requested fictional dialogue. Jordan is one fictional person, not a representative of all African American English speakers.",
   "aiScope": "Five trusted source cards, including Young’s first-person faculty statement and a fixed rubric. No claim to simulate consciousness or access to an unverified corpus. Supports revision without grades. Card references and plausible inferences are separated.",
-  "version": 3,
+  "version": 2,
   "scoring": {
     "choices": 40,
     "writing": 60,
@@ -39,24 +39,5 @@
       "supportedIndependentThinking": 20
     },
     "revisionPolicy": "Highest assessed revision counts; first response and all feedback preserved. No gradebook posting. Version 1 retained with original scoring."
-  },
-  "readingBoundary": "Young essay only: printed pp. 110–117 and author note on 118; the next article on PDF page 10 is outside the boundary.",
-  "weeklyVocabulary": {
-    "source": "David’s CORE_VOCAB_BY_WEEK.txt, AP W09, Oct 12–16, 2026; schedule reference, not independently verified live Canvas assignment",
-    "words": [
-      "line of reasoning",
-      "sophistication",
-      "emphatic positioning",
-      "rhythm",
-      "coherent",
-      "evoke"
-    ]
-  },
-  "narrative": {
-    "perspective": "first-person present",
-    "centralTension": "Help Lin reach magazine readers without erasing the voice that gives the argument meaning.",
-    "chance": "One production/policy event derived reproducibly from the saved attempt ID; affects the ending only, never learning credit.",
-    "consequences": "Contained within episode; protagonist survives; no guaranteed later reward.",
-    "estimatedMinutes": "18–25 plus writing"
   }
 }
