@@ -13,7 +13,13 @@ export const textOnly=(s:string)=>s.replace(/<[^>]*>/g,'');
 export function decisionSource(a:StoneAttempt,index:number):Source {const s=egypt.scenes[index],choice=a.choices[index];return {kind:'episode',episode:a.episode,version:a.version,attemptId:a.attemptId,choices:a.choices.slice(),index,title:s.title,passage:s.text.map(textOnly).join('\n\n'),aside:textOnly(s.aside),options:s.choices,label:s.choices.find(c=>c[0]===choice)?.[1]||choice,outcome:s.responses[choice as keyof typeof s.responses]||''};}
 export function newEntry(userId:string,classId:string,source:Source,preview=false):Entry{const id=crypto.randomUUID();return {id,key:entryKey(userId,classId,id),userId,classId,source,answers:['','',''],submitted:false,reconsideration:'',revision:0,updatedAt:new Date().toISOString(),preview};}
 export async function localEntries(userId:string,classId:string){return (await portfolioDb.entries.where('[userId+classId]').equals([userId,classId]).toArray()).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));}
-export async function saveDraft(entry:Entry){await portfolioDb.entries.put({...entry,dirty:true,updatedAt:new Date().toISOString()});}
+export async function saveDraft(entry:Entry){
+ await portfolioDb.transaction('rw',portfolioDb.entries,async()=>{
+  const current=await portfolioDb.entries.get(entry.key);
+  if(current&&(current.revision!==entry.revision||(current.submitted&&(JSON.stringify(current.answers)!==JSON.stringify(entry.answers)||JSON.stringify(current.source)!==JSON.stringify(entry.source)))))throw Error('This entry changed in another tab. Export your visible writing before reopening.');
+  await portfolioDb.entries.put({...entry,dirty:true,updatedAt:new Date().toISOString()});
+ });
+}
 export async function queueEntry(entry:Entry){
  const next={...entry,revision:entry.revision+1,dirty:false,updatedAt:new Date().toISOString()};
  await portfolioDb.transaction('rw',portfolioDb.entries,portfolioDb.outbox,async()=>{
