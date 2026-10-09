@@ -43,6 +43,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         globIgnores: ['stories/**'],
+        navigateFallbackDenylist: [/\/stories\//],
         runtimeCaching: [
           { urlPattern: /\/stories\/teaching-stone\/v1\//, handler: 'CacheFirst', options: { cacheName: 'teaching-stone-v1', expiration: { maxEntries: 12 } } },
           {

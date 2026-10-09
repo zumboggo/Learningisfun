@@ -4,7 +4,8 @@ import {useAuth} from '@/contexts/AuthContext';
 import {db} from '@/db/schema';
 import {STONE_CLASS_ID,stoneDb,newAttempt,extendAttempt,localAttempts,readStone,syncStone,validStoneMessage,type StoneAttempt,type StoneRank} from '@/services/stone.service';
 import {assess} from '../../functions/learning-content/src/stone-engine.js';
-const storyUrl=import.meta.env.BASE_URL+'stories/teaching-stone/v1/index.html';
+import stoneBuild from '../../stories/teaching-stone/build.json';
+const storyUrl=import.meta.env.BASE_URL+'stories/teaching-stone/v1/index.html?build='+stoneBuild.sourceSha256.slice(0,12);
 const assets=['index.html','village.webp','scribe.webp','household.webp','worker.webp','landholder.webp','scribe-hopeful.webp','household-hopeful.webp'];
 export default function TeachingStonePage(){
  const {classId=''}=useParams(),{user}=useAuth();
@@ -63,7 +64,7 @@ export default function TeachingStonePage(){
  },[allowed,user?.$id,classId,initialize,select,refreshHistory,synchronize]);
  const start=async()=>{
   setPlaying(true);
-  if('caches' in window){try{const cache=await caches.open('teaching-stone-v1');await cache.addAll(assets.map(a=>import.meta.env.BASE_URL+'stories/teaching-stone/v1/'+a));setCacheStatus('Episode saved for offline play');}catch{setCacheStatus('Offline download incomplete; text and choices still work while connected.');}}
+  if('caches' in window){try{const cache=await caches.open('teaching-stone-v1');await cache.addAll(assets.map(a=>a==='index.html'?storyUrl:import.meta.env.BASE_URL+'stories/teaching-stone/v1/'+a));setCacheStatus('Episode saved for offline play');}catch{setCacheStatus('Offline download incomplete; text and choices still work while connected.');}}
  };
  if(!user)return null;
  return <main className="mx-auto max-w-5xl p-3 sm:p-6">
