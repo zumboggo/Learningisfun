@@ -1,4 +1,3 @@
-import { STONE_CLASS_ID } from '../../functions/learning-content/src/stone-engine.js';
 import { assignedReadingLink } from '@/utils/assigned-reading-link';
 import {StartTextDiscussionModal} from './DiscussionsListPage';
 import {ReadingDiscussionsList} from '@/components/texts/ReadingDiscussionsList';
@@ -359,7 +358,7 @@ export function ClassDetailPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-5 p-4 sm:space-y-6 sm:p-6">
       <AssignedCopywork classId={cls.$id} />
-      {cls.$id === STONE_CLASS_ID && !isParent && <Link to={`/classes/${cls.$id}/teaching-stone`} className="flex items-center justify-between rounded-xl border border-teal-200 bg-teal-50 p-4 text-teal-950"><span><strong className="block">The Teaching Stone</strong><span className="text-sm">Episode 1 · The Grain We Keep · A new life in ancient Egypt</span></span><span aria-hidden="true">→</span></Link>}
+      {!isParent && <nav aria-label="Class sections" className="flex gap-2 border-b pb-3"><span aria-current="page" className="rounded-lg bg-gray-100 px-4 py-3 font-semibold">Class materials</span><Link to={`/classes/${cls.$id}/game`} className="rounded-lg border border-orange-300 bg-orange-50 px-4 py-3 font-semibold text-orange-950">The Game</Link></nav>}
       <Link to="/classes" className="inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-950"><span aria-hidden="true">←</span> All classes</Link>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>

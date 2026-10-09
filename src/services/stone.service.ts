@@ -15,7 +15,7 @@ export function extendAttempt(attempt:StoneAttempt,choices:string[]):StoneAttemp
 }
 export async function localAttempts(userId:string,classId:string){return (await stoneDb.attempts.where('[userId+classId]').equals([userId,classId]).toArray()).filter(a=>a.episode===EPISODE&&a.version===VERSION).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));}
 export async function readStone(classId:string){return executeLearningContent<StoneRemote>({action:'readStone',classId});}
-export async function syncStone(userId:string,classId:string){
+export async function syncStone(userId:string,classId:string,refreshResults=true){
  for(const attempt of await localAttempts(userId,classId)){
   if(!attempt.pending||attempt.preview)continue;
   try{
@@ -28,6 +28,7 @@ export async function syncStone(userId:string,classId:string){
    }else throw error;
   }
  }
+ if(!refreshResults)return null;
  const result=await readStone(classId);
  for(const remote of result.attempts){
   const existing=await stoneDb.attempts.get(remote.attemptId);

@@ -42,3 +42,13 @@ describe('offline account saves',()=>{
   expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][0].action).toBe('readStone');
  });
 });
+
+it('uploads a choice without fetching the class history or rankings',async()=>{
+ const a=extendAttempt(newAttempt('alice',STONE_CLASS_ID,false),['listen']);
+ await stoneDb.attempts.put(a);request.mockResolvedValue({saved:true});
+ expect(await syncStone('alice',STONE_CLASS_ID,false)).toBeNull();
+ expect(request.mock.calls.map(([p])=>p.action)).toEqual(['saveStone']);
+ expect((await stoneDb.attempts.get(a.attemptId))?.pending).toBe(false);
+ await syncStone('alice',STONE_CLASS_ID,false);
+ expect(request).toHaveBeenCalledTimes(1);
+});

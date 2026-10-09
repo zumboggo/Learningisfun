@@ -46,7 +46,7 @@ function DiscussionWorkspace({textId,classId}:{textId:string;classId:string}) {
       }
     }catch(e){if(revision===readRevision.current)setError(e instanceof Error?e.message:'Could not refresh');}
   },[textId,classId]);
-  useEffect(()=>{void Promise.resolve().then(refresh);const onFocus=()=>{if(document.visibilityState==='visible'&&Date.now()-lastRead.current>10000)void refresh();};window.addEventListener('focus',onFocus);const timer=window.setInterval(onFocus,15000);return()=>{clearInterval(timer);window.removeEventListener('focus',onFocus);};},[refresh]);
+  useEffect(()=>{void Promise.resolve().then(refresh);const onFocus=()=>{if(document.visibilityState==='visible'&&Date.now()-lastRead.current>60000)void refresh();};window.addEventListener('focus',onFocus);return()=>{window.removeEventListener('focus',onFocus);};},[refresh]);
   const vote = async (postId: string, upvoted: boolean) => {
     // Each item saves independently. Keep the interface responsive without
     // waiting for a second request to reload the entire discussion.

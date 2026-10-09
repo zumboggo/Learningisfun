@@ -802,8 +802,12 @@ export async function syncDecksFromServer(classIds: string[], userId: string): P
     }
 
     const deckIds = deckResult.documents.map(doc => doc.$id);
-    const cardResult = deckIds.length
-      ? await databases.listDocuments(DATABASE_ID, COLLECTIONS.flashcard_cards, [Query.equal('deckId', deckIds), Query.limit(2000)])
+    // Planning already returned its cards through the authorized server path.
+    // Fetch only the remaining decks, rather than reading those rows twice.
+    const planningDeckIds = new Set(planning.decks.map(deck => deck.$id));
+    const directDeckIds = deckIds.filter(id => !planningDeckIds.has(id));
+    const cardResult = directDeckIds.length
+      ? await databases.listDocuments(DATABASE_ID, COLLECTIONS.flashcard_cards, [Query.equal('deckId', directDeckIds), Query.limit(2000)])
       : { documents: [] };
     cardResult.documents = [...new Map([...cardResult.documents, ...planning.cards].map(doc=>[doc.$id,doc])).values()] as typeof cardResult.documents;
     assignmentResult.documents = [...new Map([...assignmentResult.documents, ...planning.assignments].map(doc=>[doc.$id,doc])).values()] as typeof assignmentResult.documents;
