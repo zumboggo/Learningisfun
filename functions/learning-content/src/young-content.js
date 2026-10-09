@@ -70,3 +70,19 @@ export function assessYoung(choices){
  scores.forEach((n,j)=>scores[j]=Math.round(n/[22,22,25,20][j]*25));
  return {complete:choices.length===scenes.length,scores,total:scores.reduce((a,b)=>a+b,0),indicators,ending:choices.length===scenes.length?ending(choices):null};
 }
+
+export const driverQuestions=[
+ {prompt:'According to Young, what makes a dialect vulnerable to unfair treatment?',options:['The dialect’s inherent lack of reasoning','People’s attitudes toward its speakers','Every unfamiliar expression'],answer:1,note:'Card A places the problem in attitudes and prejudice, not an inherently defective language.'},
+ {prompt:'Which revision best illustrates code-meshing?',options:['Keep a home-language expression and add context that helps this audience follow it','Remove every home-language feature before beginning the argument','Refuse all revision because conventions never matter'],answer:0,note:'Cards B and D support blending resources purposefully while continuing to attend to readers and craft.'},
+ {prompt:'Which reply answers an objection while advancing the claim?',options:['Anyone who asks about clarity is prejudiced','Some readers may need context; test a clarification before requiring the writer to erase the expression','A writer should never think about unfamiliar readers'],answer:1,note:'Cards A–D distinguish a genuine comprehension problem from blanket judgement. The reply acknowledges the concern and proposes a next step.'},
+ {prompt:'What can the magazine outcome establish?',options:['A rejected submission proves that its dialect cannot communicate','A later opportunity is guaranteed if the writer preserves every feature','An institution can impose a real cost without proving the writer’s language inferior'],answer:2,note:'The episode’s outcomes are fictional applications, not evidence from Young’s life. Card A helps distinguish institutional judgement from linguistic inferiority.'}
+];
+export function assessDriver(attempts=[]){
+ if(!Array.isArray(attempts)||attempts.length>50)throw new Error('Invalid driver attempts');
+ let passed=false,score=0;
+ for(const answers of attempts){
+  if(passed||!Array.isArray(answers)||answers.length!==4||answers.some(n=>!Number.isInteger(n)||n<0||n>2))throw new Error('Invalid driver answers');
+  score=answers.reduce((sum,n,i)=>sum+Number(n===driverQuestions[i].answer),0);passed=score>=3;
+ }
+ return {passed,score};
+}

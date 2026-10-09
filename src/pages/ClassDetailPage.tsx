@@ -1013,13 +1013,14 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
           const priority: Record<WeeklyMaterial['kind'], number> = { text: 0, presentation: 1, notes: 2, writingPrompt: 3, discussion: 4, quiz: 5 };
           const items = [...unsortedItems].sort((a, b) => priority[a.kind] - priority[b.kind] || b.date.localeCompare(a.date));
           const isOpen = openWeeks.has(week);
+          const itemCount = items.length + (isParent ? 0 : assignedEpisodes(classId,isOwner).filter(e=>e.assignedDate&&episodeWeek(e.assignedDate)===week).length);
           const byKind = <K extends WeeklyMaterial['kind']>(kind: K) => items.filter((item): item is Extract<WeeklyMaterial, { kind: K }> => item.kind === kind);
           const texts = byKind('text'), presentations = byKind('presentation'), notes = byKind('notes'), writingPrompts = byKind('writingPrompt'), discussions = byKind('discussion'), quizzes = byKind('quiz');
           const weekLabel = week === currentWeek ? `This week · ${formatWeek(week)}` : week === upcomingWeek ? `Coming up · ${formatWeek(week)}` : week < currentWeek ? `Earlier · ${formatWeek(week)}` : `Later · ${formatWeek(week)}`;
           return <div key={week} className="overflow-hidden rounded-xl border border-gray-200 bg-white">
             <button className="flex w-full items-center justify-between gap-3 p-4 text-left hover:bg-gray-50" onClick={() => setOpenWeeks(current => toggleSetValue(current, week))}>
               <span className="font-semibold">{isOpen ? '▾' : '▸'} {weekLabel}</span>
-              <span className="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">{items.length} {items.length === 1 ? 'item' : 'items'}</span>
+              <span className="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">{itemCount} {itemCount === 1 ? 'item' : 'items'}</span>
             </button>
             {isOpen && <div className="space-y-3 border-t bg-gray-50 p-4">
               {isOwner && <div className="flex flex-wrap gap-2"><Button size="sm" onClick={() => openQuickAdd('link', week)}>+ Link</Button><Button size="sm" variant="secondary" onClick={() => openQuickAdd('text', week)}>+ Text</Button></div>}
