@@ -29,7 +29,7 @@
   ],
   "fiction": "All encounters, characters other than Young, imagined dialogue and outcomes are invented. Only explicitly labelled excerpts reproduce the article. The bathroom/computer joke is user-requested fictional dialogue. Jordan is one fictional person, not a representative of all African American English speakers. The Chicago university workshop in 2011 is an invented setting, not a claim that Young gave this lecture there.",
   "aiScope": "Five trusted source cards, including Young’s first-person faculty statement and a fixed rubric. No claim to simulate consciousness or access to an unverified corpus. Supports revision without grades. Card references and plausible inferences are separated.",
-  "version": 4,
+  "version": 3,
   "scoring": {
     "choices": 40,
     "writing": 60,
@@ -57,14 +57,6 @@
     "centralTension": "Help Lin reach magazine readers without erasing the voice that gives the argument meaning.",
     "chance": "One production/policy event derived reproducibly from the saved attempt ID; affects the ending only, never learning credit.",
     "consequences": "Contained within episode; protagonist survives; no guaranteed later reward.",
-    "estimatedMinutes": "18–25 plus writing",
-    "interactionDesign": "Seven curiosity-led conversations with optional follow-up questions; three consequential decisions at scenes 1, 7 and 9. Curiosity routes earn no correctness points.",
-    "opening": "Single fiction disclaimer with Accept; through classroom window, front-of-room arrival, rift over CDIS soccer field.",
-    "cast": "Lin is the only student seeking advice; the school magazine editor’s request is conveyed through a message. Most scenes focus on one interlocutor."
-  },
-  "periodCue": {
-    "detail": "A nearby portable radio plays Adele’s Rolling in the Deep in autumn 2011. No lyrics or audio used.",
-    "source": "https://www.billboard-japan.com/charts/detail/?a=uhot100_year&day=&month=&year=2011",
-    "verification": "Billboard 2011 Hot 100 year-end chart, number 1; searched October 9, 2026."
+    "estimatedMinutes": "18–25 plus writing"
   }
 }

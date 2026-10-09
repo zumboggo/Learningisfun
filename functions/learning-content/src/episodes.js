@@ -2,8 +2,7 @@ import {writingRubric,writingScoringInstruction,parseWritingAssessment} from './
 import {createHash} from 'node:crypto';
 import {Query} from 'node-appwrite';
 import {availableEpisodeVersions,requireEpisode} from './episode-catalog.js';
-import * as currentContent from './young-content.js';
-import * as previousContent from './young-content-v2.js';
+import {contentForVersion} from './young-versions.js';
 const collection='episode_records';
 const hash=s=>createHash('sha256').update(s).digest('hex').slice(0,32);
 const fail=(message,code=400)=>{throw Object.assign(new Error(message),{code});};
@@ -21,7 +20,7 @@ export async function episodeAction({body,profile,userId,memberClassIds,db,datab
   return {writing:writing.map(row=>({...JSON.parse(row.dataJson),id:row.$id})),episodes:catalog,attempts:[...latest.values()].filter(a=>catalog.some(e=>e.id===a.episode&&e.version===a.version)),preview};
  }
  const e=requireEpisode(body.classId,body.episode,body.version,preview);
- const {assessYoung,assessDriver,sourceNotes,sourceUrl,assignmentPrompt,rubric,scenes}=e.version>=3?currentContent:previousContent;
+ const {assessYoung,assessDriver,sourceNotes,sourceUrl,assignmentPrompt,rubric,scenes}=contentForVersion(e.version);
  if(body.action==='episodeBoard'){
   const rows=await readAll(db,databaseId,[Query.equal('classId',body.classId),Query.equal('kind',e.version>=2?'ai':'result')]),best=new Map();
   for(const row of rows){const a=JSON.parse(row.dataJson);if(a.episode!==e.id||a.version!==e.version||a.preview)continue;if(e.version>=2){if(a.mode==='feedback'&&a.state==='complete'&&a.assessment?.rubricVersion===2&&(!best.has(row.userId)||best.get(row.userId)<a.assessment.total))best.set(row.userId,a.assessment.total);}else{const result=assessYoung(a.choices);if(result.complete&&assessDriver(a.driverAttempts).passed&&(!best.has(row.userId)||best.get(row.userId)<result.total))best.set(row.userId,result.total);}}
@@ -74,7 +73,7 @@ export async function episodeAction({body,profile,userId,memberClassIds,db,datab
   if(!response.ok)throw new Error('AI service is unavailable');
   const result=await response.json(),answer=result.choices?.[0]?.message?.content;
   if(typeof answer!=='string'||!answer.trim())throw new Error('No feedback returned');
-  const output={...record,state:'complete',...(scored?parseWritingAssessment(answer,a.choices):{answer:answer.slice(0,6000)})};
+  const output={...record,state:'complete',...(scored?parseWritingAssessment(answer,a.choices,e.version):{answer:answer.slice(0,6000)})};
   await db.updateDocument(databaseId,collection,cache,{dataJson:JSON.stringify(output)});return output;
  }catch(err){await db.updateDocument(databaseId,collection,cache,{dataJson:JSON.stringify({...record,state:'failed'})});fail('Feedback unavailable. Your response is preserved.',503);}
 }

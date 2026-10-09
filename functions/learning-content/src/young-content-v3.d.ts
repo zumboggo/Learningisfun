@@ -6,7 +6,7 @@ export const assignmentPrompt:string;
 export const rubric:string[];
 export interface YoungAssessment {complete:boolean;scores:number[];total:number;indicators:number[];ending:{title:string;paragraphs:string[]}|null;}
 export function assessYoung(choices:string[],attemptId?:string):YoungAssessment;
-export const scenes: {title:string;kind: string;cast:string[];choices:{id:string;label:string;response:string;points:number[];reactions:string[];delta:number[]}[]}[];
+export const scenes: {title:string;choices:{id:string;label:string;response:string;points:number[];reactions:string[];delta:number[]}[]}[];
 
 export const driverQuestions: {prompt:string;options:string[];answer:number;note:string}[];
 export function assessDriver(attempts?:number[][]):{passed:boolean;score:number};

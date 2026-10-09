@@ -1,0 +1,4 @@
+import * as current from './young-content.js';
+import * as v3 from './young-content-v3.js';
+import * as v2 from './young-content-v2.js';
+export function contentForVersion(version:number):typeof current|typeof v3|typeof v2;
