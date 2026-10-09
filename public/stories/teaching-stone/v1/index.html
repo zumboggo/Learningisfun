@@ -171,6 +171,7 @@ Config.passages.nobr = true;
 setup.choices = [];
 setup.channel = null;
 setup.ready = false;
+setup.booted = false;
 // Account-owned progress is restored only by the parent, never SugarCube’s tab session.
 Config.navigation.override = function(destination) { return setup.ready ? destination : 'Start'; };
 setup.send = function(type, extra = {}) {
@@ -182,9 +183,10 @@ setup.refresh = function() {
 };
 window.addEventListener('message',function(event){
  const m=event.data;
- if(event.origin!==location.origin||event.source!==window.parent||!m||m.protocol!=='teaching-stone-v1'||m.type!=='init'||typeof m.channel!=='string'||setup.ready)return;
+ if(event.origin!==location.origin||event.source!==window.parent||!m||m.protocol!=='teaching-stone-v1'||m.type!=='init'||typeof m.channel!=='string')return;
+ if(setup.ready){if(setup.booted&&State.passage==='Start')setup.refresh();return;}
  try {setup.rules.replay(m.choices); } catch {return;}
- setup.channel=m.channel;setup.choices=m.choices.slice();setup.ready=true;setup.refresh();
+ setup.channel=m.channel;setup.choices=m.choices.slice();setup.ready=true;if(setup.booted)setup.refresh();
 });
 Macro.add('stoneChoice',{handler:function(){
  const [id,label]=this.args,step=setup.choices.length;
@@ -260,6 +262,8 @@ $(document).on(':passagedisplay',function(){
  const h=passage.querySelector('h1');if(h){h.setAttribute('tabindex','-1');h.focus({preventScroll:true});}window.scrollTo(0,0);
 });
 $(document).one(':storyready',function(){
+ setup.booted=true;
+ if(setup.channel)setup.refresh();
  if(window.parent===window){setup.ready=true;return;}
  setup.send('ready'); // Parent's load event also initializes; ready has no credentials.
  window.parent.postMessage({protocol:'teaching-stone-v1',type:'ready'},location.origin);

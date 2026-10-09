@@ -38,3 +38,13 @@ it('respects reduced motion without a typing interval',()=>{
  expect(document.querySelector('.story-beats')?.textContent).toBe('Complete text.');click('Continue ▸');
  expect((document.querySelector('.after-beats') as HTMLElement).hidden).toBe(false);
 });
+
+it('waits for story startup before restoring an early parent initialization',async()=>{
+ const {runInNewContext}=await import('node:vm');
+ const handlers:Record<string,Function>={},parent={postMessage:()=>{}},plays:string[]=[];
+ const context:any={Config:{history:{},saves:{},ui:{},passages:{},navigation:{}},setup:{rules:{replay:()=>{}}},window:{parent,addEventListener:(name:string,fn:Function)=>handlers[name]=fn},location:{origin:'https://example.org'},Engine:{play:(p:string)=>plays.push(p)},State:{passage:'Start'}};
+ runInNewContext(source.slice(0,source.indexOf("Macro.add('stoneChoice'")),context);
+ handlers.message({origin:context.location.origin,source:parent,data:{protocol:'teaching-stone-v1',type:'init',channel:'test',choices:Array(10).fill('test')}});
+ expect(plays).toEqual([]);context.setup.booted=true;context.setup.refresh();expect(plays).toEqual(['Assessment']);
+ handlers.message({origin:'https://other.org',source:parent,data:{protocol:'teaching-stone-v1',type:'init',channel:'bad',choices:[]}});expect(context.setup.choices).toHaveLength(10);
+});
