@@ -1,3 +1,4 @@
+import {ensureDeckCards} from '@/services/flashcard-cache';
 import { assignedReadingLink } from '@/utils/assigned-reading-link';
 import {StartTextDiscussionModal} from './DiscussionsListPage';
 import {ReadingDiscussionsList} from '@/components/texts/ReadingDiscussionsList';
@@ -180,6 +181,7 @@ export function ClassDetailPage() {
     const rows: ClassFlashcardExportRow[] = [];
     for (const { assignment, deck } of deckRows || []) {
       if (!deck) continue;
+      if(user)await ensureDeckCards(user.$id,deck.$id);
       const cards = await db.flashcard_cards.where('deckId').equals(assignment.deckId).sortBy('sortOrder');
       rows.push(...cards.map(card => ({ ...card, deckTitle: deck.title })));
     }
@@ -445,7 +447,7 @@ export function ClassDetailPage() {
             <h2 className="text-lg font-semibold">
               Card decks ({deckRows?.length || 0})
               {totalCards > 0 && (
-                <span className="ml-2 text-sm font-normal text-gray-500">{totalCards} cards</span>
+                <span className="ml-2 text-sm font-normal text-gray-500">{totalCards} downloaded cards</span>
               )}
             </h2>
             {isOwner && (
@@ -468,7 +470,7 @@ export function ClassDetailPage() {
           </div>
           {deckRows && deckRows.length > 0 && (
             <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 p-3">
-              <span className="mr-auto text-sm text-gray-600">Export all {totalCards} cards in this class</span>
+              <span className="mr-auto text-sm text-gray-600">Export all cards in this class</span>
               <Button size="sm" variant="secondary" loading={exportingClassDecks} onClick={() => void exportAllClassDecks()}>Download CSV</Button>
               <Button size="sm" variant="secondary" disabled={exportingClassDecks} onClick={() => void copyAllClassDecks()}>Copy for Quizlet</Button>
             </div>
@@ -485,7 +487,7 @@ export function ClassDetailPage() {
                       </Link>
                       {deck?.description && <p className="text-xs text-gray-500">{deck.description}</p>}
                       <p className="text-xs text-gray-400 mt-1">
-                        {cardCount} {cardCount === 1 ? 'card' : 'cards'}
+                        {cardCount} downloaded {cardCount === 1 ? 'card' : 'cards'}
                       </p>
                     </div>
                     {isTeacher ? (

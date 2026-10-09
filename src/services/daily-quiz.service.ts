@@ -1,3 +1,4 @@
+import {ensureDeckCards} from './flashcard-cache';
 /**
  * Builds the daily Canvas quiz for a class: gathers the class's flashcards,
  * runs the deterministic generator, records the quiz locally, and produces the
@@ -56,6 +57,8 @@ export async function getClassCards(classId: string): Promise<FlashcardCard[]> {
   const assignments = await db.deck_assignments.where('classId').equals(classId).toArray();
   const deckIds = [...new Set(assignments.map(a => a.deckId))];
   if (deckIds.length === 0) return [];
+  const account=await db.app_metadata.get('currentUserId');
+  if(account?.value)await Promise.all(deckIds.map(id=>ensureDeckCards(account.value,id)));
   return db.flashcard_cards.where('deckId').anyOf(deckIds).toArray();
 }
 

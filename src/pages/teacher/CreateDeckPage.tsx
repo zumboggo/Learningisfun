@@ -1,3 +1,5 @@
+import {ensureDeckCards} from '@/services/flashcard-cache';
+import {updateEntireDeck, type EditableDeckCard} from '@/services/flashcard.service';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -146,6 +148,7 @@ export function CreateDeckPage() {
         }
       } else if (importMode === 'add') {
         deckId = targetDeckId;
+        await ensureDeckCards(user.$id,deckId);
         for (const c of cards) {
           await addCard(deckId, c.front, c.back, { hint: c.hint, tags: c.tags });
         }
@@ -154,24 +157,13 @@ export function CreateDeckPage() {
         }
       } else {
         deckId = targetDeckId;
+        await ensureDeckCards(user.$id,deckId);
         const existingCards = await db.flashcard_cards.where('deckId').equals(deckId).toArray();
-        const existingFrontsLower = new Map(
-          existingCards.map(card => [card.front.trim().toLowerCase(), card]),
-        );
-        for (const c of cards) {
-          const frontLower = c.front.trim().toLowerCase();
-          const duplicate = existingFrontsLower.get(frontLower);
-          if (duplicate) {
-            await db.flashcard_cards.update(duplicate.$id, {
-              back: c.back,
-              backMarkdown: c.back,
-              hint: c.hint,
-              tags: c.tags,
-            });
-          } else {
-            await addCard(deckId, c.front, c.back, { hint: c.hint, tags: c.tags });
-          }
-        }
+        const merged:EditableDeckCard[]=existingCards.map(card=>({id:card.$id,front:card.front,back:card.back,hint:card.hint||'',tags:card.tags||[]}));
+        for(const c of cards){const index=merged.findIndex(card=>card.front.trim().toLowerCase()===c.front.trim().toLowerCase());if(index>=0)merged[index]={...merged[index],back:c.back,hint:c.hint,tags:c.tags};else merged.push({...c});}
+        const currentDeck=await db.flashcard_decks.get(deckId);
+        if(!currentDeck)throw new Error('Deck not found');
+        await updateEntireDeck(deckId,user.$id,{title:currentDeck.title,description:currentDeck.description,cards:merged});
         for (const classId of selectedClasses) {
           await assignDeck(deckId, classId, false, dailyTarget || null);
         }

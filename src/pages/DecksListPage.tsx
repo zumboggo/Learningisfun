@@ -1,3 +1,4 @@
+import {ensureDeckCards} from '@/services/flashcard-cache';
 import { StudentVocabularyChooser } from '@/components/StudentVocabularyChooser';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -172,12 +173,13 @@ export function DecksListPage() {
     setCustomPresets(next); setPresetName('');
     await db.app_metadata.put({ key: `customStudyPresets:${user.$id}`, value: JSON.stringify(next) });
   };
-  const openStudySettings = async (deck:FlashcardDeck) => { if(!user)return;setStudySettingsDeck(deck);setStudySettings(await getDeckStudySettings(user.$id,deck.$id));const preferences=await db.student_deck_notes.where('userId').equals(user.$id).and(row=>Boolean(row.suspended)).toArray();const ids=new Set(preferences.map(row=>row.cardId));setSuspendedCards((await getDeckCards(deck.$id)).filter(card=>ids.has(card.$id))); };
+  const openStudySettings = async (deck:FlashcardDeck) => { if(!user)return;await ensureDeckCards(user.$id,deck.$id);setStudySettingsDeck(deck);setStudySettings(await getDeckStudySettings(user.$id,deck.$id));const preferences=await db.student_deck_notes.where('userId').equals(user.$id).and(row=>Boolean(row.suspended)).toArray();const ids=new Set(preferences.map(row=>row.cardId));setSuspendedCards((await getDeckCards(deck.$id)).filter(card=>ids.has(card.$id))); };
 
   const exportDeck = async (deck: FlashcardDeck) => {
     setActionError('');
     setExportingDeckId(deck.$id);
     try {
+      if(user)await ensureDeckCards(user.$id,deck.$id);
       const cards = await getDeckCards(deck.$id);
       const csv = `\uFEFF${buildFlashcardDeckCsv(cards)}`;
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
@@ -200,6 +202,7 @@ export function DecksListPage() {
     setActionError('');
     setOpeningEditorId(deck.$id);
     try {
+      if(user)await ensureDeckCards(user.$id,deck.$id);
       setEditingDeck({ deck, cards: await getDeckCards(deck.$id) });
     } catch (cause) {
       setActionError(cause instanceof Error ? cause.message : 'Could not open this deck.');

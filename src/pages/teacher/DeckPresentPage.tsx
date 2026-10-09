@@ -1,3 +1,5 @@
+import {ensureDeckCards} from '@/services/flashcard-cache';
+import {useAuth} from '@/contexts/AuthContext';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -13,6 +15,9 @@ import type { FlashcardCard } from '@/types';
 export function DeckPresentPage() {
   const { deckId } = useParams<{ deckId: string }>();
   const navigate = useNavigate();
+  const {user}=useAuth();
+  const [downloadError,setDownloadError]=useState('');
+  useEffect(()=>{if(user&&deckId)void ensureDeckCards(user.$id,deckId).catch(e=>setDownloadError(e.message));},[user?.$id,deckId]);
 
   const deck = useLiveQuery(() => (deckId ? db.flashcard_decks.get(deckId) : undefined), [deckId]);
   const cards = useLiveQuery(() => (deckId ? getDeckCards(deckId) : []), [deckId]);
@@ -171,6 +176,7 @@ export function DeckPresentPage() {
     };
   }, []);
 
+  if(downloadError)return <p role="alert" className="p-6">{downloadError}</p>;
   if (!deck || !cards) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900 text-slate-300">

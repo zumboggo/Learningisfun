@@ -1,3 +1,4 @@
+vi.mock('@/services/flashcard-cache',()=>({ensureDeckCards:vi.fn(async()=>{})}));
 import {expect,it,vi} from 'vitest';
 import {buildFlashcardQueue} from '@/services/flashcard.service';
 const data=vi.hoisted(()=>({cards:[{ $id:'other',deckId:'d',sortOrder:0 },{$id:'wanted',deckId:'d',sortOrder:1}],states:[] as object[],preferences:[] as object[]}));

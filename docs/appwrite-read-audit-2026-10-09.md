@@ -41,3 +41,16 @@ At 63 active users, 500,000 reads allows approximately 7,937 reads/user/month (a
 ## Verification limits
 
 Unit/integration tests and the production build can run locally while the quota is exhausted. Live account-backed saves, rankings and student access cannot be fully smoke-tested until Appwrite resumes. Do not describe a deployed frontend as proof that backend API access has recovered.
+
+## Follow-up implementation after account upgrade
+
+The user upgraded Appwrite to Pro on October 9; the console now permits project access. This does not itself establish a sustainable future monthly read count.
+
+Implemented:
+- Reading discussions load initially and after the user's own mutations. Peer updates require the prominent **Refresh discussion** button. Focus/visibility changes and elapsed-time display cause no discussion requests. A local timer updates the last-refresh age.
+- Planning queries accept `kind` and `includeCards`; copywork excludes decks/cards, while flashcard catalogs exclude card bodies. Kind filtering uses the existing class/release index, requiring no schema migration.
+- Opening a vocabulary collection, study session, presentation, editor, export or quiz generation loads the selected decks. The server checks access and compares the cached deck revision (`updatedAt`). Unchanged revisions return no card rows. Downloads are account-scoped, coalesced, and reconciled without deleting queued offline card edits. A previously downloaded deck remains usable offline after invalidation.
+- Card creation, editing, queued card mutations, scheduled release and consolidation update deck revisions. CSV edits now use the same server editing path. Realtime card events invalidate the affected deck; deck metadata updates no longer reload every class's cards.
+- Practice records save locally first and upload in batches of at most 40 operations, approximately every 30 seconds and at session end/reconnection. Reviews/events keep their immutable IDs; retrying does not overwrite another device's review history. Session snapshots merge monotonically. Queues are account-scoped, and browsers supporting Web Locks serialize uploads across tabs. Batch transport reduces requests; it does not eliminate the database writes needed to preserve individual review history.
+
+Verification covers manual-only refreshing, preserved typed discussion replies, deck revision hits/misses, concurrent edits, foreign-class rejection, deletion reconciliation, queued edit preservation, offline/account isolation, batch retry IDs and independent device histories. Live deployment IDs and smoke-test results are recorded in the release handoff.

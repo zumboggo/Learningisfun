@@ -1,3 +1,4 @@
+import {invalidateDeckCards} from '@/services/flashcard-cache';
 import { syncClassMaterials, type ContentDomain } from '@/services/class-material-refresh.service';
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { User, UserRole } from '@/types';
@@ -116,6 +117,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const collections = [...new Set(domainCollections.flatMap(([, ids]) => ids))];
     const unsubscribe = client.subscribe(collections.map(id => `databases.${DATABASE_ID}.collections.${id}.documents`), event => {
       const channels = event.channels.join(' ');
+      const payload=event.payload as {$id?:string;deckId?:string;updatedAt?:string};
+      if(channels.includes(`collections.${COLLECTIONS.flashcard_cards}.documents`)){
+        if(payload.deckId)void invalidateDeckCards(user.$id,payload.deckId);
+        return; // Card bodies refresh only when their deck is opened.
+      }
+      if(channels.includes(`collections.${COLLECTIONS.flashcard_decks}.documents`)){
+        if(payload.$id){
+          if(event.events.some(name=>name.endsWith('.delete'))){void db.flashcard_decks.delete(payload.$id);void db.deck_assignments.where('deckId').equals(payload.$id).delete();return;}
+          void db.flashcard_decks.get(payload.$id).then(deck=>{
+            if(deck&&payload.updatedAt)return db.flashcard_decks.put({...deck,...payload});
+          });
+          void invalidateDeckCards(user.$id,payload.$id);
+        }
+        return;
+      }
+
       for (const [domain, ids] of domainCollections) {
         if (ids.some(id => channels.includes(`collections.${id}.documents`))) pendingDomains.add(domain);
       }

@@ -1,3 +1,4 @@
+vi.mock('@/services/flashcard-cache',()=>({ensureDeckCards:vi.fn(async()=>{})}));
 import {afterEach,expect,it,vi} from 'vitest';
 import {cleanup,fireEvent,render,screen,waitFor} from '@testing-library/react';
 import type {FlashcardCard,FlashcardDeck} from '@/types';
@@ -27,8 +28,9 @@ it('keeps a stored selection within its specified decks and card IDs',()=>{
 });
 it('launches only this week in unlimited mode, and Study Now combines checked collections',async()=>{
  const week=chinaStudyWeek();
- mock.groups={classes:[{id:'class',label:'Literature',core:[card('weekly',['week:'+week]),card('old',['week:2020-01-06'])],reference:[card('person',['NAME'])]}],personal:[]};
+ mock.groups={classes:[{id:'class',label:'Literature',deckIds:['deck'],core:[card('weekly',['week:'+week]),card('old',['week:2020-01-06'])],reference:[card('person',['NAME'])]}],personal:[]};
  render(<StudentVocabularyChooser userId="u" decks={[deck]} limit={30}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Open vocabulary'}));
  await waitFor(()=>expect(screen.getByRole('button',{name:"This week's vocab · 1 word"})).toBeEnabled());
  fireEvent.click(screen.getByRole('button',{name:/This week's vocab/}));
  expect(mock.navigate.mock.lastCall?.[0]).toContain('mode=unlimited');

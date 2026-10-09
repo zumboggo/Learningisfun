@@ -119,7 +119,7 @@ it('preserves a saved vote and newly loaded posts when an older refresh finishes
   const post = screen.getByText('Second question?').closest('article')!;
   fireEvent.click(within(post).getByRole('button', { name: 'Upvote: 3' }));
   state.posts.push(makePost('A newly posted question', 0));
-  fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Refresh discussion' }));
   await act(async () => finishVote());
   await act(async () => finishRead());
   expect(screen.getByText('A newly posted question')).toBeInTheDocument();

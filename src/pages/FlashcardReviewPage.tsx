@@ -129,9 +129,11 @@ export function FlashcardReviewPage() {
     const customMode: FlashcardQueueMode = customFilter === 'due' || customFilter === 'new' ? customFilter : 'all';
     const requiresFullPool = Boolean(customFilter || customTags.length);
     // Unlimited practice runs over the whole deck, shuffled, with no cap.
-    const queues = await Promise.all(combinedDeckIds.map(id => buildFlashcardQueue(
+    let queues:FlashcardCard[][];
+    try{queues = await Promise.all(combinedDeckIds.map(id => buildFlashcardQueue(
       user.$id, id, mode === 'unlimited' ? 'all' : requiresFullPool ? customMode : mode, mode === 'unlimited' || requiresFullPool ? Number.MAX_SAFE_INTEGER : sessionLimit, selection?new Set(selection.cardIds):undefined,
     )));
+    }catch(e){setEmptyMessage(e instanceof Error?e.message:'Unable to download cards.');return;}
     const matchingCards = customFilter || customTags.length
       ? filterCustomStudyCards(queues.flat(), existingStates, customTags, customFilter || 'all')
       : queues.flat();

@@ -1,5 +1,6 @@
+import {executeLearningContent} from '@/services/learning-content.service';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import type { QuestionVoting } from '@/services/reading-discussion.service';
 import { ReadingDiscussionPage } from '@/pages/ReadingDiscussionPage';
@@ -9,7 +10,7 @@ vi.mock('@/services/learning-content.service',()=>({executeLearningContent:vi.fn
   title:'Reading example',className:'Literature · Blue',teacher:fixture.teacher,canWrite:fixture.canWrite,showStudentNames:fixture.showStudentNames,curatedReady:fixture.curatedReady,voting:fixture.voting,
   posts:[{id:'q',parentId:null,category:'question',content:'Why does the narrator change?',quotation:'The world changed.',paragraph:3,username:'Student name',label:'Reader 123ABC',teacher:false,mine:false,createdAt:'2026-09-15T01:00:00Z',hidden:false,locked:false,pinned:false,score:fixture.score,voted:false}],participation:[],
 }))}));
-beforeEach(()=>{fixture.teacher=false;fixture.canWrite=true;fixture.score=2;fixture.showStudentNames=false;fixture.curatedReady=false;fixture.voting=undefined;localStorage.clear();});afterEach(cleanup);
+beforeEach(()=>{fixture.teacher=false;fixture.canWrite=true;fixture.score=2;fixture.showStudentNames=false;fixture.curatedReady=false;fixture.voting=undefined;localStorage.clear();});afterEach(()=>{cleanup();vi.useRealTimers();});
 const mount=()=>render(<MemoryRouter initialEntries={['/discussions/texts/text/blue']}><Routes><Route path="/discussions/texts/:textId/:classId" element={<ReadingDiscussionPage/>}/></Routes></MemoryRouter>);
 it('student sees peer questions immediately with upvotes and replies, but no teacher controls',async()=>{
   mount();await screen.findByRole('heading',{name:'Reading example',level:1});
@@ -25,7 +26,7 @@ it('student sees peer questions immediately with upvotes and replies, but no tea
 it('refresh updates vote totals without replacing the composer or losing typing',async()=>{
   mount();await screen.findByRole('heading',{name:'Reading example',level:1});
   const input=screen.getByRole('textbox',{name:'Your question'});fireEvent.change(input,{target:{value:'Another question'}});input.focus();
-  fixture.score=5;fireEvent.click(screen.getByRole('button',{name:'Refresh'}));
+  fixture.score=5;fireEvent.click(screen.getByRole('button',{name:'Refresh discussion'}));
   await screen.findByRole('button',{name:'Upvote: 5'});expect(screen.getByRole('textbox',{name:'Your question'})).toBe(input);expect(input).toHaveValue('Another question');
 });
 it('parent has read-only access and teacher has moderation/presentation controls',async()=>{
@@ -69,4 +70,13 @@ it('keeps class questions and posting available during voting',async()=>{
  expect(screen.queryByRole('textbox',{name:'Draft question'})).not.toBeInTheDocument();
  expect(screen.getByRole('button',{name:/Upvote/})).toBeVisible();
  expect(screen.getByRole('textbox',{name:'Your question'})).toBeVisible();
+});
+
+it('focus and elapsed time update no server data until manual refresh',async()=>{
+ vi.useFakeTimers();await act(async()=>{mount();});
+ const readCount=()=>vi.mocked(executeLearningContent).mock.calls.filter(([p])=>p.action==='readReadingDiscussion').length;
+ const before=readCount();
+ act(()=>{vi.advanceTimersByTime(120000);window.dispatchEvent(new Event('focus'));document.dispatchEvent(new Event('visibilitychange'));});
+ expect(readCount()).toBe(before);expect(screen.getByText(/Updated 2 minutes ago/)).toBeInTheDocument();
+ vi.useRealTimers();fireEvent.click(screen.getByRole('button',{name:'Refresh discussion'}));await waitFor(()=>expect(readCount()).toBe(before+1));
 });

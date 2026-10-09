@@ -1,3 +1,5 @@
+import {saveFlashcardBatch} from './flashcard-batch.js';
+import {readFlashcardDeck} from './flashcard-read.js';
 import { stoneAction } from './stone.js';
 import { selfProfile, canReadProfile, projectProfile } from './profiles.js';
 import { presentationFileAction, ownsPlannerPresentation } from './presentation-files.js';
@@ -151,6 +153,8 @@ export default async ({ req, res, error }) => {
     const memberships = await db.listDocuments(databaseId, 'class_members', [Query.equal('userId', userId), Query.limit(500)]);
     const nowTime = Date.now();
     const memberClassIds = new Set(memberships.documents.filter(row => row.role !== 'substitute' || (row.expiresAt && new Date(row.expiresAt).getTime() > nowTime)).map(row => row.classId));
+    if(body.action==='saveFlashcardBatch'){if(!['student','teacher','admin'].includes(profile.role))return res.json({error:'Practice saving requires a student or teacher account'},403);return res.json(await saveFlashcardBatch({body,userId,memberClassIds,db,databaseId}));}
+    if(body.action==='readFlashcardDeck'){try{return res.json(await readFlashcardDeck({body,userId,memberClassIds,db,databaseId}));}catch(cause){if(cause.code===403)return res.json({error:cause.message},403);throw cause;}}
     if (['readStone','saveStone'].includes(body.action)) {
       try { return res.json(await stoneAction({body,profile,userId,memberClassIds,db,databaseId})); }
       catch(cause) { if([400,403,409].includes(cause.code)) return res.json({error:cause.message},cause.code); throw cause; }

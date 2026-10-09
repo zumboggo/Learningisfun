@@ -1,3 +1,4 @@
+import {executeLearningContent} from './learning-content.service';
 import { db } from '@/db/schema';
 import { generateDeviceId, isOnline, getTimestamp } from '@/utils/helpers';
 import { databases, functions, DATABASE_ID, COLLECTIONS, FUNCTION_IDS } from '@/lib/appwrite';
@@ -6,6 +7,10 @@ import type { SyncOperation } from '@/types';
 const MAX_RETRIES = 5;
 const SYNC_DEBOUNCE_MS = 2000;
 let syncTimer: ReturnType<typeof setTimeout> | null = null;
+let practiceTimer: ReturnType<typeof setTimeout> | null = null;
+const PRACTICE_BATCH_DELAY_MS=30_000;
+const PRACTICE_BATCH_SIZE=40;
+const isPractice=(type:string)=>['card_review','flashcard_review_event','flashcard_study_session'].includes(type);
 let isSyncing = false;
 let listenersInstalled = false;
 
@@ -20,9 +25,14 @@ export async function addToQueue(
   operationType: 'create' | 'update' | 'delete',
   payload: unknown,
 ): Promise<string> {
+  userId=userId||(await db.app_metadata.get('currentUserId'))?.value||'';
   const operationId = crypto.randomUUID();
   const deviceId = getDeviceId();
 
+  if(entityType==='flashcard_study_session'){
+    const existing=await db.sync_queue.where('entityId').equals(entityId).filter(op=>op.userId===userId&&op.entityType===entityType&&op.syncStatus==='pending').first();
+    if(existing?.id){await db.sync_queue.update(existing.id,{payload,timestamp:Date.now()});schedulePracticeSync();return existing.operationId;}
+  }
   await db.sync_queue.add({
     operationId,
     userId,
@@ -37,8 +47,13 @@ export async function addToQueue(
     syncStatus: 'pending',
   });
 
-  scheduleSync();
+  if(isPractice(entityType))schedulePracticeSync();else scheduleSync();
   return operationId;
+}
+
+function schedulePracticeSync():void{
+  if(practiceTimer)return;
+  practiceTimer=setTimeout(()=>{practiceTimer=null;void processQueue();},PRACTICE_BATCH_DELAY_MS);
 }
 
 export function scheduleSync(): void {
@@ -48,18 +63,49 @@ export function scheduleSync(): void {
   }, SYNC_DEBOUNCE_MS);
 }
 
-export async function processQueue(): Promise<void> {
+export async function processQueue():Promise<void>{
+ if(navigator.locks)return navigator.locks.request('learning-is-fun-sync',{ifAvailable:true},async lock=>{if(lock)await processQueueUnlocked();});
+ return processQueueUnlocked();
+}
+async function processQueueUnlocked(): Promise<void> {
   if (isSyncing || !isOnline()) return;
   isSyncing = true;
 
   try {
+    const owner=(await db.app_metadata.get('currentUserId'))?.value;
+    if(!owner)return;
+    const abandoned=await db.sync_queue.where('syncStatus').equals('syncing').filter(op=>op.userId===owner&&(!!navigator.locks||Date.now()-op.timestamp>120000)).toArray();
+    for(const op of abandoned)if(op.id)await db.sync_queue.update(op.id,{syncStatus:'pending'});
+    // Upgrade legacy card/assignment entries that were queued without an owner.
+    const legacy=await db.sync_queue.where('userId').equals('').toArray();
+    for(const op of legacy){
+      if(!op.id||!['card','deck_assignment'].includes(op.entityType))continue;
+      const deckId=(op.payload as {deckId?:string}).deckId;
+      const deck=deckId?await db.flashcard_decks.get(deckId):null;
+      if(deck?.creatorId===owner)await db.sync_queue.update(op.id,{userId:owner});
+    }
     const pending = await db.sync_queue
       .where('syncStatus')
       .anyOf('pending', 'failed')
-      .and(op => op.retryCount < MAX_RETRIES)
+      .and(op => op.retryCount < MAX_RETRIES && op.userId === owner)
       .sortBy('timestamp');
 
-    for (const op of pending) {
+    let practiceCount=0;
+    const batch=pending.filter(op=>!isPractice(op.entityType)||practiceCount++<PRACTICE_BATCH_SIZE);
+    const practice=batch.filter(op=>isPractice(op.entityType)&&op.id);
+    if(practice.length){
+      for(const op of practice)await db.sync_queue.update(op.id!,{syncStatus:'syncing',timestamp:Date.now()});
+      try{
+        const result=await executeLearningContent<{results:Array<{id:string;ok:boolean;error?:string}>}>({action:'saveFlashcardBatch',operations:practice.map(op=>({id:op.entityId,entityType:op.entityType,payload:op.payload}))});
+        for(const op of practice){
+          const saved=result.results.find(row=>row.id===op.entityId);
+          if(saved?.ok){const latest=await db.sync_queue.get(op.id!);await db.sync_queue.update(op.id!,{syncStatus:JSON.stringify(latest?.payload)===JSON.stringify(op.payload)?'synced':'pending'});if(op.entityType==='card_review')await db.card_reviews.update(op.entityId,{syncStatus:'synced'});else await markEntitySynced(op.entityType,op.entityId);}
+          else await db.sync_queue.update(op.id!,{syncStatus:op.retryCount+1>=MAX_RETRIES?'failed':'pending',retryCount:op.retryCount+1,error:saved?.error||'Practice save not confirmed'});
+        }
+      }catch(error){for(const op of practice)await db.sync_queue.update(op.id!,{syncStatus:op.retryCount+1>=MAX_RETRIES?'failed':'pending',retryCount:op.retryCount+1,error:error instanceof Error?error.message:'Connection unavailable'});}
+    }
+    for (const op of batch.filter(op=>!isPractice(op.entityType))) {
+      if((await db.app_metadata.get('currentUserId'))?.value!==owner)break;
       if (!op.id) continue;
       await db.sync_queue.update(op.id, { syncStatus: 'syncing' });
 
@@ -76,6 +122,8 @@ export async function processQueue(): Promise<void> {
       }
     }
 
+    const remaining=await db.sync_queue.where('syncStatus').equals('pending').filter(op=>op.userId===owner&&isPractice(op.entityType)&&op.retryCount<MAX_RETRIES).count();
+    if(remaining)schedulePracticeSync();
     await db.app_metadata.put({ key: 'lastSyncAt', value: getTimestamp() });
   } finally {
     isSyncing = false;
@@ -141,7 +189,7 @@ async function executeSyncOperation(op: SyncOperation): Promise<void> {
       }));
     }
   } else if (entityType === 'card_review' && operationType === 'create') {
-    await databases.createDocument(DATABASE_ID, COLLECTIONS.card_reviews, data.$id as string, {
+    try{await databases.createDocument(DATABASE_ID, COLLECTIONS.card_reviews, data.$id as string, {
       userId: data.userId,
       cardId: data.cardId,
       deckId: data.deckId,
@@ -151,7 +199,7 @@ async function executeSyncOperation(op: SyncOperation): Promise<void> {
       newState: data.newState,
       deviceId: data.deviceId,
       operationId: data.operationId,
-    });
+    });}catch(error){if((error as {code?:number}).code!==409)throw error;} // Immutable review ID makes retries idempotent.
     await db.card_reviews.update(data.$id as string, { syncStatus: 'synced' });
   } else {
     const collection = collectionForEntity(entityType);
@@ -166,6 +214,11 @@ async function executeSyncOperation(op: SyncOperation): Promise<void> {
     } else {
       await databases.updateDocument(DATABASE_ID, collection, documentId, toRemoteDocument(data));
       await markEntitySynced(entityType, documentId);
+    }
+    if(entityType==='card'&&typeof data.deckId==='string'){
+      const updatedAt=getTimestamp();
+      await databases.updateDocument(DATABASE_ID,COLLECTIONS.flashcard_decks,data.deckId,{updatedAt});
+      await db.flashcard_decks.update(data.deckId,{updatedAt});
     }
   }
 }
@@ -261,7 +314,7 @@ export async function getSyncStatus(userId?: string): Promise<{
   failed: number;
   lastSyncAt: string | null;
 }> {
-  const pendingRows = db.sync_queue.where('syncStatus').equals('pending');
+  const pendingRows = db.sync_queue.where('syncStatus').anyOf('pending','syncing');
   const failedRows = db.sync_queue.where('syncStatus').equals('failed');
   const pending = userId ? await pendingRows.and(operation => operation.userId === userId).count() : await pendingRows.count();
   const failed = userId ? await failedRows.and(operation => operation.userId === userId).count() : await failedRows.count();

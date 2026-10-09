@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import {ensureDeckCards} from '@/services/flashcard-cache';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '@/contexts/AuthContext';
@@ -50,6 +51,8 @@ export function AddClassCardsPage() {
       .filter((deck): deck is NonNullable<typeof deck> => Boolean(deck))
       .sort((a, b) => a.title.localeCompare(b.title));
   }, [classId]);
+
+  useEffect(()=>{if(user&&target!==NEW_DECK)void ensureDeckCards(user.$id,target).catch(e=>setError(e.message));},[user?.$id,target]);
 
   // Fronts already in the chosen deck, so we can flag duplicates before saving.
   const existingFronts = useLiveQuery(async () => {

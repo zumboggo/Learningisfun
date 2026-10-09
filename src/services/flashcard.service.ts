@@ -1,7 +1,8 @@
+import {ensureDeckCards} from './flashcard-cache';
 import { databases, DATABASE_ID, COLLECTIONS } from '@/lib/appwrite';
 import { db } from '@/db/schema';
 import { generateId, getTimestamp, parseTags } from '@/utils/helpers';
-import { addToQueue } from './sync.service';
+import { addToQueue, processQueue } from './sync.service';
 import {
   createNewCard,
   scheduleReview,
@@ -101,10 +102,19 @@ export async function addCard(
       createdAt: card.createdAt,
     });
   } catch {
-    await addToQueue('', 'card', id, 'create', card);
+    const owner=await db.flashcard_decks.get(deckId);
+    await addToQueue(owner?.creatorId||'', 'card', id, 'create', card);
   }
 
+  await touchDeckRevision(deckId);
   return card;
+}
+
+export async function touchDeckRevision(deckId:string):Promise<void>{
+ const deck=await db.flashcard_decks.get(deckId);if(!deck)return;
+ const updatedAt=getTimestamp();await db.flashcard_decks.update(deckId,{updatedAt});
+ try{await databases.updateDocument(DATABASE_ID,COLLECTIONS.flashcard_decks,deckId,{updatedAt});}
+ catch{await addToQueue(deck.creatorId,'deck',deckId,'update',{$id:deckId,updatedAt});}
 }
 
 export async function importDeckFromCsv(
@@ -484,6 +494,7 @@ export async function buildFlashcardQueue(
   limit = 30,
   allowedCardIds?: ReadonlySet<string>,
 ): Promise<FlashcardCard[]> {
+  await ensureDeckCards(userId,deckId);
   const [cards, states, preferences, settings] = await Promise.all([
     getDeckCards(deckId),
     db.student_card_state.where('userId').equals(userId).and(s => s.deckId === deckId).toArray(),
@@ -694,6 +705,7 @@ export async function finishFlashcardStudySession(
   });
   const session = await db.flashcard_study_sessions.get(sessionId);
   if (session) await addToQueue(userId, 'flashcard_study_session', sessionId, 'update', session);
+  void processQueue(); // Flush at session end; queued records survive offline exits.
 }
 
 export async function getTeacherFlashcardAnalytics(
@@ -776,7 +788,7 @@ export async function getPersonalNote(userId: string, cardId: string): Promise<S
 
 export async function syncDecksFromServer(classIds: string[], userId: string): Promise<boolean> {
   try {
-    const planning = await executeLearningContent<{decks:FlashcardDeck[];cards:FlashcardCard[];assignments:DeckAssignment[]}>({action:'readPlanningMaterials'});
+    const planning = await executeLearningContent<{decks:FlashcardDeck[];cards:FlashcardCard[];assignments:DeckAssignment[]}>({action:'readPlanningMaterials',kind:'deck',includeCards:false});
     const assignmentResult = classIds.length
       ? await databases.listDocuments(DATABASE_ID, COLLECTIONS.deck_assignments, [Query.equal('classId', classIds), Query.limit(200)])
       : { documents: [] };
@@ -801,47 +813,8 @@ export async function syncDecksFromServer(classIds: string[], userId: string): P
       });
     }
 
-    const deckIds = deckResult.documents.map(doc => doc.$id);
-    // Planning already returned its cards through the authorized server path.
-    // Fetch only the remaining decks, rather than reading those rows twice.
-    const planningDeckIds = new Set(planning.decks.map(deck => deck.$id));
-    const directDeckIds = deckIds.filter(id => !planningDeckIds.has(id));
-    const cardResult = directDeckIds.length
-      ? await databases.listDocuments(DATABASE_ID, COLLECTIONS.flashcard_cards, [Query.equal('deckId', directDeckIds), Query.limit(2000)])
-      : { documents: [] };
-    cardResult.documents = [...new Map([...cardResult.documents, ...planning.cards].map(doc=>[doc.$id,doc])).values()] as typeof cardResult.documents;
     assignmentResult.documents = [...new Map([...assignmentResult.documents, ...planning.assignments].map(doc=>[doc.$id,doc])).values()] as typeof assignmentResult.documents;
-    for (const doc of cardResult.documents) {
-      await db.flashcard_cards.put({
-        $id: doc.$id,
-        deckId: doc.deckId,
-        front: doc.front,
-        back: doc.back,
-        frontMarkdown: doc.frontMarkdown || doc.front,
-        backMarkdown: doc.backMarkdown || doc.back,
-        hint: doc.hint || '',
-        tags: Array.isArray(doc.tags) ? doc.tags : [],
-        sortOrder: doc.sortOrder,
-        createdAt: doc.createdAt,
-      });
-    }
-
-    // A pull must remove cards that were deleted on another device or by a
-    // server-side maintenance pass. Keep local cards that still have an
-    // unsent create/update operation so offline teacher work is never erased.
-    if (deckIds.length) {
-      const [localCards, queuedCardChanges] = await Promise.all([
-        db.flashcard_cards.where('deckId').anyOf(deckIds).toArray(),
-        db.sync_queue.where('entityType').equals('card').filter(op => op.syncStatus !== 'synced').toArray(),
-      ]);
-      const remoteCardIds = new Set(cardResult.documents.map(doc => doc.$id));
-      const protectedCardIds = new Set(queuedCardChanges.map(op => op.entityId));
-      const staleCardIds = localCards
-        .filter(card => !remoteCardIds.has(card.$id) && !protectedCardIds.has(card.$id))
-        .map(card => card.$id);
-      if (staleCardIds.length) await db.flashcard_cards.bulkDelete(staleCardIds);
-    }
-
+    // This is a catalog refresh. Card bodies are loaded only when requested.
     for (const doc of assignmentResult.documents) {
       await db.deck_assignments.put({
         $id: doc.$id,

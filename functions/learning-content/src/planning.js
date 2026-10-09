@@ -66,10 +66,11 @@ export async function planningAction({body, profile, userId, memberClassIds, db,
     const allowed=body.classId?[body.classId]:classes;
     if(!allowed.length)return {copywork:[],decks:[],cards:[],assignments:[]};
     const now=new Date().toISOString();
-    const materials=await listAll(db,databaseId,'planning_materials',[Query.equal('classId',allowed),Query.lessThanEqual('releaseAt',now)]);
+    const released=await listAll(db,databaseId,'planning_materials',[Query.equal('classId',allowed),Query.lessThanEqual('releaseAt',now)]);
+    const materials=['copywork','deck'].includes(body.kind)?released.filter(row=>row.kind===body.kind):released;
     const deckIds=[...new Set(materials.filter(row=>row.kind==='deck').map(row=>JSON.parse(row.dataJson).deckId))];
     const decks=deckIds.length?await listAll(db,databaseId,'flashcard_decks',[Query.equal('$id',deckIds)]):[];
-    const cards=deckIds.length?await listAll(db,databaseId,'flashcard_cards',[Query.equal('deckId',deckIds)]):[];
+    const cards=body.includeCards!==false&&deckIds.length?await listAll(db,databaseId,'flashcard_cards',[Query.equal('deckId',deckIds)]):[];
     const assignments=deckIds.length?await listAll(db,databaseId,'deck_assignments',[Query.equal('deckId',deckIds),Query.equal('classId',allowed)]):[];
     return {copywork:materials.filter(row=>row.kind==='copywork').map(row=>({id:row.$id,classId:row.classId,...JSON.parse(row.dataJson)})),decks,cards,assignments};
   }
@@ -142,6 +143,7 @@ export async function releaseDue(db,databaseId,now=new Date().toISOString()) {
           const key=prior?.$id||(exact.length===1?exact[0].$id:id(deckId,card.id));
           await put(db,databaseId,'flashcard_cards',key,{deckId,front:card.front,back:card.back,frontMarkdown:card.front,backMarkdown:card.back,hint:'',tags:[...card.tags,`week:${card.week||'reference'}`,sourceTag],sortOrder:card.week?Number(card.week.replace(/-/g,'')):0,createdAt:now});
         }
+        await db.updateDocument(databaseId,'flashcard_decks',deckId,{updatedAt:new Date().toISOString()});
       }
       await db.updateDocument(databaseId,'planning_releases',job.$id,{status:'done',lastError:''});completed++;
     } catch(error) { await db.updateDocument(databaseId,'planning_releases',job.$id,{status:'failed',lastError:String(error.message).slice(0,2000)}); }
@@ -205,5 +207,6 @@ export async function consolidateDecks(db,databaseId,teacherId,unit,apply) {
     for(const assignment of assignments.filter(row=>row.deckId===deck.$id))await db.deleteDocument(databaseId,'deck_assignments',assignment.$id);
     await db.updateDocument(databaseId,'flashcard_decks',deck.$id,{status:'archived',updatedAt:now});
   }
+  for(const deckId of Object.values(targetIds))await db.updateDocument(databaseId,'flashcard_decks',deckId,{updatedAt:new Date().toISOString()});
   return summary;
 }
