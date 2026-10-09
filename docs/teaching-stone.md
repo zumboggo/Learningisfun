@@ -34,3 +34,11 @@ The episode is excluded from app-wide precaching. Opening it caches only this ep
 ## Verification
 
 `npm test` runs frontend tests and the Node story/backend tests. Tests cover all legal choice sequences, multiple defensible strategies, resource bounds, server-derived scores, retry idempotency, divergent devices, class/role restrictions, teacher preview, replay isolation and bridge validation. Browser QA covers desktop and 390-pixel layouts, all passages, assessment and both stone actions. Production smoke tests must verify the owning teacher can open the protected class route after backend deployment.
+
+## Class-reading alignment
+
+The supplied Ethics Before Us site is privately published. Its owner-local source (`ancient-ethics-reading-site/dist/index.html`, published source commit `4488e0eb2fd143f3e5edb94e9be01145fb56a6be`) was read without signing in or sharing profile information with the site.
+
+Episode 1 highlights **authority, custom, reasons, consequences, impartiality, corroboration, dignity, duty, and accountability**, applying them through listening, rationing, investigation, promises and public records. The four-lens decision checks conceptual use directly. Ma’at provides the Egyptian context; modern analytical language is explicitly framed as the protagonist’s classroom knowledge.
+
+Reserve **stele, legitimate, retribution, restitution, proportionality, human rights, deception, information asymmetry, risk, deterrence, commission, omission, petitioner, gleaning, entitlement, and moral imagination** for later focused episodes; some are already implicitly experienced here. Do not present Babylonian laws, later funerary texts, or Hebrew prescriptions as the rules of this Middle Kingdom village.
