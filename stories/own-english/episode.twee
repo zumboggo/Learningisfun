@@ -153,8 +153,8 @@ Macro.add('ownDriver',{handler(){
  if(setup.driverAttempts.length){paragraph(root,'Last check: '+previous.score+'/4. Your journey choices are safe.');const answers=setup.driverAttempts.at(-1);setup.driverQuestions.forEach((q,i)=>{if(answers[i]!==q.answer)paragraph(root,'Review '+(i+1)+': '+q.note);});}
  const form=document.createElement('form');root.append(form);
  setup.driverQuestions.forEach((q,i)=>{const group=document.createElement('fieldset'),legend=document.createElement('legend');legend.textContent=(i+1)+'. '+q.prompt;group.append(legend);q.options.forEach((text,n)=>{const label=document.createElement('label'),input=document.createElement('input');input.type='radio';input.name='fare-'+i;input.value=n;input.required=true;label.append(input,document.createTextNode(' '+text));label.style.display='block';label.style.padding='0.5rem';group.append(label);});form.append(group);});
- const button=document.createElement('button');button.type='submit';button.textContent='Check my fare';form.append(button);
- form.onsubmit=event=>{event.preventDefault();if(!form.reportValidity())return;button.disabled=true;const answers=setup.driverQuestions.map((_,i)=>Number(new FormData(form).get('fare-'+i)));setup.driverAttempts.push(answers);setup.send('save',{choices:setup.choices.slice(),driverAttempts:setup.driverAttempts});setup.refresh();};
+ const button=document.createElement('button');button.type='button';button.textContent='Check my fare';form.append(button);
+ form.onsubmit=event=>event.preventDefault();button.onclick=()=>{if(!form.reportValidity())return;button.disabled=true;const answers=setup.driverQuestions.map((_,i)=>Number(new FormData(form).get('fare-'+i)));setup.driverAttempts.push(answers);setup.send('save',{choices:setup.choices.slice(),driverAttempts:setup.driverAttempts});setup.refresh();};
  const review=document.createElement('details'),summary=document.createElement('summary');summary.textContent='Review the source cards';review.append(summary);new Wikifier(review,'<<ownSource>>');root.append(review);
 }});
 
