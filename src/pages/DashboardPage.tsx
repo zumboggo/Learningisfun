@@ -785,10 +785,10 @@ function TeacherDashboard() {
           <h3 className="font-semibold text-lg mb-3">Vocabulary Progress</h3>
           <div className="text-sm text-gray-600 space-y-1 mb-3">
             <p>Total decks: {vocabProgress.totalDecks} ({vocabProgress.assignedDecks} assigned)</p>
-            <p>Total cards: {vocabProgress.totalCards}</p>
+            <p>Downloaded cards: {vocabProgress.totalCards}</p>
             <p>Cards studied this week: {vocabProgress.cardsStudiedThisWeek}</p>
             <p className="text-green-600 font-medium">{vocabProgress.cardsStudiedThisWeek} cards studied this week — keep it up!</p>
-            <p>Cards assigned: {vocabProgress.cardsInAssignedDecks} of {vocabProgress.totalCards}</p>
+            <p>Downloaded cards assigned: {vocabProgress.cardsInAssignedDecks} of {vocabProgress.totalCards}</p>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2.5">
             <div className="bg-blue-600 h-2.5 rounded-full transition-all" style={{

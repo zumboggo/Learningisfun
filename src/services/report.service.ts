@@ -1,3 +1,4 @@
+import {ensureDeckCards} from './flashcard-cache';
 import { db } from '@/db/schema';
 import { masteryBucketForState } from './flashcard.service';
 import type { ClassMember, User } from '@/types';
@@ -27,6 +28,8 @@ export async function buildClassParticipationRows(
   classId: string,
   options: { assignmentId?: string; classSessionId?: string; deckId?: string } = {},
 ): Promise<ParticipationRow[]> {
+  const account=await db.app_metadata.get('currentUserId');
+  if(options.deckId&&account?.value)await ensureDeckCards(account.value,options.deckId);
   const members = await db.class_members
     .where('classId')
     .equals(classId)

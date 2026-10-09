@@ -1,3 +1,4 @@
+import {ensureDeckCards} from '@/services/flashcard-cache';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -27,12 +28,14 @@ export function StudentProgressPage() {
   const navigate = useNavigate();
   const [stats, setStats] = useState<StudentStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error,setError]=useState('');
 
   useEffect(() => {
     if (!classId || !studentId) return;
-    loadStats(classId, studentId).then(s => { setStats(s); setLoading(false); });
+    loadStats(classId, studentId).then(s => { setStats(s); setLoading(false); }).catch(e=>{setError(e.message);setLoading(false);});
   }, [classId, studentId]);
 
+  if(error)return <p role="alert" className="p-4">{error}</p>;
   if (loading) return <div className="p-4 text-gray-400">Loading student progress...</div>;
   if (!stats) return <div className="p-4 text-gray-400">Student not found.</div>;
 
@@ -168,6 +171,8 @@ async function loadStats(classId: string, studentId: string): Promise<StudentSta
   const deckAssignments = await db.deck_assignments.where('classId').equals(classId).toArray();
   const deckIds = [...new Set(deckAssignments.map(a => a.deckId))];
 
+  const account=await db.app_metadata.get('currentUserId');
+  if(account?.value)await Promise.all(deckIds.map(id=>ensureDeckCards(account.value,id)));
   const cards = deckIds.length
     ? await db.flashcard_cards.where('deckId').anyOf(deckIds).toArray()
     : [];

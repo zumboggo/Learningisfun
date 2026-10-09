@@ -1,3 +1,6 @@
+import {useEffect,useState} from 'react';
+import {useAuth} from '@/contexts/AuthContext';
+import {ensureDeckCards} from '@/services/flashcard-cache';
 import { Link, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
@@ -7,6 +10,8 @@ import { Button } from '@/components/common/Button';
 
 export function FlashcardAnalyticsPage() {
   const { classId, deckId } = useParams<{ classId: string; deckId: string }>();
+  const {user}=useAuth();const [error,setError]=useState('');
+  useEffect(()=>{if(user&&deckId)void ensureDeckCards(user.$id,deckId).catch(e=>setError(e.message));},[user?.$id,deckId]);
 
   const cls = useLiveQuery(() => (classId ? db.classes.get(classId) : undefined), [classId]);
   const deck = useLiveQuery(() => (deckId ? db.flashcard_decks.get(deckId) : undefined), [deckId]);
@@ -15,6 +20,7 @@ export function FlashcardAnalyticsPage() {
     [classId, deckId],
   );
 
+  if(error)return <p role="alert" className="p-4">{error}</p>;
   if (!classId || !deckId || !cls || !deck) {
     return <div className="p-4 text-gray-400">Loading flashcard progress...</div>;
   }
