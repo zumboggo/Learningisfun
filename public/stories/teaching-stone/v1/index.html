@@ -170,7 +170,7 @@ setup.send = function(type, extra = {}) {
 };
 setup.refresh = function() {
  const step=setup.choices.length;
- Engine.play(step === 10 ? 'Assessment' : 'Decision'+(step+1));
+ Engine.play(step === 10 ? 'Assessment' : step > 0 ? 'Consequence'+step : 'Decision1');
 };
 window.addEventListener('message',function(event){
  const m=event.data;
