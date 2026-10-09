@@ -28,10 +28,10 @@ test('driver threshold, retries and server completion cannot be bypassed',async(
 test('early iframe initialization waits for SugarCube startup and late initialization also resumes',async()=>{
  const {readFile}=await import('node:fs/promises'),{runInNewContext}=await import('node:vm');
  const script=await readFile(new URL('../../../stories/own-english/story.js',import.meta.url),'utf8');
- for(const early of [true,false]){const handlers={},events={},played=[],sent=[],parent={postMessage:m=>sent.push(m)},window={addEventListener:(n,fn)=>handlers[n]=fn};const setup={assess:assessYoung,assessDriver,scenes};const context={setup,Config:{navigation:{},history:{},saves:{},ui:{},passages:{}},window,parent,location:{origin:'https://class.test'},document:{},Macro:{add:()=>{}},Engine:{play:p=>played.push(p)},State:{passage:'Start'},$ :()=>({on:()=>{},one:(n,fn)=>events[n]=fn})};runInNewContext(script,context);
- const initialize=()=>handlers.message({origin:'https://class.test',source:parent,data:{protocol:'episode-v1',episode:'own-english',version:4,type:'init',channel:'test',choices:[],driverAttempts:[]}});
+ for(const early of [true,false])for(const resumed of [false,true]){const handlers={},events={},played=[],sent=[],parent={postMessage:m=>sent.push(m)},window={addEventListener:(n,fn)=>handlers[n]=fn};const setup={assess:assessYoung,assessDriver,scenes};const context={setup,Config:{navigation:{},history:{},saves:{},ui:{},passages:{}},window,parent,location:{origin:'https://class.test'},document:{},Macro:{add:()=>{}},Engine:{play:p=>played.push(p)},State:{passage:'Start'},$ :()=>({on:()=>{},one:(n,fn)=>events[n]=fn})};runInNewContext(script,context);
+ const initialize=()=>handlers.message({origin:'https://class.test',source:parent,data:{protocol:'episode-v1',episode:'own-english',version:4,type:'init',channel:'test',choices:resumed?['voice']:[],driverAttempts:[]}});
  if(early){initialize();assert.equal(played.length,0);events[':storyready']();}else{events[':storyready']();initialize();}
- assert.deepEqual(played,['Start']);assert.equal(setup.accepted,false);setup.accepted=true;setup.refresh();assert.deepEqual(played,['Start','Decision1']);assert(sent.some(m=>m.type==='started'));
+ assert.deepEqual(played,[resumed?'Consequence1':'Start']);assert.equal(setup.accepted,resumed);if(!resumed){setup.accepted=true;setup.refresh();assert.deepEqual(played,['Start','Decision1']);}assert(sent.some(m=>m.type==='started'));
  }
 });
 test('v2 writing scores are trusted, cached, privately restored and used for rankings',async()=>{
