@@ -1,0 +1,30 @@
+{
+  "model": "andreasjansson/musicgen-looper",
+  "version": "f8140d0457c2b39ad8728a80736fea9a67a0ec0cd37b35f40b68cce507db2366",
+  "predictionId": "eg7dwy7es9rne0d13wbt62jc5m",
+  "generatedAt": "2026-10-09T05:19:09.145198458Z",
+  "input": {
+    "prompt": "Quiet ancient Egyptian inspired 16-bit adventure game background music, gently plucked harp and lyre-like chip arpeggios, breathy reed flute-like chip melody, soft low drone, sparse steady hand-drum pulse, mysterious and thoughtful Nile village at dawn, warm restrained retro game timbres, instrumental only, no voices, no dramatic build, unobtrusive repeating phrase, clear steady 90 bpm beat",
+    "bpm": 90,
+    "variations": 1,
+    "max_duration": 16,
+    "model_version": "medium",
+    "output_format": "wav",
+    "seed": 190026,
+    "classifier_free_guidance": 3
+  },
+  "asset": "public/stories/teaching-stone/v1/egypt-loop-v1.mp3",
+  "bytes": 64628,
+  "durationSeconds": 10.66665625,
+  "decodedMonoFloat32BytesEstimate": 1365332,
+  "processing": {
+    "format": "MP3, mono, 32 kHz, 48 kbps",
+    "ffmpeg": "7.1",
+    "filter": "loudnorm=I=-22:TP=-4:LRA=7,afade=t=in:d=0.008,afade=t=out:st=10.658656250000002:d=0.008"
+  },
+  "note": "Imagined ancient-Egyptian-inspired retro soundtrack; not a historical reconstruction. Generated with MusicGen-Looper.",
+  "sources": [
+    "https://replicate.com/andreasjansson/musicgen-looper",
+    "https://github.com/andreasjansson/cog-musicgen-looper"
+  ]
+}
