@@ -1,3 +1,4 @@
+import {addAssignedEpisodes} from '@/services/planner-episodes';
 import { preparePlannerStarters } from '@/services/planner-starters';
 import type { PlannerWeekSource } from '@/services/planner-parser';
 import { normalizePlan } from '@/services/planner-layout';
@@ -37,7 +38,7 @@ export function WeeklyPlannerEditor({ initial, suggestedWeek, record, sourceId, 
   },[classIdsKey,userId]);
   useEffect(()=>{
     if(!assignedReadings)return;
-    const next=addAssignedTexts(writer.draft.data,assignedReadings.texts,assignedReadings.assignments,window.location.href);
+    const next=addAssignedEpisodes(addAssignedTexts(writer.draft.data,assignedReadings.texts,assignedReadings.assignments,window.location.href),window.location.href);
     if(JSON.stringify(next.weeklyResources)!==JSON.stringify(writer.draft.data.weeklyResources))writer.update({...writer.draft,data:next});
   },[assignedReadings,writer]);
   const [busy, setBusy] = useState(false), [message, setMessage] = useState('');
