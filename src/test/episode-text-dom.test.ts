@@ -22,3 +22,11 @@ it('discovers passages when SugarCube removes its loading-screen attribute',asyn
  let fields:TextField[]=[];const controller=connectEpisodeText(document,()=>({}),f=>fields=f);expect(fields).toHaveLength(0);
  document.documentElement.removeAttribute('data-init');await vi.waitFor(()=>expect(fields.map(f=>f.text)).toEqual(['Ready to edit']));controller.disconnect();
 });
+
+it('includes disclosure text when opened and keeps numeric replacement drafts editable',async()=>{
+ document.body.innerHTML='<div class="passage"><details><summary>Source</summary><p>A source note</p></details><h1>Episode title</h1></div>';
+ let fields:TextField[]=[];let patches:TextPatches={};const controller=connectEpisodeText(document,()=>patches,f=>fields=f);
+ expect(fields.map(f=>f.text)).toEqual(['Source','Episode title']);document.querySelector('details')!.open=true;
+ await vi.waitFor(()=>expect(fields.map(f=>f.text)).toContain('A source note'));
+ const title=fields.find(f=>f.original==='Episode title')!;patches={[title.key]:{original:title.original,text:'1984'}};controller.refresh();controller.refresh();expect(fields.find(f=>f.key===title.key)?.text).toBe('1984');controller.disconnect();
+});
