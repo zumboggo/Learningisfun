@@ -11,8 +11,9 @@ export function connectEpisodeText(doc:Document,getPatches:()=>TextPatches,onFie
   const walker=doc.createTreeWalker(doc.body,4);const next:TextField[]=[];
   for(let node=walker.nextNode() as Text|null;node;node=walker.nextNode() as Text|null){
    const parent=node.parentElement;
-   if(!parent||parent.closest(excluded)||!node.data.trim()||/^\s*\d+(?:\s*\/\s*\d+)?\s*$/.test(node.data))continue;
+   if(!parent||parent.closest(excluded)||!node.data.trim())continue;
    let state=originals.get(node);if(!state||node.data!==state.applied)state={original:node.data,applied:node.data};
+   if(/^\s*\d+(?:\s*\/\s*\d+)?\s*$/.test(state.original))continue;
    const passage=parent.closest('[data-passage],.passage');
    const path:string[]=[];let el:Element|null=parent;
    while(el&&el!==passage&&el!==doc.body){path.push(el.tagName+':'+Array.from(el.parentElement?.children||[]).indexOf(el));el=el.parentElement;}
@@ -27,7 +28,7 @@ export function connectEpisodeText(doc:Document,getPatches:()=>TextPatches,onFie
    for(let ancestor:Element|null=parent;visible&&ancestor;ancestor=ancestor.parentElement){const style=doc.defaultView?.getComputedStyle(ancestor);if(style?.display==='none'||style?.visibility==='hidden')visible=false;}
    if(visible)next.push({key,original:state.original,text,node});
   }
-  fields=next;onFields(fields);observer.observe(doc.documentElement,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['hidden','style','class','aria-hidden','data-init','data-passage']});
+  fields=next;onFields(fields);observer.observe(doc.documentElement,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['hidden','style','class','aria-hidden','data-init','data-passage','open']});
  };
  const observer=new MutationObserver(refresh);refresh();
  return {refresh,fields:()=>fields,disconnect:()=>observer.disconnect()};
