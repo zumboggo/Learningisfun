@@ -1,3 +1,4 @@
+import {episodeTextAction} from './episode-text.js';
 import {ethicsPortfolioAction} from './ethics-portfolio.js';
 import {episodeAction} from './episodes.js';
 import {saveFlashcardBatch} from './flashcard-batch.js';
@@ -157,6 +158,10 @@ export default async ({ req, res, error }) => {
     const memberClassIds = new Set(memberships.documents.filter(row => row.role !== 'substitute' || (row.expiresAt && new Date(row.expiresAt).getTime() > nowTime)).map(row => row.classId));
     if(body.action==='saveFlashcardBatch'){if(!['student','teacher','admin'].includes(profile.role))return res.json({error:'Practice saving requires a student or teacher account'},403);return res.json(await saveFlashcardBatch({body,userId,memberClassIds,db,databaseId}));}
     if(body.action==='readFlashcardDeck'){try{return res.json(await readFlashcardDeck({body,userId,memberClassIds,db,databaseId}));}catch(cause){if(cause.code===403)return res.json({error:cause.message},403);throw cause;}}
+    if (['readEpisodeText','saveEpisodeText'].includes(body.action)) {
+      try { const validMembers=new Set(memberships.documents.filter(row=>row.role==='student'&&(!row.expiresAt||Date.parse(row.expiresAt)>nowTime)).map(row=>row.classId)); return res.json(await episodeTextAction({body,profile,userId,memberClassIds:validMembers,db,databaseId})); }
+      catch(cause) { return res.json({error:cause.message},cause.code||500); }
+    }
     if (['readEpisodes','saveEpisode','episodeAI','episodeBoard','episodeWriting'].includes(body.action)) {
       try { const episodeMemberships=new Set(memberships.documents.filter(row=>row.role==='student'&&(!row.expiresAt||Date.parse(row.expiresAt)>nowTime)).map(row=>row.classId)); return res.json(await episodeAction({body,profile,userId,memberClassIds:episodeMemberships,db,databaseId})); }
       catch (cause) { return res.json({error:cause.message},cause.code||500); }
