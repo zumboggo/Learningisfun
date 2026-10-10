@@ -1,0 +1,28 @@
+{
+  "model": "andreasjansson/musicgen-looper",
+  "version": "f8140d0457c2b39ad8728a80736fea9a67a0ec0cd37b35f40b68cce507db2366",
+  "input": {
+    "prompt": "Quiet warm 16-bit retro adventure background music, gentle plucked acoustic lute-like chip melody, soft flute-like chiptune, sparse soft percussion, dry sunny Spanish countryside, curious whimsical beginning with a quiet melancholy beneath it, unobtrusive simple repeating phrase, no voices, no dramatic build, steady 90 bpm",
+    "bpm": 90,
+    "variations": 1,
+    "max_duration": 16,
+    "model_version": "medium",
+    "output_format": "wav",
+    "seed": 121027,
+    "classifier_free_guidance": 3
+  },
+  "predictionId": "gfrsjsz6g1rn80d14sz8xfxh08",
+  "failedPredictionId": "y1d81jjaf1rnc0d14svt0sjg9c",
+  "failure": "operands could not be broadcast together; one bounded retry succeeded",
+  "source": "https://replicate.com/andreasjansson/musicgen-looper",
+  "license": "MusicGen model weights: CC-BY-NC 4.0; see https://github.com/facebookresearch/audiocraft/blob/main/LICENSE_weights. Noncommercial classroom use.",
+  "processing": "FFmpeg mono 32kHz 48kbps MP3, loudnorm I=-25 TP=-3 LRA=6, preserved generated loop boundary; default off and loaded only on activation.",
+  "generatedDurationSeconds": 10.66665625,
+  "compressedBytes": 64628,
+  "levels": "MP3 peak -6.64 dB, RMS -25.56 dB",
+  "credits": "Artistic retro atmosphere, not an authentic historical reconstruction.",
+  "joinCheck": {
+    "normalizedEndpointJump": 0.004089,
+    "note": "Generated loop endpoint checked before MP3 compression; join does not introduce a large endpoint jump."
+  }
+}

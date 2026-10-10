@@ -1,0 +1,12 @@
+{
+  "provider": "OpenAI imagegen",
+  "checked": "2026-10-10",
+  "sourceImages": [
+    "exec-86344a36-bdca-4ec5-89f2-99b5ae442766.png",
+    "exec-93d639d4-4c81-47df-aae0-157a88ec94c4.png"
+  ],
+  "spritePrompt": "Original SNES 16-bit transparent grid: Don Quixote lean older steel armor improvised helmet; Sancho stocky round cap brown vest; Cervantes gray beard doublet white ruff quill peeking parchment; niece dark braids cream blouse muted teal. Neutral, relieved, troubled expressions. Limited ochre, teal, cream palette. No text.",
+  "backgroundPrompt": "Original 16-bit La Mancha Spanish countryside; courtyard door, books, helmet, parchment; road toward distant white windmills, ochre fields and pale blue sky; no people or text; crisp pixel art; 480x270.",
+  "processing": "Nearest-neighbor resizing: background480x270; 3 expression cells128x160 per character; WebP quality82, transparent sprites preserved.",
+  "decodedImageBytes": 1501440
+}

@@ -2,7 +2,8 @@ import {writingRubric,writingScoringInstruction,parseWritingAssessment} from './
 import {createHash} from 'node:crypto';
 import {Query} from 'node-appwrite';
 import {availableEpisodeVersions,requireEpisode} from './episode-catalog.js';
-import {contentForVersion} from './young-versions.js';
+import {contentForEpisode} from './episode-content.js';
+import {journalProgress,validateJournal} from './journal-engine.js';
 const collection='episode_records';
 const hash=s=>createHash('sha256').update(s).digest('hex').slice(0,32);
 const fail=(message,code=400)=>{throw Object.assign(new Error(message),{code});};
@@ -20,10 +21,10 @@ export async function episodeAction({body,profile,userId,memberClassIds,db,datab
   return {writing:writing.map(row=>({...JSON.parse(row.dataJson),id:row.$id})),episodes:catalog,attempts:[...latest.values()].filter(a=>catalog.some(e=>e.id===a.episode&&e.version===a.version)),preview};
  }
  const e=requireEpisode(body.classId,body.episode,body.version,preview);
- const {assessYoung,assessDriver,sourceNotes,sourceUrl,assignmentPrompt,rubric,scenes}=contentForVersion(e.version);
+ const {assessYoung,assessDriver,sourceNotes,sourceUrl,assignmentPrompt,rubric,scenes}=contentForEpisode(e.id,e.version);
  if(body.action==='episodeBoard'){
-  const rows=await readAll(db,databaseId,[Query.equal('classId',body.classId),Query.equal('kind',e.version>=2?'ai':'result')]),best=new Map();
-  for(const row of rows){const a=JSON.parse(row.dataJson);if(a.episode!==e.id||a.version!==e.version||a.preview)continue;if(e.version>=2){if(a.mode==='feedback'&&a.state==='complete'&&a.assessment?.rubricVersion===2&&(!best.has(row.userId)||best.get(row.userId)<a.assessment.total))best.set(row.userId,a.assessment.total);}else{const result=assessYoung(a.choices);if(result.complete&&assessDriver(a.driverAttempts).passed&&(!best.has(row.userId)||best.get(row.userId)<result.total))best.set(row.userId,result.total);}}
+  const rows=await readAll(db,databaseId,[Query.equal('classId',body.classId),Query.equal('kind',e.profile==='ap-language'&&e.version>=2?'ai':'result')]),best=new Map();
+  for(const row of rows){const a=JSON.parse(row.dataJson);if(a.episode!==e.id||a.version!==e.version||a.preview)continue;if(e.profile==='ap-language'&&e.version>=2){if(a.mode==='feedback'&&a.state==='complete'&&a.assessment?.rubricVersion===2&&(!best.has(row.userId)||best.get(row.userId)<a.assessment.total))best.set(row.userId,a.assessment.total);}else{const result=assessYoung(a.choices);if(result.complete&&assessDriver(a.driverAttempts).passed&&(!best.has(row.userId)||best.get(row.userId)<result.total))best.set(row.userId,result.total);}}
   const board=[];for(const [id,score] of best){const membership=await db.listDocuments(databaseId,'class_members',[Query.equal('classId',body.classId),Query.equal('userId',id),Query.limit(1)]);if(!membership.documents.some(m=>m.role==='student'&&(!m.expiresAt||Date.parse(m.expiresAt)>Date.now())))continue;try{const p=await db.getDocument(databaseId,'users',id);if(p.role!=='student')continue;board.push({nickname:['visible','reset'].includes(p.nicknameModerationStatus)?p.name:'Learner '+hash(id).slice(0,5),score,mine:id===userId});}catch{}}
   board.sort((a,b)=>b.score-a.score);return {leaderboard:board.map(r=>({...r,rank:board.findIndex(b=>b.score===r.score)+1}))};
  }
@@ -31,10 +32,11 @@ export async function episodeAction({body,profile,userId,memberClassIds,db,datab
  if(!a||typeof a.attemptId!=='string'||!/^[a-zA-Z0-9-]{20,36}$/.test(a.attemptId))fail('Invalid attempt');
  const assessed=assessYoung(a.choices,a.attemptId),driverAttempts=a.driverAttempts||[],fare=assessDriver(driverAttempts);
  if(driverAttempts.length&&!assessed.complete)fail('Finish the journey before the driver check.');
- const progress=[...a.choices,...driverAttempts.map(v=>JSON.stringify(v))],completed=assessed.complete&&fare.passed;
+ const journal=e.profile==='world-literature'?validateJournal(a.journal,a.choices,scenes.length):undefined;
+ const progress=journal?journalProgress({...a,driverAttempts,journal},scenes.length):[...a.choices,...driverAttempts.map(v=>JSON.stringify(v))],completed=assessed.complete&&fare.passed;
  const key=hash([userId,body.classId,e.assignmentId,a.attemptId].join(':'));
  if(body.action==='saveEpisode'){
-  const data={attemptId:a.attemptId,episode:e.id,version:e.version,assignmentId:e.assignmentId,choices:a.choices,driverAttempts,revision:progress.length,status:completed?'complete':'active',preview,updatedAt:new Date().toISOString()};
+  const data={attemptId:a.attemptId,episode:e.id,version:e.version,assignmentId:e.assignmentId,choices:a.choices,driverAttempts,...(journal?{journal}:{}),revision:progress.length,status:completed?'complete':'active',preview,updatedAt:new Date().toISOString()};
   // A trusted acknowledgement avoids rereading every old prefix on each choice.
   const ackKey=hash(key+':ack');let ack;try{ack=JSON.parse((await db.getDocument(databaseId,collection,ackKey)).dataJson);}catch(err){if(err.code!==404)throw err;}
   const prior=ack?(ack.progress||ack.choices):[];
@@ -48,10 +50,11 @@ export async function episodeAction({body,profile,userId,memberClassIds,db,datab
   }
   const snapshotKey=hash(key+':snapshot:'+data.revision);
   try{await db.createDocument(databaseId,collection,snapshotKey,{classId:body.classId,userId,kind:'attempt',dataJson:JSON.stringify({...data,createdAt:data.updatedAt})},[]);}catch(err){if(err.code!==409)throw err;}
-  if(completed&&!preview&&e.version===1){try{await db.createDocument(databaseId,collection,hash(key+':result'),{classId:body.classId,userId,kind:'result',dataJson:JSON.stringify(data)},[]);}catch(err){if(err.code!==409)throw err;}}
+  if(completed&&!preview&&(e.profile==='world-literature'||e.version===1)){try{await db.createDocument(databaseId,collection,hash(key+':result'),{classId:body.classId,userId,kind:'result',dataJson:JSON.stringify(data)},[]);}catch(err){if(err.code!==409)throw err;}}
   const ackFields={classId:body.classId,userId,kind:'ack',dataJson:JSON.stringify({choices:a.choices,progress})};try{await db.createDocument(databaseId,collection,ackKey,ackFields,[]);}catch(err){if(err.code!==409)throw err;await db.updateDocument(databaseId,collection,ackKey,ackFields);}
   return {saved:true,assessment:assessed};
  }
+ if(e.profile==='world-literature')fail('Journal episodes use authored conversations and their notebook rubric, not AI writing.');
  if(body.action==='episodeWriting'){const rows=await readAll(db,databaseId,[Query.equal('classId',body.classId),Query.equal('userId',userId),Query.equal('kind','ai')]);return {writing:rows.map(row=>({...JSON.parse(row.dataJson),id:row.$id})).filter(r=>r.attemptId===a.attemptId&&r.episode===e.id&&r.version===e.version)};}
  if(body.action!=='episodeAI')fail('Unknown episode action');
  const mode=body.mode;

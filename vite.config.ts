@@ -45,6 +45,7 @@ export default defineConfig({
         globIgnores: ['stories/**'],
         navigateFallbackDenylist: [/\/stories\//],
         runtimeCaching: [
+          { urlPattern: /\/stories\/(question-journal|a-knight-needs-a-witness|the-giants-have-sails)\/v1\//, handler: 'CacheFirst', options: { cacheName: 'question-journal-v1', expiration: { maxEntries: 12 } } },
           { urlPattern: /\/stories\/(own-english\/v[12]|shared)\//, handler: 'CacheFirst', options: { cacheName: 'own-english-assets', expiration: { maxEntries: 30 } } },
           { urlPattern: /\/stories\/teaching-stone\/v1\//, handler: 'CacheFirst', options: { cacheName: 'teaching-stone-v1', expiration: { maxEntries: 12 } } },
           {

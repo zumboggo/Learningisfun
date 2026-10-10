@@ -1,0 +1,62 @@
+{
+  "checked": "2026-10-10",
+  "edition": "Cervantes, Don Quixote, John Ormsby translation (1885), Project Gutenberg996",
+  "source": "https://www.gutenberg.org/files/996/996-h/996-h.htm",
+  "downloadSha256": "962f008a5ef4adba42431964475250c3ed95585678dd22cb17a6d43a536440e2",
+  "fidelity": "All six exact excerpts verified by whitespace-normalized substring against the downloaded source. Chapters I.1 and I.8 read before final fidelity review.",
+  "curriculum": "Uploaded PLANNER_SOURCE_2026-27 lists Don Quixote I.1–8 extract for Literary Mosaic. Two opening meetings moved from October19 toOctober12 by explicit user request.",
+  "translation": "Assigned classroom translation not located; Ormsby used as authorized fallback.",
+  "vocabulary": "Episode concepts; assigned weekly list not verified.",
+  "boundaries": {
+    "a-knight-needs-a-witness": "Part I, chapter 1: opening portrait, reading habits, armor and helmet, naming Rocinante and Don Quixote, ending with Dulcinea. No later plot revealed.",
+    "the-giants-have-sails": "Part I, chapter 8: first sight of the windmills through Sancho helping Quixote remount and their departure toward Puerto Lapice. Stop before the friars and Biscayan encounter. Context from I.7 is paraphrased: Sancho has joined as squire, hoping for a promised island."
+  },
+  "classVerification": {
+    "verifiedAt": "2026-10-10T16:23:41.538Z",
+    "classes": [
+      {
+        "classId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c",
+        "section": "Blue Sect. 2",
+        "preview": true,
+        "episodes": [
+          {
+            "id": "a-knight-needs-a-witness",
+            "version": 1,
+            "assignmentId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c-a-knight-needs-a-witness-v1",
+            "date": "2026-10-12",
+            "releaseAt": "2026-10-12T00:00:00Z"
+          },
+          {
+            "id": "the-giants-have-sails",
+            "version": 1,
+            "assignmentId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c-the-giants-have-sails-v1",
+            "date": "2026-10-12",
+            "releaseAt": "2026-10-12T00:00:00Z"
+          }
+        ]
+      },
+      {
+        "classId": "09d7f0a7-4c29-462c-820f-e11ea914d375",
+        "section": "Red - Sect. 1",
+        "preview": true,
+        "episodes": [
+          {
+            "id": "a-knight-needs-a-witness",
+            "version": 1,
+            "assignmentId": "09d7f0a7-4c29-462c-820f-e11ea914d375-a-knight-needs-a-witness-v1",
+            "date": "2026-10-12",
+            "releaseAt": "2026-10-12T00:00:00Z"
+          },
+          {
+            "id": "the-giants-have-sails",
+            "version": 1,
+            "assignmentId": "09d7f0a7-4c29-462c-820f-e11ea914d375-the-giants-have-sails-v1",
+            "date": "2026-10-12",
+            "releaseAt": "2026-10-12T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "studentCheck": "Existing member: both episodes hidden before release"
+  }
+}
