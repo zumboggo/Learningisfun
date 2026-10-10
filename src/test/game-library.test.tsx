@@ -18,6 +18,19 @@ it('shows only a student’s released class episodes and remembers the window pr
  expect(await screen.findByText('The Ride That Wouldn’t Autocorrect')).toBeInTheDocument();expect(screen.queryByText('The Grain We Keep')).not.toBeInTheDocument();
  const setting=screen.getByRole('checkbox');expect(setting).toBeChecked();fireEvent.click(setting);expect(localStorage.getItem(gameDisplayKey('student'))).toBe('window');expect(localStorage.getItem(gameDisplayKey('other'))).toBeNull();
 });
-it('shows the teacher both episodes once, without requiring student membership',async()=>{auth.user={$id:'teacher',role:'teacher'};open();expect(await screen.findByText('The Grain We Keep')).toBeInTheDocument();expect(await screen.findByText('The Ride That Wouldn’t Autocorrect')).toBeInTheDocument();expect(screen.getAllByText('The Grain We Keep')).toHaveLength(1);});
+it('lets teachers choose a class before showing its scrollable episode list',async()=>{
+ auth.user={$id:'teacher',role:'teacher'};open();
+ const ethics=await screen.findByRole('button',{name:/Ethics Section View episodes/});
+ expect(screen.queryByText('The Grain We Keep')).not.toBeInTheDocument();
+ expect(screen.queryByRole('button',{name:/foreign/})).not.toBeInTheDocument();
+ fireEvent.click(ethics);
+ expect(await screen.findByText('The Grain We Keep')).toBeInTheDocument();
+ expect(screen.queryByText('The Ride That Wouldn’t Autocorrect')).not.toBeInTheDocument();
+ expect(screen.getByRole('region',{name:'Class episode list'})).toHaveClass('overflow-y-auto');
+ fireEvent.click(screen.getByRole('button',{name:'← All classes'}));
+ fireEvent.click(await screen.findByRole('button',{name:/AP Section View episodes/}));
+ expect(await screen.findByText('The Ride That Wouldn’t Autocorrect')).toBeInTheDocument();
+ expect(screen.queryByText('The Grain We Keep')).not.toBeInTheDocument();
+});
 it('does not expose cached episodes through expired memberships',async()=>{await db.class_members.put({$id:'m',classId:STONE_CLASS_ID,userId:'student',role:'student',joinedAt:'',expiresAt:'2026-10-01T00:00:00Z'});open();expect(await screen.findByText(/No episodes are available/)).toBeInTheDocument();expect(screen.queryByText('The Grain We Keep')).not.toBeInTheDocument();});
 it('does not give parent accounts a game library',async()=>{auth.user={$id:'teacher',role:'parent'};open();expect(await screen.findByRole('alert')).toHaveTextContent('available to students and class teachers');});
