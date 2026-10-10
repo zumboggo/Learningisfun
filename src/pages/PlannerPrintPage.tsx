@@ -23,6 +23,11 @@ export function PlannerPrintPage() {
   return <PlannerPrintSheet data={data}/>;
 }
 export function PlannerPrintSheet({data}: {data: WeeklyPlanData}) {
+  useEffect(() => {
+    const previousTitle = document.title;
+    document.title = data.week.key.trim() || `Week of ${data.week.startDate}`;
+    return () => { document.title = previousTitle; };
+  }, [data.week.key, data.week.startDate]);
   const rank:Record<string,number> = {'WL-B':0,'WL-R':1,ETH:2,AP:3};
   const blocks = [...data.week.blocks].sort((a,b)=>(rank[a.code]??4)-(rank[b.code]??4));
   const perPage = Math.max(1,Math.ceil(blocks.length/2));
