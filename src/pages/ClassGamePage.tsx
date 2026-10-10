@@ -14,7 +14,7 @@ export default function ClassGamePage() {
   const {user}=useAuth();
   return user ? <EpisodeLibrary key={`${user.$id}:${classId}`} classId={classId} userId={user.$id} role={user.role}/> : null;
 }
-export function EpisodeLibrary({classId,userId,role,embedded=false,showStone=true}:{classId:string;userId:string;role:string;embedded?:boolean;showStone?:boolean}) {
+export function EpisodeLibrary({classId,userId,role,embedded=false,showStone=classId===STONE_CLASS_ID}:{classId:string;userId:string;role:string;embedded?:boolean;showStone?:boolean}) {
   const access=useLiveQuery(async()=>{
     const cls=await db.classes.get(classId);
     const members=await db.class_members.where('[classId+userId]').equals([classId,userId]).toArray();
@@ -42,8 +42,8 @@ export function EpisodeLibrary({classId,userId,role,embedded=false,showStone=tru
   const completed=attempts.filter(a=>a.status==='complete'&&!a.preview);
   const best=completed.length?Math.max(...completed.map(a=>assess(a.choices).total)):null;
   return <main className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6">
-    {!embedded&&<nav aria-label="Class sections" className="flex gap-2 border-b pb-3"><Link className="rounded-lg px-4 py-3" to={`/classes/${classId}`}>Class materials</Link><span aria-current="page" className="rounded-lg border border-orange-300 bg-orange-50 px-4 py-3 font-semibold text-orange-950">The Game</span></nav>}
-    <header><p className="text-sm text-gray-600">{access.cls?.courseName} · {access.cls?.name}</p>{!embedded&&<h1 className="mt-2 text-3xl font-bold">The Game</h1>}<p className="mt-2">{embedded?'':access.preview?'Teacher library · All available episodes, including those not assigned to this class.':'Your assigned episodes stay here for unlimited replay.'}</p></header>
+    {!embedded&&<nav aria-label="Class sections" className="flex flex-wrap gap-2 border-b pb-3">{access.preview&&<Link className="rounded-lg px-4 py-3" to="/game">← All classes</Link>}<Link className="rounded-lg px-4 py-3" to={`/classes/${classId}`}>Class materials</Link><span aria-current="page" className="rounded-lg border border-orange-300 bg-orange-50 px-4 py-3 font-semibold text-orange-950">The Game</span></nav>}
+    <header><p className="text-sm text-gray-600">{access.cls?.courseName} · {access.cls?.name}</p>{!embedded&&<h1 className="mt-2 text-3xl font-bold">The Game</h1>}<p className="mt-2">{embedded?'':access.preview?'Teacher library · Browse and preview this class’s episodes.':'Your assigned episodes stay here for unlimited replay.'}</p></header>
     {showStone&&(access.preview||classId===STONE_CLASS_ID)?<article className="rounded-2xl border border-orange-300 bg-orange-50 p-6">
       <p className="text-xs font-semibold uppercase tracking-wide text-orange-900">Game episode · Ethics and Leadership · The Teaching Stone · 01</p>
       <h2 className="mt-2 font-serif text-3xl">The Grain We Keep</h2>

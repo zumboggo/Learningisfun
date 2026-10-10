@@ -14,7 +14,7 @@
     "story:build": "node scripts/build-stone.mjs && node scripts/build-young.mjs",
     "story:check": "node scripts/build-stone.mjs --check && node scripts/build-young.mjs --check",
     "test:stone": "node --test functions/learning-content/src/stone-checks.mjs",
-    "test:episodes": "node --test functions/learning-content/src/episodes-checks.mjs functions/learning-content/src/young-scoring-checks.mjs"
+    "test:episodes": "node --test functions/learning-content/src/episode-text-checks.mjs functions/learning-content/src/episodes-checks.mjs functions/learning-content/src/young-scoring-checks.mjs"
   },
   "dependencies": {
     "appwrite": "^26.0.0",
