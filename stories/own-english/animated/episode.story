@@ -36,12 +36,12 @@ goto summon
 label summon
 camera wide
 show Hepting happy center
-Hepting: Young's essay gives us a useful way to test that objection. Luckily, my transport app has a “deadline emergency” button.
+Hepting [happy, explain]: Young's essay gives us a useful way to test that objection. Luckily, my transport app has a “deadline emergency” button.
 I: Mr. Hepting opens a secret WeChat mini-program. Its dumpling icon unfolds into a golden wheel.
 effect magic
 I: A silver Didi pushes through the classroom window. The glass stretches like a soap bubble, then snaps back without a crack.
 I: The car settles between the board and the front row. Its headlights briefly illuminate tomorrow. Tomorrow appears to contain homework.
-Hepting: Bring both drafts and the essay. Your job is still to help Lin submit something she can stand behind.
+Hepting [determined, reassure]: Bring both drafts and the essay. Your job is still to help Lin submit something she can stand behind.
 I: The driver lowers his sunglasses: “Chicago, autumn 2011. University writing workshop. Four questions before the ride home. Three correct pays the fare.”
 scene rift
 effect magic

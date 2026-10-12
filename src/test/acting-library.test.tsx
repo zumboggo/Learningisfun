@@ -20,3 +20,25 @@ it('finite gestures prepare, emphasize, hold and settle without a repeating puls
 it('cartoon skins validate only the shared palette and render continuous arms',()=>{expect(validateRig(pack.assets.characters.Lin.rig)).toBeNull();expect(validateRig({version:2,preset:'cartoon-v1',palette:{skin:'url(attack)'}})).not.toBeNull();const {container}=render(<PuppetActor character={pack.assets.characters.Lin} reduced/>);expect(container.querySelectorAll('[data-arm]')).toHaveLength(2);expect(container.querySelectorAll('image')).toHaveLength(0);expect(container.querySelector('.cartoon-chest')).toBeNull();});
 
 it('manga styling is optional and does not change the rig or legal cues',()=>{const rig=structuredClone(pack.assets.characters.Lin.rig);expect(rig.style).toBe('manga');expect(validateRig(rig)).toBeNull();delete rig.style;expect(validateRig(rig)).toBeNull();rig.style='unknown';expect(validateRig(rig)).toContain('style');});
+
+it('shared appearance schema rejects unknown traits and unsafe values',()=>{
+ const rig=pack.assets.characters.Hepting.rig;
+ for(const appearance of [null,[],{hair:'new-arbitrary-svg'},{glasses:true},{age:'child'},{script:'alert(1)'},{constructor:'teen'}])expect(validateRig({...rig,appearance})).not.toBeNull();
+ expect(validateRig({...rig,appearance:{}})).toBeNull();
+});
+it('all reusable cast packs share continuous anatomy while preserving identity',()=>{
+ const silhouettes=new Set<string>();
+ for(const id of ['Lin','Hepting','Mei','Yeyul']){
+  const character=JSON.parse(readFileSync(`public/stories/animated/rigs/${id.toLowerCase()}-cartoon.json`,'utf8'));
+  expect(validateRig(character.rig)).toBeNull();
+  const {container,unmount}=render(<PuppetActor character={character} reduced/>);
+  expect(container.querySelector('svg')).toHaveAttribute('viewBox','0 0 240 600');
+  expect(container.querySelectorAll('[data-arm]')).toHaveLength(2);
+  silhouettes.add(container.querySelector('svg')!.getAttribute('data-hair')!);
+  expect(container.querySelector('[data-glasses]')!==null).toBe(id==='Hepting');
+  expect(container.querySelector('svg')).toHaveAttribute('data-age',id==='Hepting'?'adult':'teen');
+  unmount();
+ }
+ expect(silhouettes.size).toBe(4);
+ for(const c of Object.values(pack.assets.characters) as any[])expect(c.rig.preset).toBe('cartoon-v1');
+});

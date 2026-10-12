@@ -1,6 +1,6 @@
 # Shared acting library v1
 
-Generated from `functions/learning-content/src/acting-library.js`. Use Story 2 for all new episodes. Do not invent cue names. Current Lin uses cartoon-v1: a coherent vector character with continuous arms and finite coordinated gestures. Raster teen-v1 remains supported for existing packages. Both use this same closed cue vocabulary.
+Generated from `functions/learning-content/src/acting-library.js`. Use Story 2 for all new episodes. Do not invent cue names. The reusable Lin, Hepting, Mei and Yeyul cast uses cartoon-v1: a coherent vector character with continuous arms and finite coordinated gestures. Raster teen-v1 remains supported for existing packages. Both use this same closed cue vocabulary.
 
 ## Emotions
 
@@ -73,7 +73,7 @@ Whole-character moves: `enter`, `exit`, `left`, `center`, `right`, `turn`, `nod`
 
 ## Current cartoon character contract
 
-New Lin uses character version 4 with `rig: {version: 2, preset: "cartoon-v1", style: "manga", palette: {skin: "#eac09c", hair: "#293338", shirt: "#b93f46"}}`. Palette values must be six-digit hex colours. The runtime draws the complete figure in one vector style, including curved arms and consistent hands and face. No bitmap body parts are required. Keep the existing cue vocabulary.
+New Lin uses character version 4 with `rig: {version: 2, preset: "cartoon-v1", style: "manga", palette: {skin: "#eac09c", hair: "#293338", shirt: "#b93f46"}}`. Palette values must be six-digit hex colours. The runtime draws the complete figure in one vector style, including curved arms and consistent hands and face. No bitmap body parts are required. Optional appearance selects age (teen/adult), hair (layered/side-part/long/bob), glasses (none/round), and outfit (uniform/teacher). Omitted appearance preserves Lin’s original design. See character-standard.md for constraints and the creation prompt. Keep the existing cue vocabulary.
 
 ## Legacy raster character contract
 

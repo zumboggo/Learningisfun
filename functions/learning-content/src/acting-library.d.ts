@@ -7,3 +7,5 @@ export function packageAssetEntries(pack:any):any[];
 export function validateRig(rig:any):string|null;
 
 export function packageContentBytes(pack:any):number;
+
+export const CHARACTER_OPTIONS:Record<string,string[]>;
