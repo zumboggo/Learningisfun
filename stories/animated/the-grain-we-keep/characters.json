@@ -1,0 +1,82 @@
+[
+  {
+    "id": "Djehu",
+    "name": "Djehu \u00b7 the scribe",
+    "version": 1,
+    "palette": {
+      "skin": "#a8734f",
+      "hair": "#34302b",
+      "shirt": "#e8dfc9",
+      "trim": "#a98a50"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "cropped",
+      "face": "oval",
+      "glasses": "none",
+      "facialHair": "none",
+      "outfit": "tunic"
+    },
+    "provenance": "Fictional manga adaptation of the existing Teaching Stone character. Shared cartoon-v1 rig; generic linen-coloured costume, not a documentary reconstruction. No real-person likeness."
+  },
+  {
+    "id": "Tia",
+    "name": "Tia \u00b7 household representative",
+    "version": 1,
+    "palette": {
+      "skin": "#875538",
+      "hair": "#292726",
+      "shirt": "#dbcfb1",
+      "trim": "#a98a50"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "long",
+      "face": "round",
+      "glasses": "none",
+      "facialHair": "none",
+      "outfit": "robe"
+    },
+    "provenance": "Fictional manga adaptation of the existing Teaching Stone character. Shared cartoon-v1 rig; generic linen-coloured costume, not a documentary reconstruction. No real-person likeness."
+  },
+  {
+    "id": "Hori",
+    "name": "Hori \u00b7 irrigation worker",
+    "version": 1,
+    "palette": {
+      "skin": "#805439",
+      "hair": "#332c29",
+      "shirt": "#d1bd96",
+      "trim": "#a98a50"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "layered",
+      "face": "angular",
+      "glasses": "none",
+      "facialHair": "none",
+      "outfit": "tunic"
+    },
+    "provenance": "Fictional manga adaptation of the existing Teaching Stone character. Shared cartoon-v1 rig; generic linen-coloured costume, not a documentary reconstruction. No real-person likeness."
+  },
+  {
+    "id": "Intef",
+    "name": "Intef \u00b7 landholder",
+    "version": 1,
+    "palette": {
+      "skin": "#b78057",
+      "hair": "#797770",
+      "shirt": "#f0e8d5",
+      "trim": "#a98a50"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "cropped",
+      "face": "angular",
+      "glasses": "none",
+      "facialHair": "none",
+      "outfit": "robe"
+    },
+    "provenance": "Fictional manga adaptation of the existing Teaching Stone character. Shared cartoon-v1 rig; generic linen-coloured costume, not a documentary reconstruction. No real-person likeness."
+  }
+]

@@ -1,0 +1,24 @@
+{
+  "adaptation": "Additive adaptation; never replace the polished original Teaching Stone episode.",
+  "storyCircle": {
+    "you": "Student in Mr. Hepting's classroom, invited to consider limited grain.",
+    "need": "Make decisions that can be defended to people who must live with them.",
+    "go": "Teaching Stone transports the student safely into an Egyptian village as a temporary adviser.",
+    "search": "Hear needs, distribute rations, repair the bank, negotiate food and examine an accusation.",
+    "find": "There are resources and workable plans, but each shifts a cost or risk.",
+    "take": "The river tests preparation; evidence, labour debt and seed tradeoffs cannot be wished away.",
+    "return": "Hand over responsibility and return safely through the stone.",
+    "change": "Notice who an account omits; leave reasons, consequences and appeals open to scrutiny."
+  },
+  "characterMotives": {
+    "Djehu": "Wants an accurate account; fears a correction will cost him his place. Open acknowledgment can teach a safer procedure.",
+    "Tia": "Wants neighbours fed with dignity; knows absent and larger households disappear behind equal-looking totals.",
+    "Hori": "Wants durable repairs without sacrificing workers' households; his father's failed patches explain his insistence on the foundation.",
+    "Intef": "Wants people to survive and his contribution recognised; fears every future shortage becoming his personal obligation."
+  },
+  "variables": ["food: bounded integer", "seed: bounded integer", "repaired: boolean", "evidence: boolean"],
+  "assessment": "Four knowledge questions, 75/100 required. No moral points for a preferred decision or fortunate river outcome; independent Ethics portfolio preserved.",
+  "assets": "Existing village scenery plus shared classroom; Hepting and four reusable cartoon-v1 character recipes. No new episode-specific player code.",
+  "curriculumBoundary": "Faithful adaptation of the existing Egyptian lesson, rather than rewriting it into the current weekly Socrates unit.",
+  "availability": "Separate published teacher-library edition. No original assignment or student attempt is changed."
+}
