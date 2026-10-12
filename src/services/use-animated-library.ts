@@ -1,0 +1,6 @@
+import {useEffect,useState} from 'react';
+import {animatedCall} from './animated-stories';
+const cache=new Map<string,{at:number;data:any}>(),pending=new Map<string,Promise<any>>();
+export async function readAnimatedLibrary(userId:string){const hit=cache.get(userId);if(hit&&Date.now()-hit.at<60000)return hit.data;let request=pending.get(userId);if(!request){request=animatedCall('animatedLibrary').then(data=>{if(!Array.isArray(data?.assignments)||!Array.isArray(data?.drafts))throw Error('Invalid episode library response');cache.set(userId,{at:Date.now(),data});return data;}).finally(()=>pending.delete(userId));pending.set(userId,request);}return request;}
+export function invalidateAnimatedLibrary(userId:string){cache.delete(userId);window.dispatchEvent(new Event('animated-library-changed'));}
+export function useAnimatedLibrary(userId:string){const [data,setData]=useState<any>(cache.get(userId)?.data||null);useEffect(()=>{let active=true;const load=()=>{if(!userId)return;void readAnimatedLibrary(userId).then(d=>{if(active)setData(d);}).catch(()=>{});};load();window.addEventListener('animated-library-changed',load);return()=>{active=false;window.removeEventListener('animated-library-changed',load);};},[userId]);return data;}

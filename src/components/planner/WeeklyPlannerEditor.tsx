@@ -1,3 +1,4 @@
+import {useAnimatedLibrary} from '@/services/use-animated-library';
 import {addAssignedEpisodes} from '@/services/planner-episodes';
 import { preparePlannerStarters } from '@/services/planner-starters';
 import type { PlannerWeekSource } from '@/services/planner-parser';
@@ -19,6 +20,7 @@ import { PlannerSharePreview } from './PlannerSharePreview';
 import { WeeklySlots } from './WeeklySlots';
 
 export function WeeklyPlannerEditor({ initial, suggestedWeek, record, sourceId, userId, units, onUnitsChange, onSaved }: { initial: WeeklyPlanData; suggestedWeek?: PlannerWeekSource; record?: WeeklyPlanRecord; sourceId: string; userId: string; units: UnitPlan[]; onUnitsChange: (units: UnitPlan[]) => void; onSaved: (record: WeeklyPlanRecord) => void }) {
+  const animatedLibrary=useAnimatedLibrary(userId);
   const [, redraw] = useReducer(value => value + 1, 0);
   const [writer] = useState(() => new PlannerAutosave(`planner-draft:${userId}:${sourceId}:${initial.week.key}`, { data: preparePlannerStarters(prepareWeeklyBank(migrateCardEditor(initial)),suggestedWeek), ready: record?.status === 'ready' || record?.status === 'published' }, record, localStorage, async (draft, id) => { const saved = (await saveWeeklyPlan(sourceId, projectCardMaterials(draft.data), draft.ready ? 'ready' : 'draft', id)).plan; onSaved(saved); return saved; }));
   useEffect(()=>{
@@ -38,9 +40,9 @@ export function WeeklyPlannerEditor({ initial, suggestedWeek, record, sourceId, 
   },[classIdsKey,userId]);
   useEffect(()=>{
     if(!assignedReadings)return;
-    const next=addAssignedEpisodes(addAssignedTexts(writer.draft.data,assignedReadings.texts,assignedReadings.assignments,window.location.href),window.location.href);
+    const next=addAssignedEpisodes(addAssignedTexts(writer.draft.data,assignedReadings.texts,assignedReadings.assignments,window.location.href),window.location.href,animatedLibrary?.assignments||[]);
     if(JSON.stringify(next.weeklyResources)!==JSON.stringify(writer.draft.data.weeklyResources))writer.update({...writer.draft,data:next});
-  },[assignedReadings,writer]);
+  },[assignedReadings,writer,animatedLibrary]);
   const [busy, setBusy] = useState(false), [message, setMessage] = useState('');
   const [share,setShare]=useState<WeeklyPlanData|null>(null);
   const [shareError,setShareError]=useState('');

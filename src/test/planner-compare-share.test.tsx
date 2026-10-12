@@ -51,7 +51,7 @@ describe('World Lit comparison and sharing',()=>{
     vi.mocked(executeLearningContent).mockResolvedValue({plan:{...record,status:'published'},published:{agendas:2,texts:0,presentations:0}});
     render(<MemoryRouter><WeeklyPlannerEditor initial={data} record={record} userId="teacher" sourceId="source" units={[]} onUnitsChange={()=>{}} onSaved={()=>{}}/></MemoryRouter>);
     fireEvent.click(screen.getByText('Share with students…'));
-    expect(executeLearningContent).not.toHaveBeenCalled();
+    expect(executeLearningContent).not.toHaveBeenCalledWith(expect.objectContaining({action:'publishWeeklyPlan'}));
     fireEvent.click(screen.getByText('Confirm · Share now'));
     await waitFor(()=>expect(executeLearningContent).toHaveBeenCalledWith({action:'publishWeeklyPlan',planId:'plan',expectedUpdatedAt:'reviewed-version'}));
     expect(await screen.findByText(/Published 2 agendas/)).toBeInTheDocument();

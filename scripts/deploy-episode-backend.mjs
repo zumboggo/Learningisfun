@@ -1,3 +1,4 @@
+import {fileURLToPath} from 'node:url';
 import {execFileSync} from 'node:child_process';
 import {mkdtempSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
@@ -14,4 +15,4 @@ export async function deployEpisodeBackend(){
  while(Date.now()<deadline){const status=await functions.getDeployment({functionId:'learning-content',deploymentId:deployment.$id});if(status.status==='failed')throw new Error('Backend build failed; frontend was not published');if(status.status==='ready'){const active=await functions.get({functionId:'learning-content'});if(active.deploymentId!==deployment.$id)throw new Error('Backend built but is not active; verify before publishing');console.log('Backend ready and active:',deployment.$id);return deployment.$id;}await new Promise(r=>setTimeout(r,5000));}
  throw new Error('Backend activation not confirmed in five minutes; inspect this deployment rather than creating a duplicate: '+deployment.$id);
 }
-if(process.argv[1]&&resolve(process.argv[1])===new URL(import.meta.url).pathname)await deployEpisodeBackend();
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url))await deployEpisodeBackend();

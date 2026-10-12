@@ -1,0 +1,9 @@
+export interface StoryPackage {format:1;title:string;description:string;profile:string;script:string;assets:{backgrounds:Record<string,any>;characters:Record<string,any>;music?:any};quiz:{prompt:string;options:string[];answer:number;explanation:string}[];sources?:string[]}
+export interface StoryState {cues?:any[];cursor:number;variables:Record<string,number|boolean>;stage:{background:string|null;actors:Record<string,{expression:string;position:string;facing:number}>};history:{actor:string;text:string}[];events:any[];seed:number;ended:boolean}
+export function compileStory(source:string,assets?:any):{errors:{line:number;message:string}[];story?:any};
+export function validatePackage(pack:StoryPackage):ReturnType<typeof compileStory>;
+export function initialStoryState(story:any,seed?:number):StoryState;
+export function settleStory(story:any,state:StoryState):StoryState;
+export function advanceStory(story:any,state:StoryState,option:string|null):StoryState;
+export function replayStory(story:any,steps:(string|null)[],seed:number):StoryState;
+export function quizScore(quiz:StoryPackage['quiz'],answers:number[]):number;

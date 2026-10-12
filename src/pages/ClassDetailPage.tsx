@@ -1,3 +1,4 @@
+import {useAnimatedLibrary} from '@/services/use-animated-library';
 import {EpisodeCards,episodeWeek} from '@/components/EpisodeCards';
 import {assignedEpisodes} from '../../functions/learning-content/src/episode-catalog.js';
 import {ensureDeckCards} from '@/services/flashcard-cache';
@@ -923,6 +924,7 @@ function SimplePresentationLinksPanel({ links, isOwner }: { links: PresentationL
 
 function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }: { classId: string; materials: WeeklyMaterial[]; isOwner: boolean; onOpenQuizResults: (quiz: Quiz) => void }) {
   const { user, isParent } = useAuth();
+  const nativeEpisodes=useAnimatedLibrary(user?.$id||'')?.assignments.filter((a:any)=>a.classId===classId)||[];
   const textDiscussions = useWeeklyTextDiscussions(classId, user?.$id);
   const teacherClasses=useLiveQuery(()=>user?db.classes.where('teacherId').equals(user.$id).toArray():[],[user?.$id]);
   const releasedCards = useLiveQuery(async () => {
@@ -937,6 +939,7 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
     groups.set(key, [...(groups.get(key) || []), material]);
   }
   if(!isParent) for(const episode of assignedEpisodes(classId,isOwner)){if(episode.assignedDate){const week=episodeWeek(episode.assignedDate);if(!groups.has(week))groups.set(week,[]);}}
+  if(!isParent)for(const e of nativeEpisodes){const week=episodeWeek(e.date);if(!groups.has(week))groups.set(week,[]);}
   for (const week of vocabulary.keys()) if (!groups.has(week)) groups.set(week, []);
   const currentWeek = weekStart(todayKey());
   const upcomingWeek = addDays(currentWeek, 7);
@@ -1012,7 +1015,7 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
           const priority: Record<WeeklyMaterial['kind'], number> = { text: 0, presentation: 1, notes: 2, writingPrompt: 3, discussion: 4, quiz: 5 };
           const items = [...unsortedItems].sort((a, b) => priority[a.kind] - priority[b.kind] || b.date.localeCompare(a.date));
           const isOpen = openWeeks.has(week);
-          const itemCount = items.length + (isParent ? 0 : assignedEpisodes(classId,isOwner).filter(e=>e.assignedDate&&episodeWeek(e.assignedDate)===week).length);
+          const itemCount = items.length + (isParent?0:nativeEpisodes.filter((e:any)=>episodeWeek(e.date)===week).length) + (isParent ? 0 : assignedEpisodes(classId,isOwner).filter(e=>e.assignedDate&&episodeWeek(e.assignedDate)===week).length);
           const byKind = <K extends WeeklyMaterial['kind']>(kind: K) => items.filter((item): item is Extract<WeeklyMaterial, { kind: K }> => item.kind === kind);
           const texts = byKind('text'), presentations = byKind('presentation'), notes = byKind('notes'), writingPrompts = byKind('writingPrompt'), discussions = byKind('discussion'), quizzes = byKind('quiz');
           const weekLabel = week === currentWeek ? `This week · ${formatWeek(week)}` : week === upcomingWeek ? `Coming up · ${formatWeek(week)}` : week < currentWeek ? `Earlier · ${formatWeek(week)}` : `Later · ${formatWeek(week)}`;
@@ -1041,7 +1044,7 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
                 if (isParent) return <div key={item.quiz.$id} className="flex items-center border-t border-amber-100 px-4 py-3">{details}</div>;
                 return <Link key={item.quiz.$id} to={`/quizzes/${item.quiz.$id}/take`} className="flex items-center gap-3 border-t border-amber-100 px-4 py-3 hover:bg-amber-100/50">{details}<span className="shrink-0 text-xs font-semibold text-amber-900">{best ? 'Review result' : 'Open quiz'} →</span></Link>;
               })}</CompactWeekSection>}
-              {!items.length && !assignedEpisodes(classId,isOwner).some(e=>e.assignedDate&&episodeWeek(e.assignedDate)===week) && <p className="rounded-lg border border-dashed p-4 text-sm text-gray-500">Nothing has been added to this week yet.</p>}
+              {!items.length && !nativeEpisodes.some((e:any)=>episodeWeek(e.date)===week) && !assignedEpisodes(classId,isOwner).some(e=>e.assignedDate&&episodeWeek(e.assignedDate)===week) && <p className="rounded-lg border border-dashed p-4 text-sm text-gray-500">Nothing has been added to this week yet.</p>}
             </div>}
           </div>;
         })}

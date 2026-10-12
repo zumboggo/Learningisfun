@@ -1,0 +1,16 @@
+import 'fake-indexeddb/auto';
+import {afterEach,expect,it,vi} from 'vitest';
+import {cleanup,fireEvent,render,screen,waitFor} from '@testing-library/react';
+import {MemoryRouter} from 'react-router-dom';
+import {readFileSync} from 'node:fs';
+const call=vi.hoisted(()=>vi.fn());
+vi.mock('@/services/learning-content.service',()=>({executeLearningContent:call}));
+vi.mock('@/contexts/AuthContext',()=>({useAuth:()=>({user:{$id:'teacher',role:'teacher'}})}));
+vi.mock('dexie-react-hooks',()=>({useLiveQuery:()=>[{$id:'class',courseName:'AP Language',name:'11'}]}));
+import Studio from '@/pages/AnimatedStudioPage';
+import StoryPlayer from '@/components/animated/StoryPlayer';
+import {settleStory,initialStoryState,advanceStory,validatePackage} from '../../functions/learning-content/src/story-engine.js';
+const pack=JSON.parse(readFileSync('public/stories/animated/demo.json','utf8'));
+afterEach(()=>{cleanup();localStorage.clear();vi.unstubAllGlobals();call.mockReset();});
+it('opens a saved draft, validates, publishes and assigns through the common API',async()=>{call.mockImplementation(async b=>b.action==='animatedLibrary'?{assignments:[],drafts:[]}:b.action==='animatedReadDraft'?{pack,revision:1}:b.action==='animatedSaveDraft'?{revision:2}:b.action==='animatedPublish'?{version:2,versionId:'v'}:{});render(<MemoryRouter initialEntries={['/game/create?draft=demo']}><Studio/></MemoryRouter>);await screen.findByDisplayValue(pack.title);fireEvent.click(screen.getByRole('button',{name:'Publish fixed version'}));await screen.findByText('Published version 2 · ready to assign');fireEvent.change(screen.getByLabelText('Assign to class'),{target:{value:'class'}});fireEvent.change(screen.getByLabelText('Teaching date'),{target:{value:'2026-10-20'}});fireEvent.click(screen.getByRole('button',{name:'Assign episode'}));await waitFor(()=>expect(call).toHaveBeenCalledWith({action:'animatedAssign',versionId:'v',classId:'class',date:'2026-10-20'}));});
+it('resumes the same story endpoint, explains a failed quiz and permits a successful retry',async()=>{const {story}=validatePackage(pack);let s=settleStory(story,initialStoryState(story,1));const steps:(string|null)[]=[];while(!s.ended){const n=story.nodes[s.cursor],o=n.type==='choice'?n.options[0].id:null;steps.push(o);s=advanceStory(story,s,o);}const saved=vi.fn();render(<StoryPlayer pack={pack} initial={{steps,seed:1,quizzes:[[0,0,0,0]]}} onProgress={saved}/>);expect(screen.getByText(/25\/100/)).toBeInTheDocument();for(let i=0;i<4;i++)fireEvent.click(screen.getAllByRole('group')[i].querySelectorAll('input')[i]);fireEvent.click(screen.getByRole('button',{name:'Check answers'}));expect(screen.getByText(/100\/100/)).toBeInTheDocument();expect(saved.mock.calls[0][0].steps).toEqual(steps);});

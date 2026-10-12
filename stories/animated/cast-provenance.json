@@ -1,0 +1,17 @@
+{
+  "source": "/Users/david.hepting/.codex/generated_images/01a11f1b-c6f2-7fb1-b0bd-5c7605518c2c/exec-1b08b209-d5ce-45c9-ba78-b689e9085029.png",
+  "created": "2026-10-12",
+  "uniform": "CDIS red polo, white piping, navy trousers",
+  "mascot": "panda",
+  "processing": "Atlas cells extracted and normalized to a common transparent 240x370 canvas; WebP quality 85.",
+  "expressions": [
+    "neutral",
+    "happy",
+    "worried",
+    "angry",
+    "surprised",
+    "sad"
+  ],
+  "prompt": "Transparent graphic-novel sprite atlas: six expressions neutral, happy, worried, angry, surprised, sad for each of Mr. Hepting, Mei, Lin and Yeyul. Same standing height and pose, alpha outside figures. Adult teacher teal sweater/beige trousers. Grade 11 students red short-sleeved CDIS polos, white collar/cuff piping, small white shield and navy trousers. Fictional designs, no actual-student likenesses.",
+  "referenceUrl": "https://cdis-english-challenge.zumboggo.chatgpt.site/"
+}

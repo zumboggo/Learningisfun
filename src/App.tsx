@@ -1,3 +1,5 @@
+const AnimatedStudioPage = lazy(() => import('@/pages/AnimatedStudioPage'));
+const AnimatedEpisodePage = lazy(() => import('@/pages/AnimatedEpisodePage'));
 const GamePage = lazy(() => import('@/pages/GamePage'));
 const PrinciplesPortfolioPage = lazy(() => import('@/pages/PrinciplesPortfolioPage'));
 const EpisodePage = lazy(() => import('@/pages/EpisodePage'));
@@ -149,6 +151,8 @@ export default function App() {
 
           <Route path="/classes" element={<ProtectedRoute><ClassesListPage /></ProtectedRoute>} />
           <Route path="/classes/:classId/episodes/:episodeId" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening episode…</p>}><EpisodePage /></Suspense></ProtectedRoute>} />
+          <Route path="/game/create" element={<ProtectedRoute><TeacherRoute><Suspense fallback={<p>Opening studio…</p>}><AnimatedStudioPage /></Suspense></TeacherRoute></ProtectedRoute>} />
+          <Route path="/game/play/:assignmentId" element={<ProtectedRoute><Suspense fallback={<p>Opening episode…</p>}><AnimatedEpisodePage /></Suspense></ProtectedRoute>} />
           <Route path="/game" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening The Game…</p>}><GamePage /></Suspense></ProtectedRoute>} />
           <Route path="/classes/:classId/principles" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening portfolio…</p>}><PrinciplesPortfolioPage /></Suspense></ProtectedRoute>} />
           <Route path="/classes/:classId/game" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening The Game…</p>}><ClassGamePage /></Suspense></ProtectedRoute>} />
