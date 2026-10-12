@@ -39,3 +39,5 @@ The checked-in source/package now uses Story 2 with Lin character version 2, tee
 ## Continuous cartoon Lin — 2026-10-12
 
 The unassigned preview now uses character version 3 (`cartoon-v1`), drawn entirely in SVG with one consistent outline and palette. Continuous curved arms replace raster elbow/wrist joins. Speaking gestures have a finite preparation/emphasis/hold/settle sequence; the head follows slightly later. Breathing expands the chest subtly while feet remain planted. Small mouth shapes include pauses. A 20-second rehearsal on `/game/acting-demo` demonstrates listening, questioning, celebration, hesitation and reassurance. No generated bitmap artwork was added for this revision. Previously published packages and the legacy raster renderer remain available.
+
+Lin character version 4 adds manga-inspired vector eyes, layered hair and subtle cel shading (`style: manga`) while preserving the continuous-limb animation. Existing cartoon packs without the style flag retain their simple design.

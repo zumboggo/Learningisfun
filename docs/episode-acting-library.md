@@ -73,7 +73,7 @@ Whole-character moves: `enter`, `exit`, `left`, `center`, `right`, `turn`, `nod`
 
 ## Current cartoon character contract
 
-New Lin uses character version 3 with `rig: {version: 2, preset: "cartoon-v1", palette: {skin: "#eac09c", hair: "#293338", shirt: "#b93f46"}}`. Palette values must be six-digit hex colours. The runtime draws the complete figure in one vector style, including curved arms and consistent hands and face. No bitmap body parts are required. Keep the existing cue vocabulary.
+New Lin uses character version 4 with `rig: {version: 2, preset: "cartoon-v1", style: "manga", palette: {skin: "#eac09c", hair: "#293338", shirt: "#b93f46"}}`. Palette values must be six-digit hex colours. The runtime draws the complete figure in one vector style, including curved arms and consistent hands and face. No bitmap body parts are required. Keep the existing cue vocabulary.
 
 ## Legacy raster character contract
 
