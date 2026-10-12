@@ -1,3 +1,4 @@
+import {packageAssetEntries,packageContentBytes} from './acting-library.js';
 import {createHash,randomInt} from 'node:crypto';
 import {Query} from 'node-appwrite';
 import {InputFile} from 'node-appwrite/file';
@@ -7,13 +8,13 @@ const collection='episode_records',bucketId='animated-episodes';
 const hash=s=>createHash('sha256').update(s).digest('hex').slice(0,32);
 const fail=(s,code=400)=>{throw Object.assign(Error(s),{code});};
 const safeId=s=>typeof s==='string'&&/^[\w-]{1,64}$/.test(s);
-export function packageBytes(pack){let bytes=Buffer.byteLength(JSON.stringify({...pack,assets:{}}));for(const a of [...Object.values(pack.assets?.backgrounds||{}),...Object.values(pack.assets?.characters||{}).flatMap(c=>Object.values(c.expressions||{})),...(pack.assets?.music?[pack.assets.music]:[])]){if(typeof a.src!=='string'||!/^data:(image\/webp|audio\/mpeg|audio\/ogg);base64,[A-Za-z0-9+/]+=*$/.test(a.src))fail('Package assets must be embedded WebP images or MP3/Ogg audio');const b=Buffer.from(a.src.split(',')[1],'base64');if(a.src.startsWith('data:image/webp')&&(b.toString('ascii',0,4)!=='RIFF'||b.toString('ascii',8,12)!=='WEBP'))fail('Invalid WebP image');bytes+=b.length;}return bytes;}
+export function packageBytes(pack){let bytes=packageContentBytes(pack);for(const a of packageAssetEntries(pack)){if(typeof a.src!=='string'||!/^data:(image\/webp|audio\/mpeg|audio\/ogg);base64,[A-Za-z0-9+/]+=*$/.test(a.src))fail('Package assets must be embedded WebP images or MP3/Ogg audio');const b=Buffer.from(a.src.split(',')[1],'base64');if(a.src.startsWith('data:image/webp')&&(b.toString('ascii',0,4)!=='RIFF'||b.toString('ascii',8,12)!=='WEBP'))fail('Invalid WebP image');}return bytes;}
 export async function animatedEpisodeAction({body,profile,userId,memberClassIds,db,databaseId,storage}){
  const teacher=['teacher','admin'].includes(profile.role),scope='studio-'+userId;
  const list=async(queries)=>{const all=[];let cursor;do{const page=await db.listDocuments(databaseId,collection,[...queries,Query.limit(100),...(cursor?[Query.cursorAfter(cursor)]:[])]);all.push(...page.documents);cursor=page.documents.length===100?page.documents.at(-1).$id:null;}while(cursor);return all;};
  const read=async id=>JSON.parse((await db.getDocument(databaseId,collection,id)).dataJson);
  const write=async(id,classId,kind,data)=>{const dataJson=JSON.stringify(data);if(dataJson.length>28000)fail('Record exceeds supported size');return db.createDocument(databaseId,collection,id,{classId,userId,kind,dataJson},[]);};
- const getPack=async fileId=>{const raw=await storage.getFileDownload({bucketId,fileId});return raw&&raw.format===1?raw:JSON.parse(Buffer.from(raw).toString());};
+ const getPack=async fileId=>{const raw=await storage.getFileDownload({bucketId,fileId});return raw&&[1,2].includes(raw.format)?raw:JSON.parse(Buffer.from(raw).toString());};
  const storePack=async pack=>{const raw=JSON.stringify(pack);if(raw.length>7500000)fail('Package is too large');const fileId=hash(userId+raw);try{await storage.createFile({bucketId,fileId,file:InputFile.fromBuffer(Buffer.from(raw),'episode.json'),permissions:[]});}catch(e){if(e.code!==409)throw e;}return fileId;};
  const latest=async(id)=>{const rows=await list([Query.equal('classId',scope),Query.equal('kind','animated-draft-'+id)]);return rows.map(r=>JSON.parse(r.dataJson)).sort((a,b)=>b.revision-a.revision)[0];};
  const owned=async classId=>{const c=await db.getDocument(databaseId,'classes',classId);if(!teacher||c.teacherId!==userId)fail('Only the class teacher can assign episodes',403);};

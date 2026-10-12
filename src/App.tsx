@@ -1,3 +1,4 @@
+const ActingDemoPage = lazy(() => import('@/pages/ActingDemoPage'));
 const AnimatedStudioPage = lazy(() => import('@/pages/AnimatedStudioPage'));
 const AnimatedEpisodePage = lazy(() => import('@/pages/AnimatedEpisodePage'));
 const GamePage = lazy(() => import('@/pages/GamePage'));
@@ -117,6 +118,7 @@ export default function App() {
     <HashRouter>
       <AuthProvider>
         <Routes>
+          <Route path="/game/acting-demo" element={<Suspense fallback={<p>Loading Lin…</p>}><ActingDemoPage/></Suspense>} />
           <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
           <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />

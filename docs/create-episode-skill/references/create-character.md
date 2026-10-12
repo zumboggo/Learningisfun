@@ -1,0 +1,11 @@
+# Create episode character
+
+For articulated characters, use the shipped Lin rig as the visual and anatomical reference. Read [the acting library](acting-library.md). Reuse `teen-v1`; do not add character-specific animation names. Lin is currently the only supplied articulated skin. Existing flat packs remain valid fallbacks.
+
+Imagegen prompt:
+
+“Create a transparent production puppet-parts atlas for [fictional character name and appearance], matching the supplied Lin reference’s graphic-novel inks, shading and slender Grade 11 proportions. CDIS students wear a red short-sleeved polo with white piping and navy trousers. The teacher is an adult. No actual student likeness. Use a generous, non-overlapping 4×4 grid: row 1 torso, pelvis, head, empty; row 2 left upper arm, left forearm, right upper arm, right forearm; row 3 left hand, right hand, left thigh, right thigh; row 4 left shin with shoe, right shin with shoe, empty, empty. Arms hang straight down in neutral local coordinates. Head includes hair, ears and neck, with a smooth blank face: the runtime draws eyes, eyebrows, nose and mouth. Hidden rounded overlap extends past every joint. No cast shadows, labels, scenery or assembled figure. Real alpha transparency; consistent scale and identity.”
+
+Inspect every extracted part for neighbouring-cell contamination and intact joint overlap. Save the exact 13 transparent WebP parts named in acting-library.md. Reuse the fixed 240×600 SVG skeleton, common feet baseline, head placement and face overlay. Test neutral, guarded, explain, wave and recoil at wide and close framing before accepting the pack. Do not claim arbitrary body proportions fit without inspecting them. Record prompt, date, reference and fictional-design provenance. Package character metadata includes name, version, provenance, neutral expression fallback, and `rig: {version: 1, preset: "teen-v1", parts: {…}}`. Import via episode ZIP; all referenced parts count toward the 5 MB limit. Copy Lin’s build script as the packaging pattern, changing skin assets rather than runtime logic.
+
+For an intentionally static supporting character, generate aligned full-body expression images using only the shared emotions. A neutral image is required; unavailable expressions fall back to it. Static characters support whole-character moves but not articulated arm gestures.

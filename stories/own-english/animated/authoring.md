@@ -31,3 +31,7 @@ Prompt: “Use case: illustration-story. Create a wide 16:9 graphic novel backgr
 Run `node stories/own-english/animated/build.mjs`, then `node scripts/story-package.mjs zip public/stories/own-english/animated/episode.json public/stories/own-english/animated/the-last-chair.zip`. Build checks enforce source/package consistency. The editor can import that ZIP unchanged.
 
 Automated route test visits 512 complete runs across four seeds: all seven decisions, both chance outcomes, conditional endings, authoritative replay equality, and quiz scores. ZIP imports through the actual editor importer. Desktop and 390-pixel phone preview checked for opening, choices and magical travel. Package size: 478,558 bytes (content plus decoded images), below the 5 MB limit.
+
+## Lin acting upgrade — 2026-10-12
+
+The checked-in source/package now uses Story 2 with Lin character version 2, teen-v1 articulated parts and automatic acting. The public unassigned acting preview uses this package. The publication receipt describes the earlier immutable assigned Story 1 release; this presentation experiment does not replace students’ pinned attempts or create a second class assignment. Rig provenance is in public/stories/animated/rigs/lin-v1/README.md.

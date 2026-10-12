@@ -2,9 +2,9 @@
 
 Teachers open **The Game → Create episode**. Edit the demonstration or import a ZIP, upload images, preview, publish a fixed version, then choose a class and teaching date. The demonstration is unassigned. Existing Twine episodes retain their original rules and saves.
 
-## Story 1 language
+## Story language (versions 1 and 2)
 
-The first line is `story 1`. Blank lines and lines beginning `#` are ignored. Commands occupy one line; dialogue is plain text, never HTML or JavaScript. Script identifiers begin with a letter and contain letters, digits, `_`, or `-`. Asset IDs and labels are case sensitive.
+New episodes use `story 2` and package format `2`. Existing `story 1` packages remain supported. Blank lines and lines beginning `#` are ignored. Commands occupy one line; dialogue is plain text, never HTML or JavaScript. Script identifiers begin with a letter and contain letters, digits, `_`, or `-`. Asset IDs and labels are case sensitive.
 
 ```
 story 1
@@ -68,3 +68,7 @@ Publishing uses the same authenticated function actions as the editor. Supply `A
 Provision private storage with `scripts/setup-animated-storage.mjs` using the existing setup environment, then deploy learning-content before the frontend. Metadata uses the existing function-only episode_records collection; package files live in the private animated-episodes bucket. Backend operations validate class membership and release dates, replay story choices with a server seed, and recompute quiz scores. Story variables do not earn quiz points. Every correct answer earns 25; 75 permits completion, with review/retry otherwise. Start an attempt online; a previously opened attempt can continue offline and synchronize on reconnect.
 
 Draft saves use immutable revision IDs to reject competing saves. Publication pins the package file. Assignments are idempotent per class/version/date. Default release is Friday 08:00 Shanghai preceding the assigned week. Account-scoped local drafts and play caches provide recovery; export a ZIP if device storage is full.
+
+## Shared puppet acting
+
+See [the curated acting library](episode-acting-library.md) for the only supported emotions, rests, talking gestures, responses and camera shots. The studio previews/inserts these cues and offers the reusable Lin rig. `story 2` accepts tagged dialogue, `rest`, `react` and `camera`; static supporting characters still work. Try the unassigned `/game/acting-demo` route. The checked-in Last Chair package demonstrates Lin; the earlier published assignment stays pinned to its original version.

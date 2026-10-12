@@ -1,4 +1,4 @@
-story 1
+story 2
 # The Last Chair — AP Language, 13 October 2026.
 variable Trust = 1 range 0 3 hidden
 variable ReaderEvidence = false hidden
@@ -7,12 +7,13 @@ variable PublicReply = false hidden
 label opening
 scene classroom
 show Lin worried center
+camera medium Lin
 I: Lin puts two openings on my desk. Both have her name on them. Only one sounds like her.
 Lin: You're my submission partner today. Please help me choose what actually goes to the magazine.
 I: We're in AP Language at CDIS. Lin is my classmate; the magazine publishes student writing for students, teachers, and families.
 I: Her piece argues that newcomers need invitations they can actually hear themselves accepting. The deadline is this afternoon.
-effect closeup
-Lin: My opening: “Come, eat, sit a while. At our table, we pull up another chair.”
+camera close Lin
+Lin [worried, hesitant]: My opening: “Come, eat, sit a while. At our table, we pull up another chair.”
 Lin: The suggested edit: “Our community promotes inclusive social interaction.”
 I: The second version sounds as if a committee has tried to hug me.
 show Lin sad center
@@ -23,15 +24,17 @@ choice promise
 option listen "I ask which words she most wants to protect." -> listen ; Trust += 1
 option practical "I offer to help secure the byline first." -> practical
 label listen
-Lin: “Sit a while.” It means you aren't being tolerated until someone more interesting arrives. You can stay.
+camera close Lin
+Lin [sad, hesitant]: “Sit a while.” It means you aren't being tolerated until someone more interesting arrives. You can stay.
 I: I circle those three words. Now I know what an edit could cost.
 goto summon
 label practical
 show Lin neutral center
-Lin: Okay. But if the finished thing could have been written by anyone, I don't know what my name is doing there.
+Lin [skeptical, question]: Okay. But if the finished thing could have been written by anyone, I don't know what my name is doing there.
 I: I put her original beside the edited version. Getting published and being heard may not be the same problem.
 goto summon
 label summon
+camera wide
 show Hepting happy center
 Hepting: Young's essay gives us a useful way to test that objection. Luckily, my transport app has a “deadline emergency” button.
 I: Mr. Hepting opens a secret WeChat mini-program. Its dumpling icon unfolds into a golden wheel.
@@ -80,6 +83,7 @@ option mesh "I keep her invitation and add a sentence of context." -> mesh ; Kee
 option formal "I use a formal opening and preserve her invitation later." -> formal ; KeepVoice = false
 label mesh
 show Lin happy center
+react Lin nod
 Lin: “Come, eat, sit a while. At our table, that means you don't have to earn your place before someone makes room.”
 I: Her invitation now sits beside its explanation. The different registers work inside the same paragraph, rather than taking turns in separate settings.
 Lin: It still has the rhythm of someone pulling out a chair. That's what I wanted the words to evoke.
@@ -221,6 +225,7 @@ scene rift
 effect magic
 I: The Didi waits outside. Through its windows I can see the CDIS soccer field, impossibly bright on the other side of the rain.
 show Lin happy center
+react Lin nod
 Lin: I used to think a good edit made it impossible for anyone to object. Apparently an editor is not a wizard. Present company excepted.
 I: The driver adjusts his sunglasses and holds up four fingers. “Understanding first. Home second.” The portal hums behind him.
 I: I buckle in with Lin's draft safely between us. I can't promise her a byline. I can explain the choices that brought her words this far.
