@@ -33,7 +33,7 @@
   {
     "id": "Mei",
     "name": "Mei",
-    "version": 2,
+    "version": 3,
     "palette": {
       "skin": "#efc6a3",
       "hair": "#292b31",
@@ -43,14 +43,15 @@
       "age": "teen",
       "hair": "long",
       "glasses": "none",
-      "outfit": "uniform"
+      "outfit": "uniform",
+      "face": "round"
     },
     "fallback": "public/stories/animated/cast/Mei-neutral.webp"
   },
   {
     "id": "Yeyul",
     "name": "Yeyul",
-    "version": 2,
+    "version": 3,
     "palette": {
       "skin": "#efcba9",
       "hair": "#302e35",
@@ -60,14 +61,15 @@
       "age": "teen",
       "hair": "bob",
       "glasses": "none",
-      "outfit": "uniform"
+      "outfit": "uniform",
+      "face": "oval"
     },
     "fallback": "public/stories/animated/cast/Yeyul-neutral.webp"
   },
   {
     "id": "Jordan",
     "name": "Jordan",
-    "version": 1,
+    "version": 2,
     "palette": {
       "skin": "#c88e68",
       "hair": "#392b27",
@@ -77,7 +79,8 @@
       "age": "teen",
       "hair": "side-part",
       "glasses": "none",
-      "outfit": "uniform"
+      "outfit": "uniform",
+      "face": "angular"
     },
     "provenance": "Fictional Grade 11 classmate assembled from shared manga components; not a real student likeness."
   }

@@ -28,3 +28,7 @@ Next improvements, in priority order:
 5. Later, introduce speaker-directed eye lines when two people share the screen. Keep this automatic and reversible, with reduced-motion support.
 
 No generated video, per-character rigs, live AI dialogue or class-specific animation code is needed. Published episode content and student outcomes are not rewritten by this audit.
+
+## Follow-up implementation
+
+Added shared oval/round/angular face shapes (default preserves earlier designs), tunic and robe costume bases with trim colours and sandals, rounded elbow joins with fixed bone lengths, and delayed wrist follow-through. Mei, Yeyul and Jordan library packs use distinct face shapes. Three illustrated manga-v1 backgrounds now share a studio picker and the AP package uses them. Historical costume accuracy still depends on selecting an appropriate base and source-grounded details; the shared modules are generic stylised forms.

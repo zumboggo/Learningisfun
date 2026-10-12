@@ -12,28 +12,29 @@ A character pack contains name, incrementing version, provenance, `expressions: 
 {"version":2,"preset":"cartoon-v1","style":"manga","palette":{"skin":"#eac7a8","hair":"#654637","shirt":"#376975"},"appearance":{"age":"adult","hair":"side-part","glasses":"round","outfit":"teacher"}}
 ```
 
-Only six-digit hex colours are allowed. Optional palette keys `glasses` and `beard` set their colours. Optional appearance values are closed:
+Only six-digit hex colours are allowed. Optional palette keys `glasses`, `beard` and `trim` set their colours. Optional appearance values are closed:
 
 | Field | Allowed values | Default |
 | --- | --- | --- |
 | age | teen, adult | teen |
 | hair | layered, side-part, long, bob, cropped | layered |
 | glasses | none, round | none |
-| outfit | uniform, teacher | uniform |
+| outfit | uniform, teacher, tunic, robe | uniform |
+| face | default, oval, round, angular | default |
 | facialHair | none, full | none |
 
-Preserve identity through silhouette, hair, age, glasses and clothing—not palette alone. Hepting is an adult with a broader jaw, smaller irises, short brown hair, blue glasses, a neatly cropped brown beard, teal top and tan trousers. Lin has layered short hair; Mei long hair; Yeyul a bob. Classmates wear red CDIS polos and navy trousers. Students are fictional illustrated people, not real student likenesses. Mr. Hepting’s updated portrait uses David’s explicitly supplied reference photo. Keep source photos outside published assets; record authorization in provenance.
+Preserve identity through silhouette, hair, age, glasses and clothing—not palette alone. Hepting is an adult with a broader jaw, smaller irises, short brown hair, blue glasses, a neatly cropped brown beard, teal top and tan trousers. Lin has layered short hair; Mei long hair and a round face; Yeyul a bob and oval face; Jordan a side-part and angular face. Classmates wear red CDIS polos and navy trousers. Students are fictional illustrated people, not real student likenesses. Mr. Hepting’s updated portrait uses David’s explicitly supplied reference photo. Keep source photos outside published assets; record authorization in provenance.
 
 ## Drawing constraints
 
 - One coherent vector figure: clean rounded ink, restrained cel shadows, almond eyes with small highlights and a small expressive mouth. No photo-textured parts or floating facial overlays.
 - Keep the shared 240 × 600 coordinate frame, feet at y=579, shadow at y=582, shoulders at x=76/164 and y=213, upper/forearm lengths 58/57, head pivot (120,176), torso pivot (120,348). All characters have the same displayed height and baseline.
-- Continuous curved arms connect to overlapping sleeves and wrists. Hair and clothing may change silhouette but cannot move the skeleton or obscure the mouth, hands or expressions. Do not stretch bitmap limbs.
+- Straight upper/lower arm segments with rounded elbow joins connect to overlapping sleeves and wrists. Hair and clothing may change silhouette but cannot move the skeleton or obscure the mouth, hands or expressions. Do not stretch bitmap limbs.
 - Use the approved appearance options for ordinary new characters. A new silhouette outside these options requires one deliberate shared-renderer extension, schema validation and visual checks; do not embed SVG, HTML or JavaScript in character packages.
 
 ## Movement constraints
 
-All characters inherit the same controller; never add a per-character loop. A gesture prepares for 180 ms, reaches emphasis by 650 ms, holds until 1150 ms and settles by 1900 ms. Head and torso follow slightly later. Pose changes blend; feet remain planted. Idle breathing expands only the chest by less than 0.5%; blinking is spaced and varied. Speaking uses small mouth shapes with pauses and stops between beats. Every timer/frame cancels on unmount or navigation. Reduced motion disables breathing, blinking and talking motion while preserving a readable resting expression.
+All characters inherit the same controller; never add a per-character loop. A gesture prepares for 180 ms, reaches emphasis by 650 ms, holds until 1150 ms and settles by 1900 ms. Head, torso and wrists follow slightly later. Pose changes blend; feet remain planted. Idle breathing expands only the chest by less than 0.5%; blinking is spaced and varied. Speaking uses small mouth shapes with pauses and stops between beats. Every timer/frame cancels on unmount or navigation. Reduced motion disables breathing, blinking and talking motion while preserving a readable resting expression.
 
 Use only [the acting library](episode-acting-library.md): its 12 emotions, four resting poses, six talking gestures, eight responses, moves and camera settings. Prefer automatic acting, with one intentional gesture for an important beat. Wide establishes a place or choice; medium carries conversation; close supports a personal reaction. Do not shake, zoom or wave on every line.
 
@@ -58,6 +59,6 @@ Codex uses the identical recipe/schema:
 {"id":"Jordan","name":"Jordan","version":1,"palette":{"skin":"#c88e68","hair":"#392b27","shirt":"#b93f46"},"appearance":{"age":"teen","hair":"side-part","glasses":"none","outfit":"uniform"},"provenance":"Original fictional classmate; no real student likeness."}
 ```
 
-Run `npm run character:create -- recipe.json character.json`, then place that object at `assets.characters.Jordan`. The command refuses to overwrite an existing output. To make a character available in the built-in selector, add the recipe to `stories/characters/cast.json` and run `npm run characters:build`; the catalog is generated automatically. No new React component or animation code is needed for supported appearances. School uniforms apply to CDIS students, not all historical characters; extend the shared wardrobe deliberately when a story needs a different costume.
+Run `npm run character:create -- recipe.json character.json`, then place that object at `assets.characters.Jordan`. The command refuses to overwrite an existing output. To make a character available in the built-in selector, add the recipe to `stories/characters/cast.json` and run `npm run characters:build`; the catalog is generated automatically. No new React component or animation code is needed for supported appearances. School uniforms apply to CDIS students. Tunic and robe modules use plain cloth, a belt/neckline trim and sandals, with no school crest. They are generic stylised costume bases: choose colours and source-grounded details for the place, era and social role; do not describe them as accurate reconstructions. New face shapes preserve the same eye/mouth/joint anchors. Historical clothing uses shirt as its cloth colour and trim as its accent colour.
 
 Every class uses the same renderer, recipe parser, acting vocabulary, camera controls, package format and preview. Only the story, travel premise, learning content and relevant clothing change. Jordan is available in the library but is not part of the current Last Chair script.

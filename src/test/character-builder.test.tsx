@@ -23,3 +23,20 @@ it('studio creates a distinct character and prevents accidental replacement',()=
 it('Jordan has a working neutral pose and surprised expression with no bitmap fallback',()=>{
  const character=JSON.parse(readFileSync('public/stories/animated/rigs/jordan-cartoon.json','utf8'));const {container,rerender}=render(<PuppetActor character={character} reduced/>);expect(container.querySelectorAll('[data-arm]')).toHaveLength(2);const neutral=container.querySelector('[data-mouth]')!.innerHTML;rerender(<PuppetActor character={character} emotion="surprised" reduced/>);expect(container.querySelector('[data-mouth]')!.innerHTML).not.toEqual(neutral);
 });
+
+import {armGeometry,FACE_PATHS} from '@/components/animated/character-geometry';
+import {POSES} from '../../functions/learning-content/src/acting-library.js';
+it('historical costumes and face modules share legal anatomy and expression positions',()=>{
+ for(const face of Object.keys(FACE_PATHS))for(const outfit of ['tunic','robe']){
+  const c=createCharacter({id:'Guide',name:'Guide',appearance:{age:'adult',face,outfit},palette:{shirt:'#ded0ab',trim:'#907745'}});
+  expect(validatePackage({...pack,assets:{...pack.assets,characters:{...pack.assets.characters,Guide:c}}}).errors).toEqual([]);
+  const {container,unmount}=render(<PuppetActor character={c} reduced/>);expect(container.querySelector('[data-costume]')).toHaveAttribute('data-costume',outfit);expect(container.querySelector('[data-face]')).toHaveAttribute('data-face',face);expect(container.querySelectorAll('[data-arm]')).toHaveLength(2);expect(container.querySelector('[data-mouth]')).not.toBeNull();unmount();
+ }
+});
+it('rounded elbows keep fixed bone lengths and continuous finite paths across all poses',()=>{
+ for(const pose of Object.values(POSES))for(const side of ['left','right'] as const){
+  const g=armGeometry(side,pose[side+'UpperArm']||0,pose[side+'Forearm']||0);
+  expect(Math.hypot(g.ex-g.x,g.ey-g.y)).toBeCloseTo(58);expect(Math.hypot(g.wx-g.ex,g.wy-g.ey)).toBeCloseTo(57);
+  expect(g.path).not.toMatch(/NaN|Infinity| T /);expect(g.path.endsWith(`L ${g.wx} ${g.wy}`)).toBe(true);
+ }
+});

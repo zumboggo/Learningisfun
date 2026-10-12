@@ -1,6 +1,6 @@
 {
   "name": "Mei",
-  "version": 2,
+  "version": 3,
   "provenance": "Fictional Grade 11 CDIS classmate. Original manga-inspired vector design based on the existing illustrated cast, 2026-10-12. Shared continuous limbs and finite gestures; no real-person likeness.",
   "expressions": {
     "neutral": {
@@ -20,7 +20,8 @@
       "age": "teen",
       "hair": "long",
       "glasses": "none",
-      "outfit": "uniform"
+      "outfit": "uniform",
+      "face": "round"
     }
   }
 }
