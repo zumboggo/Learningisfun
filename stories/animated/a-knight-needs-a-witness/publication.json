@@ -4,6 +4,24 @@
   "version": 1,
   "versionId": "b6b0528cedc20578e082e2a55ccd9e41",
   "bytes": 731466,
-  "status": "published-unassigned",
-  "studioUrl": "https://zumboggo.github.io/Learningisfun/#/game/create?draft=quixote-sidekick-animated"
+  "status": "published-assigned",
+  "studioUrl": "https://zumboggo.github.io/Learningisfun/#/game/create?draft=quixote-sidekick-animated",
+  "assignments": [
+    {
+      "classId": "09d7f0a7-4c29-462c-820f-e11ea914d375",
+      "className": "Red - Sect. 1",
+      "date": "2026-10-12",
+      "releaseAt": "2026-10-12T00:00:00Z",
+      "assignmentId": "f573dfcab3e07dc34d595868fe06312c",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/f573dfcab3e07dc34d595868fe06312c"
+    },
+    {
+      "classId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c",
+      "className": "Blue Sect. 2",
+      "date": "2026-10-12",
+      "releaseAt": "2026-10-12T00:00:00Z",
+      "assignmentId": "c515177a0a1b52b37ad98680108d2ab6",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/c515177a0a1b52b37ad98680108d2ab6"
+    }
+  ]
 }

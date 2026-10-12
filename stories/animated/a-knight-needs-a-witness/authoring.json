@@ -1,7 +1,7 @@
 {
   "title": "A Knight Needs a Sidekick",
   "date": "2026-10-12",
-  "status": "published-unassigned",
+  "status": "published-assigned",
   "package": "public/stories/animated/a-knight-needs-a-witness/episode.json",
   "zip": "public/stories/animated/a-knight-needs-a-witness/episode.zip",
   "script": "stories/animated/a-knight-needs-a-witness/episode.story",
@@ -91,6 +91,6 @@
     "roundTrip": "ZIP imported through teacher editor import function equals source package.",
     "automated": "8 targeted engine/Studio/package tests passed; production build passed.",
     "visual": "Desktop and 390×844 phone courtyard checked; character and dialogue fit.",
-    "limits": "Unassigned published remake. No new student attempt, class assignment or offline student-account synchronization created; existing Twine versions and attempts unchanged."
+    "limits": "Assigned to both existing World Literature sections for 2026-10-12. Legacy Witness entries retired from current library; their saved attempts remain available. No student impersonation or new student attempt created."
   }
 }
