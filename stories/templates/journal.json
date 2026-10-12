@@ -1,0 +1,386 @@
+{
+  "draft": true,
+  "version": 1,
+  "externalWriting": true,
+  "description": "AUTHOR: short student description",
+  "chapter": "AUTHOR: passage",
+  "boundary": "AUTHOR: exact reading boundary and spoiler limit",
+  "checked": "AUTHOR: YYYY-MM-DD",
+  "notes": "AUTHOR: source/provenance distinctions",
+  "writingPrompt": "Choose one specific detail. Explain what it supports, consider another interpretation, and name what remains uncertain.",
+  "sources": [
+    {
+      "id": "source-1",
+      "title": "AUTHOR: passage title",
+      "quote": "AUTHOR: verify exact excerpt",
+      "note": "AUTHOR: context and interpretation limits",
+      "url": "AUTHOR: source URL"
+    }
+  ],
+  "scenes": [
+    {
+      "title": "AUTHOR: scene title",
+      "speaker": "journal",
+      "cast": [],
+      "kind": "question",
+      "source": null,
+      "margin": null,
+      "text": [
+        "AUTHOR: first-person situation, evidence, or complication."
+      ],
+      "choices": [
+        {
+          "id": "scene-1-choice-1",
+          "label": "AUTHOR: curiosity or commitment; no correctness points",
+          "response": "AUTHOR: respond to this specific choice and its evidence.",
+          "points": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "id": "scene-1-choice-2",
+          "label": "AUTHOR: curiosity or commitment; no correctness points",
+          "response": "AUTHOR: respond to this specific choice and its evidence.",
+          "points": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "id": "scene-1-choice-3",
+          "label": "AUTHOR: curiosity or commitment; no correctness points",
+          "response": "AUTHOR: respond to this specific choice and its evidence.",
+          "points": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "title": "AUTHOR: scene title",
+      "speaker": "journal",
+      "cast": [],
+      "kind": "checkpoint",
+      "source": null,
+      "margin": null,
+      "text": [
+        "AUTHOR: first-person situation, evidence, or complication."
+      ],
+      "choices": [
+        {
+          "id": "scene-2-choice-1",
+          "label": "AUTHOR: supported reading A",
+          "response": "AUTHOR: respond to this specific choice and its evidence.",
+          "points": [
+            25,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "id": "scene-2-choice-2",
+          "label": "AUTHOR: supported reading B",
+          "response": "AUTHOR: respond to this specific choice and its evidence.",
+          "points": [
+            25,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "id": "scene-2-choice-3",
+          "label": "AUTHOR: plausible unsupported overclaim",
+          "response": "AUTHOR: respond to this specific choice and its evidence.",
+          "points": [
+            5,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "title": "AUTHOR: scene title",
+      "speaker": "journal",
+      "cast": [],
+      "kind": "commitment",
+      "source": null,
+      "margin": null,
+      "text": [
+        "AUTHOR: first-person situation, evidence, or complication."
+      ],
+      "choices": [
+        {
+          "id": "scene-3-choice-1",
+          "label": "AUTHOR: curiosity or commitment; no correctness points",
+          "response": "AUTHOR: respond to this specific choice and its evidence.",
+          "points": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "id": "scene-3-choice-2",
+          "label": "AUTHOR: curiosity or commitment; no correctness points",
+          "response": "AUTHOR: respond to this specific choice and its evidence.",
+          "points": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "id": "scene-3-choice-3",
+          "label": "AUTHOR: curiosity or commitment; no correctness points",
+          "response": "AUTHOR: respond to this specific choice and its evidence.",
+          "points": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "title": "AUTHOR: scene title",
+      "speaker": "journal",
+      "cast": [],
+      "kind": "checkpoint",
+      "source": null,
+      "margin": null,
+      "text": [
+        "AUTHOR: first-person situation, evidence, or complication."
+      ],
+      "choices": [
+        {
+          "id": "scene-4-choice-1",
+          "label": "AUTHOR: supported reading A",
+          "response": "AUTHOR: respond to this specific choice and its evidence.",
+          "points": [
+            0,
+            25,
+            0,
+            0
+          ]
+        },
+        {
+          "id": "scene-4-choice-2",
+          "label": "AUTHOR: supported reading B",
+          "response": "AUTHOR: respond to this specific choice and its evidence.",
+          "points": [
+            0,
+            25,
+            0,
+            0
+          ]
+        },
+        {
+          "id": "scene-4-choice-3",
+          "label": "AUTHOR: plausible unsupported overclaim",
+          "response": "AUTHOR: respond to this specific choice and its evidence.",
+          "points": [
+            0,
+            5,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "title": "AUTHOR: scene title",
+      "speaker": "journal",
+      "cast": [],
+      "kind": "checkpoint",
+      "source": null,
+      "margin": null,
+      "text": [
+        "AUTHOR: first-person situation, evidence, or complication."
+      ],
+      "choices": [
+        {
+          "id": "scene-5-choice-1",
+          "label": "AUTHOR: supported reading A",
+          "response": "AUTHOR: respond to this specific choice and its evidence.",
+          "points": [
+            0,
+            0,
+            25,
+            0
+          ]
+        },
+        {
+          "id": "scene-5-choice-2",
+          "label": "AUTHOR: supported reading B",
+          "response": "AUTHOR: respond to this specific choice and its evidence.",
+          "points": [
+            0,
+            0,
+            25,
+            0
+          ]
+        },
+        {
+          "id": "scene-5-choice-3",
+          "label": "AUTHOR: plausible unsupported overclaim",
+          "response": "AUTHOR: respond to this specific choice and its evidence.",
+          "points": [
+            0,
+            0,
+            5,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "title": "AUTHOR: scene title",
+      "speaker": "journal",
+      "cast": [],
+      "kind": "checkpoint",
+      "source": null,
+      "margin": null,
+      "text": [
+        "AUTHOR: first-person situation, evidence, or complication."
+      ],
+      "choices": [
+        {
+          "id": "scene-6-choice-1",
+          "label": "AUTHOR: supported reading A",
+          "response": "AUTHOR: respond to this specific choice and its evidence.",
+          "points": [
+            0,
+            0,
+            0,
+            25
+          ]
+        },
+        {
+          "id": "scene-6-choice-2",
+          "label": "AUTHOR: supported reading B",
+          "response": "AUTHOR: respond to this specific choice and its evidence.",
+          "points": [
+            0,
+            0,
+            0,
+            25
+          ]
+        },
+        {
+          "id": "scene-6-choice-3",
+          "label": "AUTHOR: plausible unsupported overclaim",
+          "response": "AUTHOR: respond to this specific choice and its evidence.",
+          "points": [
+            0,
+            0,
+            0,
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "title": "AUTHOR: scene title",
+      "speaker": "journal",
+      "cast": [],
+      "kind": "commitment",
+      "source": null,
+      "margin": null,
+      "text": [
+        "AUTHOR: first-person situation, evidence, or complication."
+      ],
+      "choices": [
+        {
+          "id": "scene-7-choice-1",
+          "label": "AUTHOR: curiosity or commitment; no correctness points",
+          "response": "AUTHOR: respond to this specific choice and its evidence.",
+          "points": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "id": "scene-7-choice-2",
+          "label": "AUTHOR: curiosity or commitment; no correctness points",
+          "response": "AUTHOR: respond to this specific choice and its evidence.",
+          "points": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "id": "scene-7-choice-3",
+          "label": "AUTHOR: curiosity or commitment; no correctness points",
+          "response": "AUTHOR: respond to this specific choice and its evidence.",
+          "points": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    }
+  ],
+  "driverQuestions": [
+    {
+      "prompt": "AUTHOR: demonstrated learning 1",
+      "options": [
+        "AUTHOR: option A",
+        "AUTHOR: option B",
+        "AUTHOR: option C"
+      ],
+      "answer": 0,
+      "note": "AUTHOR: evidence-specific review guidance"
+    },
+    {
+      "prompt": "AUTHOR: demonstrated learning 2",
+      "options": [
+        "AUTHOR: option A",
+        "AUTHOR: option B",
+        "AUTHOR: option C"
+      ],
+      "answer": 1,
+      "note": "AUTHOR: evidence-specific review guidance"
+    },
+    {
+      "prompt": "AUTHOR: demonstrated learning 3",
+      "options": [
+        "AUTHOR: option A",
+        "AUTHOR: option B",
+        "AUTHOR: option C"
+      ],
+      "answer": 2,
+      "note": "AUTHOR: evidence-specific review guidance"
+    },
+    {
+      "prompt": "AUTHOR: demonstrated learning 4",
+      "options": [
+        "AUTHOR: option A",
+        "AUTHOR: option B",
+        "AUTHOR: option C"
+      ],
+      "answer": 0,
+      "note": "AUTHOR: evidence-specific review guidance"
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import {episodes} from '../../functions/learning-content/src/episode-catalog.js';
 import EpisodeTextEditor from '@/components/EpisodeTextEditor';
 import JournalEpisodePage from './JournalEpisodePage';
 import {episodeScore,writingRubric} from '../../functions/learning-content/src/young-scoring.js';
@@ -14,7 +15,7 @@ import {db} from '@/db/schema';
 import {availableEpisodeVersions,type Episode} from '../../functions/learning-content/src/episode-catalog.js';
 import {advanceEpisode,attemptsFor,episodeAI,episodeDb,makeEpisodeAttempt,readEpisodeWriting,readEpisodes,saveEpisode,validEpisodeMessage,type EpisodeAttempt} from '@/services/episodes.service';
 import build from '../../stories/own-english/build.json';
-export default function EpisodePage(){const {classId='',episodeId=''}=useParams(),{user}=useAuth(),[query]=useSearchParams(),version=episodeId==='own-english'?(['1','2','3'].includes(query.get('version')||'')?Number(query.get('version')):4):Number(query.get('version')||1);return user?(episodeId!=='own-english'?<JournalEpisodePage key={user.$id+classId+episodeId+version} version={version} userId={user.$id} role={user.role} classId={classId} episodeId={episodeId}/>:<Player key={user.$id+classId+episodeId+version} version={version} userId={user.$id} role={user.role} classId={classId} episodeId={episodeId}/>):null;}
+export default function EpisodePage(){const {classId='',episodeId=''}=useParams(),{user}=useAuth(),[query]=useSearchParams(),version=episodeId==='own-english'?(['1','2','3'].includes(query.get('version')||'')?Number(query.get('version')):4):Number(query.get('version')||episodes.find(e=>e.id===episodeId&&e.classId===classId)?.version||1);return user?(episodeId!=='own-english'?<JournalEpisodePage key={user.$id+classId+episodeId+version} version={version} userId={user.$id} role={user.role} classId={classId} episodeId={episodeId}/>:<Player key={user.$id+classId+episodeId+version} version={version} userId={user.$id} role={user.role} classId={classId} episodeId={episodeId}/>):null;}
 function Player({userId,role,classId,episodeId,version}:{version:number;userId:string;role:string;classId:string;episodeId:string}){
  const [board,setBoard]=useState<{nickname:string;score:number;rank:number;mine:boolean}[]>([]);
  const [episode,setEpisode]=useState<Episode|null>(null),[attempt,setAttempt]=useState<EpisodeAttempt|null>(null),[status,setStatus]=useState('Checking class access…'),[error,setError]=useState(''),[panel,setPanel]=useState<'question'|'feedback'|null>(null),[playing,setPlaying]=useState(false),[connected,setConnected]=useState(false);

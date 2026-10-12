@@ -1,0 +1,90 @@
+[
+  {
+    "episodeId": "a-knight-needs-a-witness",
+    "version": 1,
+    "unitId": "world-literature-quixote",
+    "classId": "09d7f0a7-4c29-462c-820f-e11ea914d375",
+    "assignedDate": "2026-10-12",
+    "releaseAt": "2026-10-12T00:00:00Z",
+    "assignmentId": "09d7f0a7-4c29-462c-820f-e11ea914d375-a-knight-needs-a-witness-v1",
+    "archived": true,
+    "minutes": 15
+  },
+  {
+    "episodeId": "a-knight-needs-a-witness",
+    "version": 2,
+    "unitId": "world-literature-quixote",
+    "classId": "09d7f0a7-4c29-462c-820f-e11ea914d375",
+    "assignedDate": "2026-10-12",
+    "releaseAt": "2026-10-12T00:00:00Z",
+    "assignmentId": "09d7f0a7-4c29-462c-820f-e11ea914d375-a-knight-needs-a-witness-v2",
+    "archived": false,
+    "minutes": 15
+  },
+  {
+    "episodeId": "a-knight-needs-a-witness",
+    "version": 1,
+    "unitId": "world-literature-quixote",
+    "classId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c",
+    "assignedDate": "2026-10-12",
+    "releaseAt": "2026-10-12T00:00:00Z",
+    "assignmentId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c-a-knight-needs-a-witness-v1",
+    "archived": true,
+    "minutes": 15
+  },
+  {
+    "episodeId": "a-knight-needs-a-witness",
+    "version": 2,
+    "unitId": "world-literature-quixote",
+    "classId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c",
+    "assignedDate": "2026-10-12",
+    "releaseAt": "2026-10-12T00:00:00Z",
+    "assignmentId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c-a-knight-needs-a-witness-v2",
+    "archived": false,
+    "minutes": 15
+  },
+  {
+    "episodeId": "the-giants-have-sails",
+    "version": 1,
+    "unitId": "world-literature-quixote",
+    "classId": "09d7f0a7-4c29-462c-820f-e11ea914d375",
+    "assignedDate": "2026-10-12",
+    "releaseAt": "2026-10-12T00:00:00Z",
+    "assignmentId": "09d7f0a7-4c29-462c-820f-e11ea914d375-the-giants-have-sails-v1",
+    "archived": true,
+    "minutes": 15
+  },
+  {
+    "episodeId": "the-giants-have-sails",
+    "version": 2,
+    "unitId": "world-literature-quixote",
+    "classId": "09d7f0a7-4c29-462c-820f-e11ea914d375",
+    "assignedDate": "2026-10-12",
+    "releaseAt": "2026-10-12T00:00:00Z",
+    "assignmentId": "09d7f0a7-4c29-462c-820f-e11ea914d375-the-giants-have-sails-v2",
+    "archived": false,
+    "minutes": 15
+  },
+  {
+    "episodeId": "the-giants-have-sails",
+    "version": 1,
+    "unitId": "world-literature-quixote",
+    "classId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c",
+    "assignedDate": "2026-10-12",
+    "releaseAt": "2026-10-12T00:00:00Z",
+    "assignmentId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c-the-giants-have-sails-v1",
+    "archived": true,
+    "minutes": 15
+  },
+  {
+    "episodeId": "the-giants-have-sails",
+    "version": 2,
+    "unitId": "world-literature-quixote",
+    "classId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c",
+    "assignedDate": "2026-10-12",
+    "releaseAt": "2026-10-12T00:00:00Z",
+    "assignmentId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c-the-giants-have-sails-v2",
+    "archived": false,
+    "minutes": 15
+  }
+]

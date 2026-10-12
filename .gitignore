@@ -26,3 +26,7 @@ canvas-quiz-*.json
 *.njsproj
 *.sln
 *.sw?
+
+# Local deployment acknowledgement (no credentials)
+.episode-publish-state.json
+.episode-git-publication.json

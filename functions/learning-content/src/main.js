@@ -162,7 +162,7 @@ export default async ({ req, res, error }) => {
       try { const validMembers=new Set(memberships.documents.filter(row=>row.role==='student'&&(!row.expiresAt||Date.parse(row.expiresAt)>nowTime)).map(row=>row.classId)); return res.json(await episodeTextAction({body,profile,userId,memberClassIds:validMembers,db,databaseId})); }
       catch(cause) { return res.json({error:cause.message},cause.code||500); }
     }
-    if (['readEpisodes','saveEpisode','episodeAI','episodeBoard','episodeWriting'].includes(body.action)) {
+    if (['readEpisodes','saveEpisode','episodeAI','episodeBoard','episodeWriting','readJournalReflection','saveJournalReflection'].includes(body.action)) {
       try { const episodeMemberships=new Set(memberships.documents.filter(row=>row.role==='student'&&(!row.expiresAt||Date.parse(row.expiresAt)>nowTime)).map(row=>row.classId)); return res.json(await episodeAction({body,profile,userId,memberClassIds:episodeMemberships,db,databaseId})); }
       catch (cause) { return res.json({error:cause.message},cause.code||500); }
     }

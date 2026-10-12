@@ -1,0 +1,44 @@
+{
+  "world-literature-quixote": {
+    "profile": "world-literature",
+    "verifiedAt": "2026-10-10",
+    "sections": [
+      {
+        "id": "09d7f0a7-4c29-462c-820f-e11ea914d375",
+        "section": "Red - Sect. 1",
+        "canvasCourseId": "21695"
+      },
+      {
+        "id": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c",
+        "section": "Blue Sect. 2",
+        "canvasCourseId": "21824"
+      }
+    ],
+    "edition": "John Ormsby (1885), Project Gutenberg 996, public domain; fallback, classroom translation unverified",
+    "sourceUrl": "https://www.gutenberg.org/files/996/996-h/996-h.htm",
+    "readingBoundary": "Don Quixote I.1–8; each episode declares its narrower boundary",
+    "concepts": [
+      "characterization",
+      "diction",
+      "parody",
+      "irony",
+      "juxtaposition",
+      "counterevidence",
+      "perspective"
+    ],
+    "weeklyVocabularyVerified": false,
+    "presentation": {
+      "assetBase": "stories/question-journal/v1/",
+      "background": "landscape.webp",
+      "backgroundDescription": "La Mancha: courtyard, road, and distant windmills",
+      "portraits": {
+        "quixote": "Don Quixote",
+        "sancho": "Sancho Panza",
+        "niece": "Quixote’s niece",
+        "cervantes": "Cervantes"
+      },
+      "audio": "journal-loop.mp3",
+      "portraitFrames": 3
+    }
+  }
+}

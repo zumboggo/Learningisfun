@@ -1,13 +1,13 @@
 import 'fake-indexeddb/auto';
 import {beforeEach,describe,it,expect,vi} from 'vitest';
 import {advanceEpisode,episodeDb,makeEpisodeAttempt,attemptsFor,validEpisodeMessage,saveEpisode} from '@/services/episodes.service';
-import {assignedEpisodes,WORLD_LIT_CLASSES} from '../../functions/learning-content/src/episode-catalog.js';
+import {assignedEpisodes,availableEpisodeVersions,WORLD_LIT_CLASSES} from '../../functions/learning-content/src/episode-catalog.js';
 import {journalStories} from '../../functions/learning-content/src/journal-stories.js';
 import {addAssignedEpisodes} from '@/services/planner-episodes';
 import type {WeeklyPlanData} from '@/services/planner.service';
 vi.mock('@/services/learning-content.service',()=>({executeLearningContent:vi.fn()}));
 import {executeLearningContent} from '@/services/learning-content.service';
-const e=assignedEpisodes(WORLD_LIT_CLASSES[0].id,true)[0],s=journalStories[0],choices=s.scenes.map(s=>s.choices[0].id),good=s.driverQuestions.map(q=>q.answer),bad=good.map(v=>(v+1)%3);
+const e=availableEpisodeVersions(WORLD_LIT_CLASSES[0].id,true).find(e=>e.version===1)!,s=journalStories[0],choices=s.scenes.map(s=>s.choices[0].id),good=s.driverQuestions.map(q=>q.answer),bad=good.map(v=>(v+1)%3);
 beforeEach(async()=>{await episodeDb.attempts.clear();});
 describe('journal attempts',()=>{
  it('persists private entries and retry state without mixing accounts or sections',async()=>{let a=makeEpisodeAttempt('student',e,false);a=advanceEpisode(a,[choices[0]],[],{question:'My question'});await episodeDb.attempts.put(a);expect((await attemptsFor('student',e.classId))[0].journal?.question).toBe('My question');expect(await attemptsFor('other',e.classId)).toEqual([]);expect(await attemptsFor('student',WORLD_LIT_CLASSES[1].id)).toEqual([]);a=advanceEpisode(a,choices,[],{question:'My question',reflection:'What remains uncertain'});a=advanceEpisode(a,choices,[bad]);expect(a.status).toBe('active');a=advanceEpisode(a,choices,[bad,good]);expect(a.status).toBe('complete');expect(a.journal?.reflection).toBe('What remains uncertain');expect(()=>advanceEpisode(a,choices,[bad,good],{question:'Changed',reflection:'What remains uncertain'})).toThrow();expect(()=>advanceEpisode(a,choices,[good])).toThrow();});

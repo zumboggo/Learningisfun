@@ -1,3 +1,5 @@
+> Updated October 12: the current assignments use version 2. Reflection is now optional, editable writing **below the player**, saved separately from game progress. Exactly four return questions (three correct) complete the game without writing. Original version 1 and its saved entries remain accessible. Current payloads are about 0.89 MB each. See [the reusable workflow](episode-workflow.md).
+
 # The Question Journal · World Literature · v1
 
 Two independently playable 12–15 minute opening encounters, assigned October 12, 2026. Both release at **2026-10-12T00:00:00Z (08:00 Asia/Shanghai)**, overriding Friday release only for these assignments. Teacher previews are available earlier. No Canvas assignments or grades are posted.

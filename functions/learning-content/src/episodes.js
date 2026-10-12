@@ -1,3 +1,4 @@
+import {journalReflectionAction} from './journal-reflection.js';
 import {writingRubric,writingScoringInstruction,parseWritingAssessment} from './young-scoring.js';
 import {createHash} from 'node:crypto';
 import {Query} from 'node-appwrite';
@@ -21,6 +22,7 @@ export async function episodeAction({body,profile,userId,memberClassIds,db,datab
   return {writing:writing.map(row=>({...JSON.parse(row.dataJson),id:row.$id})),episodes:catalog,attempts:[...latest.values()].filter(a=>catalog.some(e=>e.id===a.episode&&e.version===a.version)),preview};
  }
  const e=requireEpisode(body.classId,body.episode,body.version,preview);
+ if(['readJournalReflection','saveJournalReflection'].includes(body.action))return journalReflectionAction({body,userId,db,databaseId,episode:e});
  const {assessYoung,assessDriver,sourceNotes,sourceUrl,assignmentPrompt,rubric,scenes}=contentForEpisode(e.id,e.version);
  if(body.action==='episodeBoard'){
   const rows=await readAll(db,databaseId,[Query.equal('classId',body.classId),Query.equal('kind',e.profile==='ap-language'&&e.version>=2?'ai':'result')]),best=new Map();

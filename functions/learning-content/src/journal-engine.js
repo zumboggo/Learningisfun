@@ -12,7 +12,7 @@ export function journalContent(story){
   let score=0,passed=false;for(const answers of attempts){if(passed)throw new Error('The return check is already complete');if(!Array.isArray(answers)||answers.length!==4||answers.some((a,i)=>!Number.isInteger(a)||a<0||a>=story.driverQuestions[i].options.length))throw new Error('Answer all four journal questions');score=answers.filter((a,i)=>a===story.driverQuestions[i].answer).length;passed=score>=3;}
   return {passed,score};
  };
- return {...story,scenes:story.scenes,sourceNotes:story.sources,assignmentPrompt:'Record what you discovered and what remains uncertain.',rubric:notebookDomains.map(n=>n+': 25 points from its explicit checkpoint; 25 supported reasoning, 5 unsupported overclaim, 0 not yet demonstrated.'),assessYoung,assessDriver};
+ return {...story,scenes:story.scenes,sourceNotes:story.sources,assignmentPrompt:story.writingPrompt||'Record what you discovered and what remains uncertain.',rubric:notebookDomains.map(n=>n+': 25 points from its explicit checkpoint; 25 supported reasoning, 5 unsupported overclaim, 0 not yet demonstrated.'),assessYoung,assessDriver};
 }
 export function validateJournal(journal={},choices=[],sceneCount){
  if(!journal||typeof journal!=='object'||Array.isArray(journal)||Object.keys(journal).some(k=>!['question','reflection'].includes(k)))throw new Error('Invalid journal writing');
