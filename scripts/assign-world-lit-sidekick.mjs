@@ -13,6 +13,10 @@ const f=new Functions(new Client().setEndpoint(process.env.APPWRITE_ENDPOINT).se
 const call=async body=>{const r=await f.createExecution({functionId:'learning-content',body:JSON.stringify(body)});const d=JSON.parse(r.responseBody||'{}');if(r.responseStatusCode>=400||d.error)throw Error(d.error||'Function failed');return d;};
 const pack=JSON.parse(await readFile('public/stories/animated/a-knight-needs-a-witness/episode.json','utf8'));
 const library=await call({action:'animatedLibrary'}),assigned=[];
+if(receipt.status==='published-assigned'){
+ for(const a of receipt.assignments||[])if(!library.assignments.some(x=>x.assignmentId===a.assignmentId))throw Error('Recorded assignment is no longer active; preserve current teacher choices');
+ console.log('Recorded current assignments are already active. No changes.');process.exit(0);
+}
 for(const {old,c} of classes){
  const existing=library.assignments.filter(a=>a.id===receipt.id&&a.classId===c.$id&&a.date===old.assignedDate);
  if(existing.length>1)throw Error('Multiple current assignments need review');

@@ -21,3 +21,19 @@ test('quiz retries preserve progress, completion is immutable, future release st
  await assert.rejects(call({...update,versionId:v1.versionId}),/Students have started/);
  assert.equal((await call({action:'animatedRead',assignmentId:a.assignmentId},'student')).pack.title,'Updated');
  });
+
+test('assignment retirement is owner-only, reversible, and preserves saved attempts',async()=>{
+ const {call,records}=harness();await call({action:'animatedSaveDraft',id:'demo',revision:0,pack});
+ const v=await call({action:'animatedPublish',id:'demo',revision:1});
+ const a=await call({action:'animatedAssign',classId:'class',versionId:v.versionId,date:'2026-01-01'});
+ const attempt=await call({action:'animatedSaveAttempt',assignmentId:a.assignmentId,attemptId:'keep',steps:[],quizzes:[]},'student');
+ const archive={action:'animatedArchiveAssignment',assignmentId:a.assignmentId,archived:true};
+ await assert.rejects(call(archive,'student'),/teacher/);
+ await assert.rejects(call(archive,'teacher','other-teacher'),/teacher/);
+ const count=records.size;await call(archive);await call(archive);
+ assert.equal(records.size,count);assert.equal((await call({action:'animatedLibrary'})).assignments.length,0);
+ assert.equal((await call({action:'animatedLibrary'},'student')).assignments.length,0);
+ const restored=await call({action:'animatedRead',assignmentId:a.assignmentId},'student');
+ assert.equal(restored.attempts[0].seed,attempt.seed);assert.equal(restored.pack.title,pack.title);
+ await call({...archive,archived:false});assert.equal((await call({action:'animatedLibrary'})).assignments.length,1);
+});

@@ -22,7 +22,7 @@ export async function animatedEpisodeAction({body,profile,userId,memberClassIds,
  if(body.action==='animatedLibrary'){
   let classIds=[...memberClassIds];if(teacher)classIds=(await db.listDocuments(databaseId,'classes',[Query.equal('teacherId',userId),Query.limit(100)])).documents.map(c=>c.$id);
   const rows=classIds.length?await list([Query.equal('classId',classIds),Query.equal('kind','animated-assignment')]):[];
-  const assignments=rows.map(r=>({...JSON.parse(r.dataJson),assignmentId:r.$id})).filter(a=>teacher||profile.role==='student'&&Date.parse(a.releaseAt)<=Date.now());
+  const assignments=rows.map(r=>({...JSON.parse(r.dataJson),assignmentId:r.$id})).filter(a=>!a.archived&&(teacher||profile.role==='student'&&Date.parse(a.releaseAt)<=Date.now()));
   const drafts=teacher?await list([Query.equal('classId',scope)]):[];const byId={};for(const r of drafts){const d=JSON.parse(r.dataJson);if(d.type==='animated-draft'&&(!byId[d.id]||byId[d.id].revision<d.revision))byId[d.id]=d;}
   const results=classIds.length?(await list([Query.equal('classId',classIds),Query.equal('userId',userId),Query.equal('kind','animated-result')])).map(r=>JSON.parse(r.dataJson)):[];const best={};for(const r of results)best[r.assignmentId]=Math.max(best[r.assignmentId]||0,r.score);return {assignments:assignments.map(a=>({...a,best:best[a.assignmentId]??null})),drafts:Object.values(byId)};
  }
@@ -35,6 +35,15 @@ export async function animatedEpisodeAction({body,profile,userId,memberClassIds,
    const bytes=packageBytes(body.pack);if(bytes>5000000)fail('Episode exceeds 5 MB');const fileId=await storePack(body.pack);const d={type:'animated-draft',id:body.id,teacherId:userId,title:String(body.pack.title).slice(0,180),revision:(prior?.revision||0)+1,fileId,bytes};await write(hash(scope+body.id+':'+d.revision),scope,'animated-draft-'+body.id,d);return d;
   }
   if(!prior||prior.revision!==body.revision)fail('Save the latest draft before publishing',409);const pack=await getPack(prior.fileId),validation=validatePackage(pack);if(validation.errors.length)fail(validation.errors.map(e=>`Line ${e.line}: ${e.message}`).join('\n'));const versionId=hash(scope+body.id+':published:'+prior.revision),published={...prior,type:'animated-version',version:prior.revision,versionId};try{await write(versionId,scope,'animated-version',published);}catch(e){if(e.code!==409)throw e;}return published;
+ }
+ if(body.action==='animatedArchiveAssignment'){
+  if(typeof body.archived!=='boolean')fail('Choose whether to archive this assignment');
+  const a=await read(body.assignmentId);if(a.type!=='animated-assignment')fail('Invalid assignment');
+  await owned(a.classId);
+  const updated={...a,archived:body.archived};
+  await db.updateDocument(databaseId,collection,body.assignmentId,{dataJson:JSON.stringify(updated)});
+  // Only library visibility changes. Immutable content and attempt histories remain usable.
+  return {...updated,assignmentId:body.assignmentId};
  }
  if(body.action==='animatedAssign'){
   await owned(body.classId);const v=await read(body.versionId);if(v.type!=='animated-version'||v.teacherId!==userId)fail('Episode ownership required',403);const releaseAt=body.releaseAt||textReleaseAt(body.date);if(!/^\d{4}-\d{2}-\d{2}$/.test(body.date)||!Number.isFinite(Date.parse(releaseAt)))fail('Choose a valid teaching date');

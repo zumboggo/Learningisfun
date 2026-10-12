@@ -18,10 +18,23 @@
     {
       "classId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c",
       "className": "Blue Sect. 2",
+      "date": "2026-10-13",
+      "releaseAt": "2026-10-09T00:00:00.000Z",
+      "assignmentId": "6a9d05ca78bd1366b6a91e62ac83c515",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/6a9d05ca78bd1366b6a91e62ac83c515",
+      "version": 4,
+      "versionId": "8c34fcb36f21ce59d20618d3f61723ca"
+    }
+  ],
+  "archivedAssignments": [
+    {
+      "classId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c",
+      "className": "Blue Sect. 2",
       "date": "2026-10-12",
       "releaseAt": "2026-10-12T00:00:00Z",
       "assignmentId": "c515177a0a1b52b37ad98680108d2ab6",
-      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/c515177a0a1b52b37ad98680108d2ab6"
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/c515177a0a1b52b37ad98680108d2ab6",
+      "reason": "Duplicate of teacher-created October 13 assignment; saved attempts retained."
     }
   ]
 }
