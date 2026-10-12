@@ -38,7 +38,17 @@ export async function animatedEpisodeAction({body,profile,userId,memberClassIds,
  }
  if(body.action==='animatedAssign'){
   await owned(body.classId);const v=await read(body.versionId);if(v.type!=='animated-version'||v.teacherId!==userId)fail('Episode ownership required',403);const releaseAt=body.releaseAt||textReleaseAt(body.date);if(!/^\d{4}-\d{2}-\d{2}$/.test(body.date)||!Number.isFinite(Date.parse(releaseAt)))fail('Choose a valid teaching date');
-  const a={type:'animated-assignment',classId:body.classId,id:v.id,version:v.version,versionId:v.versionId,fileId:v.fileId,title:v.title,date:body.date,releaseAt};const assignmentId=hash(body.classId+v.versionId+body.date);try{await write(assignmentId,body.classId,'animated-assignment',a);}catch(e){if(e.code!==409)throw e;}return {...a,assignmentId};
+  const a={type:'animated-assignment',classId:body.classId,id:v.id,version:v.version,versionId:v.versionId,fileId:v.fileId,title:v.title,date:body.date,releaseAt};const assignmentId=body.assignmentId||hash(body.classId+v.versionId+body.date);
+  if(body.assignmentId){
+   const old=await read(assignmentId);
+   if(old.type!=='animated-assignment'||old.classId!==body.classId||old.id!==v.id||old.date!==body.date)fail('Replacement must be the same episode, class and date');
+   if(old.versionId===v.versionId)return {...old,assignmentId};
+   const rows=await list([Query.equal('classId',body.classId)]);
+   if(rows.some(r=>{const t=JSON.parse(r.dataJson);return ['animated-attempt','animated-result'].includes(t.type)&&t.assignmentId===assignmentId;}))fail('Students have started this assignment; preserve its version and assign a separate replay',409);
+   await db.updateDocument(databaseId,collection,assignmentId,{dataJson:JSON.stringify(a)});
+   return {...a,assignmentId};
+  }
+  try{await write(assignmentId,body.classId,'animated-assignment',a);}catch(e){if(e.code!==409)throw e;}return {...a,assignmentId};
  }
  if(['animatedRead','animatedSaveAttempt'].includes(body.action)){
   const {a,preview}=await assignment(),pack=await getPack(a.fileId);const kind='aa-'+hash(body.assignmentId+':'+body.attemptId).slice(0,24);

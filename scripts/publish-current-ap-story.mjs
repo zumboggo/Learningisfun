@@ -7,13 +7,18 @@ const owner=await users.get({userId:cls.teacherId});if(!/^(davidh|david hepting)
 const {jwt}=await users.createJWT({userId:owner.$id,duration:300});
 const f=new Functions(new Client().setEndpoint(process.env.APPWRITE_ENDPOINT).setProject(process.env.APPWRITE_PROJECT_ID).setJWT(jwt));
 const call=async body=>{const result=await f.createExecution({functionId:'learning-content',body:JSON.stringify(body)});const data=JSON.parse(result.responseBody||'{}');if(result.responseStatusCode>=400||data.error)throw Error((data.error||'Function request failed')+'; action='+body.action+'; execution='+result.$id+'; diagnostics='+result.errors);return data;};
+const receiptBefore=JSON.parse(await readFile('stories/own-english/animated/publication.json','utf8'));
 const library=await call({action:'animatedLibrary'});
 const id='own-english-animated',pack=JSON.parse(await readFile('public/stories/own-english/animated/episode.json','utf8'));
 let prior=library.drafts.find(d=>d.id===id);
-if(prior){const loaded=await call({action:'animatedReadDraft',id});if(JSON.stringify(loaded.pack)!==JSON.stringify(pack))throw Error('Live draft differs; preserve teacher edits and review before publishing');}
+if(prior){const loaded=await call({action:'animatedReadDraft',id});if(JSON.stringify(loaded.pack)!==JSON.stringify(pack)){
+ const assigned=await call({action:'animatedRead',assignmentId:receiptBefore.assignmentId});
+ if(JSON.stringify(loaded.pack)!==JSON.stringify(assigned.pack))throw Error('Live draft has unpublished teacher edits; preserve and review before publishing');
+ prior=await call({action:'animatedSaveDraft',id,revision:loaded.revision,pack});
+ }}
 else prior=await call({action:'animatedSaveDraft',id,revision:0,pack});
 const published=await call({action:'animatedPublish',id,revision:prior.revision});
-const assigned=await call({action:'animatedAssign',versionId:published.versionId,classId:cls.$id,date:'2026-10-13',releaseAt:'2026-10-09T00:00:00Z'});
+const assigned=await call({action:'animatedAssign',assignmentId:receiptBefore.assignmentId,versionId:published.versionId,classId:cls.$id,date:'2026-10-13',releaseAt:'2026-10-09T00:00:00Z'});
 const loaded=await call({action:'animatedRead',assignmentId:assigned.assignmentId});
 if(loaded.pack.script!==pack.script||!loaded.preview)throw Error('Published preview mismatch');
 const current=await call({action:'animatedLibrary'});

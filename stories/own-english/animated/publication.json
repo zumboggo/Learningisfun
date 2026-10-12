@@ -1,13 +1,13 @@
 {
   "id": "own-english-animated",
   "title": "The Last Chair",
-  "version": 1,
-  "versionId": "b10db1c51743d7cfce92b0c63ceb8ac9",
+  "version": 2,
+  "versionId": "444f6f1336ce99cd9185b0ff28b29a00",
   "assignmentId": "00a9e23b526292c4e456970132203e9a",
   "classId": "88421c66-9cda-4002-8e15-086312b7805e",
   "date": "2026-10-13",
   "releaseAt": "2026-10-09T00:00:00Z",
-  "bytes": 478558,
+  "bytes": 337700,
   "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/00a9e23b526292c4e456970132203e9a",
   "studioUrl": "https://zumboggo.github.io/Learningisfun/#/game/create?draft=own-english-animated"
 }
