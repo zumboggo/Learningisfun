@@ -14,3 +14,28 @@ const pack=JSON.parse(readFileSync('public/stories/animated/demo.json','utf8'));
 afterEach(()=>{cleanup();localStorage.clear();vi.unstubAllGlobals();call.mockReset();});
 it('opens a saved draft, validates, publishes and assigns through the common API',async()=>{call.mockImplementation(async b=>b.action==='animatedLibrary'?{assignments:[],drafts:[]}:b.action==='animatedReadDraft'?{pack,revision:1}:b.action==='animatedSaveDraft'?{revision:2}:b.action==='animatedPublish'?{version:2,versionId:'v'}:{});render(<MemoryRouter initialEntries={['/game/create?draft=demo']}><Studio/></MemoryRouter>);await screen.findByDisplayValue(pack.title);fireEvent.click(screen.getByRole('button',{name:'Publish fixed version'}));await screen.findByText('Published version 2 · ready to assign');fireEvent.change(screen.getByLabelText('Assign to class'),{target:{value:'class'}});fireEvent.change(screen.getByLabelText('Teaching date'),{target:{value:'2026-10-20'}});fireEvent.click(screen.getByRole('button',{name:'Assign episode'}));await waitFor(()=>expect(call).toHaveBeenCalledWith({action:'animatedAssign',versionId:'v',classId:'class',date:'2026-10-20'}));});
 it('resumes the same story endpoint, explains a failed quiz and permits a successful retry',async()=>{const {story}=validatePackage(pack);let s=settleStory(story,initialStoryState(story,1));const steps:(string|null)[]=[];while(!s.ended){const n=story.nodes[s.cursor],o=n.type==='choice'?n.options[0].id:null;steps.push(o);s=advanceStory(story,s,o);}const saved=vi.fn();render(<StoryPlayer pack={pack} initial={{steps,seed:1,quizzes:[[0,0,0,0]]}} onProgress={saved}/>);expect(screen.getByText(/25\/100/)).toBeInTheDocument();for(let i=0;i<4;i++)fireEvent.click(screen.getAllByRole('group')[i].querySelectorAll('input')[i]);fireEvent.click(screen.getByRole('button',{name:'Check answers'}));expect(screen.getByText(/100\/100/)).toBeInTheDocument();expect(saved.mock.calls[0][0].steps).toEqual(steps);});
+it('opening an unchanged published draft does not create a redundant autosave',async()=>{
+ call.mockImplementation(async b=>b.action==='animatedLibrary'?{assignments:[],drafts:[]}:b.action==='animatedReadDraft'?{pack,revision:3}:{});
+ render(<MemoryRouter initialEntries={['/game/create?draft=clean-sidekick']}><Studio/></MemoryRouter>);
+ await screen.findByDisplayValue(pack.title);
+ await new Promise(resolve=>setTimeout(resolve,3100));
+ expect(call.mock.calls.filter(([b])=>b.action==='animatedSaveDraft')).toHaveLength(0);
+});
+it('a stale local revision recovers only when the server content is identical',async()=>{
+ const {saveStoryCache}=await import('@/services/animated-stories');
+ await saveStoryCache('animated-draft:teacher:same-sidekick',{pack,revision:1});
+ call.mockImplementation(async b=>{if(b.action==='animatedLibrary')return {assignments:[],drafts:[]};if(b.action==='animatedSaveDraft')throw Error('Draft changed elsewhere. Export your work and reload before saving.');if(b.action==='animatedReadDraft')return {pack,revision:3};return {};});
+ render(<MemoryRouter initialEntries={['/game/create?draft=same-sidekick']}><Studio/></MemoryRouter>);
+ await screen.findByDisplayValue(pack.title);fireEvent.click(screen.getByRole('button',{name:'Save draft'}));
+ await screen.findByText('Draft saved to your account');
+ expect(call.mock.calls.filter(([b])=>b.action==='animatedSaveDraft')).toHaveLength(1);
+});
+it('a real competing edit remains a conflict and is never overwritten',async()=>{
+ const {saveStoryCache}=await import('@/services/animated-stories');
+ await saveStoryCache('animated-draft:teacher:changed-sidekick',{pack,revision:1});
+ call.mockImplementation(async b=>{if(b.action==='animatedLibrary')return {assignments:[],drafts:[]};if(b.action==='animatedSaveDraft')throw Error('Draft changed elsewhere. Export your work and reload before saving.');if(b.action==='animatedReadDraft')return {pack:{...pack,title:'Another teacher edit'},revision:3};return {};});
+ render(<MemoryRouter initialEntries={['/game/create?draft=changed-sidekick']}><Studio/></MemoryRouter>);
+ await screen.findByDisplayValue(pack.title);fireEvent.click(screen.getByRole('button',{name:'Save draft'}));
+ await screen.findByText(/Error: Draft changed elsewhere/);
+ expect(call.mock.calls.filter(([b])=>b.action==='animatedSaveDraft')).toHaveLength(1);
+});

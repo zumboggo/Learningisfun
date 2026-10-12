@@ -14,11 +14,31 @@ function Studio({userId}:{userId:string}){
  const [query,setQuery]=useSearchParams(),[id,setId]=useState(query.get('draft')||crypto.randomUUID()),[pack,setPack]=useState<StoryPackage|null>(null),[revision,setRevision]=useState(0),[status,setStatus]=useState('Opening studio…'),[preview,setPreview]=useState(false),[busy,setBusy]=useState(false),[classId,setClassId]=useState(''),[date,setDate]=useState(''),[published,setPublished]=useState<any>(null),[kind,setKind]=useState('character'),[assetId,setAssetId]=useState('newcharacter'),[expression,setExpression]=useState('neutral'),[file,setFile]=useState<File|null>(null),[zoom,setZoom]=useState(1),[offset,setOffset]=useState(0),[image,setImage]=useState('');
  const library=useAnimatedLibrary(userId);
  const classes=useLiveQuery(()=>db.classes.where('teacherId').equals(userId).toArray(),[userId],[]),loaded=useRef(false),saving=useRef(false),latest=useRef(pack);latest.current=pack;
+ const savedPack=useRef<StoryPackage|null>(null),revisionRef=useRef(revision);revisionRef.current=revision;
  const key=`animated-draft:${userId}:${id}`;
- useEffect(()=>{let alive=true;void(async()=>{try{const local=await loadStoryCache(key);if(local){const saved=local;if(alive){setPack(saved.pack);setRevision(saved.revision);setStatus('Recovered local draft');}}else if(query.get('draft')){const d=await animatedCall('animatedReadDraft',{id});if(alive){setPack(d.pack);setRevision(d.revision);setStatus('Draft loaded');}}else{const p=await fetch(import.meta.env.BASE_URL+'stories/animated/demo.json').then(r=>r.json());if(alive){setPack({...p,format:2,script:p.script.replace(/^story 1/m,'story 2')});setStatus('Unassigned demonstration · edit or duplicate to begin');}}loaded.current=true;if(alive)setQuery({draft:id},{replace:true});}catch(e){if(alive)setStatus(String(e));}})();return()=>{alive=false;};},[id,userId]);
+ useEffect(()=>{let alive=true;loaded.current=false;savedPack.current=null;void(async()=>{try{const local=await loadStoryCache(key);if(local){const saved=local;if(alive){setPack(saved.pack);setRevision(saved.revision);setStatus('Recovered local draft');}}else if(query.get('draft')){const d=await animatedCall('animatedReadDraft',{id});if(alive){savedPack.current=d.pack;revisionRef.current=d.revision;setPack(d.pack);setRevision(d.revision);setStatus('Draft loaded');}}else{const p=await fetch(import.meta.env.BASE_URL+'stories/animated/demo.json').then(r=>r.json());if(alive){setPack({...p,format:2,script:p.script.replace(/^story 1/m,'story 2')});setStatus('Unassigned demonstration · edit or duplicate to begin');}}loaded.current=true;if(alive)setQuery({draft:id},{replace:true});}catch(e){if(alive)setStatus(String(e));}})();return()=>{alive=false;};},[id,userId]);
  useEffect(()=>{if(!pack||!loaded.current)return;void saveStoryCache(key,{pack,revision}).catch(()=>setStatus('Local storage is full. Save to your account or export a ZIP.'));setPublished(null);},[pack]);
- const save=async()=>{if(!pack||saving.current)return;saving.current=true;setBusy(true);try{const d=await animatedCall('animatedSaveDraft',{id,revision,pack});setRevision(d.revision);await saveStoryCache(key,{pack:latest.current,revision:d.revision});setQuery({draft:id},{replace:true});setStatus('Draft saved to your account');return d;}catch(e){setStatus(String(e));return null;}finally{saving.current=false;setBusy(false);}};
- useEffect(()=>{if(!pack||!loaded.current)return;const t=setTimeout(()=>{if(navigator.onLine)void save();},3000);return()=>clearTimeout(t);},[pack]);
+ const save=async()=>{
+  const snapshot=latest.current;if(!snapshot||saving.current)return;
+  if(savedPack.current===snapshot)return {id,revision:revisionRef.current};
+  saving.current=true;setBusy(true);
+  try{
+   let d;
+   try{d=await animatedCall('animatedSaveDraft',{id,revision:revisionRef.current,pack:snapshot});}
+   catch(error){
+    // An earlier save may have succeeded before its response was lost. Reconcile
+    // only identical content; never overwrite a genuinely competing teacher edit.
+    if(!String(error).includes('Draft changed elsewhere'))throw error;
+    const remote=await animatedCall('animatedReadDraft',{id});
+    if(JSON.stringify(remote.pack)!==JSON.stringify(snapshot))throw error;
+    d=remote;
+   }
+   savedPack.current=snapshot;revisionRef.current=d.revision;setRevision(d.revision);
+   await saveStoryCache(key,{pack:latest.current,revision:d.revision});
+   setQuery({draft:id},{replace:true});setStatus('Draft saved to your account');return d;
+  }catch(e){setStatus(String(e));return null;}finally{saving.current=false;setBusy(false);}
+ };
+ useEffect(()=>{if(!pack||!loaded.current||savedPack.current===pack)return;const t=setTimeout(()=>{if(navigator.onLine)void save();},3000);return()=>clearTimeout(t);},[pack,revision]);
  useEffect(()=>{let active=true;if(file)void imageWebP(file,kind==='character',zoom,offset).then(src=>{if(active)setImage(src);}).catch(e=>setStatus(String(e)));return()=>{active=false;};},[file,zoom,offset,kind]);
  if(!pack)return <main className="p-6"><p role="status">{status}</p></main>;
  const validation=validatePackage(pack),edit=(p:Partial<StoryPackage>)=>{setPack({...pack,...p,...(p.script?.startsWith('story 2\n')?{format:2 as const}:{})});setPreview(false);};
