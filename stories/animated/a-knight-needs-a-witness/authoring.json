@@ -1,0 +1,70 @@
+{
+  "title": "A Knight Needs a Witness — Episode Studio rewrite",
+  "date": "2026-10-12",
+  "status": "unassigned-importable-package",
+  "package": "public/stories/animated/a-knight-needs-a-witness/episode.json",
+  "zip": "public/stories/animated/a-knight-needs-a-witness/episode.zip",
+  "script": "stories/animated/a-knight-needs-a-witness/episode.story",
+  "import": "The Game → Create episode → Import ZIP. Preview before publishing a fixed version and assigning an exact class/date.",
+  "boundary": "Don Quixote, Part I chapter 1 only; John Ormsby (1885). Existing fallback edition retained; no verified current weekly vocabulary list.",
+  "storyCircle": {
+    "you": "Student wants an answer worth sharing.",
+    "need": "Find an account worth bringing home.",
+    "go": "One question opens the journal; student lands in laundry.",
+    "search": "Become a chronicler, negotiate a promise, examine books and helmet.",
+    "find": "Grand names offer a satisfying heroic introduction.",
+    "take": "Evidence threatens approval; chance can expose private notes.",
+    "return": "Choose an introduction and reach the return-door quiz.",
+    "change": "Separate reported actions, inferred motives and claims; answer the original question with limits."
+  },
+  "motives": {
+    "student": "Bring back a worthwhile account; prior memory of being laughed at makes kindness personally meaningful.",
+    "Quixote": "Begin a useful, remembered life; believes chivalric models and names can organize his calling; fears reduction to a joke."
+  },
+  "learningTargets": [
+    "Evidence versus inference in characterization",
+    "Diction and parody in the helmet passage",
+    "Names as constructed identity rather than achievement",
+    "Perspective and consent in the naming of Dulcinea"
+  ],
+  "assets": [
+    {
+      "file": "assets/quixote.webp",
+      "tool": "OpenAI built-in imagegen",
+      "reference": "public/stories/animated/cast/Hepting-neutral.webp, style only",
+      "prompt": "Full-body transparent Don Quixote, lean older Spanish gentleman around fifty, grey moustache and pointed beard, dignified hopeful anxious expression; worn steel breastplate, brown clothes and boots; holding open helmet with pasteboard visor. Clean graphic-novel ink contours, warm flat colors, soft shading. Centered full body with margins, no text or scenery.",
+      "normalization": "Actual alpha checked, 240×370 transparent canvas, feet at y=360, aspect ratio preserved, WebP quality 88."
+    },
+    {
+      "file": "assets/courtyard.webp",
+      "tool": "OpenAI built-in imagegen",
+      "prompt": "Landscape 16:9 warm graphic-novel La Mancha courtyard around 1600: whitewashed house, open book-room doorway, table with paper and quill, laundry basket, fields beyond open gate. Clear central foreground, no people, text, weapons, windmills or modern objects.",
+      "normalization": "1280px maximum width, WebP quality 86."
+    },
+    {
+      "file": "assets/journal.webp",
+      "source": "create-episode/assets/question-journal-cover.png",
+      "normalization": "Proportional resize, WebP quality 88."
+    },
+    {
+      "source": "public/stories/animated/demo.json",
+      "reuse": "Classroom background and Mr. Hepting expression pack; original provenance retained."
+    }
+  ],
+  "verification": {
+    "packageBytes": 580785,
+    "zipBytes": 583641,
+    "routes": 432,
+    "chanceOutcomes": 2,
+    "wordsPerRoute": [
+      1451,
+      1556
+    ],
+    "resume": "Replay checked at all branch decision points and endings.",
+    "sources": "Read complete saved chapter; all three exact excerpts matched normalized chapter text. Gutenberg source also retrieved.",
+    "quiz": "50, 75 and 100 scores checked; shared Studio tests verify failed-quiz review and successful retry.",
+    "automated": "6 shared animated engine/Studio tests passed; production build passed.",
+    "visual": "Desktop courtyard checked; 390×844 mobile viewport checked, no horizontal overflow and sprite loaded.",
+    "limits": "No authenticated class assignment or student-account online/offline synchronization performed for this unassigned package."
+  }
+}
