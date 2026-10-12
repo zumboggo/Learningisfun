@@ -1,31 +1,48 @@
 {
-  "title": "A Knight Needs a Witness — Episode Studio rewrite",
+  "title": "A Knight Needs a Sidekick",
   "date": "2026-10-12",
-  "status": "unassigned-importable-package",
+  "status": "published-unassigned",
   "package": "public/stories/animated/a-knight-needs-a-witness/episode.json",
   "zip": "public/stories/animated/a-knight-needs-a-witness/episode.zip",
   "script": "stories/animated/a-knight-needs-a-witness/episode.story",
-  "import": "The Game → Create episode → Import ZIP. Preview before publishing a fixed version and assigning an exact class/date.",
-  "boundary": "Don Quixote, Part I chapter 1 only; John Ormsby (1885). Existing fallback edition retained; no verified current weekly vocabulary list.",
+  "studioUrl": "https://zumboggo.github.io/Learningisfun/#/game/create?draft=quixote-sidekick-animated",
+  "boundary": "Don Quixote Part I chapter 1 only, John Ormsby (1885). Prior edition/range retained; current classroom translation not independently verified.",
+  "vocabulary": {
+    "week": "W09 Oct 12–16, 2026",
+    "source": "David’s CORE_VOCAB_BY_WEEK.txt; local schedule, not a live Canvas check",
+    "terms": [
+      "intertextuality",
+      "adaptation",
+      "revision",
+      "close reading",
+      "derivative",
+      "judicious"
+    ]
+  },
   "storyCircle": {
-    "you": "Student wants an answer worth sharing.",
-    "need": "Find an account worth bringing home.",
-    "go": "One question opens the journal; student lands in laundry.",
-    "search": "Become a chronicler, negotiate a promise, examine books and helmet.",
-    "find": "Grand names offer a satisfying heroic introduction.",
-    "take": "Evidence threatens approval; chance can expose private notes.",
-    "return": "Choose an introduction and reach the return-door quiz.",
-    "change": "Separate reported actions, inferred motives and claims; answer the original question with limits."
+    "you": "Student arrives as themself, seeking an answer to one question.",
+    "need": "Help a would-be hero without losing sight of what help requires.",
+    "go": "Write one question; jump through the journal and land in laundry.",
+    "search": "Choose equipment, discover Quixote’s motives and negotiate loyalty.",
+    "find": "Heroic names and a repaired helmet seem to complete his preparation.",
+    "take": "A runaway cart forces the student to prioritize a person or books; equipment and saved chance affect losses.",
+    "return": "Recover the books, decide how to tell the rescue, and reach the journal door.",
+    "change": "Use evidence without erasing sympathy; knowledge quiz remains separate from fortune."
   },
   "motives": {
-    "student": "Bring back a worthwhile account; prior memory of being laughed at makes kindness personally meaningful.",
-    "Quixote": "Begin a useful, remembered life; believes chivalric models and names can organize his calling; fears reduction to a joke."
+    "student": "Wants to be useful as a temporary sidekick; chooses how to balance approval, honesty and practical help.",
+    "Quixote": "Wants to act in a world made larger by his books. Believes heroic models and names can give him a purposeful life. Questions feel like dismissal; damage to books touches both financial cost and cherished hope."
   },
+  "adaptation": "Temporary sidekick, all dialogue, courtyard mishap and magic are authored additions, not canonical incidents. Student is not Sancho. No later chapter is retold, no lasting canonical reform is claimed.",
   "learningTargets": [
-    "Evidence versus inference in characterization",
-    "Diction and parody in the helmet passage",
-    "Names as constructed identity rather than achievement",
-    "Perspective and consent in the naming of Dulcinea"
+    "Evidence and inference from the sale of land for books",
+    "Diction, close reading and parody in the untested helmet",
+    "Intertextuality in the Amadis naming model",
+    "Declared identities versus ability or another person’s agreement"
+  ],
+  "characters": [
+    "Shared versioned Mr. Hepting manga rig",
+    "Quixote recipe: shared cartoon-v1, adult/angular face, grey hair and beard, generic brown tunic; not exact period costume"
   ],
   "assets": [
     {
@@ -33,7 +50,8 @@
       "tool": "OpenAI built-in imagegen",
       "reference": "public/stories/animated/cast/Hepting-neutral.webp, style only",
       "prompt": "Full-body transparent Don Quixote, lean older Spanish gentleman around fifty, grey moustache and pointed beard, dignified hopeful anxious expression; worn steel breastplate, brown clothes and boots; holding open helmet with pasteboard visor. Clean graphic-novel ink contours, warm flat colors, soft shading. Centered full body with margins, no text or scenery.",
-      "normalization": "Actual alpha checked, 240×370 transparent canvas, feet at y=360, aspect ratio preserved, WebP quality 88."
+      "normalization": "Actual alpha checked, 240×370 transparent canvas, feet at y=360, aspect ratio preserved, WebP quality 88.",
+      "reuse": "Legacy static artwork retained in repository; not referenced by this Story 2 package."
     },
     {
       "file": "assets/courtyard.webp",
@@ -47,24 +65,32 @@
       "normalization": "Proportional resize, WebP quality 88."
     },
     {
-      "source": "public/stories/animated/demo.json",
-      "reuse": "Classroom background and Mr. Hepting expression pack; original provenance retained."
+      "file": "assets/page-passage-v1.webp",
+      "tool": "OpenAI built-in imagegen",
+      "original": "exec-11e72bda-e964-4d9f-b4a5-4ed1a271bdb9.png",
+      "prompt": "Manga visual-novel background: spiralling cream-page corridor through a leather journal to a sunlit La Mancha courtyard; clean slate outlines, muted cream/gold/teal, no people, no text.",
+      "encoding": "Full 1672×941 frame, WebP quality 88"
+    },
+    {
+      "source": "public/stories/animated/backgrounds/manga-v1/classroom.webp",
+      "reuse": "Shared illustrated classroom; existing provenance retained."
     }
   ],
   "verification": {
-    "packageBytes": 580785,
-    "zipBytes": 583641,
-    "routes": 432,
+    "packageBytes": 731466,
+    "routes": 384,
+    "choicesPerRoute": 6,
     "chanceOutcomes": 2,
+    "rescueResults": 4,
     "wordsPerRoute": [
-      1451,
-      1556
+      1490,
+      1564
     ],
-    "resume": "Replay checked at all branch decision points and endings.",
-    "sources": "Read complete saved chapter; all three exact excerpts matched normalized chapter text. Gutenberg source also retrieved.",
-    "quiz": "50, 75 and 100 scores checked; shared Studio tests verify failed-quiz review and successful retry.",
-    "automated": "6 shared animated engine/Studio tests passed; production build passed.",
-    "visual": "Desktop courtyard checked; 390×844 mobile viewport checked, no horizontal overflow and sprite loaded.",
-    "limits": "No authenticated class assignment or student-account online/offline synchronization performed for this unassigned package."
+    "resume": "Replay equality at every branch and ending across all enumerated routes.",
+    "quiz": "Four questions. Scores 0, 50, 75 and 100 verified; shared Studio retry tests pass.",
+    "roundTrip": "ZIP imported through teacher editor import function equals source package.",
+    "automated": "8 targeted engine/Studio/package tests passed; production build passed.",
+    "visual": "Desktop and 390×844 phone courtyard checked; character and dialogue fit.",
+    "limits": "Unassigned published remake. No new student attempt, class assignment or offline student-account synchronization created; existing Twine versions and attempts unchanged."
   }
 }

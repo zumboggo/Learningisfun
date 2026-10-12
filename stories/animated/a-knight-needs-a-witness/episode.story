@@ -1,211 +1,243 @@
-story 1
+story 2
 variable question = 0 range 0 2 hidden
-variable promise = 0 range 0 2 hidden
-variable evidence = false hidden
+variable trust = 1 range 0 3 hidden
+variable rope = false hidden
 variable honest = false hidden
+# Harmon: You / Need — I want to help, but helpful to whom?
 label opening
 scene classroom
 show Hepting happy center
-Hepting: I bought this journal in an airport in Peru. I asked it why boarding groups exist. Three days later, I still had no satisfactory answer.
-I: He puts the book on my desk. A little door is drawn on its leather cover; the handle casts a shadow it has no business casting.
-Hepting: One question on a new line. Then jump through. Ask people anything you like, but the journal gets just one question per visit.
-Hepting: Its return door checks what you understand. You do not have to persuade everyone you meet.
+camera medium Hepting
+Hepting [happy, explain]: Today's job: be someone's sidekick. The difficult part is deciding when helping means saying no.
+I: Mr. Hepting slides an old leather journal across my desk. A door is sketched on the cover. Something behind it knocks.
+Hepting [curious]: One question to the journal. Write it, step through, and meet the person on the other side. You can ask him as many questions as you like.
+Hepting [happy]: The return door asks four questions about what you learned. Three correct gets you home. It allows retries; it is a door, not a monster.
 scene journal
-I: I want to bring back an answer worth sharing, preferably without spending three days in an airport. I choose my one question.
+camera wide
+I: The little brass handle feels warm. I choose one question and write it on the first page.
 choice entry-question
-option names "How much can a name change a person?" -> enter ; question = 0
-option hero "What makes a hero before the first adventure?" -> enter ; question = 1
-option books "Can a story change what we see?" -> enter ; question = 2
+option names "Can a new name make someone a hero?" -> enter ; question = 0
+option hero "What does a good sidekick owe a would-be hero?" -> enter ; question = 1
+option books "Can a story stop us seeing what is right in front of us?" -> enter ; question = 2
+# Go — one question, one magical threshold.
 label enter
-I: I write my question once. Ink runs into the drawing, and the little door swings inward onto a road of fluttering pages.
+I: My ink drains into the sketched door. The leather wrinkles like a face waking up; the door opens far deeper than the book is thick.
 effect magic
-I: I jump. The book sucks me through, turns me sideways, and deposits me safely in a basket of clean washing.
+scene passage
+camera wide
+I: I jump. The pages catch my shoes, pull me sideways, and sweep me down a tunnel that smells of dust and summer grass.
+I: Commas rush past like tadpoles. A chapter heading narrowly misses my nose. Then the paper floor folds away.
+effect magic
 scene courtyard
-show Quixote neutral center
-I: I am in a village courtyard in La Mancha, Spain, in the early modern world of Don Quixote. A gentleman in old armor extracts a sock from my shoulder.
-Quixote: A messenger from distant lands! Or the laundry. Both are welcome.
-I: He is preparing to become a knight-errant: a wandering knight who seeks adventures and rights wrongs. His horse investigates a patch of grass with less complicated ambitions.
-Quixote: I call myself Don Quixote of La Mancha. I need a chronicler. Someone must write the beginning before the victories make it difficult to catch up.
-I: A chronicler records events. My journal opens to a blank introduction; its return door has become an outline with no handle.
-Quixote: Give me one introduction I can hear aloud. Tell them why I am worth remembering.
-I: I have a task: write his introduction before returning. I have never met someone who needs a first sentence quite this badly.
-I: He holds out a quill, then draws it back to straighten the feather. His hand lingers over it.
+show Quixote surprised center
+camera wide
+I: I land bottom-first in a basket of clean laundry. A grey-bearded man looks down at me, holding one extremely surprised sock.
+Quixote [surprised, question]: Have you come to assist me, or to be washed?
+I: I scramble out. I am in a village courtyard in La Mancha, Spain, around the beginning of the seventeenth century. Fields lie beyond the gate.
+I: The gentleman wears plain brown clothes. Old armor waits on a bench; his thin horse noses a bucket nearby. Everything looks ordinary except his expectations.
+camera medium Quixote
+Quixote [happy, explain]: Don Quixote of La Mancha, at your service. Soon a knight-errant: a wandering knight who rights wrongs. I could use an assistant before I set out.
+I: He gives me a cloth and points to a little handcart of books. My job is clear: help with his preparations, keep his belongings safe, and get home before he leaves.
+Quixote [determined]: We shall begin with the essential equipment. A great adventure must have a proper beginning.
+# Search — a practical choice and curiosity reveal his beliefs.
+label equipment
+I: A coil of rope lies beside a splendid book. The rope could secure the load; the book could help me understand what he expects of me.
+choice sidekick-kit
+option practical "I take the rope and check the cart." -> kit-rope ; rope = true
+option stories "I open the book and look for his model of a hero." -> kit-book ; trust += 1
+label kit-rope
+I: I loop the rope around the book crate. One cart wheel rests against a small stone. Beyond it, the paving slopes toward a shallow muddy ditch.
+Quixote [skeptical]: A necessary precaution, though chronicles seldom begin with knots.
+I: I suggest that a good knot may explain why a chronicler lives long enough to write. He considers this a surprisingly strong argument.
+goto model
+label kit-book
+I: The book describes knights, enchanted dangers, impossible victories. He points to Amadis of Gaul as if introducing a trusted colleague.
+Quixote [happy, explain]: A man should learn from the finest examples. Why aim for an ordinary life when the extraordinary has already been described?
+I: I set the book on the cart. The load leans slightly downhill; a small stone is doing all the work of keeping it still.
+goto model
+label model
+Quixote [determined]: Amadis of Gaul. Don Quixote of La Mancha. Do you hear it? A name large enough to travel in.
+I: One story is shaping another: intertextuality, right here in his borrowed pattern. His name changes the place, but keeps the heroic rhythm.
+I: It might sound derivative—copied too closely—but this adaptation of another hero’s title matters deeply to him.
 choice first-conversation
-option purpose "I ask why being remembered matters to him." -> purpose
-option preparation "I ask what he has done to prepare." -> preparation
+option purpose "I ask what he hopes this new life will let him do." -> purpose
+option preparation "I ask what the books have already changed." -> books
 label purpose
-Quixote: There are wrongs waiting to be put right. What use is a life spent arranging tomorrow until there are no tomorrows left?
-I: I came looking for an amusing story. Suddenly I am holding someone's fear of wasting his life.
-Quixote: Also, the introduction should mention my horse. He has waited patiently for his importance to be recognized.
-goto commission
-label preparation
-Quixote: Armor restored. Horse named. My own name perfected. A lady chosen. I have attended to the essentials.
-I: Each item comes with a little lift of his shoulders. He has worked hard at becoming the sort of person his books taught him to admire.
-I: The horse eats a weed. I decide to leave that out of my first question about preparation.
-goto commission
-label commission
-Quixote: Will your account be grand?
-I: I remember a time someone laughed before I finished explaining an idea. I want to give him room to speak; I also want my account to be true.
-I: The quill waits between us. My promise will shape the sentence he expects from me.
-choice chronicler-promise
-option hope "I promise to begin with his purpose, while checking his claims." -> promise-hope ; promise = 0
-option details "I promise to put ordinary details beside heroic claims." -> promise-details ; promise = 1
-option praise "I promise a splendid introduction with no awkward details." -> promise-praise ; promise = 2
-label promise-hope
-Quixote: Begin with the purpose. Yes. The armor can follow after a suitable pause.
-I: He gives me the quill carefully. I have promised kindness, but I still owe him accuracy.
-goto books
-label promise-details
-Quixote: Ordinary details? Even great chronicles must have somewhere to put the furniture, I suppose.
-I: He gives me the quill with a watchful look. I have permission to be specific, though he may dislike the specifics.
-goto books
-label promise-praise
-Quixote: At last, a chronicler who understands the scale of the undertaking!
-I: His relief feels like a reward. Then I look at the empty page and realize how much I have agreed not to see.
-goto books
+camera close Quixote
+Quixote [determined, hesitant]: There are wrongs to put right. I have spent long enough reading about men who act.
+I: He rubs a thumb over the book's worn edge. I had expected a man showing off. I find a man frightened of remaining merely a reader.
+Quixote [worried]: If I wait until everyone thinks I am ready, I may never begin.
+goto cost
 label books
-I: Through an open door I see shelves crowded with books of chivalry: romances about knights and extraordinary adventures. Outside, fields stretch away from the village.
-Quixote: A man needs examples. How else can he know what greatness looks like?
-I: On my page, a passage appears: Source excerpt — Cervantes, Don Quixote I.1, translated by John Ormsby: “he sold many an acre of tillageland to buy books of chivalry to read”.
-I: Land has become books. That is an action the narrator reports; what it tells me about the man's priorities is an inference I must defend.
-Quixote: You are staring at the shelves as if they have eaten something.
-I: I look again at the fields. Characterization can happen through a purchase, not just through a narrator calling someone brave or foolish.
-I: My quill starts a sentence about devotion. There is room for the cost beside it, if I make room.
-choice record-cost
-option both "I record the books and the land sold to buy them." -> record-both ; evidence = true
-option dream "I record only his love of heroic stories." -> record-dream
-label record-both
-I: I write: His devotion to stories is strong enough to change what he owns. I leave space to ask whether that devotion helps him judge the world.
-Quixote: The land was not going to read itself.
-I: He smiles, then glances toward the fields. The joke does not make the sale disappear.
+camera close Quixote
+Quixote [happy]: My shelves, for a start. A fine collection. Expensive, of course. I sold land for some of it.
+I: I glance through the gate: fields on one side, books on the other. His devotion has a cost I can actually point to.
+Quixote [worried]: You make that face as if I had bought nothing at all.
+goto cost
+label cost
+camera medium Quixote
+I: A remembered line from chapter 1 comes into focus: he sold farmland to buy books of chivalry. That action is evidence; what it tells me about his priorities is an inference.
+Quixote [curious, question]: You will stand beside me, won't you? An assistant who doubts everything is a very slow assistant.
+I: The question matters. If I only flatter him, I may be easy company and poor help. If I question every word, he may stop listening when it counts.
+choice sidekick-promise
+option honest "I promise support, including a warning when something looks wrong." -> promise-honest
+option obedient "I promise to follow his lead and keep my doubts to myself." -> promise-obedient ; trust += 1
+label promise-honest
+Quixote [skeptical]: Even in the middle of a heroic moment?
+I: Especially then, I say. He hands me the polishing cloth, but his fingers hold it for an extra second.
+Quixote [neutral]: Very well. Try to make your warnings concise.
 goto helmet
-label record-dream
-I: I write that he loves heroic stories. It is true, and it sounds generous.
-I: But someone reading only my sentence would never know what the books cost. A true detail can still give an incomplete picture.
-Quixote: A fine beginning. You have captured the spirit of it.
-I: I keep the source passage in the margin. His approval is comfortable; the missing land is less so.
+label promise-obedient
+Quixote [relieved, reassure]: At last. Someone who understands loyalty.
+I: His relief makes me stand taller. Then I notice that I have promised silence before finding out what I might need to say.
 goto helmet
+# Find — apparent readiness; close reading reveals the weakness.
 label helmet
-move Quixote nod
-Quixote: Now, the helmet. You may admire the workmanship.
-I: He raises an old open helmet fitted with a homemade visor. Pasteboard is layered paper or cardboard; it does not become steel because someone needs it to.
-I: The page shows the sequence: his first sword test destroyed a week's work. He repaired the helmet with iron bars, then decided not to test it again.
-I: Source excerpt — Cervantes, Don Quixote I.1, Ormsby: “not caring to try any more experiments with it, he passed it and adopted it as a helmet of the most perfect construction.”
-I: “Most perfect” is a magnificent phrase. The avoided test stands beside it like a small person coughing during a royal speech.
-Quixote: You may put that in your introduction. Perfect construction has a reassuring sound.
-I: Diction is word choice. Here those confident words ask me to accept more than the testing history establishes.
-I: I set my draft on the table. A breeze lifts the corner; I reach for a book to hold it down.
-chance loose-page 50 -> page-turns else page-stays
-label page-turns
-I: Too late. The wind flips the sheet over, exposing my rough note: GRAND WORDS; QUESTIONABLE HELMET.
-move Quixote recoil
-Quixote: Is that what you intend to remember?
-I: The wind has made a private doubt public. Even a careful account can arrive in the wrong way.
-goto explain
-label page-stays
-I: The book catches the page. My rough note about the helmet stays hidden; he sees only the fine heading.
-Quixote: Excellent lettering. It already looks like history.
-I: A lucky gust has spared me an awkward moment. It has not made the helmet reliable.
-goto explain
-label explain
-I: The sentence is still mine to choose. I can explain the joke without reducing him to it, or let his favorite word do the work.
-choice helmet-response
-option explain "I explain why the grand phrase and the avoided test belong together." -> helmet-honest ; honest = true
-option reassure "I say that perfect is an excellent word and move on." -> helmet-flatter
-label helmet-honest
-I: I tell him that the phrase sounds like a heroic romance, but the homemade repair and avoided retest make its certainty doubtful.
-Quixote: You think the contrast makes me ridiculous.
-I: I say the contrast makes the preparation comic. It also shows how much he wants to believe he is ready; I cannot certify the helmet from that wish.
-I: Parody imitates a genre's habits while exposing their limits. The joke needs the heroic claim and the stubborn ordinary detail together.
-Quixote: I would prefer a smaller ordinary detail.
-I: He sets the helmet down gently. I have kept the evidence, but lost the easy warmth of his first welcome.
-goto names
-label helmet-flatter
-I: I praise the sound of the word. He straightens, delighted.
-Quixote: I thought so. A helmet of adequate construction would hardly deserve a chronicler.
-I: The joke is right there: heroic certainty rests on an avoided retest. By flattering the phrase, I have helped it cover the problem.
-I: Parody exposes the gap between a genre's grand habits and ordinary reality. My introduction is beginning to hide the gap it should help a reader notice.
-goto names
+camera medium Quixote
+Quixote [happy, explain]: Observe the helmet. Improved construction. You may admire it without striking it.
+I: On the bench sits an old metal helmet with a homemade pasteboard addition. Pasteboard is layered paper: useful for shaping, less reassuring for stopping a sword.
+I: He tells me his first test destroyed a week's work. He rebuilt it with iron bars inside, then chose not to test it again.
+Quixote [determined, insist]: We have spent enough time proving that things can break.
+I: I remember the narrator's phrase—source excerpt, Cervantes, chapter 1, Ormsby: “a helmet of the most perfect construction.”
+I: Close reading catches the wobble: “most perfect” sounds gloriously certain beside an avoided retest. The diction makes the mismatch comic.
+Quixote [curious]: Why are you looking at the helmet and then at me?
+I: I say I am trying to be judicious: careful in my judgment. A convincing shape is not the same thing as evidence of strength.
+react Quixote sigh
+Quixote [skeptical]: You have an alarming talent for making short words take a long time.
+I: He leaves the helmet on the bench. I do not test it or change it. The cloth in my hand is for polishing, not for rewriting his equipment.
 label names
-Quixote: You must hear the names. Rocinante took four days. Don Quixote took eight. Greatness is not a hurried business.
-I: He introduces the horse with ceremony. Rocinante continues eating, unmoved by twelve days of human administration.
-I: Source excerpt — Cervantes, Don Quixote I.1, Ormsby: “a distinguished and full-sounding one, befitting the new order and calling he was about to follow.”
-I: The wording describes the name he seeks for his horse. The name announces a new identity; it does not establish new abilities.
-Quixote: And my lady is Dulcinea del Toboso. A knight must have someone to whom his victories may be dedicated.
-I: The chapter identifies her as Aldonza Lorenzo, a farm-girl, and says that, as far as is known, she never knew of his love. His beautiful name does not give me her agreement.
-I: I nearly write that everyone is ready for the adventure. Then I cross out “everyone.” His account cannot speak for her.
-I: I have enough for a grand introduction now. I also have enough to know what a grand introduction might conceal.
-if evidence == true -> kept-cost else missing-cost
-label kept-cost
-I: My earlier note still contains the land beside the books. It gives me a concrete way to show both devotion and its cost.
-goto remember-promise
-label missing-cost
-I: My earlier note left the land out. The source in the margin lets me restore it; I do not have to protect my first draft.
-goto remember-promise
-label remember-promise
-if promise == 2 -> break-promise else keep-promise
-label break-promise
-I: I promised to leave out awkward details. An honest introduction now means admitting that I made the wrong promise.
-Quixote: You have become very quiet for a chronicler.
-goto final-choice
-label keep-promise
-I: I promised an account with room for evidence. Keeping that promise may cost me the delighted reaction I wanted.
-Quixote: Read it. A beginning cannot spend its whole life in preparation.
-goto final-choice
-label final-choice
-choice introduction
-option tender "I read a hopeful introduction that includes the land, helmet, and limits of naming." -> tender
-option sharp "I lead with the comic gap, then acknowledge his wish to do something useful." -> sharp
-option flatter "I declare him a perfect knight and leave out the contradictions." -> flatter
-label tender
-I: I read: Here is a man who wants his life to serve a heroic purpose. He gives land for stories and days to names, while his repaired helmet remains untested.
-I: His new names announce the life he wants; they cannot prove his readiness or another person's consent.
-if promise == 2 -> apology else tender-reaction
-label apology
-I: I tell him I should never have promised praise without awkward details. He folds his arms; the apology does not oblige him to forgive me.
-goto tender-reaction
-label tender-reaction
-Quixote: You have made my beginning smaller than I imagined.
-I: I tell him I have tried to make it large enough to contain the man, not only the title. He studies the page without taking it.
+camera wide
+I: Rocinante lifts his head from the bucket. Quixote announces the name as if a trumpet section should follow.
+Quixote [happy, explain]: Four days for his name. Eight for mine. One should never rush the important work.
+I: I look from the grand name to the thin horse. The name declares an ambition; it has not changed the animal's abilities.
+Quixote [happy]: And my victories shall belong to Dulcinea del Toboso.
+I: That is his new name for Aldonza Lorenzo. The chapter says she did not, as far as anyone knew, even know of his love. He cannot name her agreement into existence.
+I: His world is almost assembled: knight, horse, lady. Then a hot gust catches the loose laundry, and the courtyard stops following his plan.
+# Take — a local invented mishap; help requires action and has a cost.
+label gust
+react Quixote recoil
+I: A sheet snaps across the paving. Rocinante shies sideways. The stone beneath the cart wheel skitters loose.
+I: The book cart begins rolling toward the muddy ditch. Quixote steps after it, straight into the trailing sheet; his foot catches and he staggers.
+Quixote [surprised, insist]: The books! Catch the books!
+camera wide
+I: I cannot reach both him and the cart at once. He is near the hard edge of the bench; the books are near the mud.
+choice first-rescue
+option person "I catch his arm and steady him. The books may fall." -> catch-person
+option cart "I go after the cart and shout for him to grab the bench." -> catch-cart
+label catch-person
+I: I catch his forearm and brace my feet. He rights himself against the bench. His sleeve tears; neither of us falls.
+Quixote [angry]: My books! Do you know what those cost?
+I: I do. The cart is still moving. Keeping him upright has bought safety, not his gratitude.
+if rope == true -> rope-person else loose-person
+label rope-person
+I: I seize the trailing rope and pull from the side. The tied crate stays together, though the wheel is already at the ditch.
+goto fortune
+label loose-person
+I: Without a rope to hold it, I can only push a laundry basket into the cart's path. It might turn the wheel; it might collapse.
+goto fortune
+label catch-cart
+I: I run beside the cart, clear of its wheels. Behind me comes a thump: Quixote catches the bench, bruising his palm.
+Quixote [worried]: I have it. Keep going!
+I: He is upright, but the sound stays with me. I chose the books and trusted him to save himself.
+if rope == true -> rope-cart else loose-cart
+label rope-cart
+I: I pull the rope sideways toward a flat patch. The secured crate holds; the moving wheel is still trying to drag it into the ditch.
+goto fortune
+label loose-cart
+I: I push at the cart's side, trying to turn it across the slope. The untied books slide toward the rim.
+goto fortune
+label fortune
+chance wheel-rut 50 -> wheel-catches else wheel-slips
+label wheel-catches
+I: The wheel catches in a rut and stops. My plan gets help from a piece of ground I never noticed.
+if rope == true -> dry-books else spilled-books
+label dry-books
+I: The rope keeps the crate in place. Dusty covers, startled horse, torn dignity—but every book is dry.
+Quixote [relieved]: A victory. An unconventional one.
+goto after-rescue
+label spilled-books
+I: The cart stops, but two loose books tumble into the mud. I lift them out by their boards and lay them open on the dry bench.
+Quixote [sad]: That one took me weeks to find.
+goto after-rescue
+label wheel-slips
+I: The wheel slips through the rut and jolts into the ditch. Preparation has not persuaded the ground to cooperate.
+if rope == true -> wet-crate else wet-books
+label wet-crate
+I: The rope holds the crate together, but muddy water splashes the bottom book. I pull the load onto dry ground; its pages will need careful drying.
+Quixote [sad]: The rope was a good thought. I wish good thoughts were enough.
+goto after-rescue
+label wet-books
+I: Three books spill into the ditch. I recover them, but mud darkens their pages. I can save them from more water, not undo the first soaking.
+Quixote [sad]: Please. Set them down gently.
+goto after-rescue
+# Local outcomes are remembered without awarding learning points.
+label after-rescue
+if rope == true -> check-dry else repair
+label check-dry
+# The stable event has already determined what the student saw.
+I: The rope still circles the crate. I leave it there while we work; one useful decision does not make the whole afternoon safe.
+goto repair
+label repair
+camera close Quixote
+I: We carry the books to the bench. His earlier boast has disappeared. He smooths a corner with extraordinary care.
+Quixote [sad, hesitant]: They made the world seem larger. You must understand that much.
+I: I do. I can see both the land they cost and what he hoped to find in them. Neither fact erases the other.
+Quixote [worried]: Was that a heroic rescue?
+I: I want to give him an answer that helps. It would be easy to give him one that merely sounds good.
+choice rescue-account
+option honest "I describe what we actually saved, what went wrong, and what remains uncertain." -> account-honest ; honest = true
+option grand "I announce a glorious victory over the treacherous courtyard." -> account-grand ; trust += 1
+label account-honest
+I: I say we kept each other upright and recovered the books. The rest belongs in the account too: the loose stone, our hurried choices, and the ground's inconvenient opinion.
+Quixote [skeptical]: It sounds very small when you put it like that.
+I: I point to his hands. They are still here to turn the pages. Small is not the same as worthless.
+if trust >= 2 -> listened else distant
+label listened
+Quixote [neutral, hesitant]: You took my books seriously before the trouble. I suppose I should hear you now.
+I: He listens without agreeing to all of it. The warmth I built earlier has made room for a harder answer.
 goto farewell
-label sharp
-I: I read: A self-appointed knight equips an enormous ambition with a homemade helmet and impressive names. The details expose the gap between heroic language and tested ability.
-I: I add that his wish to put wrongs right deserves attention, even when his preparations invite laughter.
-Quixote: That last sentence might have come first.
-I: He turns away. My account has evidence, but its order has made it harder for him to hear the care in it.
+label distant
+Quixote [sad]: I had hoped you would see more than a muddle.
+I: He turns to the books. My honest answer has not earned the reaction I wanted; I still help him carry them inside.
 goto farewell
-label flatter
-I: I proclaim him a perfect knight, ready for every adventure. He beams and asks me to read it again.
-I: My journal places the source passages beside my sentence. The sold land, refused retest, and imagined names have all vanished from my account.
-I: I have won his approval by making my introduction less trustworthy. I draw a line beneath it: this is praise I cannot support.
+label account-grand
+react Quixote laugh
+Quixote [happy, celebrate]: Yes! A treacherous courtyard, nobly defeated. That has the proper sound.
+I: He laughs, and for a moment we are splendid companions. Then a muddy mark on the bench catches my eye.
+I: The grand version leaves out the mishap it claims to explain. I keep the laughter, but make a quiet revision in my own journal: names cannot do the work of evidence.
 goto farewell
+# Return / Change — keep canonical preparations and future events intact.
 label farewell
-if honest == true -> farewell-truth else farewell-doubt
-label farewell-truth
-I: The helmet rests where our difficult conversation left it. I do not run another test, change his plans, or invent a victory for him.
-goto question-return
-label farewell-doubt
-I: The helmet still rests on the table. Avoiding a difficult conversation has changed my visit, not the strength of his equipment.
-goto question-return
-label question-return
-Quixote: Whatever else you write, remember that I meant to begin.
-I: I can remember that. I can also remember what the beginning leaves uncertain.
+camera medium Quixote
+Quixote [curious]: Before you go, an assistant deserves a title. Guardian of the Books? Conqueror of Unhelpful Slopes?
+I: I ask for Sidekick. It has room for carrying things and asking awkward questions.
+Quixote [happy]: An unusually modest ambition. Very well, Sidekick.
+I: I carry the final book inside. He returns to his preparations; the repaired helmet and his great plans remain his own.
+I: The comedy echoes heroic romances while exposing their limits: parody. I can laugh at the gap without forgetting the man who lives inside it.
 scene journal
+camera wide
 effect fade
 if question == 0 -> answer-names else other-question
 label other-question
 if question == 1 -> answer-hero else answer-books
 label answer-names
-I: My original question returns: How much can a name change a person? Here, it organizes a hope and a performance; it cannot supply proof that the hope has been fulfilled.
+I: My one question returns: can a new name make someone a hero? It can organize a hope. It cannot strengthen a helmet, improve a horse, or guarantee a deed.
 goto threshold
 label answer-hero
-I: My original question returns: What makes a hero before the first adventure? This opening gives me aspiration and preparation to examine, not achievements to assume.
+I: My one question returns: what does a sidekick owe a would-be hero? Today I had to care about his purpose and still notice the things his purpose made him miss.
 goto threshold
 label answer-books
-I: My original question returns: Can a story change what we see? His romances give ordinary objects heroic identities; the narrator's details let me see the gap.
+I: My one question returns: can a story stop us seeing? His romances give the courtyard a heroic shape. Watching the actual details helps me see what that shape leaves out.
 goto threshold
 label threshold
-I: A handle appears on the drawn door. Through it I glimpse my classroom, where a chair has never looked so welcoming.
-I: I carry back a better way to read: place the action beside the claim, then explain the difference. I leave his future adventures on the other side of the page.
-I: Four questions glow on the threshold. I must answer three correctly to return; if I miss them, I can review and try again.
+I: The little door opens beneath my hand.
+if honest == true -> return-honest else return-revision
+label return-honest
+I: I carry back an account that leaves room for both his hope and the facts. He did not have to like every word for the visit to matter.
+goto return-door
+label return-revision
+I: I keep my revision beside the grand speech. Next time I tell this story, I want the person and the facts to fit on the same page.
+goto return-door
+label return-door
+I: Four questions shine along the frame. Beyond them is my classroom. I brush one final sock off my shoulder and step toward home.
 end

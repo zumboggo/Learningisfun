@@ -1,0 +1,26 @@
+{
+  "name": "Don Quixote",
+  "version": 1,
+  "provenance": "Fictional manga interpretation of Cervantes's Don Quixote, using shared cartoon-v1 components. Angular face and grey beard suggest the spare, nearly fifty-year-old gentleman of I.1. Generic brown preparation clothes, not a claim of exact Spanish costume reconstruction; armor rests offstage. No real-person likeness.",
+  "expressions": {},
+  "rig": {
+    "version": 2,
+    "preset": "cartoon-v1",
+    "style": "manga",
+    "palette": {
+      "skin": "#d9b18e",
+      "hair": "#7b7770",
+      "shirt": "#84644c",
+      "beard": "#77736c",
+      "trim": "#bda475"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "cropped",
+      "face": "angular",
+      "glasses": "none",
+      "facialHair": "full",
+      "outfit": "tunic"
+    }
+  }
+}
