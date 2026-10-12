@@ -14,7 +14,8 @@ it('every AP choice route finishes with seven choices and stable reloads across 
  expect(paths).toBe(512);expect(events.size).toBe(2);expect(endings.size).toBeGreaterThan(8);
  expect(quizScore(pack.quiz,pack.quiz.map((q:any)=>q.answer))).toBe(100);
  expect(quizScore(pack.quiz,pack.quiz.map((q:any)=>(q.answer+1)%4))).toBe(0);
-});
+// Exhaustive replay of 512 complete routes needs more than the default 5s on CI.
+},30000);
 it('the downloadable Codex ZIP imports unchanged through the teacher editor',async()=>{
  const zip=readFileSync('public/stories/own-english/animated/the-last-chair.zip');
  const imported=await importStory(zip as unknown as File);expect(imported).toEqual(pack);
