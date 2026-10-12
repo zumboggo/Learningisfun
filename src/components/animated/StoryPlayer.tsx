@@ -26,7 +26,7 @@ export default function StoryPlayer({pack,initial,onProgress,debug=false}:{pack:
   setState(next);save({...progress,steps:[...progress.steps,option]});
   await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()));
   for(const n of next.cues||[]){if(token!==generation.current)return;const el=n.actor?root.current?.querySelector<HTMLElement>(`[data-actor="${n.actor}"]`):root.current?.querySelector<HTMLElement>('.story-world');
-   if(n.type==='react'){setResponses({[n.actor]:n.action});await animate(el||null,[{opacity:1},{opacity:1}],650);setResponses({});}
+   if(n.type==='react'){setResponses({[n.actor]:n.action});await animate(el||null,[{opacity:1},{opacity:1}],pack.assets.characters[n.actor]?.rig?.preset==='cartoon-v1'?1900:650);setResponses({});}
    else if(n.type==='show'&&!state.stage.actors[n.actor])await animate(el||null,[{opacity:0,transform:'translateX(-45px)'},{opacity:1,transform:'translateX(0)'}]);
    else if(n.type==='effect'||(n.type==='move'&&n.action!=='exit')){const transforms:Record<string,string[]>={enter:['translateX(-70px)','translateX(0)'],nod:['translateY(0)','translateY(10px)','translateY(0)'],shake:['translateX(-8px)','translateX(8px)','translateX(0)'],bounce:['translateY(0)','translateY(-25px)','translateY(0)'],recoil:['rotate(0)','rotate(-5deg)','rotate(0)'],closeup:['scale(1)','scale(1.08)','scale(1)'],magic:['scale(.6) rotate(-4deg)','scale(1.08) rotate(2deg)','scale(1)']};await animate(el||null,(transforms[n.action]||['scale(.98)','scale(1)']).map((transform,i)=>({transform,opacity:(n.action==='fade'||n.action==='magic')&&i===0?0:1})),n.action==='magic'?850:420);}
   }

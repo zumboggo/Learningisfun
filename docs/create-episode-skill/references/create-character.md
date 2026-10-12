@@ -1,5 +1,16 @@
 # Create episode character
 
+## Current default: simplified cartoon rig
+
+Use Lin character version 3 in `public/stories/animated/rigs/lin-cartoon.json` as the reference. It uses `rig: {version: 2, preset: "cartoon-v1", palette: {skin: "#eac09c", hair: "#293338", shirt: "#b93f46"}}`. The complete figure, face, hands and continuous arms share one vector style. Palette accepts only those three six-digit hex colours. A palette change alone does not create a distinct character: new hair, face or clothing geometry requires an intentional shared-renderer extension and visual review. Do not claim the studio supports arbitrary new cartoon anatomy yet.
+
+Preserve the red CDIS polo and teenage proportions for classmates. Let one finite gesture prepare, emphasize, hold and settle; do not add repeating arm pulses or a large circular talking mouth. Preview a short conversation at wide, medium and close framing before accepting a skin. Do not generate separate bitmap limbs for the new cartoon preset. Read acting-library.md and use only its closed cue list.
+
+## Legacy raster packs
+
+The following atlas workflow is only for maintaining existing teen-v1 artwork, not the default for new characters.
+
+
 For articulated characters, use the shipped Lin rig as the visual and anatomical reference. Read [the acting library](acting-library.md). Reuse `teen-v1`; do not add character-specific animation names. Lin is currently the only supplied articulated skin. Existing flat packs remain valid fallbacks.
 
 Imagegen prompt:

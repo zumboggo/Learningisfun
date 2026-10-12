@@ -23,7 +23,7 @@ New packages must stay below 5 MB including all referenced images/audio, excludi
 
 ## Acting and framing
 
-Read [the curated acting library](references/acting-library.md) before writing. Use only its supported emotions, resting poses, talking gestures, responses, moves and camera settings. Do not invent animations or imply that static artwork has articulated joints. Lin is the first supplied `teen-v1` rig; the other existing cast members remain static expression packs. Reuse the same rig contract for future characters. Let emotion choose automatic acting; add sparse intentional gestures and wide/medium/close shots for story emphasis. Use `story 2` / package format `2`. Keep already published Story 1 and Twine attempts unchanged.
+Read [the curated acting library](references/acting-library.md) before writing. Use only its supported emotions, resting poses, talking gestures, responses, moves and camera settings. Do not invent animations or imply that static artwork has articulated joints. Lin is the first supplied `cartoon-v1` rig; the other existing cast members remain static expression packs. Use the simplified vector rig for new articulated characters; preserve raster `teen-v1` for old packages. Keep one consistent face/body style, continuous limbs, grounded idle movement and finite coordinated gestures. Reuse the same acting vocabulary for future characters. Let emotion choose automatic acting; add sparse intentional gestures and wide/medium/close shots for story emphasis. Use `story 2` / package format `2`. Keep already published Story 1 and Twine attempts unchanged.
 
 ## Verify and deliver
 

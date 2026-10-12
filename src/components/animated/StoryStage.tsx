@@ -14,7 +14,7 @@ export default function StoryStage({pack,state,current,speaking,reduced,response
   <div className="story-camera" style={{transform:`translateX(${offset}%) scale(${scale})`,transitionDuration:reduced?'0ms':undefined} as CSSProperties}>
    <div className="story-world" style={{backgroundImage:state.stage.background?`url("${pack.assets.backgrounds[state.stage.background]?.src}")`:undefined}}>
     {actors.map(([id,a])=>{const c=pack.assets.characters[id],asset=c.expressions[a.expression]||c.expressions.neutral;return <div data-actor={id} data-expression={a.expression} key={id} className={`story-actor position-${a.position} ${c.rig?'has-rig':''}`}>
-     <div className="story-facing" style={{transform:`scaleX(${a.facing})`}}>{c.rig?<PuppetActor character={c} actorId={id} emotion={a.expression} talking={speaking&&id===speaker} gesture={id===speaker?current.gesture:undefined} rest={a.rest} response={responses[id]} reduced={reduced}/>:<img src={asset?.src} alt={`${c.name} — ${a.expression}`} onError={e=>{e.currentTarget.style.opacity='0';}}/>}</div>
+     <div className="story-facing" style={{transform:`scaleX(${a.facing})`}}>{c.rig?<PuppetActor character={c} actorId={id} performanceKey={state.cursor} emotion={a.expression} talking={speaking&&id===speaker} gesture={id===speaker?current.gesture:undefined} rest={a.rest} response={responses[id]} reduced={reduced}/>:<img src={asset?.src} alt={`${c.name} — ${a.expression}`} onError={e=>{e.currentTarget.style.opacity='0';}}/>}</div>
      {!modern&&<span>{c.name}</span>}
     </div>;})}
    </div>

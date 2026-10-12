@@ -42,6 +42,7 @@ export const ACTING_DESCRIPTIONS={
 };
 export function packageAssetEntries(pack){return [...Object.values(pack.assets?.backgrounds||{}),...Object.values(pack.assets?.characters||{}).flatMap(c=>[...Object.values(c.expressions||{}),...Object.values(c.rig?.parts||{})]),...(pack.assets?.music?[pack.assets.music]:[])];}
 export function validateRig(rig){
+ if(rig?.version===2&&rig.preset==='cartoon-v1'){if(!rig.palette||Object.keys(rig.palette).some(k=>!['skin','hair','shirt'].includes(k))||Object.values(rig.palette).some(v=>typeof v!=='string'||!/^#[0-9a-fA-F]{6}$/.test(v)))return 'Cartoon palette accepts only skin, hair and shirt hex colours';if(rig.parts)return 'Cartoon rigs use continuous vector shapes, not image parts';return null;}
  if(!rig||rig.version!==1||rig.preset!=='teen-v1')return 'Use rig version 1 and the teen-v1 preset';
  if(!rig.parts||RIG_PARTS.some(k=>!rig.parts[k]?.src)||Object.keys(rig.parts).some(k=>!RIG_PARTS.includes(k)))return 'Rig requires exactly the 13 standard body parts';
  if(rig.faceSkin&&!/^#[0-9a-fA-F]{6}$/.test(rig.faceSkin))return 'Rig faceSkin must be a six-digit hex colour';
