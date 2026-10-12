@@ -1,3 +1,4 @@
+import {useAnimatedLibrary} from '@/services/use-animated-library';
 import AnimatedLibrary from '@/components/animated/AnimatedLibrary';
 import {useSearchParams} from 'react-router-dom';
 import {useState} from 'react';
@@ -10,6 +11,7 @@ import {EpisodeLibrary} from './ClassGamePage';
 import {prefersGameFullscreen,saveGameDisplay} from '@/services/game-display';
 export default function GamePage(){const {user}=useAuth();return user?<Library key={user.$id} userId={user.$id} role={user.role}/>:null;}
 function Library({userId,role}:{userId:string;role:string}) {
+  const animated=useAnimatedLibrary(userId);
   const [query,setQuery]=useSearchParams();
   const selectedClass=query.get('class');
   const teacher=['teacher','admin'].includes(role);
@@ -23,7 +25,7 @@ function Library({userId,role}:{userId:string;role:string}) {
   },[userId,role,teacher]);
   if(!teacher&&role!=='student')return <p role="alert" className="p-6">The Game is available to students and class teachers.</p>;
   const stoneClass=classes?.find(c=>c.$id===STONE_CLASS_ID)?.$id;
-  const visible=classes?.filter(c=>teacher||c.$id===stoneClass||assignedEpisodes(c.$id,teacher).length);
+  const visible=classes?.filter(c=>teacher||c.$id===stoneClass||assignedEpisodes(c.$id,teacher).length||animated?.assignments.some((a:any)=>a.classId===c.$id));
   const selected=teacher?classes?.find(c=>c.$id===selectedClass):undefined;
   return <main className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6">
     <header><h1 className="text-3xl font-bold">The Game</h1><p className="mt-2 text-gray-600">{teacher?'Play and test episodes across your classes. Teacher previews never enter student rankings.':'Your released episodes, highest scores, and past adventures—all here for unlimited replay.'}</p></header>

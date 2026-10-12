@@ -1,3 +1,4 @@
+import {useAnimatedLibrary} from '@/services/use-animated-library';
 import {GameLaunchLink} from '@/components/GameLaunchLink';
 import {EpisodeCards} from '@/components/EpisodeCards';
 import {assignedEpisodes} from '../../functions/learning-content/src/episode-catalog.js';
@@ -15,6 +16,7 @@ export default function ClassGamePage() {
   return user ? <EpisodeLibrary key={`${user.$id}:${classId}`} classId={classId} userId={user.$id} role={user.role}/> : null;
 }
 export function EpisodeLibrary({classId,userId,role,embedded=false,showStone=classId===STONE_CLASS_ID}:{classId:string;userId:string;role:string;embedded?:boolean;showStone?:boolean}) {
+  const animated=useAnimatedLibrary(userId)?.assignments.filter((a:any)=>a.classId===classId)||[];
   const access=useLiveQuery(async()=>{
     const cls=await db.classes.get(classId);
     const members=await db.class_members.where('[classId+userId]').equals([classId,userId]).toArray();
@@ -52,7 +54,7 @@ export function EpisodeLibrary({classId,userId,role,embedded=false,showStone=cla
       <p className="my-4 font-semibold">{access.preview?'Teacher preview · excluded from rankings':best===null?'No completed attempt yet':`Your highest score: ${best}/100`}</p>
       <GameLaunchLink className="inline-flex min-h-11 items-center rounded-lg bg-orange-900 px-5 py-3 font-semibold text-white" to={access.preview?`/classes/${classId}/game/preview/teaching-stone`:`/classes/${classId}/teaching-stone`}>{access.preview?'Play teacher preview':attempts.length?'Play / replay':'Begin episode'}</GameLaunchLink>
       {!access.preview&&<p role="status" className="mt-3 text-xs text-gray-600">{status}{attempts.some(a=>a.pending)?' Progress pending synchronization.':''}</p>}
-    </article>:assignedEpisodes(classId,access.preview).length?null:<section className="rounded-2xl border border-orange-200 bg-orange-50 p-6"><h2 className="font-semibold">Your next story is still being written.</h2><p className="mt-2 text-sm">No episodes have been assigned to this class yet. They will appear here when published.</p></section>}
+    </article>:(assignedEpisodes(classId,access.preview).length||animated.length)?null:<section className="rounded-2xl border border-orange-200 bg-orange-50 p-6"><h2 className="font-semibold">Your next story is still being written.</h2><p className="mt-2 text-sm">No episodes have been assigned to this class yet. They will appear here when published.</p></section>}
     {classId===STONE_CLASS_ID&&<Link to={`/classes/${classId}/principles`} className="block rounded-xl border border-teal-200 bg-teal-50 p-5 font-semibold text-teal-900">Principles Portfolio · Ideas under examination →</Link>}
     <EpisodeCards classId={classId} userId={userId} preview={access.preview}/>
     <p className="text-sm text-gray-600">Each episode keeps its own highest completed score. Replaying preserves your earlier results.</p>
