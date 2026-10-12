@@ -12,16 +12,17 @@ A character pack contains name, incrementing version, provenance, a neutral WebP
 {"version":2,"preset":"cartoon-v1","style":"manga","palette":{"skin":"#eac7a8","hair":"#654637","shirt":"#376975"},"appearance":{"age":"adult","hair":"side-part","glasses":"round","outfit":"teacher"}}
 ```
 
-Only six-digit hex colours are allowed. Optional appearance values are closed:
+Only six-digit hex colours are allowed. Optional palette keys `glasses` and `beard` set their colours. Optional appearance values are closed:
 
 | Field | Allowed values | Default |
 | --- | --- | --- |
 | age | teen, adult | teen |
-| hair | layered, side-part, long, bob | layered |
+| hair | layered, side-part, long, bob, cropped | layered |
 | glasses | none, round | none |
 | outfit | uniform, teacher | uniform |
+| facialHair | none, full | none |
 
-Preserve identity through silhouette, hair, age, glasses and clothing—not palette alone. Hepting is an adult with a broader jaw, smaller irises, brown side-parted hair, glasses, teal top and tan trousers. Lin has layered short hair; Mei long hair; Yeyul a bob. Classmates wear red CDIS polos and navy trousers. These are fictional illustrated people, not real student likenesses.
+Preserve identity through silhouette, hair, age, glasses and clothing—not palette alone. Hepting is an adult with a broader jaw, smaller irises, short brown hair, blue glasses, a full brown beard, teal top and tan trousers. Lin has layered short hair; Mei long hair; Yeyul a bob. Classmates wear red CDIS polos and navy trousers. Students are fictional illustrated people, not real student likenesses. Mr. Hepting’s updated portrait uses David’s explicitly supplied reference photo. Keep source photos outside published assets; record authorization in provenance.
 
 ## Drawing constraints
 

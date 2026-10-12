@@ -73,7 +73,7 @@ Whole-character moves: `enter`, `exit`, `left`, `center`, `right`, `turn`, `nod`
 
 ## Current cartoon character contract
 
-New Lin uses character version 4 with `rig: {version: 2, preset: "cartoon-v1", style: "manga", palette: {skin: "#eac09c", hair: "#293338", shirt: "#b93f46"}}`. Palette values must be six-digit hex colours. The runtime draws the complete figure in one vector style, including curved arms and consistent hands and face. No bitmap body parts are required. Optional appearance selects age (teen/adult), hair (layered/side-part/long/bob), glasses (none/round), and outfit (uniform/teacher). Omitted appearance preserves Lin’s original design. See character-standard.md for constraints and the creation prompt. Keep the existing cue vocabulary.
+New Lin uses character version 4 with `rig: {version: 2, preset: "cartoon-v1", style: "manga", palette: {skin: "#eac09c", hair: "#293338", shirt: "#b93f46"}}`. Palette values must be six-digit hex colours. The runtime draws the complete figure in one vector style, including curved arms and consistent hands and face. No bitmap body parts are required. Optional appearance selects age (teen/adult), hair (layered/side-part/long/bob/cropped), glasses (none/round), outfit (uniform/teacher), and facialHair (none/full). Optional palette glasses and beard colours customize these details. Omitted appearance preserves Lin’s original design. See character-standard.md for constraints and the creation prompt. Keep the existing cue vocabulary.
 
 ## Legacy raster character contract
 
