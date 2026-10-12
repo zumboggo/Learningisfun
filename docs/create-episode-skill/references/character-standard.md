@@ -1,12 +1,12 @@
 # Shared manga character standard
 
-Use `cartoon-v1` for new articulated characters. Lin is the visual reference; Mr. Hepting, Mei and Yeyul use the same renderer and acting controller. The character's identity is data, not a new animation implementation.
+Use `cartoon-v1` for new articulated characters. Lin is the visual reference; Mr. Hepting, Mei, Yeyul and Jordan use the same renderer and acting controller. The character's identity is data, not a new animation implementation.
 
 ## Identity and appearance
 
-Available packs: `public/stories/animated/rigs/{lin,hepting,mei,yeyul}-cartoon.json`. Add them from the studio's **Reusable cast** selector. The AP episode uses Lin and Mr. Hepting; Mei and Yeyul remain reusable library characters, without inserting them into its story.
+Available packs: `public/stories/animated/rigs/{lin,hepting,mei,yeyul,jordan}-cartoon.json`. Add them from the studio's **Reusable cast** selector. The AP episode uses Lin and Mr. Hepting; Mei and Yeyul remain reusable library characters, without inserting them into its story.
 
-A character pack contains name, incrementing version, provenance, a neutral WebP fallback, and:
+A character pack contains name, incrementing version, provenance, `expressions: {}`, and the rig below. Vector neutral poses are drawn directly; no image is needed. Legacy and static characters keep their neutral WebP fallback.
 
 ```json
 {"version":2,"preset":"cartoon-v1","style":"manga","palette":{"skin":"#eac7a8","hair":"#654637","shirt":"#376975"},"appearance":{"age":"adult","hair":"side-part","glasses":"round","outfit":"teacher"}}
@@ -22,7 +22,7 @@ Only six-digit hex colours are allowed. Optional palette keys `glasses` and `bea
 | outfit | uniform, teacher | uniform |
 | facialHair | none, full | none |
 
-Preserve identity through silhouette, hair, age, glasses and clothing—not palette alone. Hepting is an adult with a broader jaw, smaller irises, short brown hair, blue glasses, a full brown beard, teal top and tan trousers. Lin has layered short hair; Mei long hair; Yeyul a bob. Classmates wear red CDIS polos and navy trousers. Students are fictional illustrated people, not real student likenesses. Mr. Hepting’s updated portrait uses David’s explicitly supplied reference photo. Keep source photos outside published assets; record authorization in provenance.
+Preserve identity through silhouette, hair, age, glasses and clothing—not palette alone. Hepting is an adult with a broader jaw, smaller irises, short brown hair, blue glasses, a neatly cropped brown beard, teal top and tan trousers. Lin has layered short hair; Mei long hair; Yeyul a bob. Classmates wear red CDIS polos and navy trousers. Students are fictional illustrated people, not real student likenesses. Mr. Hepting’s updated portrait uses David’s explicitly supplied reference photo. Keep source photos outside published assets; record authorization in provenance.
 
 ## Drawing constraints
 
@@ -39,11 +39,25 @@ Use only [the acting library](acting-library.md): its 12 emotions, four resting 
 
 ## Repeatable creation prompt
 
-> Create a reusable fictional episode character named [name], role/age [role], identity [hair, glasses, clothes, colours]. Follow character-standard.md and acting-library.md. Select only validated cartoon-v1 appearance options, preserve the common anatomy and finite motion controller, and keep the design distinct from the existing cast. Add a versioned pack with neutral fallback and provenance using scripts/build-lin-rig.mjs as the build pattern. Do not invent animation cues, recolour Lin as a substitute for identity, or insert new characters into a story without a narrative reason. Preview all emotions plus contrasting gestures at wide, medium and close framing, check phone cropping and reduced motion, validate the package, and document any unsupported appearance request before extending the shared renderer.
+> Create a reusable fictional episode character named [name], role/age [role], identity [hair, glasses, clothes, colours]. Follow character-standard.md and acting-library.md. Select only validated cartoon-v1 appearance options, preserve the common anatomy and finite motion controller, and keep the design distinct from the existing cast. Create a JSON recipe using the shared character builder described below. Record provenance; do not generate separate bitmap limbs. Do not invent animation cues, recolour Lin as a substitute for identity, or insert new characters into a story without a narrative reason. Preview all emotions plus contrasting gestures at wide, medium and close framing, check phone cropping and reduced motion, validate the package, and document any unsupported appearance request before extending the shared renderer.
 
 ## Build and review
 
-1. Add or update a cast definition in `scripts/build-lin-rig.mjs`; increment the affected character version. The historical script name also builds the full cartoon cast.
-2. Run `node scripts/build-lin-rig.mjs`, rebuild the episode source and ZIP. The studio can add/update a pack in a draft. Published packages embed their own snapshot; never rewrite an existing attempt.
+1. Add or update a cast definition in `stories/characters/cast.json`; increment the affected character version. The historical script name also builds the full cartoon cast.
+2. Run `npm run characters:build`, rebuild the episode source and ZIP. The studio can add/update a pack in a draft. Published packages embed their own snapshot; never rewrite an existing attempt.
 3. Validate appearance through the shared client/server `validateRig`. Preview neutral, worried, happy, angry and surprised; explain, reassure, celebrate, wave and recoil. Check connected limbs at extreme poses, unobstructed glasses/eyes/mouth, distinctive silhouette, anchored feet, close-up framing and reduced motion. Review phone and desktop.
 4. Run the repository checks. When changing the appearance schema, deploy backend support before frontend. Do not assign or migrate episodes merely to update the library.
+
+## One pipeline for Ethics, AP Language and World Literature
+
+In **Game → Create episode → Acting library → Create a character**, enter a script ID and name, select hair/age/glasses/beard/clothing, choose colours, inspect the live preview, then add it to the draft. Export its recipe and import it into any other class episode. Adding never silently replaces an existing character ID. Draft autosave and normal ZIP export preserve the completed character.
+
+Codex uses the identical recipe/schema:
+
+```json
+{"id":"Jordan","name":"Jordan","version":1,"palette":{"skin":"#c88e68","hair":"#392b27","shirt":"#b93f46"},"appearance":{"age":"teen","hair":"side-part","glasses":"none","outfit":"uniform"},"provenance":"Original fictional classmate; no real student likeness."}
+```
+
+Run `npm run character:create -- recipe.json character.json`, then place that object at `assets.characters.Jordan`. The command refuses to overwrite an existing output. To make a character available in the built-in selector, add the recipe to `stories/characters/cast.json` and run `npm run characters:build`; the catalog is generated automatically. No new React component or animation code is needed for supported appearances. School uniforms apply to CDIS students, not all historical characters; extend the shared wardrobe deliberately when a story needs a different costume.
+
+Every class uses the same renderer, recipe parser, acting vocabulary, camera controls, package format and preview. Only the story, travel premise, learning content and relevant clothing change. Jordan is available in the library but is not part of the current Last Chair script.

@@ -1,0 +1,84 @@
+[
+  {
+    "id": "Lin",
+    "name": "Lin",
+    "version": 4,
+    "palette": {
+      "skin": "#eac09c",
+      "hair": "#293338",
+      "shirt": "#b93f46"
+    },
+    "fallback": "public/stories/animated/cast/Lin-neutral.webp"
+  },
+  {
+    "id": "Hepting",
+    "name": "Mr. Hepting",
+    "version": 4,
+    "palette": {
+      "skin": "#e5b495",
+      "hair": "#514038",
+      "shirt": "#376975",
+      "glasses": "#328fbd",
+      "beard": "#514239"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "cropped",
+      "glasses": "round",
+      "outfit": "teacher",
+      "facialHair": "full"
+    },
+    "fallback": "public/stories/animated/cast/Hepting-neutral.webp"
+  },
+  {
+    "id": "Mei",
+    "name": "Mei",
+    "version": 2,
+    "palette": {
+      "skin": "#efc6a3",
+      "hair": "#292b31",
+      "shirt": "#bb3d46"
+    },
+    "appearance": {
+      "age": "teen",
+      "hair": "long",
+      "glasses": "none",
+      "outfit": "uniform"
+    },
+    "fallback": "public/stories/animated/cast/Mei-neutral.webp"
+  },
+  {
+    "id": "Yeyul",
+    "name": "Yeyul",
+    "version": 2,
+    "palette": {
+      "skin": "#efcba9",
+      "hair": "#302e35",
+      "shirt": "#b93f46"
+    },
+    "appearance": {
+      "age": "teen",
+      "hair": "bob",
+      "glasses": "none",
+      "outfit": "uniform"
+    },
+    "fallback": "public/stories/animated/cast/Yeyul-neutral.webp"
+  },
+  {
+    "id": "Jordan",
+    "name": "Jordan",
+    "version": 1,
+    "palette": {
+      "skin": "#c88e68",
+      "hair": "#392b27",
+      "shirt": "#b93f46"
+    },
+    "appearance": {
+      "age": "teen",
+      "hair": "side-part",
+      "glasses": "none",
+      "outfit": "uniform"
+    },
+    "provenance": "Fictional Grade 11 classmate assembled from shared manga components; not a real student likeness."
+  }
+]

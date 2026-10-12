@@ -1,3 +1,4 @@
+import {createCharacter} from '../functions/learning-content/src/character-builder.js';
 import {readFile,writeFile} from 'node:fs/promises';
 import {RIG_PARTS,EMOTIONS,RESTS,TALKS,RESPONSES,CAMERAS,ACTING_DESCRIPTIONS} from '../functions/learning-content/src/acting-library.js';
 const root=new URL('../',import.meta.url),base='public/stories/animated/rigs/lin-v1/';
@@ -7,14 +8,14 @@ const outputs=[[base+'character.json',JSON.stringify(character,null,2)+'\n'],['d
 for(const [path,data]of outputs){const url=new URL(path,root);if(process.argv.includes('--check')){if(await readFile(url,'utf8')!==data)throw Error('Stale '+path);}else await writeFile(url,data);}
 console.log('Lin rig and acting reference are current.');
 // Versioned snapshots: the renderer shares motion; packs describe identity.
-const cast=[
- {id:'Lin',name:'Lin',version:4,palette:{skin:'#eac09c',hair:'#293338',shirt:'#b93f46'}},
- {id:'Hepting',name:'Mr. Hepting',version:4,palette:{skin:'#e5b495',hair:'#514038',shirt:'#376975',glasses:'#328fbd',beard:'#514239'},appearance:{age:'adult',hair:'cropped',glasses:'round',outfit:'teacher',facialHair:'full'}},
- {id:'Mei',name:'Mei',version:2,palette:{skin:'#efc6a3',hair:'#292b31',shirt:'#bb3d46'},appearance:{age:'teen',hair:'long',glasses:'none',outfit:'uniform'}},
- {id:'Yeyul',name:'Yeyul',version:2,palette:{skin:'#efcba9',hair:'#302e35',shirt:'#b93f46'},appearance:{age:'teen',hair:'bob',glasses:'none',outfit:'uniform'}},
-];
-for(const {id,name,version,palette,appearance} of cast){
- const cartoon={name,version,provenance:id==='Hepting'?'Manga-inspired adult teacher portrait based on David Hepting’s supplied reference photograph, with his authorization, 2026-10-12. Brown cropped hair, blue glasses and neatly cropped brown beard. Shared vector rig. Source photograph is not included in the package.':id==='Lin'?'Fictional Grade 11 CDIS classmate. Original manga-inspired vector cartoon design, 2026-10-12. Continuous arms, shared palette and coordinated finite gestures. No student likeness.':`Fictional ${id==='Hepting'?'adult CDIS teacher':'Grade 11 CDIS classmate'}. Original manga-inspired vector design based on the existing illustrated cast, 2026-10-12. Shared continuous limbs and finite gestures; no real-person likeness.`,expressions:{neutral:await image(`public/stories/animated/cast/${id}-neutral.webp`)},rig:{version:2,preset:'cartoon-v1',style:'manga',palette,...(appearance?{appearance}:{})}};
+const cast=JSON.parse(await readFile(new URL('stories/characters/cast.json',root),'utf8'));
+for(const {id,name,version,palette,appearance,provenance,fallback} of cast){
+ createCharacter({id,name,version,palette,appearance});
+ const cartoon={name,version,provenance:provenance||(id==='Hepting'?'Manga-inspired adult teacher portrait based on David Hepting’s supplied reference photograph, with his authorization, 2026-10-12. Brown cropped hair, blue glasses and neatly cropped brown beard. Shared vector rig. Source photograph is not included in the package.':id==='Lin'?'Fictional Grade 11 CDIS classmate. Original manga-inspired vector cartoon design, 2026-10-12. Continuous arms, shared palette and coordinated finite gestures. No student likeness.':`Fictional ${id==='Hepting'?'adult CDIS teacher':'Grade 11 CDIS classmate'}. Original manga-inspired vector design based on the existing illustrated cast, 2026-10-12. Shared continuous limbs and finite gestures; no real-person likeness.`),expressions:fallback?{neutral:await image(fallback)}:{},rig:{version:2,preset:'cartoon-v1',style:'manga',palette,...(appearance?{appearance}:{})}};
  const path=new URL(`public/stories/animated/rigs/${id.toLowerCase()}-cartoon.json`,root),data=JSON.stringify(cartoon,null,2)+'\n';
  if(process.argv.includes('--check')){if(await readFile(path,'utf8')!==data)throw Error('Stale cartoon '+id);}else await writeFile(path,data);
 }
+
+const manifest=JSON.stringify(cast.map(({id,name})=>({id,name})),null,2)+'\n';
+const manifestPath=new URL('public/stories/animated/rigs/catalog.json',root);
+if(process.argv.includes('--check')){if(await readFile(manifestPath,'utf8')!==manifest)throw Error('Stale cast catalog');}else await writeFile(manifestPath,manifest);

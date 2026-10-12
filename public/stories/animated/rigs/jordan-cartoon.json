@@ -1,0 +1,22 @@
+{
+  "name": "Jordan",
+  "version": 1,
+  "provenance": "Fictional Grade 11 classmate assembled from shared manga components; not a real student likeness.",
+  "expressions": {},
+  "rig": {
+    "version": 2,
+    "preset": "cartoon-v1",
+    "style": "manga",
+    "palette": {
+      "skin": "#c88e68",
+      "hair": "#392b27",
+      "shirt": "#b93f46"
+    },
+    "appearance": {
+      "age": "teen",
+      "hair": "side-part",
+      "glasses": "none",
+      "outfit": "uniform"
+    }
+  }
+}

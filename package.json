@@ -19,7 +19,9 @@
     "episode:build": "node scripts/build-journal.mjs",
     "episode:check": "node scripts/build-journal.mjs --check",
     "episode:publish": "node scripts/publish-episodes.mjs",
-    "episode:verify": "node scripts/verify-episodes.mjs"
+    "episode:verify": "node scripts/verify-episodes.mjs",
+    "characters:build": "node scripts/build-lin-rig.mjs",
+    "character:create": "node scripts/create-character.mjs"
   },
   "dependencies": {
     "appwrite": "^26.0.0",
