@@ -1,0 +1,23 @@
+import {Client,Databases,Users,Functions} from 'node-appwrite';
+import {readFile,writeFile} from 'node:fs/promises';
+const admin=new Client().setEndpoint(process.env.APPWRITE_ENDPOINT).setProject(process.env.APPWRITE_PROJECT_ID).setKey(process.env.APPWRITE_API_KEY);
+const db=new Databases(admin),users=new Users(admin);
+const cls=await db.getDocument({databaseId:process.env.APPWRITE_DATABASE_ID||'main',collectionId:'classes',documentId:'88421c66-9cda-4002-8e15-086312b7805e'});
+const owner=await users.get({userId:cls.teacherId});if(!/^(davidh|david hepting)$/i.test(owner.name))throw Error('Expected classroom owner; stopping');
+const {jwt}=await users.createJWT({userId:owner.$id,duration:300});
+const f=new Functions(new Client().setEndpoint(process.env.APPWRITE_ENDPOINT).setProject(process.env.APPWRITE_PROJECT_ID).setJWT(jwt));
+const call=async body=>{const result=await f.createExecution({functionId:'learning-content',body:JSON.stringify(body)});const data=JSON.parse(result.responseBody||'{}');if(result.responseStatusCode>=400||data.error)throw Error((data.error||'Function request failed')+'; action='+body.action+'; execution='+result.$id+'; diagnostics='+result.errors);return data;};
+const library=await call({action:'animatedLibrary'});
+const id='own-english-animated',pack=JSON.parse(await readFile('public/stories/own-english/animated/episode.json','utf8'));
+let prior=library.drafts.find(d=>d.id===id);
+if(prior){const loaded=await call({action:'animatedReadDraft',id});if(JSON.stringify(loaded.pack)!==JSON.stringify(pack))throw Error('Live draft differs; preserve teacher edits and review before publishing');}
+else prior=await call({action:'animatedSaveDraft',id,revision:0,pack});
+const published=await call({action:'animatedPublish',id,revision:prior.revision});
+const assigned=await call({action:'animatedAssign',versionId:published.versionId,classId:cls.$id,date:'2026-10-13',releaseAt:'2026-10-09T00:00:00Z'});
+const loaded=await call({action:'animatedRead',assignmentId:assigned.assignmentId});
+if(loaded.pack.script!==pack.script||!loaded.preview)throw Error('Published preview mismatch');
+const current=await call({action:'animatedLibrary'});
+if(current.assignments.filter(a=>a.assignmentId===assigned.assignmentId).length!==1)throw Error('Assignment verification failed');
+const receipt={id,title:pack.title,version:published.version,versionId:published.versionId,assignmentId:assigned.assignmentId,classId:cls.$id,date:assigned.date,releaseAt:assigned.releaseAt,bytes:prior.bytes,playUrl:'https://zumboggo.github.io/Learningisfun/#/game/play/'+assigned.assignmentId,studioUrl:'https://zumboggo.github.io/Learningisfun/#/game/create?draft='+id};
+await writeFile('stories/own-english/animated/publication.json',JSON.stringify(receipt,null,2)+'\n');
+console.log(JSON.stringify(receipt,null,2));

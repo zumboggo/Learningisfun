@@ -4,7 +4,7 @@ import {render,screen,cleanup,fireEvent} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
 const auth=vi.hoisted(()=>({user:{$id:'student',role:'student'}}));
 vi.mock('@/contexts/AuthContext',()=>({useAuth:()=>auth}));
-vi.mock('@/services/learning-content.service',()=>({executeLearningContent:vi.fn(async()=>({attempts:[],leaderboard:[],preview:false}))}));
+vi.mock('@/services/learning-content.service',()=>({executeLearningContent:vi.fn(async(body:any)=>body.action==='animatedLibrary'?{drafts:[],assignments:[{assignmentId:'native-ap',classId:'88421c66-9cda-4002-8e15-086312b7805e',title:'The Last Chair',date:'2026-10-13',best:null}]}:({attempts:[],leaderboard:[],preview:false}))}));
 import {db} from '@/db/schema';
 import {STONE_CLASS_ID} from '@/services/stone.service';
 import {AP_CLASS_ID} from '../../functions/learning-content/src/episode-catalog.js';
@@ -15,7 +15,7 @@ afterEach(()=>{cleanup();vi.useRealTimers();});
 function open(){return render(<MemoryRouter><GamePage/></MemoryRouter>);}
 it('shows only a student’s released class episodes and remembers the window preference per account',async()=>{
  await db.class_members.put({$id:'m',classId:AP_CLASS_ID,userId:'student',role:'student',joinedAt:''});open();
- expect(await screen.findByText('The Ride That Wouldn’t Autocorrect')).toBeInTheDocument();expect(screen.queryByText('The Grain We Keep')).not.toBeInTheDocument();
+ expect(await screen.findByText('The Last Chair')).toBeInTheDocument();expect(screen.queryByText('The Grain We Keep')).not.toBeInTheDocument();
  const setting=screen.getByRole('checkbox');expect(setting).toBeChecked();fireEvent.click(setting);expect(localStorage.getItem(gameDisplayKey('student'))).toBe('window');expect(localStorage.getItem(gameDisplayKey('other'))).toBeNull();
 });
 it('lets teachers choose a class before showing its scrollable episode list',async()=>{
@@ -25,11 +25,11 @@ it('lets teachers choose a class before showing its scrollable episode list',asy
  expect(screen.queryByRole('button',{name:/foreign/})).not.toBeInTheDocument();
  fireEvent.click(ethics);
  expect(await screen.findByText('The Grain We Keep')).toBeInTheDocument();
- expect(screen.queryByText('The Ride That Wouldn’t Autocorrect')).not.toBeInTheDocument();
+ expect(screen.queryByText('The Last Chair')).not.toBeInTheDocument();
  expect(screen.getByRole('region',{name:'Class episode list'})).toHaveClass('overflow-y-auto');
  fireEvent.click(screen.getByRole('button',{name:'← All classes'}));
  fireEvent.click(await screen.findByRole('button',{name:/AP Section View episodes/}));
- expect(await screen.findByText('The Ride That Wouldn’t Autocorrect')).toBeInTheDocument();
+ expect(await screen.findByText('The Last Chair')).toBeInTheDocument();
  expect(screen.queryByText('The Grain We Keep')).not.toBeInTheDocument();
 });
 it('does not expose cached episodes through expired memberships',async()=>{await db.class_members.put({$id:'m',classId:STONE_CLASS_ID,userId:'student',role:'student',joinedAt:'',expiresAt:'2026-10-01T00:00:00Z'});open();expect(await screen.findByText(/No episodes are available/)).toBeInTheDocument();expect(screen.queryByText('The Grain We Keep')).not.toBeInTheDocument();});

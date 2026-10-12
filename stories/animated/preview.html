@@ -2,6 +2,7 @@
 import React from 'react';
 import {createRoot} from 'react-dom/client';
 import StoryPlayer from '/src/components/animated/StoryPlayer.tsx';
-const pack=await fetch('/Learningisfun/stories/animated/demo.json').then(r=>r.json());
+const source=new URLSearchParams(location.search).get('episode')==='ap'?'own-english/animated/episode.json':'animated/demo.json';
+const pack=await fetch('/Learningisfun/stories/'+source).then(r=>r.json());
 createRoot(document.getElementById('root')).render(React.createElement(StoryPlayer,{pack}));
 </script></html>

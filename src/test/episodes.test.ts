@@ -1,9 +1,9 @@
 import 'fake-indexeddb/auto';
 import {beforeEach,describe,expect,it} from 'vitest';
 import {advanceEpisode,episodeDb,makeEpisodeAttempt,attemptsFor,validEpisodeMessage} from '@/services/episodes.service';
-import {episodes} from '../../functions/learning-content/src/episode-catalog.js';
+import {availableEpisodeVersions,AP_CLASS_ID} from '../../functions/learning-content/src/episode-catalog.js';
 import {isGameEpisode,resourceCategory,resourceColor} from '@/services/planner-appearance';
-const e=episodes[0];
+const e=availableEpisodeVersions(AP_CLASS_ID,true).find(e=>e.version===4)!;
 beforeEach(async()=>{await episodeDb.attempts.clear();await episodeDb.writing.clear();});
 describe('episode persistence and isolation',()=>{
  it('keeps accounts separate, first completion and independent replay',async()=>{const a=makeEpisodeAttempt('one',e,false),b=makeEpisodeAttempt('two',e,false);const done=advanceEpisode(a,['voice','clarify','test','mix','power','assess','bridge','check','preserve','revisit'],[[1,0,1,2]]);await episodeDb.attempts.bulkPut([done,b,makeEpisodeAttempt('one',e,false)]);expect((await attemptsFor('one',e.classId))).toHaveLength(2);expect((await attemptsFor('two',e.classId))).toHaveLength(1);expect((await episodeDb.attempts.get(a.attemptId))?.status).toBe('complete');expect(()=>advanceEpisode(done,['reach'])).toThrow();});
