@@ -33,6 +33,10 @@ Emotion names and gesture names differ: use `shocked` → `shock`, `angry` → `
 
 Use coordinated actions when bodies interacting matter: `give` for a mimed handoff, `challenge` for a confrontation, `bow` or `cheer` for a social beat, and the supported attack/block/dodge outcomes only when the source event calls for them. Stage both actors before paired actions and keep canonical outcomes fixed. Frame hand/arm acting wide or medium so wrists, belly holds and raised hands remain visible; reserve close-ups for facial emphasis. Preview the chosen character and cue at the actual framing, including reduced motion, and validate through the shared parser. A written stage direction alone is not a rendered animation.
 
+## Reusable scene beats
+
+Use [scene beats](references/scene-beats.md) for emotional turns and quick staging. Read the current `scene-beats.js` definitions; use `beat preset Lead Listener "Caption"` only in Learning is Fun Story 2. Each beat stages exactly two characters and holds a caption for Continue, with expressions, listener reactions and framing. Lin is a girl; Yeyul is a boy. Preview the chosen pair in the studio, including reduced motion. Keep quiet dialogue between beats. Plan a concrete want, a relationship under pressure, a costly choice and one meaningful change; use existing variables for a later callback. Reuse an earlier detail with changed meaning. The preset supplies direction, not a generated story or automatic consequences.
+
 ## Verify and deliver
 
 Follow [efficient authoring](references/efficient-authoring.md). Validate script and quiz, preview contrasting routes, source fidelity, mobile/desktop access, resume and quiz retries. Use authenticated publishing and exact class/date assignments only as authorized. Follow repository checks/master publishing instructions and report actual verification limits. Do not create Canvas assignments or post grades without separate authorization.

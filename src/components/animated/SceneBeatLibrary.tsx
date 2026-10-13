@@ -1,0 +1,21 @@
+import './story-player.css';
+import {useState} from 'react';
+import {SCENE_BEATS,sceneBeatCommand} from '../../../functions/learning-content/src/scene-beats.js';
+import {compileStory,initialStoryState,settleStory,type StoryPackage} from '../../../functions/learning-content/src/story-engine.js';
+import StoryStage from './StoryStage';
+export default function SceneBeatLibrary({pack,onChange}:{pack:StoryPackage;onChange?:(p:Partial<StoryPackage>)=>void}){
+ const ids=Object.keys(pack.assets.characters);
+ const [preset,setPreset]=useState('private-confession'),[actor,setActor]=useState(ids[0]||''),[listener,setListener]=useState(ids[1]||''),[caption,setCaption]=useState('I wait. For once, neither of us rushes to fill the silence.'),[run,setRun]=useState(0),[reduced,setReduced]=useState(!!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+ const a=ids.includes(actor)?actor:ids[0]||'',b=ids.includes(listener)?listener:ids[1]||'';
+ let command='',error='';try{command=sceneBeatCommand(preset,a,b,caption);}catch(e){error=(e as Error).message;}
+ const background=Object.keys(pack.assets.backgrounds)[0];
+ const compiled=compileStory(`story 2\n${background?`scene ${background}\n`:''}${command}\nend`,pack.assets);
+ const state=compiled.story?settleStory(compiled.story,initialStoryState(compiled.story)):null;
+ return <section className="rounded-xl border p-4 space-y-3" aria-label="Scene beat library"><h2 className="text-xl font-bold">Scene beats</h2><p>Choose a moment, cast two characters, and write what changes between them. Each beat stages the pair, clears other actors, sets their expressions and camera, and holds the caption until Continue. It does not change the background or story outcomes.</p>
+ <div className="flex flex-wrap gap-3"><label>Scene beat<select className="block border p-2" value={preset} onChange={e=>{setPreset(e.target.value);setRun(r=>r+1);}}>{Object.entries(SCENE_BEATS).map(([id,v])=><option key={id} value={id}>{v.name}</option>)}</select></label>{(['Lead character','Listening character'] as const).map((label,i)=><label key={label}>{label}<select className="block border p-2" value={i?b:a} onChange={e=>(i?setListener:setActor)(e.target.value)}>{ids.map(id=><option key={id} value={id}>{pack.assets.characters[id].name}</option>)}</select></label>)}</div>
+ <p>{SCENE_BEATS[preset].description}</p><label className="block">Beat caption<input className="block w-full border p-2" value={caption} onChange={e=>setCaption(e.target.value)}/></label>
+ {error?<p role="alert">{error}</p>:state&&<div className="animated-story story-modern" key={run}><StoryStage pack={{...pack,format:2}} state={state} current={compiled.story.nodes[state.cursor]} speaking={false} reduced={reduced}/></div>}
+ <div className="flex flex-wrap gap-3"><button disabled={!!error} onClick={()=>setRun(r=>r+1)}>Replay beat</button><label><input type="checkbox" checked={reduced} onChange={e=>setReduced(e.target.checked)}/> Reduced motion</label>{onChange&&<button disabled={!!error} onClick={()=>{const field=document.getElementById('story-script') as HTMLTextAreaElement|null;const cursor=field?.selectionStart??pack.script.length;const start=pack.script.lastIndexOf('\n',Math.max(0,cursor-1))+1;const next=pack.script.indexOf('\n',cursor);const lineEnd=next<0?pack.script.length:next;const position=pack.script.slice(start,lineEnd).trim()==='end'?start:lineEnd;onChange({format:2,script:(pack.script.slice(0,position)+'\n'+command+'\n'+pack.script.slice(position)).replace(/^story 1\b/,'story 2')});}}>Insert beat after selected script line</button>}</div>
+ {command&&<pre className="overflow-auto whitespace-pre-wrap bg-stone-100 p-3">{command}</pre>}
+ <details><summary>Give the moment a purpose</summary><p>Who wants what? What makes saying it difficult? What changes after this moment? Reuse an earlier detail—a seat, a notebook, a promise—with a different meaning. Use existing choices and variables for later callbacks; a beat only directs the performance.</p><p>Use one central relationship, one difficult choice and one meaningful change as a starting point. Leave quiet dialogue between strong gestures. Follow a beat with dialogue, a choice, or a camera override. Stage other characters again when they return.</p></details></section>;
+}

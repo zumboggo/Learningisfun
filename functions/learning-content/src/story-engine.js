@@ -1,3 +1,4 @@
+import {SCENE_BEATS,expandSceneBeat} from './scene-beats.js';
 import {ACTIONS,EMOTIONS,RESTS,TALKS,RESPONSES,CAMERAS,MOVES,EFFECTS,validateRig} from './acting-library.js';
 /** Story 1/2: deliberately small, data-only language shared by browser and server. */
 export const STORY_VERSION=2;
@@ -27,6 +28,13 @@ export function compileStory(source,assets={}) {
   }
   if((m=s.match(new RegExp(`^label (${id})$`)))){if(own(labels,m[1]))error(line,'Duplicate label');labels[m[1]]=nodes.length;add({type:'label',id:m[1]},line);continue;}
   if((m=s.match(new RegExp(`^scene (${id})$`)))){if(!assets.backgrounds?.[m[1]])error(line,'Unknown background '+m[1]);add({type:'scene',asset:m[1]},line);continue;}
+  if(version===2&&(m=s.match(new RegExp(`^beat (${id}) (${id}) (${id}) "([^"\\n]+)"$`)))){
+   if(!Object.hasOwn(SCENE_BEATS,m[1]))error(line,'Unknown scene beat '+m[1]);
+   else if(!assets.characters?.[m[2]]||!assets.characters?.[m[3]])error(line,'Unknown scene beat character');
+   else if(m[2]===m[3])error(line,'A scene beat needs two different characters');
+   else expandSceneBeat(m[1],m[2],m[3],m[4]).forEach(n=>add(n,line));
+   continue;
+  }
   if(version===2&&(m=s.match(new RegExp(`^act (${id}) (${id})(?: (${id}))? "([^"\\n]+)"$`)))){
    const action=ACTIONS[m[2]];
    if(!action)error(line,'Unknown action '+m[2]);
@@ -63,6 +71,7 @@ export function compileStory(source,assets={}) {
   const cache=new Map();
   const after=i=>{if(cache.has(i))return cache.get(i);const parents=incoming[i].map(after);let visible=parents.length?new Map([...parents[0]].filter(([a,pos])=>parents.every(p=>p.get(a)===pos))):new Map();const n=nodes[i];
    if(n.type==='act'){for(const a of [n.actor,n.targetActor].filter(Boolean))if(!visible.has(a))error(n.line,'Show '+a+' in a distinct position on every path before this action');}
+   if(n.type==='ensemble')visible=new Map([...visible].filter(([a])=>n.actors.includes(a)));
    if(n.type==='scene')visible=new Map();
    if(n.type==='show'||n.type==='move'&&visible.has(n.actor)&&['left','center','right'].includes(n.action)){const position=n.position||n.action;for(const [a,p]of visible)if(p===position)visible.delete(a);visible.set(n.actor,position);}
    if(n.type==='move'&&n.action==='exit')visible.delete(n.actor);
@@ -76,6 +85,8 @@ export function settleStory(story,state){const s=structuredClone(state);s.cues=[
  if(['scene','show','move','effect','react','camera'].includes(n.type))s.cues.push(n);
  if(n.type==='scene'){s.stage={background:n.asset,actors:{},...(story.version===2?{camera:{shot:'auto'}}:{})};}
  if(n.type==='show'){for(const [id,a] of Object.entries(s.stage.actors))if(id!==n.actor&&a.position===n.position){delete s.stage.actors[id];s.cues.push({type:'move',actor:id,action:'exit'});}s.stage.actors[n.actor]={expression:n.expression,position:n.position,facing:1};}
+ if(n.type==='ensemble')s.stage.actors=Object.fromEntries(Object.entries(s.stage.actors).filter(([id])=>n.actors.includes(id)));
+ if(n.type==='face'&&s.stage.actors[n.actor])s.stage.actors[n.actor].facing=n.direction;
  if(n.type==='camera')s.stage.camera={shot:n.shot,actor:n.actor};
  if(n.type==='rest'&&s.stage.actors[n.actor])s.stage.actors[n.actor].rest=n.action;
  if(n.type==='move'){const a=s.stage.actors[n.actor];if(n.action==='exit')delete s.stage.actors[n.actor];else if(a){if(['left','center','right'].includes(n.action))a.position=n.action;if(n.action==='turn')a.facing*=-1;}}
