@@ -2,24 +2,31 @@
   {
     "id": "Lin",
     "name": "Lin",
-    "version": 5,
+    "version": 6,
+    "finish": "hybrid",
+    "provenance": "Original reusable illustrated character; students are fictional, not real student likenesses. Teacher identity follows the previously authorized character design. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json.",
     "palette": {
-      "skin": "#eac09c",
-      "hair": "#293338",
+      "skin": "#efcba9",
+      "hair": "#302e35",
       "shirt": "#b93f46"
     },
-    "fallback": "public/stories/animated/cast/Lin-neutral.webp",
-    "finish": "hybrid",
+    "appearance": {
+      "age": "teen",
+      "hair": "bob",
+      "glasses": "none",
+      "outfit": "uniform",
+      "face": "oval"
+    },
+    "fallback": "public/stories/animated/cast/Yeyul-neutral.webp",
     "headAsset": {
-      "path": "public/stories/animated/heads/hybrid-v1/lin.webp",
+      "path": "public/stories/animated/heads/hybrid-v1/yeyul.webp",
       "frame": [
         57,
-        34,
+        26,
         126,
-        157
+        169
       ]
-    },
-    "provenance": "Original reusable illustrated character; students are fictional, not real student likenesses. Teacher identity follows the previously authorized character design. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json."
+    }
   },
   {
     "id": "Hepting",
@@ -84,31 +91,24 @@
   {
     "id": "Yeyul",
     "name": "Yeyul",
-    "version": 4,
+    "version": 5,
+    "finish": "hybrid",
+    "provenance": "Original reusable illustrated character; students are fictional, not real student likenesses. Teacher identity follows the previously authorized character design. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json.",
     "palette": {
-      "skin": "#efcba9",
-      "hair": "#302e35",
+      "skin": "#eac09c",
+      "hair": "#293338",
       "shirt": "#b93f46"
     },
-    "appearance": {
-      "age": "teen",
-      "hair": "bob",
-      "glasses": "none",
-      "outfit": "uniform",
-      "face": "oval"
-    },
-    "fallback": "public/stories/animated/cast/Yeyul-neutral.webp",
-    "finish": "hybrid",
+    "fallback": "public/stories/animated/cast/Lin-neutral.webp",
     "headAsset": {
-      "path": "public/stories/animated/heads/hybrid-v1/yeyul.webp",
+      "path": "public/stories/animated/heads/hybrid-v1/lin.webp",
       "frame": [
         57,
-        26,
+        34,
         126,
-        169
+        157
       ]
-    },
-    "provenance": "Original reusable illustrated character; students are fictional, not real student likenesses. Teacher identity follows the previously authorized character design. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json."
+    }
   },
   {
     "id": "Jordan",
