@@ -1,3 +1,4 @@
+const StoryPreviewPage = lazy(() => import('@/pages/StoryPreviewPage'));
 const SceneBeatsPage = lazy(() => import('@/pages/SceneBeatsPage'));
 const CastGalleryPage = lazy(() => import('@/pages/CastGalleryPage'));
 const AnimationLabPage = lazy(() => import('@/pages/AnimationLabPage'));
@@ -121,6 +122,7 @@ export default function App() {
     <HashRouter>
       <AuthProvider>
         <Routes>
+          <Route path="/game/story-preview/:slug" element={<Suspense fallback={<p>Loading episode…</p>}><StoryPreviewPage/></Suspense>} />
           <Route path="/game/scene-beats" element={<Suspense fallback={<p>Loading scene beats…</p>}><SceneBeatsPage/></Suspense>} />
           <Route path="/game/cast" element={<Suspense fallback={<p>Loading the cast…</p>}><CastGalleryPage/></Suspense>} />
           <Route path="/game/animation-lab" element={<Suspense fallback={<p>Loading animation comparison…</p>}><AnimationLabPage/></Suspense>} />
