@@ -16,6 +16,14 @@ Generated from `functions/learning-content/src/acting-library.js`. Use Story 2 f
 - `embarrassed`
 - `relieved`
 - `determined`
+- `shocked`
+- `laughing`
+- `excited` — Throw both hands overhead with an eager bounce.
+- `scared` — Recoil with open hands shielding the face.
+- `frustrated`
+- `proud` — Plant hands at the waist and lift the chin.
+- `pleading`
+- `disappointed` — Let both arms fall as the head and shoulders sink.
 
 ## Resting poses
 
@@ -32,6 +40,15 @@ Generated from `functions/learning-content/src/acting-library.js`. Use Story 2 f
 - `insist` — A firm single-hand emphasis.
 - `hesitant` — Small hand movement and a tentative tilt.
 - `celebrate` — Open arms and an upbeat emphasis.
+- `shock` — Both hands fly to the cheeks as the eyes widen and mouth opens.
+- `laugh` — Lean back, tip the head up and hold the belly through a burst of laughter.
+- `rage` — Clench both fists and swing the arms in two frustrated emphases.
+- `excited` — Throw both hands overhead with an eager bounce.
+- `scared` — Recoil with open hands shielding the face.
+- `facepalm` — Bring one hand over the face and bow the head.
+- `proud` — Plant hands at the waist and lift the chin.
+- `plead` — Bring both hands together at the chest and lean forward.
+- `disappointed` — Let both arms fall as the head and shoulders sink.
 
 ## Expressive responses
 
@@ -41,7 +58,7 @@ Generated from `functions/learning-content/src/acting-library.js`. Use Story 2 f
 - `point` — Extend an arm toward something.
 - `wave` — Lift a forearm and wave the hand.
 - `recoil` — Lean back with raised forearms.
-- `laugh` — Head lifts with a brief shoulder bounce.
+- `laugh` — Lean back, tip the head up and hold the belly through a burst of laughter.
 - `sigh` — Head and shoulders settle downward.
 - `bow` — A brief formal bow. One character.
 - `cheer` — An enthusiastic raised-arm celebration. One character.
@@ -51,6 +68,14 @@ Generated from `functions/learning-content/src/acting-library.js`. Use Story 2 f
 - `strike` — Extend the leading arm in a stylized strike.
 - `block` — Raise both forearms to guard.
 - `dodge` — Lean away and recover balance.
+- `shock` — Both hands fly to the cheeks as the eyes widen and mouth opens.
+- `rage` — Clench both fists and swing the arms in two frustrated emphases.
+- `excited` — Throw both hands overhead with an eager bounce.
+- `scared` — Recoil with open hands shielding the face.
+- `facepalm` — Bring one hand over the face and bow the head.
+- `proud` — Plant hands at the waist and lift the chin.
+- `plead` — Bring both hands together at the chest and lean forward.
+- `disappointed` — Let both arms fall as the head and shoulders sink.
 
 ## Camera framing
 
