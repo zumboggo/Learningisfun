@@ -1,0 +1,35 @@
+{
+  "title": "The Castle That Served Supper",
+  "continuity": "Episode 1 ends during chapter 1 preparations, before the first departure. This sequel begins at the inn after a brief recap of chapter 2 travel and ends at the chapter 3 departure.",
+  "selection": {
+    "chapters1to8": "1 identity/equipment; 2–3 first sally, inn and knighting; 4 failed interventions with Andres and merchants; 5 neighbour brings him home; 6 scrutiny of books; 7 burning/walled library and Sancho recruited; 8 windmills, friars and unresolved Biscayan duel.",
+    "chosen": "2–3 offer one complete evening with clear escalation. Going straight to windmills would omit the first sally and how he obtains his imagined authority.",
+    "nextSuggested": "Chapters 4–5: the rescue that makes things worse, followed by the merchants and return home. Later 6–7 can bridge to Sancho; chapter 8 is its own action episode, ending at Cervantes’s cliffhanger unless chapter 9 is authorized."
+  },
+  "storyCircle": {
+    "you": "Returning student helper remembers a funny hopeful man.",
+    "need": "Help him settle in and get through the night without trouble.",
+    "go": "One written question opens the journal into the inn.",
+    "search": "Manage supper, ribbons, the request and supplies.",
+    "find": "The host agrees to grant the ceremony; the goal seems attainable.",
+    "take": "Heroic interpretation leads to real injuries and stones.",
+    "return": "A hasty ceremony gets Quixote away; journal takes student home.",
+    "change": "Student distinguishes sincere intent and ceremonial success from actual care for neighbours."
+  },
+  "characterCausality": {
+    "Quixote": "Wants to help and earn honour; treats chivalric books as practical authority; reads ordinary actions as heroic ritual or insult; attacks and feels confirmed by knighting.",
+    "Innkeeper": "Initially enjoys a joke and wants manageable guests; plays along; injuries change his immediate motive to ending the danger; improvises ceremony.",
+    "Carriers": "Need to water working animals; interpret armour as an obstruction; move it; suffer consequences unrelated to any wish to duel.",
+    "student": "Initially assumes practical assistance and explanations can smooth things over; warnings fail; chooses small useful care and returns with a changed understanding."
+  },
+  "choices": "Six binary choices; 64 routes. All preserve source events. Variables only change later reflection, never grades or source outcomes. No chance command.",
+  "duration": "Roughly 10–12 minutes plus four questions; an estimate to confirm in class.",
+  "vocabulary": "Intertextuality, revision and close reading explicitly; adaptation in framing/sources. Do not force all six terms into the emotional ending.",
+  "art": {
+    "tool": "Built-in imagegen",
+    "original": "exec-6ee92a87-c595-483a-9c2f-14c0cf3e2cce.png",
+    "asset": "public/stories/animated/the-castle-that-served-supper/assets/inn-moonlight-v1.webp",
+    "prompt": "Create a 16:9 visual-novel background of a modest roadside inn courtyard in La Mancha Spain around 1600, at night under a bright moon. No people or text. Match simple manga-inspired vector characters: clean dark slate outlines, flat muted colours, restrained two-tone cel shadows, simplified geometric scenery, no photorealistic surfaces or painterly texture. Eye-level camera, broad clear central foreground for standing characters. Low whitewashed inn with weathered clay roof, warm lantern at doorway on left, stable doorway at far right, stone well with a long low animal watering trough behind the standing area. Moonlit blue-grey paving, warm amber windows, plausible simple rural architecture, no castle towers. Keep background less contrasted than actors. Whole scene readable on a phone, welcoming at first but capable of tense night action."
+  },
+  "publication": "Separate unassigned teacher draft. Existing chapter-1 episode, published versions and class assignments unchanged."
+}
