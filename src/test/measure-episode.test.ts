@@ -17,5 +17,5 @@ it('all 96 choice routes finish with six choices, preserved callbacks and determ
 it('ships a portable, source-matched package within budget with polished new characters',async()=>{
  expect(pack.script).toBe(readFileSync('stories/animated/the-measure-that-changed/episode.story','utf8'));expect(packageSize(pack)).toBeLessThan(5000000);
  for(const id of ['Seneb','Iset','Kha'])expect(pack.assets.characters[id].rig.finish).toBe('polished');
- const zip=readFileSync('public/stories/animated/the-measure-that-changed/episode.zip');const imported=await importStory(new Blob([zip]));expect(imported).toEqual(pack);
+ const zip=readFileSync('public/stories/animated/the-measure-that-changed/episode.zip');const imported=await importStory(new File([zip], 'episode.zip'));expect(imported).toEqual(pack);
 });
