@@ -62,7 +62,7 @@
     "assignedDate": "2026-10-12",
     "releaseAt": "2026-10-12T00:00:00Z",
     "assignmentId": "09d7f0a7-4c29-462c-820f-e11ea914d375-the-giants-have-sails-v2",
-    "archived": false,
+    "archived": true,
     "minutes": 15
   },
   {
@@ -84,7 +84,7 @@
     "assignedDate": "2026-10-12",
     "releaseAt": "2026-10-12T00:00:00Z",
     "assignmentId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c-the-giants-have-sails-v2",
-    "archived": false,
+    "archived": true,
     "minutes": 15
   }
 ]

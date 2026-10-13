@@ -1,8 +1,27 @@
 {
   "id": "quixote-inn-animated",
   "title": "The Castle That Served Supper",
-  "revision": 1,
+  "version": 1,
+  "versionId": "b37ea9118aec318e9c4c6157cd866fa9",
   "bytes": 617896,
-  "status": "draft-unassigned",
-  "studioUrl": "https://zumboggo.github.io/Learningisfun/#/game/create?draft=quixote-inn-animated"
+  "status": "published-assigned",
+  "studioUrl": "https://zumboggo.github.io/Learningisfun/#/game/create?draft=quixote-inn-animated",
+  "assignments": [
+    {
+      "classId": "09d7f0a7-4c29-462c-820f-e11ea914d375",
+      "className": "Red - Sect. 1",
+      "date": "2026-10-12",
+      "releaseAt": "2026-10-09T00:00:00.000Z",
+      "assignmentId": "c20ce58b8d378f47862855751b888500",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/c20ce58b8d378f47862855751b888500"
+    },
+    {
+      "classId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c",
+      "className": "Blue Sect. 2",
+      "date": "2026-10-12",
+      "releaseAt": "2026-10-09T00:00:00.000Z",
+      "assignmentId": "0bbaa248bf23dc20e5091833476679fd",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/0bbaa248bf23dc20e5091833476679fd"
+    }
+  ]
 }
