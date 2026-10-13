@@ -72,3 +72,14 @@ Draft saves use immutable revision IDs to reject competing saves. Publication pi
 ## Rigged acting
 
 Story 2 adds the closed vocabulary in [acting-library.md](acting-library.md): `Lin [worried, hesitant]: Dialogue`, `rest Lin attentive`, `react Lin nod`, and `camera close Lin`. `camera auto` selects medium for a sole speaker and wide otherwise. Camera/rest/emotion persist in saved state; transient gestures do not replay on resume. Story 1 remains supported for old content. Rig parts travel in the same ZIP and count toward 5 MB. The studio’s Acting library previews and inserts supported commands at the script cursor.
+
+## Coordinated action beats
+
+```story
+show Quixote determined left
+show Carrier surprised right
+act Quixote attack Carrier "Quixote strikes; the carrier reels back."
+Carrier [worried]: What are you doing?
+```
+
+The `act actor action [target] "caption"` command is a blocking Story 2 beat. Use only [the acting library](acting-library.md). Both actors must be shown in distinct positions on every path reaching a paired action. The caption must occupy one line and contain no embedded double quotes. Solo actions omit the target. Action outcomes are explicit, never randomly inferred. Pairs face each other in a wide shot, animate together, then return to their marks. Resume restores the caption/stage without replaying the transient motion; Continue advances once. Reduced motion retains the same text and outcome. Props are mimed, not rendered. Describe persistent consequences in the next beat and remove a character who leaves the scene.

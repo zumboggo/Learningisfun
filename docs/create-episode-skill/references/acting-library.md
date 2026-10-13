@@ -1,4 +1,4 @@
-# Shared acting library v1
+# Shared acting library v2
 
 Generated from `functions/learning-content/src/acting-library.js`. Use Story 2 for all new episodes. Do not invent cue names. The reusable Lin, Hepting, Mei and Yeyul cast uses cartoon-v1: a coherent vector character with continuous arms and finite coordinated gestures. Raster teen-v1 remains supported for existing packages. Both use this same closed cue vocabulary.
 
@@ -43,6 +43,14 @@ Generated from `functions/learning-content/src/acting-library.js`. Use Story 2 f
 - `recoil` — Lean back with raised forearms.
 - `laugh` — Head lifts with a brief shoulder bounce.
 - `sigh` — Head and shoulders settle downward.
+- `bow` — A brief formal bow. One character.
+- `cheer` — An enthusiastic raised-arm celebration. One character.
+- `reach` — Reach out to inspect or take something described in the caption. One character.
+- `cower` — Cover the head and draw back. One character.
+- `stumble` — Lose balance, catch it, and return upright. One character.
+- `strike` — Extend the leading arm in a stylized strike.
+- `block` — Raise both forearms to guard.
+- `dodge` — Lean away and recover balance.
 
 ## Camera framing
 
@@ -50,6 +58,21 @@ Generated from `functions/learning-content/src/acting-library.js`. Use Story 2 f
 - `wide`
 - `medium`
 - `close`
+
+## Action beats
+
+- `attack` — A stylized lunge and strike; the other character recoils. Requires a second character.
+- `attack-blocked` — A strike meets a raised guard; both return to their marks. Requires a second character.
+- `attack-dodged` — A strike misses as the other character leans away. Requires a second character.
+- `challenge` — One character challenges; the other answers with a shrug. Requires a second character.
+- `give` — Both reach for a mimed handoff; describe the object in the caption. Requires a second character.
+- `bow` — A brief formal bow. One character.
+- `cheer` — An enthusiastic raised-arm celebration. One character.
+- `reach` — Reach out to inspect or take something described in the caption. One character.
+- `cower` — Cover the head and draw back. One character.
+- `stumble` — Lose balance, catch it, and return upright. One character.
+
+Use `act Lin attack-blocked Jordan "Lin lunges; Jordan blocks."` for a coordinated action beat, or `act Lin bow "Lin bows."` for one character. Show both actors in distinct positions first. Paired actions face each other and use a wide shot; later dialogue uses the authored camera again. A caption is required (one line, no double quotes inside it). Actions pause until Continue; motion cannot change scores, variables or outcomes. Reload restores the caption and stage without replaying the action. Reduced motion skips movement; static images use whole-character motion. Props are mimed, not drawn. Every action ends upright at its original marks. Use a following line/exit to describe lasting injury or absence; a return to the mark is not a recovery in the story.
 
 ## Authoring
 

@@ -1,0 +1,8 @@
+<!doctype html><html lang="en"><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Two-character action rehearsal</title><div id="root"></div><script type="module">
+import React from 'react';
+import {createRoot} from 'react-dom/client';
+import StoryPlayer from '/src/components/animated/StoryPlayer.tsx';
+import ActionLibrary from '/src/components/animated/ActionLibrary.tsx';
+const pack=await fetch('/Learningisfun/stories/animated/action-rehearsal/episode.json').then(r=>r.json());
+createRoot(document.getElementById('root')).render(new URLSearchParams(location.search).has('library')?React.createElement(ActionLibrary,{pack,onChange:()=>{}}):React.createElement(StoryPlayer,{pack,debug:true}));
+</script></html>

@@ -72,3 +72,9 @@ Draft saves use immutable revision IDs to reject competing saves. Publication pi
 ## Shared puppet acting
 
 See [the curated acting library](episode-acting-library.md) for the only supported emotions, rests, talking gestures, responses and camera shots. The studio previews/inserts these cues and offers the reusable Lin rig. `story 2` accepts tagged dialogue, `rest`, `react` and `camera`; static supporting characters still work. Try the unassigned `/game/acting-demo` route. The checked-in Last Chair package demonstrates Lin; the earlier published assignment stays pinned to its original version.
+
+## Two-character action beats (acting library v2)
+
+`act Quixote attack Carrier "Quixote strikes; the carrier reels back."` creates a standalone beat. First show the actors at left/right (or distinct positions). Use the studio’s **Acting library → Action choreography** to preview and insert one of ten actions. Captions provide the action’s meaning for reduced-motion and screen-reader users. Blocked and dodged attacks have authored outcomes; choreography does not change variables or quiz scores. Save/replay records the action beat with a normal null advance. Resume never repeats the action. The camera widens during the action and returns to the scripted framing afterward. Actions return actors upright to their marks; props are mimed.
+
+The unassigned **Quixote · two-character action** rehearsal at `#/game/acting-demo` demonstrates a chapter 3 excerpt with local replies that reconverge before the same source event. It does not replace any assigned episode. Source and scene limits appear above the player.

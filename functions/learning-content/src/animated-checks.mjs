@@ -37,3 +37,15 @@ test('assignment retirement is owner-only, reversible, and preserves saved attem
  assert.equal(restored.attempts[0].seed,attempt.seed);assert.equal(restored.pack.title,pack.title);
  await call({...archive,archived:false});assert.equal((await call({action:'animatedLibrary'})).assignments.length,1);
 });
+
+test('server accepts action beats, pins their outcomes and recomputes quiz scores',async()=>{
+ const actionPack=JSON.parse(readFileSync(new URL('../../../public/stories/animated/action-rehearsal/episode.json',import.meta.url)));
+ const {call}=harness();await call({action:'animatedSaveDraft',id:'action-demo',revision:0,pack:actionPack});
+ const v=await call({action:'animatedPublish',id:'action-demo',revision:1});const a=await call({action:'animatedAssign',classId:'class',versionId:v.versionId,date:'2026-01-01'});
+ const initial=await call({action:'animatedSaveAttempt',assignmentId:a.assignmentId,attemptId:'action',steps:[],quizzes:[]},'student');
+ const {validatePackage,initialStoryState,settleStory,advanceStory,replayStory}=await import('./story-engine.js');const {story}=validatePackage(actionPack);
+ let state=settleStory(story,initialStoryState(story,initial.seed));const steps=[];
+ while(!state.ended){const node=story.nodes[state.cursor];if(node.type==='act'){const saved=await call({action:'animatedSaveAttempt',assignmentId:a.assignmentId,attemptId:'action',steps:[...steps],quizzes:[]},'student');assert.deepEqual(replayStory(story,saved.steps,saved.seed),state);}
+ const option=node.type==='choice'?node.options[0].id:null;steps.push(option);state=advanceStory(story,state,option);}
+ const result=await call({action:'animatedSaveAttempt',assignmentId:a.assignmentId,attemptId:'action',steps,quizzes:[actionPack.quiz.map(q=>q.answer)],score:999},'student');assert.equal(result.score,100);assert.equal(result.complete,true);
+});

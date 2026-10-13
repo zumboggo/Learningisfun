@@ -1,6 +1,8 @@
 # World Literature
 
-Read the assigned edition/range. Give the student a concrete role in an original adventure around the literary world and ideas; do not alter canonical events. Use short conversations to advance the problem.
+Read the assigned edition/range. Prefer acting out the assigned text itself: preserve its event order, motives, consequences and ending. Give the student a concrete witness, helper or sidekick role, without taking over a canonical character’s decisive act. Use brief local choices for a question, aside, funny reply, small helpful action or viewpoint; reconverge before the next fixed source event. Do not replace source events with an unrelated rescue or invented crisis simply to add branching. Draw the tension from the text. Treat a separate original adventure or alternate history as an explicit authoring mode, not the default.
+
+Before scripting, list fixed source events and the small spaces where a student can act. Dramatize important physical events using supported action beats and two characters on screen, with one clear speaker at a time. The scripted outcome of an attack must match the source; never roll chance over a canonical event. Keep reading boundaries explicit: do not import a famous later adventure merely because it offers more combat. Explain transitions briefly. Dialogue may be adapted, but only label verified verbatim text as a quotation.
 
 Reuse assets/question-journal-cover.png. The student commits exactly one question to the journal; a concise authored question menu is acceptable. Writing opens the door sketched on the cover. Jumping into the book sucks the student through the pages into a safe but unceremonious landing. Immediately establish place, time and task. NPC questions are unrestricted by the journal limit.
 

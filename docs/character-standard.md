@@ -36,7 +36,7 @@ Preserve identity through silhouette, hair, age, glasses and clothing—not pale
 
 All characters inherit the same controller; never add a per-character loop. A gesture prepares for 180 ms, reaches emphasis by 650 ms, holds until 1150 ms and settles by 1900 ms. Head, torso and wrists follow slightly later. Pose changes blend; feet remain planted. Idle breathing expands only the chest by less than 0.5%; blinking is spaced and varied. Speaking uses small mouth shapes with pauses and stops between beats. Every timer/frame cancels on unmount or navigation. Reduced motion disables breathing, blinking and talking motion while preserving a readable resting expression.
 
-Use only [the acting library](episode-acting-library.md): its 12 emotions, four resting poses, six talking gestures, eight responses, moves and camera settings. Prefer automatic acting, with one intentional gesture for an important beat. Wide establishes a place or choice; medium carries conversation; close supports a personal reaction. Do not shake, zoom or wave on every line.
+Use only [the acting library](episode-acting-library.md): its emotions, resting poses, talking gestures, responses, coordinated actions, moves and camera settings. Prefer automatic acting, with one intentional gesture for an important beat. Wide establishes a place or choice; medium carries conversation; close supports a personal reaction. Do not shake, zoom or wave on every line.
 
 ## Repeatable creation prompt
 

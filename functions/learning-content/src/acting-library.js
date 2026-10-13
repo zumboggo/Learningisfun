@@ -1,10 +1,24 @@
 /** Closed, versioned vocabulary shared by parser, renderer, studio and authoring tools. */
-export const ACTING_VERSION=1;
+export const ACTING_VERSION=2;
 export const CHARACTER_OPTIONS={age:['teen','adult'],hair:['layered','side-part','long','bob','cropped'],glasses:['none','round'],outfit:['uniform','teacher','tunic','robe'],face:['default','oval','round','angular'],facialHair:['none','full']};
 export const EMOTIONS=['neutral','happy','worried','sad','angry','surprised','curious','confused','skeptical','embarrassed','relieved','determined'];
 export const RESTS=['relaxed','attentive','guarded','downcast'];
 export const TALKS=['explain','reassure','question','insist','hesitant','celebrate'];
-export const RESPONSES=['nod','shake-head','shrug','point','wave','recoil','laugh','sigh'];
+export const RESPONSES=['nod','shake-head','shrug','point','wave','recoil','laugh','sigh','bow','cheer','reach','cower','stumble','strike','block','dodge'];
+/** Explicit outcomes: choreography never rolls a result or changes the literary plot. */
+export const ACTIONS={
+ attack:{paired:true,actor:'strike',target:'recoil',description:'A stylized lunge and strike; the other character recoils.'},
+ 'attack-blocked':{paired:true,actor:'strike',target:'block',description:'A strike meets a raised guard; both return to their marks.'},
+ 'attack-dodged':{paired:true,actor:'strike',target:'dodge',description:'A strike misses as the other character leans away.'},
+ challenge:{paired:true,actor:'point',target:'shrug',description:'One character challenges; the other answers with a shrug.'},
+ give:{paired:true,actor:'reach',target:'reach',description:'Both reach for a mimed handoff; describe the object in the caption.'},
+ bow:{paired:false,actor:'bow',description:'A brief formal bow.'},
+ cheer:{paired:false,actor:'cheer',description:'An enthusiastic raised-arm celebration.'},
+ reach:{paired:false,actor:'reach',description:'Reach out to inspect or take something described in the caption.'},
+ cower:{paired:false,actor:'cower',description:'Cover the head and draw back.'},
+ stumble:{paired:false,actor:'stumble',description:'Lose balance, catch it, and return upright.'},
+};
+export const ACTION_DURATION=2200;
 export const MOVES=['enter','exit','left','center','right','turn','nod','shake','bounce','recoil'];
 export const EFFECTS=['fade','closeup','shake','magic'];
 export const CAMERAS=['auto','wide','medium','close'];
@@ -19,6 +33,14 @@ export const AUTO_ACTING={
 };
 // Joint angles in degrees. Every preset uses the same anatomy; skins supply only artwork.
 export const POSES={
+ bow:{torso:16,head:18,leftUpperArm:-6,rightUpperArm:6},
+ cheer:{head:-9,leftUpperArm:100,leftForearm:35,rightUpperArm:-100,rightForearm:-35},
+ reach:{head:4,rightUpperArm:-55,rightForearm:-20},
+ cower:{torso:-10,head:12,leftUpperArm:-30,leftForearm:-135,rightUpperArm:30,rightForearm:135},
+ stumble:{torso:10,head:-10,leftUpperArm:65,leftForearm:20,rightUpperArm:-65,rightForearm:-20},
+ strike:{torso:8,head:-5,rightUpperArm:-80,rightForearm:-10,rightHand:0,leftForearm:40},
+ block:{torso:-4,head:4,leftUpperArm:-35,leftForearm:-125,rightUpperArm:35,rightForearm:125},
+ dodge:{torso:-15,head:10,leftForearm:25,rightForearm:-25},
  relaxed:{},attentive:{head:-3,leftForearm:8,rightForearm:-8},
  guarded:{head:3,leftUpperArm:-12,leftForearm:-42,rightUpperArm:12,rightForearm:42},
  downcast:{head:8,torso:2,leftUpperArm:3,rightUpperArm:-3},
@@ -37,6 +59,8 @@ export const POSES={
  sigh:{head:9,torso:3,leftUpperArm:5,rightUpperArm:-5},
 };
 export const ACTING_DESCRIPTIONS={
+ ...Object.fromEntries(Object.entries(ACTIONS).filter(([,a])=>!a.paired).map(([id,a])=>[id,a.description])),
+ strike:'Extend the leading arm in a stylized strike.',block:'Raise both forearms to guard.',dodge:'Lean away and recover balance.',
  relaxed:'Soft breathing, occasional blink, shoulders at ease.',attentive:'Slight head tilt and alert listening.',guarded:'Arms held nearer the body; restrained movement.',downcast:'Lowered head and quieter breathing.',
  explain:'One open hand presents an idea.',reassure:'Gentle open hands and a sympathetic tilt.',question:'Both hands open with a questioning head tilt.',insist:'A firm single-hand emphasis.',hesitant:'Small hand movement and a tentative tilt.',celebrate:'Open arms and an upbeat emphasis.',
  nod:'One head nod, then return to rest.','shake-head':'A small side-to-side head motion.',shrug:'Raised forearms and a questioning tilt.',point:'Extend an arm toward something.',wave:'Lift a forearm and wave the hand.',recoil:'Lean back with raised forearms.',laugh:'Head lifts with a brief shoulder bounce.',sigh:'Head and shoulders settle downward.',
