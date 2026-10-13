@@ -1,0 +1,23 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {Client,Databases,Users,Functions} from 'node-appwrite';
+const admin=new Client().setEndpoint(process.env.APPWRITE_ENDPOINT).setProject(process.env.APPWRITE_PROJECT_ID).setKey(process.env.APPWRITE_API_KEY);
+const db=new Databases(admin),users=new Users(admin);
+const cls=await db.getDocument({databaseId:process.env.APPWRITE_DATABASE_ID||'main',collectionId:'classes',documentId:'e24ec8d9-21d7-4c32-a30e-08655c2f4e65'});
+if(cls.courseName!=='Ethics and Leadership'||cls.status!=='active')throw Error('Unexpected class');
+const owner=await users.get({userId:cls.teacherId});if(!/^(davidh|david hepting)$/i.test(owner.name))throw Error('Unexpected owner');
+const {jwt}=await users.createJWT({userId:owner.$id,duration:300});
+const f=new Functions(new Client().setEndpoint(process.env.APPWRITE_ENDPOINT).setProject(process.env.APPWRITE_PROJECT_ID).setJWT(jwt));
+const call=async body=>{const r=await f.createExecution({functionId:'learning-content',body:JSON.stringify(body)});const d=JSON.parse(r.responseBody||'{}');if(r.responseStatusCode>=400||d.error)throw Error(d.error||'Request failed');return d;};
+const id='measure-that-changed-ethics',date='2026-10-13';
+const pack=JSON.parse(await readFile('public/stories/animated/the-measure-that-changed/episode.json','utf8'));
+const library=await call({action:'animatedLibrary'});let draft=library.drafts.find(d=>d.id===id);
+if(draft){const current=await call({action:'animatedReadDraft',id});if(JSON.stringify(current.pack)!==JSON.stringify(pack))throw Error('Existing draft differs; preserve teacher edits');draft=current;}
+else draft=await call({action:'animatedSaveDraft',id,revision:0,pack});
+const version=await call({action:'animatedPublish',id,revision:draft.revision});
+const assigned=await call({action:'animatedAssign',versionId:version.versionId,classId:cls.$id,date});
+const read=await call({action:'animatedRead',assignmentId:assigned.assignmentId});
+if(!read.preview||JSON.stringify(read.pack)!==JSON.stringify(pack))throw Error('Published package verification failed');
+const after=await call({action:'animatedLibrary'});
+if(after.assignments.filter(a=>a.assignmentId===assigned.assignmentId).length!==1)throw Error('Assignment verification failed');
+const receipt={id,title:pack.title,className:cls.courseName,section:cls.name,classId:cls.$id,date:assigned.date,releaseAt:assigned.releaseAt,version:version.version,versionId:version.versionId,assignmentId:assigned.assignmentId,playUrl:'https://zumboggo.github.io/Learningisfun/#/game/play/'+assigned.assignmentId};
+await writeFile('stories/animated/the-measure-that-changed/publication.json',JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt,null,2));
