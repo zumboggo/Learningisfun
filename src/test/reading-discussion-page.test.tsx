@@ -80,3 +80,13 @@ it('focus and elapsed time update no server data until manual refresh',async()=>
  expect(readCount()).toBe(before);expect(screen.getByText(/Updated 2 minutes ago/)).toBeInTheDocument();
  vi.useRealTimers();fireEvent.click(screen.getByRole('button',{name:'Refresh discussion'}));await waitFor(()=>expect(readCount()).toBe(before+1));
 });
+
+it.each(['question','reply'])('accepts a %s quote passed from the Texts reader',async(destination)=>{
+ render(<MemoryRouter initialEntries={[{pathname:'/discussions/texts/text/blue',state:{selectedQuote:{quotation:'A selected passage.',paragraph:4,token:'reader-selection',destination}}}]}><Routes><Route path="/discussions/texts/:textId/:classId" element={<ReadingDiscussionPage/>}/></Routes></MemoryRouter>);
+ await screen.findByRole('heading',{name:'Reading example',level:1});
+ if(destination==='reply')fireEvent.click(screen.getByRole('button',{name:'Reply'}));
+ const form=screen.getByRole('textbox',{name:destination==='question'?'Your question':'Your reply'}).closest('form')!;
+ await waitFor(()=>expect(form.querySelector('textarea[aria-label="Quotation"]')).toHaveValue('A selected passage.'));
+ expect(form.querySelector('blockquote')).toHaveClass('reading-quote');
+ expect(form.querySelector('input[type="number"]')).toHaveValue(4);
+});

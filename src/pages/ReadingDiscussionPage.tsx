@@ -4,7 +4,7 @@ import { QuestionVoting } from '@/components/discussions/QuestionVoting';
 import { EditReadingContribution } from '@/components/discussions/EditReadingContribution';
 import { DiscussionTextInput, DiscussionVote, DiscussionModeration } from '@/components/discussions/DiscussionControls';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/common/Button';
 import { ExpandableContribution } from '@/components/discussions/ExpandableContribution';
@@ -18,9 +18,13 @@ export function ReadingDiscussionPage() {
 }
 function DiscussionWorkspace({textId,classId}:{textId:string;classId:string}) {
   const {user}=useAuth();
+  const location=useLocation(),navigate=useNavigate();
+  const incomingQuote=location.state?.selectedQuote as {quotation:string;paragraph:number;token:string;destination:'question'|'reply'}|undefined;
+  const [questionQuote,setQuestionQuote]=useState<{quotation:string;paragraph:number;token:string}|undefined>(incomingQuote?.destination==='question'?incomingQuote:undefined);
+  useEffect(()=>{if(incomingQuote)navigate(location.pathname+location.search,{replace:true,state:null});},[incomingQuote,location.pathname,location.search,navigate]);
   const [anonymous,setAnonymous]=useState(()=>{try{return localStorage.getItem('teacher-anonymous:'+classId)==='true';}catch{return false;}});
   const [data,setData]=useState<ReadingDiscussion>(),[error,setError]=useState(''),[busy,setBusy]=useState(false),[view,setView]=useState<'text'|'discussion'|'parallel'>('parallel'),[present,setPresent]=useState(false),[selected,setSelected]=useState<string|null>(null);
-  const [activeReply,setActiveReply]=useState<string|null>(null),[pendingQuote,setPendingQuote]=useState<{quotation:string;paragraph:number;token:string}>();
+  const [activeReply,setActiveReply]=useState<string|null>(null),[pendingQuote,setPendingQuote]=useState<{quotation:string;paragraph:number;token:string}|undefined>(incomingQuote?.destination==='reply'?incomingQuote:undefined);
   const replyTools={activeReply,setActiveReply,pendingQuote,consumeQuote:()=>setPendingQuote(undefined)};
   const openReply=(id:string)=>{setActiveReply(id);requestAnimationFrame(()=>document.getElementById(`question-${id}`)?.scrollIntoView({behavior:'smooth',block:'center'}));};
   const [optimisticVotes,setOptimisticVotes]=useState<Record<string,boolean>>({});
@@ -86,7 +90,7 @@ function DiscussionWorkspace({textId,classId}:{textId:string;classId:string}) {
     {!present&&<p className="text-xs text-slate-500">{data.showStudentNames?'Classmates can see usernames on posts and replies.':'Posts and replies are anonymous to classmates. Your teacher can see who wrote them.'}</p>}
     {error&&<p role="alert" className="rounded-xl bg-red-50 p-3 text-red-800">{error}</p>}
     <div className="reading-columns">
-    <div hidden={view==='discussion'||present}><ParallelReading textId={textId} classId={classId} onUseQuote={data.canWrite?quote=>setPendingQuote({...quote,token:crypto.randomUUID()}):undefined}/></div>
+    <div hidden={view==='discussion'||present}><ParallelReading textId={textId} classId={classId} onUseQuote={data.canWrite?(quote,destination)=>{const selected={...quote,token:crypto.randomUUID()};if(destination==='question'){setQuestionQuote(selected);}else{setPendingQuote(selected);}if(view==='text')setView('parallel');requestAnimationFrame(()=>document.querySelector<HTMLTextAreaElement>(destination==='question'?'textarea[aria-label="Your question"]':'textarea[aria-label="Your reply"]')?.focus());}:undefined}/></div>
     <section hidden={view==='text'&&!present} className="reading-conversation" aria-label="Questions and replies">
     <div className="reading-feed-heading"><h2>Questions <span>{roots.length}</span></h2><span className="reading-top">↑ Top</span></div>
     {!present&&data.curatedReady&&<QuestionVoting {...{data,busy,mutate}}/>}
@@ -94,7 +98,7 @@ function DiscussionWorkspace({textId,classId}:{textId:string;classId:string}) {
     {!present&&data.curatedReady&&<ReplyAssignments {...{data,textId,classId,busy,mutate}} onReply={openReply}/>}
     {!present&&pendingQuote&&!activeReply&&<p role="status" className="rounded-lg bg-blue-50 p-3 text-sm">Passage retained. Choose a question and select Reply to use it.</p>}
     {!present&&data.canWrite&&!data.teacher&&Boolean(data.notebook?.length)&&<QuestionNotebook {...{data,busy,mutate}} storageKey={`question-notebook:${user?.$id}:${textId}:${classId}`}/>}
-    {!present&&data.canWrite&&<DiscussionComposer key={user?.$id} storageKey={`reading-draft:${user?.$id}:${textId}:${classId}:question`} category="question" busy={busy} onSubmit={fields=>mutate('postReadingDiscussion',{...fields,category:'question'})}/>}
+    {!present&&data.canWrite&&<DiscussionComposer quote={questionQuote} onQuoteUsed={()=>setQuestionQuote(undefined)} key={user?.$id} storageKey={`reading-draft:${user?.$id}:${textId}:${classId}:question`} category="question" busy={busy} onSubmit={fields=>mutate('postReadingDiscussion',{...fields,category:'question'})}/>}
     {!present&&<p className="mb-2 text-xs text-slate-500">An upvote means “This question could deepen our understanding.” One vote per item. Highest voted first.</p>}
     {present&&selected&&<Button variant="secondary" onClick={()=>setSelected(null)}>Show all contributions</Button>}
     <div className="space-y-2">{shown.map(post=><ReadingThread {...replyTools} key={post.id} post={showNames?{...post,label:post.username||post.label}:post} posts={visiblePosts.map(p=>showNames?{...p,label:p.username||p.label}:p)} teacher={data.teacher} canWrite={data.canWrite&&!present} busy={busy} mutate={mutate} readUrl={readUrl} draftPrefix={`reading-draft:${user?.$id}:${textId}:${classId}`} present={present} onSelect={()=>setSelected(post.id)}/>)}{!shown.length&&<p className="rounded-2xl bg-slate-50 p-5 text-slate-600">Ask the first question about this reading.</p>}</div>
@@ -112,12 +116,12 @@ export function DiscussionComposer({storageKey,category,busy,onSubmit,onCancel,q
   const [draft,setDraft]=useState<Draft>(()=>{try{return JSON.parse(localStorage.getItem(storageKey)||'null')||blank();}catch{return blank();}});
   const [storageError,setStorageError]=useState('');
   const usedQuote=useRef<string|undefined>(undefined);
-  useEffect(()=>{if(!quote||usedQuote.current===quote.token)return;usedQuote.current=quote.token;setDraft(current=>{const next=current.quotation?{...current,content:`${current.content}\n\n“${quote.quotation}” — paragraph ${quote.paragraph}`}:{...current,quotation:quote.quotation,paragraph:String(quote.paragraph)};try{localStorage.setItem(storageKey,JSON.stringify(next));}catch{/* writing remains in memory */}return next;});onQuoteUsed?.();},[quote,onQuoteUsed,storageKey]);
+  useEffect(()=>{if(!quote||usedQuote.current===quote.token)return;usedQuote.current=quote.token;setDraft(current=>{const quotation=current.quotation?`${current.quotation}\n\n${quote.quotation} — paragraph ${quote.paragraph}`:quote.quotation;if(quotation.length>3000){setStorageError('Your quotation is full. Shorten it before adding another passage.');return current;}const next={...current,quotation,paragraph:current.quotation?current.paragraph:String(quote.paragraph)};try{localStorage.setItem(storageKey,JSON.stringify(next));}catch{/* writing remains in memory */}return next;});onQuoteUsed?.();},[quote,onQuoteUsed,storageKey]);
   const update=(field:keyof Draft,value:string)=>{const next={...draft,[field]:value};setDraft(next);try{localStorage.setItem(storageKey,JSON.stringify(next));setStorageError('');}catch{setStorageError('Draft storage is unavailable. Keep this page open until you post.');}};
   const prompts={thought:'Share a thought…',question:'What question does this text raise for you?',connection:'Share a connection…'};
   return <form className="my-3 space-y-3 rounded-2xl border border-slate-200 bg-white p-3" onSubmit={e=>{e.preventDefault();void onSubmit(draft).then(()=>{setDraft(blank());try{localStorage.removeItem(storageKey);}catch{setStorageError('Posted successfully, but the old local draft could not be cleared.');}}).catch(()=>{});}}>
     <DiscussionTextInput label={onCancel?'Your reply':'Your question'} value={draft.content} onChange={value=>update('content',value)} placeholder={onCancel?'Share your answer or a thought…':prompts[category]} rows={2} compact={!onCancel}/>
-    {onCancel&&<><input aria-label="Quotation" className="quote-input w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400" placeholder="Paste quote here" maxLength={3000} value={draft.quotation} onChange={e=>update('quotation',e.target.value)}/>{draft.quotation&&<p className="text-sm text-slate-600">Explain how this passage supports or challenges your answer.</p>}{draft.quotation&&<label className="block text-xs text-slate-500">Paragraph number (optional) <input className="ml-2 w-20 rounded-lg border bg-white p-2" type="number" min="1" max="10000" value={draft.paragraph} onChange={e=>update('paragraph',e.target.value)}/></label>}</>}
+    {<><textarea rows={2} aria-label="Quotation" className="quote-input w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400" placeholder="Paste quote here" maxLength={3000} value={draft.quotation} onChange={e=>update('quotation',e.target.value)}/>{draft.quotation&&<blockquote className="reading-quote">{draft.quotation}</blockquote>}{draft.quotation&&<label className="block text-xs text-slate-500">Paragraph number (optional) <input className="ml-2 w-20 rounded-lg border bg-white p-2" type="number" min="1" max="10000" value={draft.paragraph} onChange={e=>update('paragraph',e.target.value)}/></label>}</>}
 
     <div className="flex items-center gap-3"><Button type="submit" disabled={busy||!draft.content.trim()}>Post {onCancel?'reply':'question'}</Button>{onCancel&&<Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>}<small className="text-slate-500">{onCancel ? 'Unsent reply saved on this device' : 'Posting shares your question with everyone in this class'}</small></div>{storageError&&<p role="alert">{storageError}</p>}
   </form>;

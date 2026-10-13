@@ -42,15 +42,15 @@ it('shows questions only, ranks a voted question first, and reveals replies in s
   fireEvent.click(within(second).getByRole('button', { name: 'Remove upvote: 4' }));
   await within(second).findByRole('button', { name: 'Upvote: 3' });
 });
-it('only shows the simple quote input on reply and preserves it after cancelling', async () => {
+it('offers quotation fields for questions and preserves reply quotes after cancelling', async () => {
   mount(); await screen.findByRole('heading', { name: 'The reading', level: 1 });
-  expect(screen.queryByPlaceholderText('Paste quote here')).not.toBeInTheDocument();
+  expect(screen.getByPlaceholderText('Paste quote here')).toBeInTheDocument();
   const question = screen.getByText('First question?').closest('article')!;
   fireEvent.click(within(question).getByRole('button', { name: 'Reply' }));
-  fireEvent.change(screen.getByPlaceholderText('Paste quote here'), { target: { value: 'A passage worth discussing.' } });
+  fireEvent.change(within(question).getByPlaceholderText('Paste quote here'), { target: { value: 'A passage worth discussing.' } });
   fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
   fireEvent.click(within(question).getByRole('button', { name: 'Reply' }));
-  expect(screen.getByPlaceholderText('Paste quote here')).toHaveValue('A passage worth discussing.');
+  expect(within(question).getByPlaceholderText('Paste quote here')).toHaveValue('A passage worth discussing.');
 });
 it('loads the actual reading beside the discussion without replacing the question draft', async () => {
   mount(); await screen.findByRole('heading', { name: 'The reading', level: 1 });
@@ -135,4 +135,24 @@ it('posts directly to the shared feed without a private notebook, including duri
  fireEvent.click(screen.getByRole('button',{name:'Post question'}));
  expect(await screen.findByText('A directly shared question?')).toBeVisible();
  await waitFor(()=>expect(screen.getByRole('textbox',{name:'Your question'})).toHaveValue(''));
+});
+
+it.each(['Question', 'Reply'])('routes a selected passage to Use in %s with quote styling', async (destination) => {
+  mount();
+  const passage=await screen.findByText('An exact paragraph from the reading.');
+  const range=document.createRange();range.selectNodeContents(passage);
+  window.getSelection()?.removeAllRanges();window.getSelection()?.addRange(range);
+  fireEvent(document,new Event('selectionchange'));
+  fireEvent.click(screen.getByRole('button',{name:`Use in ${destination}`}));
+  if(destination==='Reply'){
+    expect(screen.getByText(/Passage retained/)).toBeInTheDocument();
+    const thread=screen.getByText('First question?').closest('article')!;
+    fireEvent.click(within(thread).getByRole('button',{name:'Reply'}));
+  }
+  const editor=screen.getByRole('textbox',{name:destination==='Question'?'Your question':'Your reply'});
+  const form=editor.closest('form')!;
+  await waitFor(()=>expect(within(form).getByRole('textbox',{name:'Quotation'})).toHaveValue('An exact paragraph from the reading.'));
+  expect(form.querySelector('blockquote.reading-quote')).toHaveTextContent('An exact paragraph from the reading.');
+  expect(within(form).getByRole('spinbutton')).toHaveValue(1);
+  expect(editor).toHaveValue('');
 });
