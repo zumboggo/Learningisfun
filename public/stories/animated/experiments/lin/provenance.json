@@ -1,0 +1,10 @@
+{
+  "asset": "head-base.png",
+  "created": "2026-10-13",
+  "method": "Built-in image_gen tool with transparent_background=true",
+  "reference": "public/stories/animated/cast/Lin-neutral.webp",
+  "character": "Lin, a fictional Chinese teenage student; not a real student likeness",
+  "prompt": "Use case: illustration-story. Create ONE reusable animation asset: isolated head base of the fictional Chinese teenage boy Lin in the reference image. Preserve his short tousled dark charcoal hair, warm peach skin, youthful manga character identity. Head only, perfectly front facing and upright, ears included, no neck, no body, no clothes. Transparent background, no shadow outside the head. Head should be centered and occupy most of a square canvas with transparent margin. Use rich but restrained hand-painted cel shading and fine dark ink outlines, subtle warm cheek shading and beautifully drawn individual hair locks. CRITICAL animation layering: leave the central face entirely blank skin from below the fringe to the chin: NO EYES, NO EYEBROWS, NO NOSE, NO MOUTH, NO expression marks. Those features will be drawn and animated by the application. Hair fringe must end above the eye line, leaving generous blank space for eyes. Natural fairly long oval teen face, not a chibi toddler, cheeks gently taper to a rounded chin. This is a clean production head skin for a hybrid SVG puppet; not a finished portrait, no text, no watermark, no other heads or objects.",
+  "processing": "Original generated PNG copied unchanged, alpha preserved. SVG positions and scales it behind the shared animated facial features.",
+  "scope": "Opt-in animation comparison only. Existing cast packs and published episode content are unchanged."
+}

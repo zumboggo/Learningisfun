@@ -1,3 +1,4 @@
+const AnimationLabPage = lazy(() => import('@/pages/AnimationLabPage'));
 const ActingDemoPage = lazy(() => import('@/pages/ActingDemoPage'));
 const AnimatedStudioPage = lazy(() => import('@/pages/AnimatedStudioPage'));
 const AnimatedEpisodePage = lazy(() => import('@/pages/AnimatedEpisodePage'));
@@ -118,6 +119,7 @@ export default function App() {
     <HashRouter>
       <AuthProvider>
         <Routes>
+          <Route path="/game/animation-lab" element={<Suspense fallback={<p>Loading animation comparison…</p>}><AnimationLabPage/></Suspense>} />
           <Route path="/game/acting-demo" element={<Suspense fallback={<p>Loading Lin…</p>}><ActingDemoPage/></Suspense>} />
           <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
