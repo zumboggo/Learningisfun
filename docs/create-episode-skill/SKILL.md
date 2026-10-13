@@ -37,6 +37,10 @@ Use coordinated actions when bodies interacting matter: `give` for a mimed hando
 
 Use [scene beats](references/scene-beats.md) for emotional turns and quick staging. Read the current `scene-beats.js` definitions; use `beat preset Lead Listener "Caption"` only in Learning is Fun Story 2. Each beat stages exactly two characters and holds a caption for Continue, with expressions, listener reactions and framing. Lin is a girl; Yeyul is a boy. Preview the chosen pair in the studio, including reduced motion. Keep quiet dialogue between beats. Plan a concrete want, a relationship under pressure, a costly choice and one meaningful change; use existing variables for a later callback. Reuse an earlier detail with changed meaning. The preset supplies direction, not a generated story or automatic consequences.
 
+## Three writing passes
+
+Apply the [opening check, choice–response–callback plan, and scene-trimming pass](references/narrative-craft.md#three-writing-passes) on every new episode or substantial story revision. Introduce the promised problem early, make each choice produce a distinct response, and remove beats that neither change the situation nor earn an emotional pause. Use a compact authoring plan and the existing Story 2 commands; these checks do not require new assets or runtime features. Preserve source events, reading clarity, student agency and separate knowledge scoring.
+
 ## Verify and deliver
 
 Follow [efficient authoring](references/efficient-authoring.md). Validate script and quiz, preview contrasting routes, source fidelity, mobile/desktop access, resume and quiz retries. Use authenticated publishing and exact class/date assignments only as authorized. Follow repository checks/master publishing instructions and report actual verification limits. Do not create Canvas assignments or post grades without separate authorization.
