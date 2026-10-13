@@ -1,3 +1,4 @@
+import { ReadingParticipationExport } from '@/components/reports/ReadingParticipationExport';
 import { MarkdownPasteEditor } from '@/components/common/MarkdownPasteEditor';
 import {useAnimatedLibrary} from '@/services/use-animated-library';
 import {EpisodeCards,episodeWeek} from '@/components/EpisodeCards';
@@ -414,6 +415,7 @@ export function ClassDetailPage() {
           <span className="shrink-0 text-sm font-medium text-gray-500" aria-hidden="true">Show ▾</span>
         </summary>
         <div className="space-y-5 border-t bg-gray-50/60 p-3 sm:p-4">
+      {isOwner && <ReadingParticipationExport classId={cls.$id} className={`${cls.courseName} · ${cls.name}`} students={pickableStudents} />}
       <ClassLinksPanel cls={cls} isOwner={Boolean(isOwner)} teacherId={user?.$id || ''} />
       {!isParent && !isOwner && <ClassNicknamesPanel classId={cls.$id} userId={user?.$id || ''} isOwner={false} />}
       {isOwner && <SimplePresentationLinksPanel links={presentationLinks || []} isOwner />}
