@@ -42,3 +42,25 @@ it('all reusable cast packs share continuous anatomy while preserving identity',
  expect(silhouettes.size).toBe(4);
  for(const c of Object.values(pack.assets.characters) as any[])expect(c.rig.preset).toBe('cartoon-v1');
 });
+
+it('expressive reactions compile, put shocked hands at the cheeks, and keep hands in front of the face',async()=>{
+ const {armGeometry}=await import('@/components/animated/character-geometry');
+ for(const response of ['shock','rage','laugh','excited','scared','facepalm','proud','plead','disappointed'])expect(compileStory(`story 2\nshow Lin neutral center\nreact Lin ${response}\nLin: Oh!\nend`,pack.assets).errors).toEqual([]);
+ for(const side of ['left','right'] as const){const wrist=armGeometry(side,POSES.shock[side+'UpperArm'],POSES.shock[side+'Forearm']);expect(wrist.wy).toBeGreaterThan(140);expect(wrist.wy).toBeLessThan(170);expect(wrist.wx).toBeGreaterThan(85);expect(wrist.wx).toBeLessThan(155);}
+ const {container,rerender}=render(<PuppetActor character={pack.assets.characters.Lin} emotion="shocked" reduced/>);
+ expect(container.querySelector('[data-mouth] ellipse')).toHaveAttribute('ry','9');
+ expect(container.querySelector('.puppet-face')!.compareDocumentPosition(container.querySelector('[data-arm]')!)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+ rerender(<PuppetActor character={pack.assets.characters.Lin} emotion="angry" reduced/>);
+ expect(container.querySelectorAll('[data-hand="fist"]')).toHaveLength(2);
+ rerender(<PuppetActor character={pack.assets.characters.Lin} emotion="neutral" response="laugh" reduced/>);
+ expect(container.querySelector('[data-mouth] path')).toHaveAttribute('fill','#815250');
+});
+it('anger swings both arms and a laughter burst settles instead of looping',()=>{
+ vi.useFakeTimers();
+ const {container,rerender}=render(<PuppetActor character={pack.assets.characters.Lin} emotion="angry"/>);
+ act(()=>vi.advanceTimersByTime(750));const first=container.querySelector('[data-arm="left"]')!.innerHTML;
+ act(()=>vi.advanceTimersByTime(160));expect(container.querySelector('[data-arm="left"]')!.innerHTML).not.toEqual(first);
+ rerender(<PuppetActor character={pack.assets.characters.Lin} emotion="laughing"/>);
+ act(()=>vi.advanceTimersByTime(2300));const settled=container.querySelector('[data-arm="left"]')!.innerHTML;
+ act(()=>vi.advanceTimersByTime(2300));expect(container.querySelector('[data-arm="left"]')!.innerHTML).toEqual(settled);
+});
