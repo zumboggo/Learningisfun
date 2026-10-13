@@ -20,6 +20,7 @@
           "version": 2,
           "preset": "cartoon-v1",
           "style": "manga",
+          "finish": "polished",
           "palette": {
             "skin": "#d9b18e",
             "hair": "#7b7770",
@@ -46,6 +47,7 @@
           "version": 2,
           "preset": "cartoon-v1",
           "style": "manga",
+          "finish": "polished",
           "palette": {
             "skin": "#ba8965",
             "hair": "#39332d",

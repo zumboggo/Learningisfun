@@ -38,7 +38,7 @@ export default function AnimationLabPage(){
    <header><span className="lab-letter">{v.letter}</span><div><h2>{v.name}</h2><p>{v.tag}</p></div></header>
    <div className={`lab-stage ${portrait?'lab-portrait':''}`}>
     <div className="lab-stage-line"/>
-    {character&&<CartoonActor character={character} actorId="Lin-comparison" emotion={b.emotion} talking={b.talking} reduced={still} performanceKey={run} portrait={portrait} experiment={v.id==='current'?undefined:v.id} headImage={v.id==='hybrid'?import.meta.env.BASE_URL+'stories/animated/experiments/lin/head-base.png':undefined}/>}
+    {character&&<CartoonActor character={character} actorId="Lin-comparison" emotion={b.emotion} talking={b.talking} reduced={still} performanceKey={run} portrait={portrait} experiment={v.id} headImage={v.id==='hybrid'?import.meta.env.BASE_URL+'stories/animated/experiments/lin/head-base.png':undefined}/>}
     <span className="lab-stage-caption">LIN · {b.name.toUpperCase()}</span>
    </div>
    <p className="lab-description">{v.description}</p>

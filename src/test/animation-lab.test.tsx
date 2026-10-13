@@ -7,7 +7,7 @@ import AnimationLabPage from '@/pages/AnimationLabPage';
 const lin=JSON.parse(readFileSync('public/stories/animated/rigs/lin-cartoon.json','utf8'));
 afterEach(()=>{cleanup();vi.useRealTimers();vi.unstubAllGlobals();});
 it('keeps illustration opt-in, uses separate gradient IDs, and falls back if artwork fails',()=>{
- const {container}=render(<><CartoonActor character={lin} reduced/><CartoonActor character={lin} experiment="polished" reduced/><CartoonActor character={lin} experiment="hybrid" headImage="/lin.png" reduced/></>);
+ const {container}=render(<><CartoonActor character={lin} experiment="current" reduced/><CartoonActor character={lin} experiment="polished" reduced/><CartoonActor character={lin} experiment="hybrid" headImage="/lin.png" reduced/></>);
  const actors=container.querySelectorAll('svg');expect(actors[0].querySelector('image')).toBeNull();expect(actors[0].querySelector('defs')).toBeNull();
  const ids=[...container.querySelectorAll('linearGradient')].map(e=>e.id);expect(new Set(ids).size).toBe(ids.length);
  expect(actors[2].querySelector('.puppet-face')).not.toBeNull();fireEvent.error(actors[2].querySelector('image')!);expect(actors[2].querySelector('image')).toBeNull();expect(actors[2].querySelector('.puppet-face')).not.toBeNull();

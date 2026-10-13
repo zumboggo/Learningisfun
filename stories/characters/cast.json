@@ -2,18 +2,29 @@
   {
     "id": "Lin",
     "name": "Lin",
-    "version": 4,
+    "version": 5,
     "palette": {
       "skin": "#eac09c",
       "hair": "#293338",
       "shirt": "#b93f46"
     },
-    "fallback": "public/stories/animated/cast/Lin-neutral.webp"
+    "fallback": "public/stories/animated/cast/Lin-neutral.webp",
+    "finish": "hybrid",
+    "headAsset": {
+      "path": "public/stories/animated/heads/hybrid-v1/lin.webp",
+      "frame": [
+        57,
+        34,
+        126,
+        157
+      ]
+    },
+    "provenance": "Original reusable illustrated character; students are fictional, not real student likenesses. Teacher identity follows the previously authorized character design. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json."
   },
   {
     "id": "Hepting",
     "name": "Mr. Hepting",
-    "version": 4,
+    "version": 5,
     "palette": {
       "skin": "#e5b495",
       "hair": "#514038",
@@ -28,12 +39,23 @@
       "outfit": "teacher",
       "facialHair": "full"
     },
-    "fallback": "public/stories/animated/cast/Hepting-neutral.webp"
+    "fallback": "public/stories/animated/cast/Hepting-neutral.webp",
+    "finish": "hybrid",
+    "headAsset": {
+      "path": "public/stories/animated/heads/hybrid-v1/hepting.webp",
+      "frame": [
+        59,
+        32,
+        122,
+        155
+      ]
+    },
+    "provenance": "Original reusable illustrated character; students are fictional, not real student likenesses. Teacher identity follows the previously authorized character design. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json."
   },
   {
     "id": "Mei",
     "name": "Mei",
-    "version": 3,
+    "version": 4,
     "palette": {
       "skin": "#efc6a3",
       "hair": "#292b31",
@@ -46,12 +68,23 @@
       "outfit": "uniform",
       "face": "round"
     },
-    "fallback": "public/stories/animated/cast/Mei-neutral.webp"
+    "fallback": "public/stories/animated/cast/Mei-neutral.webp",
+    "finish": "hybrid",
+    "headAsset": {
+      "path": "public/stories/animated/heads/hybrid-v1/mei.webp",
+      "frame": [
+        53,
+        30,
+        134,
+        174
+      ]
+    },
+    "provenance": "Original reusable illustrated character; students are fictional, not real student likenesses. Teacher identity follows the previously authorized character design. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json."
   },
   {
     "id": "Yeyul",
     "name": "Yeyul",
-    "version": 3,
+    "version": 4,
     "palette": {
       "skin": "#efcba9",
       "hair": "#302e35",
@@ -64,12 +97,23 @@
       "outfit": "uniform",
       "face": "oval"
     },
-    "fallback": "public/stories/animated/cast/Yeyul-neutral.webp"
+    "fallback": "public/stories/animated/cast/Yeyul-neutral.webp",
+    "finish": "hybrid",
+    "headAsset": {
+      "path": "public/stories/animated/heads/hybrid-v1/yeyul.webp",
+      "frame": [
+        57,
+        26,
+        126,
+        169
+      ]
+    },
+    "provenance": "Original reusable illustrated character; students are fictional, not real student likenesses. Teacher identity follows the previously authorized character design. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json."
   },
   {
     "id": "Jordan",
     "name": "Jordan",
-    "version": 2,
+    "version": 3,
     "palette": {
       "skin": "#c88e68",
       "hair": "#392b27",
@@ -82,6 +126,16 @@
       "outfit": "uniform",
       "face": "angular"
     },
-    "provenance": "Fictional Grade 11 classmate assembled from shared manga components; not a real student likeness."
+    "provenance": "Fictional Grade 11 classmate assembled from shared manga components; not a real student likeness. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json.",
+    "finish": "hybrid",
+    "headAsset": {
+      "path": "public/stories/animated/heads/hybrid-v1/jordan.webp",
+      "frame": [
+        57,
+        33,
+        126,
+        157
+      ]
+    }
   }
 ]
