@@ -415,7 +415,7 @@ export function ClassDetailPage() {
           <span className="shrink-0 text-sm font-medium text-gray-500" aria-hidden="true">Show ▾</span>
         </summary>
         <div className="space-y-5 border-t bg-gray-50/60 p-3 sm:p-4">
-      {isOwner && <ReadingParticipationExport classId={cls.$id} className={`${cls.courseName} · ${cls.name}`} students={pickableStudents} />}
+      {isOwner && <ReadingParticipationExport classId={cls.$id} className={`${cls.courseName} · ${cls.name}`} students={(students || []).map(student => ({ id: student.$id, name: student.name, email: student.email === 'Profile not synced yet' ? '' : student.email }))} />}
       <ClassLinksPanel cls={cls} isOwner={Boolean(isOwner)} teacherId={user?.$id || ''} />
       {!isParent && !isOwner && <ClassNicknamesPanel classId={cls.$id} userId={user?.$id || ''} isOwner={false} />}
       {isOwner && <SimplePresentationLinksPanel links={presentationLinks || []} isOwner />}
