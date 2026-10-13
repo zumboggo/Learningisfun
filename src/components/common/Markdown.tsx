@@ -5,6 +5,7 @@ import { anchorHighlights, type PassageHighlight } from '@/components/texts/anch
 
 interface MarkdownProps {
   content: string;
+  preserveLineBreaks?: boolean;
   className?: string;
   highlights?: PassageHighlight[];
   onHighlightClick?: (id: string) => void;
@@ -12,10 +13,10 @@ interface MarkdownProps {
 
 const INLINE_TOKEN = /(!\[[^\]]*\]\([^)]+\)|\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\)|\*[^*]+\*)/g;
 
-export function Markdown({ content, className = '', highlights, onHighlightClick }: MarkdownProps) {
+export function Markdown({ content, className = '', preserveLineBreaks = false, highlights, onHighlightClick }: MarkdownProps) {
   return (
     <div className={`space-y-3 leading-relaxed ${className}`}>
-      {highlights?.length ? anchorHighlights(renderBlocks(content), highlights, onHighlightClick) : renderBlocks(content)}
+      {highlights?.length ? anchorHighlights(renderBlocks(content, preserveLineBreaks), highlights, onHighlightClick) : renderBlocks(content, preserveLineBreaks)}
     </div>
   );
 }
@@ -33,7 +34,7 @@ export function countMarkdownWords(markdown: string): number {
   return plain.split(/\s+/).filter(Boolean).length;
 }
 
-function renderBlocks(content: string): ReactNode[] {
+function renderBlocks(content: string, preserveLineBreaks = false): ReactNode[] {
   const lines = content.replace(/\r\n/g, '\n').split('\n');
   const blocks: ReactNode[] = [];
   let index = 0;
@@ -137,7 +138,7 @@ function renderBlocks(content: string): ReactNode[] {
     }
     blocks.push(
       <p key={`p-${index}`} className="whitespace-pre-wrap">
-        {renderInline(paragraph.join(' '), `p-${index}`)}
+        {renderInline(paragraph.join(preserveLineBreaks ? '\n' : ' '), `p-${index}`)}
       </p>,
     );
   }

@@ -1580,3 +1580,12 @@ input, textarea, select, button {
 /* The fullscreen player keeps its controls and text scrollable on short screens. */
 .game-display-expanded .game-display-content > main { width: 100%; max-width: 90rem; }
 .game-display-expanded iframe { height: calc(100dvh - 16rem); min-height: 22rem; }
+
+/* Prompt formatting remains readable on the presentation's dark background. */
+.writing-prompt-content { color: white; overflow-wrap: anywhere; }
+.writing-prompt-content :is(h1, h2, h3, p, li, blockquote, strong, em) { color: inherit !important; }
+.writing-prompt-content h1 { font-size: 1.5em; }
+.writing-prompt-content h2 { font-size: 1.25em; }
+.writing-prompt-content h3 { font-size: 1.125em; }
+.writing-prompt-content a { color: #bfdbfe; }
+.writing-prompt-content :is(th, code) { background: #334155; color: white; }

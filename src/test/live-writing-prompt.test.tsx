@@ -4,10 +4,12 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 const read = vi.fn();
 const submit = vi.fn();
+const update = vi.fn();
 vi.mock('@/services/presentation.service', () => ({
   readLivePresentation: (...args: unknown[]) => read(...args),
   submitLiveAnswer: (...args:unknown[])=>submit(...args),
   controlLivePresentation: vi.fn(),
+  updateWritingPrompt: (...args: unknown[]) => update(...args),
 }));
 
 const state = {
@@ -77,6 +79,34 @@ describe('Live writing prompt', () => {
     expect(screen.getByText(/writing prompt is finished/i)).toBeInTheDocument();
     expect(screen.queryByRole('button',{name:/resubmit|submit response/i})).not.toBeInTheDocument();
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+  });
+
+  it.each([false, true])('renders formatted standard prompts for teacher=%s', async (isTeacher) => {
+    read.mockResolvedValue({...state,isTeacher,promptSize:'standard',activeQuestion:{...state.activeQuestion,text:'First line\nSecond line\n\n**Evidence**\n\n- One\n- Two'}});
+    const { LivePresentationPage } = await import('@/pages/LivePresentationPage');
+    const { container } = render(<MemoryRouter initialEntries={['/presentations/session-1/live']}><Routes><Route path="/presentations/:sessionId/live" element={<LivePresentationPage />}/></Routes></MemoryRouter>);
+    await act(async()=>{await vi.advanceTimersByTimeAsync(1)});
+    const prompt = container.querySelector('.writing-prompt-content')!;
+    expect(prompt).toHaveClass('text-base', 'font-normal');
+    expect(prompt.querySelector('strong')).toHaveTextContent('Evidence');
+    expect(prompt.querySelectorAll('li')).toHaveLength(2);
+    expect(prompt.querySelector('p')?.textContent).toBe('First line\nSecond line');
+  });
+  it('preserves rich clipboard formatting when editing and saving a prompt', async () => {
+    read.mockResolvedValue({...state,isTeacher:true});
+    const { LivePresentationPage } = await import('@/pages/LivePresentationPage');
+    render(<MemoryRouter initialEntries={['/presentations/session-1/live']}><Routes><Route path="/presentations/:sessionId/live" element={<LivePresentationPage />}/></Routes></MemoryRouter>);
+    await act(async()=>{await vi.advanceTimersByTimeAsync(1)});
+    fireEvent.click(screen.getByRole('button',{name:'Edit prompt'}));
+    const editor = screen.getByRole('textbox',{name:'Text content'}) as HTMLTextAreaElement;
+    editor.setSelectionRange(0, editor.value.length);
+    fireEvent.paste(editor,{clipboardData:{getData:(type:string)=>type==='text/html'?'<p><strong>Explain</strong> <em>why</em>.</p><ul><li>Use evidence</li></ul>':''}});
+    expect(editor.value).toContain('**Explain**');
+    expect(editor.value).toContain('*why*');
+    expect(editor.value).toContain('- Use evidence');
+    fireEvent.click(screen.getByRole('button',{name:'Save prompt'}));
+    await act(async()=>{await Promise.resolve()});
+    expect(update).toHaveBeenCalledWith('session-1',editor.value,true,'large','');
   });
 
 });
