@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { TextReaderPage } from '@/pages/TextReaderPage';
 import type { ReactNode } from 'react';
 const notes = vi.hoisted(()=>[{$id:'note',textId:'text',classId:'class',paragraphId:'p1',authorId:'student',anonymousLabel:'Reader',type:'observation',content:'The contrast suggests that the narrator feels uncertain about the journey.',selectedText:'quiet light',kind:'annotation',visibility:'class',moderationStatus:'visible',createdAt:'2026-09-10T01:00:00Z'}]);
-vi.mock('react-router-dom',()=>({useParams:()=>({textId:'text'}),useSearchParams:()=>[new URLSearchParams(),vi.fn()],Link:({children,to}:{children:ReactNode;to:string})=><a href={to}>{children}</a>}));
+vi.mock('react-router-dom',()=>({useNavigate:()=>vi.fn(),useParams:()=>({textId:'text'}),useSearchParams:()=>[new URLSearchParams(),vi.fn()],Link:({children,to}:{children:ReactNode;to:string})=><a href={to}>{children}</a>}));
 vi.mock('@/contexts/AuthContext',()=>({useAuth:()=>({user:{$id:'student'},isTeacher:false,isParent:false})}));
 vi.mock('@/services/sync-policy',()=>({runCachedSync:vi.fn()}));
 vi.mock('dexie-react-hooks',()=>({useLiveQuery:(fn:()=>unknown)=>{

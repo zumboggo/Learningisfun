@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { TextPresentPage } from '@/pages/teacher/TextPresentPage';
 import { TextViewControls } from '@/components/texts/TextViewControls';
 
-vi.mock('react-router-dom', () => ({ useParams: () => ({ textId: 'text' }), useSearchParams:()=>[new URLSearchParams(),vi.fn()], Link:({children,to}:{children:import('react').ReactNode;to:string})=><a href={to}>{children}</a> }));
+vi.mock('react-router-dom', () => ({ useNavigate:()=>vi.fn(),useParams: () => ({ textId: 'text' }), useSearchParams:()=>[new URLSearchParams(),vi.fn()], Link:({children,to}:{children:import('react').ReactNode;to:string})=><a href={to}>{children}</a> }));
 vi.mock('@/contexts/AuthContext',()=>({useAuth:()=>({user:{$id:'teacher'},isTeacher:true,isParent:false})}));
 vi.mock('dexie-react-hooks',()=>({useLiveQuery:(query:()=>unknown)=>{
   const code=query.toString();

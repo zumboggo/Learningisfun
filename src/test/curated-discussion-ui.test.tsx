@@ -28,14 +28,14 @@ it('inserts exact quote and reference without replacing reply writing, and does 
  fireEvent.change(screen.getByRole('textbox',{name:'Your reply'}),{target:{value:'My reasoning'}});
  const quote={quotation:'  Exact words. ',paragraph:4,token:'quote1'};rerender(<DiscussionComposer {...props} quote={quote}/>);
  expect(screen.getByRole('textbox',{name:'Your reply'})).toHaveValue('My reasoning');expect(screen.getByRole('textbox',{name:'Quotation'})).toHaveValue('  Exact words. ');expect(screen.getByRole('spinbutton')).toHaveValue(4);
- expect(screen.getByText('Explain how this passage supports or challenges your answer.')).toBeInTheDocument();
+ expect(screen.getByRole('textbox',{name:'Quotation'})).toHaveClass('quote-input');
  rerender(<DiscussionComposer {...props} quote={quote}/>);expect(screen.getByRole('textbox',{name:'Your reply'})).toHaveValue('My reasoning');
- rerender(<DiscussionComposer {...props} quote={{quotation:'A second passage.',paragraph:7,token:'quote2'}}/>);expect(screen.getByRole('textbox',{name:'Your reply'})).toHaveValue('My reasoning\n\n“A second passage.” — paragraph 7');
+ rerender(<DiscussionComposer {...props} quote={{quotation:'A second passage.',paragraph:7,token:'quote2'}}/>);expect(screen.getByRole('textbox',{name:'Your reply'})).toHaveValue('My reasoning');expect(screen.getByRole('textbox',{name:'Quotation'})).toHaveValue('  Exact words. \n\nA second passage. — paragraph 7');
 });
-it('selected passage offers Use in my reply with exact words and paragraph',()=>{
+it('selected passage offers Use in Reply with exact words and paragraph',()=>{
  const useQuote=vi.fn();render(<MemoryRouter><ParagraphCard paragraph={{$id:'p',textId:'t',sortOrder:0,content:'Exact original words.'}} index={2} onUseQuote={useQuote}/></MemoryRouter>);
  const text=screen.getByText('Exact original words.').firstChild!,range=document.createRange();range.setStart(text,0);range.setEnd(text,5);window.getSelection()?.removeAllRanges();window.getSelection()?.addRange(range);fireEvent(document,new Event('selectionchange'));
- fireEvent.click(screen.getByRole('button',{name:'Use in my reply'}));expect(useQuote).toHaveBeenCalledWith({quotation:'Exact',paragraph:3});
+ fireEvent.click(screen.getByRole('button',{name:'Use in Reply'}));expect(useQuote).toHaveBeenCalledWith({quotation:'Exact',paragraph:3},'reply');
 });
 it('assigned question opens a direct reply and leaves free choice available',()=>{
  const onReply=vi.fn();render(<ReplyAssignments data={{...data,assignments:[{studentId:'me',questionId:'q',roundId:'round',status:'pending'}],posts:[{id:'q',content:'A class question'} as ReadingDiscussion['posts'][number]]}} textId="text" classId="blue" busy={false} mutate={vi.fn()} onReply={onReply}/>);
