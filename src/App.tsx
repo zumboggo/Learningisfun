@@ -1,3 +1,4 @@
+const PublicEthicsPage = lazy(() => import('@/pages/PublicEthicsPage'));
 const StoryPreviewPage = lazy(() => import('@/pages/StoryPreviewPage'));
 const SceneBeatsPage = lazy(() => import('@/pages/SceneBeatsPage'));
 const CastGalleryPage = lazy(() => import('@/pages/CastGalleryPage'));
@@ -122,6 +123,8 @@ export default function App() {
     <HashRouter>
       <AuthProvider>
         <Routes>
+          <Route path="/ethics" element={<Suspense fallback={<p>Loading adventures…</p>}><PublicEthicsPage/></Suspense>} />
+          <Route path="/ethics/:slug" element={<Suspense fallback={<p>Loading adventure…</p>}><PublicEthicsPage/></Suspense>} />
           <Route path="/game/story-preview/:slug" element={<Suspense fallback={<p>Loading episode…</p>}><StoryPreviewPage/></Suspense>} />
           <Route path="/game/scene-beats" element={<Suspense fallback={<p>Loading scene beats…</p>}><SceneBeatsPage/></Suspense>} />
           <Route path="/game/cast" element={<Suspense fallback={<p>Loading the cast…</p>}><CastGalleryPage/></Suspense>} />
