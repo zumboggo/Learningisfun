@@ -1,0 +1,85 @@
+{
+  "title": "The Promise Left Behind",
+  "episode": 3,
+  "readingBoundary": "Don Quixote Part I chapters 4–5",
+  "openingPromise": "As Quixote’s visiting helper, find whether helping has actually helped by listening to those his heroic account leaves out.",
+  "duration": "12–15 minutes plus quiz; expanded conversation requested",
+  "sourceEvents": "See sources.json; identical on all 128 routes.",
+  "studentRole": "Witness and small practical helper. Never replaces Andrés’s warning or Pedro’s rescue.",
+  "harmon": [
+    "You: returning student wants to be useful",
+    "Need: distinguish claimed rescue from real protection",
+    "Go: one-question journal to dawn road",
+    "Search: listen to Andrés and question promise",
+    "Find: apparent rescue secured by oath",
+    "Take: unseen retaliation and failed merchant charge",
+    "Return: help Pedro bring Quixote home, then return safely",
+    "Change: judge help by its consequences, not its heroic description"
+  ],
+  "choices": [
+    {
+      "id": "wages",
+      "options": "Listen / count",
+      "response": "Andrés identifies continuing danger / says the amount was already known",
+      "callback": "listened -> classroom contrast",
+      "rejoin": "deductions"
+    },
+    {
+      "id": "promise",
+      "options": "Ask how checked / repeat warning",
+      "response": "Quixote trusts punishment / authority",
+      "callback": "Immediate only",
+      "rejoin": "oath"
+    },
+    {
+      "id": "beauty",
+      "options": "Ask about evidence / request gentleness",
+      "response": "Quixote values unseen belief / merchant explains conscience",
+      "callback": "evidence -> classroom contrast",
+      "rejoin": "portrait"
+    },
+    {
+      "id": "neighbour",
+      "options": "Ordinary name / borrowed hero",
+      "response": "Pedro reassures / wry donkey remark",
+      "callback": "care -> classroom observation",
+      "rejoin": "lift"
+    },
+    {
+      "id": "load",
+      "options": "Clear straps / gather fragments",
+      "response": "Concrete lifting aid / changed meaning of lance",
+      "callback": "care -> classroom observation",
+      "rejoin": "homeward"
+    },
+    {
+      "id": "identity",
+      "options": "Ask why / affirm neighbour",
+      "response": "Unconditional care / practical need",
+      "callback": "Immediate only",
+      "rejoin": "dusk"
+    },
+    {
+      "id": "door",
+      "options": "Report facts / comfort niece",
+      "response": "Preserve account / acknowledge worry",
+      "callback": "Immediate only",
+      "rejoin": "bedtime"
+    }
+  ],
+  "sceneTrim": {
+    "classroom": "Question and threshold, short comic opening",
+    "oak": "Authority stops violence, but promise fails to protect",
+    "road": "Belief becomes demand; threat turns back on its owner",
+    "roadside": "Borrowed heroism meets ordinary care",
+    "home": "Community receives him; competing accounts persist",
+    "return": "Question answered with consequences and callbacks"
+  },
+  "nextSuggested": "Chapters 6–7: scrutiny of the library and recruitment of Sancho. Preserve book-by-book nuance if adapting the scrutiny.",
+  "background": {
+    "tool": "Built-in imagegen",
+    "original": "/Users/david.hepting/.codex/generated_images/01a1333e-aafc-7043-a037-0ac5434b2de8/exec-f4b63c1a-6d80-44d4-b8c4-7d76548aecf1.png",
+    "asset": "public/stories/animated/the-promise-left-behind/assets/la-mancha-road-v1.webp",
+    "prompt": "Use case: historical-scene. Create a 16:9 visual-novel background for Don Quixote Part I chapters 4–5: rural La Mancha, Spain, early seventeenth century. A dusty open road across dry ochre countryside, a small oak thicket at the right edge, distant low hills and pale blue morning sky. No people, animals, weapons, text or buildings in the foreground. Match simple manga-inspired vector characters: clean dark slate outlines, flat muted colours, restrained two-tone cel shadows, simplified geometric scenery, no photorealistic surfaces or painterly texture. Eye-level camera, broad clear central foreground for standing characters, useful scenery at edges. Keep contrast subdued behind actors. Full landscape frame, no border."
+  }
+}

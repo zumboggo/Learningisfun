@@ -1,4 +1,4 @@
-# Shared acting library v4
+# Shared acting library v5
 
 Generated from `functions/learning-content/src/acting-library.js`. Use Story 2 for all new episodes. Do not invent cue names. The reusable Lin, Hepting, Mei and Yeyul cast uses cartoon-v1: a coherent vector character with continuous arms and finite coordinated gestures. Raster teen-v1 remains supported for existing packages. Both use this same closed cue vocabulary.
 
@@ -27,6 +27,7 @@ Generated from `functions/learning-content/src/acting-library.js`. Use Story 2 f
 
 ## Resting poses
 
+- `arms-crossed` — Keep both arms firmly folded across the chest, including while speaking. Pair with angry emotion for a sustained angry stance.
 - `kneeling` — Remain on one knee until the resting pose changes.
 - `crouched` — Remain low with bent knees.
 - `sheltered` — Stay crouched with hands shielding the head.
@@ -37,6 +38,7 @@ Generated from `functions/learning-content/src/acting-library.js`. Use Story 2 f
 
 ## Talking gestures
 
+- `cross-arms` — Fold both arms tightly across the chest. Follow with rest Actor arms-crossed to stay folded during speech. One character.
 - `phone-talk` — Hold a visible phone at the ear and talk. The phone stays equipped until prop Actor none. One character.
 - `phone-shout` — Keep the phone at the ear while leaning forward and emphasizing with the free hand. One character.
 - `explain` — One open hand presents an idea.
@@ -57,6 +59,8 @@ Generated from `functions/learning-content/src/acting-library.js`. Use Story 2 f
 
 ## Expressive responses
 
+- `cross-arms` — Fold both arms tightly across the chest. Follow with rest Actor arms-crossed to stay folded during speech. One character.
+- `lance-threat` — Level a visible lance at another character, who draws back. No thrust or hit; the lance stays held. Requires a second character.
 - `kneel` — Lower onto one knee, pause, then rise. Use rest Actor kneeling to remain down. One character.
 - `crouch` — Bend both knees into a low crouch, then rise. Use rest Actor crouched to stay low. One character.
 - `duck` — Drop the head and bend the knees beneath an incoming threat, then recover. One character.
@@ -100,6 +104,8 @@ Generated from `functions/learning-content/src/acting-library.js`. Use Story 2 f
 
 ## Action beats
 
+- `cross-arms` — Fold both arms tightly across the chest. Follow with rest Actor arms-crossed to stay folded during speech. One character.
+- `lance-threat` — Level a visible lance at another character, who draws back. No thrust or hit; the lance stays held. Requires a second character.
 - `kneel` — Lower onto one knee, pause, then rise. Use rest Actor kneeling to remain down. One character.
 - `crouch` — Bend both knees into a low crouch, then rise. Use rest Actor crouched to stay low. One character.
 - `duck` — Drop the head and bend the knees beneath an incoming threat, then recover. One character.
@@ -129,8 +135,9 @@ Generated from `functions/learning-content/src/acting-library.js`. Use Story 2 f
 - `phone`
 - `sword`
 - `bow`
+- `lance`
 
-Use `act Lin attack-blocked Jordan "Lin lunges; Jordan blocks."` for a coordinated action beat, or `act Lin bow "Lin bows."` for one character. Show both actors in distinct positions first. Paired actions face each other and use a wide shot; later dialogue uses the authored camera again. A caption is required (one line, no double quotes inside it). Actions pause until Continue; motion cannot change scores, variables or outcomes. Reload restores the caption and stage without replaying the action. Reduced motion skips movement; static images use whole-character motion. Polished/hybrid cartoon-v1 characters support visible props: `prop Lin phone`, `prop Lin sword`, `prop Lin bow`, `prop Lin none`. Equip only after show; scene, exit or a new show resets the prop. Prop actions auto-equip their object and leave it held. `phone-talk` and `phone-shout` also work as talking gestures while the phone stays at the ear. Ordinary give remains mimed. Use wide framing for weapons and projectiles; magic-beam clears the held object. Reduced motion shows static props and a static effect. Every action returns to its resting pose at its original marks. Use kneeling, crouched or sheltered rests to stay low; relaxed returns upright. Use a following line/exit to describe lasting injury or absence; a return to the mark is not a recovery in the story.
+Use `act Lin attack-blocked Jordan "Lin lunges; Jordan blocks."` for a coordinated action beat, or `act Lin bow "Lin bows."` for one character. Show both actors in distinct positions first. Paired actions face each other and use a wide shot; later dialogue uses the authored camera again. A caption is required (one line, no double quotes inside it). Actions pause until Continue; motion cannot change scores, variables or outcomes. Reload restores the caption and stage without replaying the action. Reduced motion skips movement; static images use whole-character motion. Polished/hybrid cartoon-v1 characters support visible props: `prop Lin phone`, `prop Lin sword`, `prop Lin bow`, `prop Lin lance`, `prop Lin none`. Equip only after show; scene, exit or a new show resets the prop. Prop actions auto-equip their object and leave it held. `phone-talk` and `phone-shout` also work as talking gestures while the phone stays at the ear. Ordinary give remains mimed. Use wide framing for weapons and projectiles; magic-beam clears the held object. Reduced motion shows static props and a static effect. Every action returns to its resting pose at its original marks. Use `rest Lin arms-crossed` for folded arms that stay folded during speech; use angry emotion for a stern expression. `act Lin cross-arms "Lin folds her arms."` is a finite gesture and frees both hands; follow with that rest to hold it. `lance-threat` levels the visible lance without a hit. Put props away before a held folded-arm pose. Use kneeling, crouched or sheltered rests to stay low; relaxed returns upright. Use a following line/exit to describe lasting injury or absence; a return to the mark is not a recovery in the story.
 
 ## Authoring
 

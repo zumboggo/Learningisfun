@@ -1,1 +1,14 @@
-[{"id":"the-measure-that-changed","title":"The Measure That Changed","package":"stories/animated/the-measure-that-changed/episode.json","zip":"stories/animated/the-measure-that-changed/episode.zip"}]
+[
+  {
+    "id": "the-measure-that-changed",
+    "title": "The Measure That Changed",
+    "package": "stories/animated/the-measure-that-changed/episode.json",
+    "zip": "stories/animated/the-measure-that-changed/episode.zip"
+  },
+  {
+    "id": "the-promise-left-behind",
+    "title": "The Promise Left Behind",
+    "package": "stories/animated/the-promise-left-behind/episode.json",
+    "zip": "stories/animated/the-promise-left-behind/episode.zip"
+  }
+]

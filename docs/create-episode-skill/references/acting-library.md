@@ -163,3 +163,7 @@ A rig has version 1, preset `teen-v1`, and exactly these transparent WebP parts:
 ### Kneeling and defensive movement
 
 Use `act Actor kneel "Caption"`, `crouch`, `duck` or `cover-head` for finite low movements. `attack-ducked` takes a second staged actor and fixes the outcome as a miss. These lower the cartoon-v1 body with bent, connected legs; they are not just torso tilts. For a ceremony or sustained shelter, use `rest Actor kneeling`, `crouched` or `sheltered`; return to `rest Actor relaxed` to stand. Keep full-body framing wide. Held poses persist across dialogue/resume, while action gestures finish and return to the resting pose. Legacy raster rigs retain their limited fallback; do not claim articulated kneeling for them. Rocks are still described in captions, not rendered projectiles. Preserve published episode snapshots; new library support alone does not rewrite an old Quixote script.
+
+## Folded arms and lance (acting v5)
+
+`act Actor cross-arms "Caption"` frees both hands and folds the arms once. Follow with `rest Actor arms-crossed` to hold them during angry dialogue and choices; `rest Actor relaxed` releases. The held rest suppresses automatic arm gestures; explicit gestures can override it. `prop Actor lance` equips a visible hand-attached lance. `act Actor lance-threat Other "Caption"` levels it without striking, with a defensive target reaction. Use wide framing. Clear props before folded rests and after narrative loss or destruction. See the live catalog for all cues.

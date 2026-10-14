@@ -34,6 +34,12 @@ Emotion names and gesture names differ: use `shocked` → `shock`, `angry` → `
 Use coordinated actions when bodies interacting matter: `give` for a mimed handoff, `challenge` for a confrontation, `bow` or `cheer` for a social beat, and the supported attack/block/dodge outcomes only when the source event calls for them. Stage both actors before paired actions and keep canonical outcomes fixed. Frame hand/arm acting wide or medium so wrists, belly holds and raised hands remain visible; reserve close-ups for facial emphasis. Preview the chosen character and cue at the actual framing, including reduced motion, and validate through the shared parser. A written stage direction alone is not a rendered animation.
 
 
+### Folded arms and lances
+
+Use `act Actor cross-arms "Caption"` for the transition, then `rest Actor arms-crossed` to keep both arms folded through dialogue and choices. Pair with `[angry]` for a sustained stern expression; the held pose suppresses automatic arm swinging. An explicit talking gesture or reaction may temporarily override it. Return to `rest Actor relaxed` to release. The action clears a held prop; put props away before using the held rest directly.
+
+`prop Actor lance` attaches a long lance to the hand. `act Actor lance-threat Other "Caption"` levels it while the other character draws back, without a hit, and leaves it equipped. Stage both actors and use wide framing. This is not a mounted charge: horses, falls from horseback and broken-lance fragments still require honest narrative staging. Clear the prop when it is dropped or destroyed. Existing published episodes remain unchanged.
+
 ### Kneeling and defensive movement
 
 Use `act Actor kneel "Caption"`, `crouch`, `duck` or `cover-head` for finite low movements. `attack-ducked` takes a second staged actor and fixes the outcome as a miss. These lower the cartoon-v1 body with bent, connected legs; they are not just torso tilts. For a ceremony or sustained shelter, use `rest Actor kneeling`, `crouched` or `sheltered`; return to `rest Actor relaxed` to stand. Keep full-body framing wide. Held poses persist across dialogue/resume, while action gestures finish and return to the resting pose. Legacy raster rigs retain their limited fallback; do not claim articulated kneeling for them. Rocks are still described in captions, not rendered projectiles. Preserve published episode snapshots; new library support alone does not rewrite an old Quixote script.

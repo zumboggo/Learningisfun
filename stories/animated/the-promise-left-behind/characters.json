@@ -1,0 +1,122 @@
+[
+  {
+    "id": "Juan",
+    "name": "Juan Haldudo",
+    "version": 1,
+    "palette": {
+      "skin": "#bd8d69",
+      "hair": "#40332b",
+      "shirt": "#79563c",
+      "trim": "#d7c49a"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "cropped",
+      "face": "broad",
+      "glasses": "none",
+      "facialHair": "full",
+      "outfit": "tunic"
+    },
+    "provenance": "Fictional depiction of Juan Haldudo from Cervantes, Don Quixote I.4–5. Shared polished SVG rig; generic period cloth costume, not an exact historical reconstruction. No real-person likeness."
+  },
+  {
+    "id": "Andres",
+    "name": "Andrés",
+    "version": 1,
+    "palette": {
+      "skin": "#d6a583",
+      "hair": "#3b3029",
+      "shirt": "#9a9573",
+      "trim": "#d7c49a"
+    },
+    "appearance": {
+      "age": "teen",
+      "hair": "tousled",
+      "face": "lean",
+      "glasses": "none",
+      "facialHair": "none",
+      "outfit": "tunic"
+    },
+    "provenance": "Fictional depiction of Andrés from Cervantes, Don Quixote I.4–5. Shared polished SVG rig; generic period cloth costume, not an exact historical reconstruction. No real-person likeness."
+  },
+  {
+    "id": "Merchant",
+    "name": "The Toledo merchant",
+    "version": 1,
+    "palette": {
+      "skin": "#cca080",
+      "hair": "#66503c",
+      "shirt": "#566d83",
+      "trim": "#d7c49a"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "side-part",
+      "face": "angular",
+      "glasses": "none",
+      "facialHair": "none",
+      "outfit": "tunic"
+    },
+    "provenance": "Fictional depiction of The Toledo merchant from Cervantes, Don Quixote I.4–5. Shared polished SVG rig; generic period cloth costume, not an exact historical reconstruction. No real-person likeness."
+  },
+  {
+    "id": "Muleteer",
+    "name": "The muleteer",
+    "version": 1,
+    "palette": {
+      "skin": "#b78664",
+      "hair": "#2e2b29",
+      "shirt": "#805447",
+      "trim": "#d7c49a"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "cropped",
+      "face": "broad",
+      "glasses": "none",
+      "facialHair": "full",
+      "outfit": "tunic"
+    },
+    "provenance": "Fictional depiction of The muleteer from Cervantes, Don Quixote I.4–5. Shared polished SVG rig; generic period cloth costume, not an exact historical reconstruction. No real-person likeness."
+  },
+  {
+    "id": "Pedro",
+    "name": "Pedro Alonso",
+    "version": 1,
+    "palette": {
+      "skin": "#c99973",
+      "hair": "#615044",
+      "shirt": "#66755e",
+      "trim": "#d7c49a"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "swept",
+      "face": "round",
+      "glasses": "none",
+      "facialHair": "none",
+      "outfit": "tunic"
+    },
+    "provenance": "Fictional depiction of Pedro Alonso from Cervantes, Don Quixote I.4–5. Shared polished SVG rig; generic period cloth costume, not an exact historical reconstruction. No real-person likeness."
+  },
+  {
+    "id": "Niece",
+    "name": "Quixote’s niece",
+    "version": 1,
+    "palette": {
+      "skin": "#dbb190",
+      "hair": "#49352e",
+      "shirt": "#98757f",
+      "trim": "#d7c49a"
+    },
+    "appearance": {
+      "age": "teen",
+      "hair": "bun",
+      "face": "oval",
+      "glasses": "none",
+      "facialHair": "none",
+      "outfit": "robe"
+    },
+    "provenance": "Fictional depiction of Quixote’s niece from Cervantes, Don Quixote I.4–5. Shared polished SVG rig; generic period cloth costume, not an exact historical reconstruction. No real-person likeness."
+  }
+]
