@@ -29,14 +29,14 @@ for(const entry of catalog.filter(e=>e.available)){
   const right=pack.quiz.map((q:any)=>q.answer);expect(quizScore(pack.quiz,right)).toBe(100);expect(quizScore(pack.quiz,right.map((a:number,i:number)=>i===0?(a+1)%4:a))).toBe(75);
  },30000);
 }
-it('public collection offers exactly four playable episodes and an honest finale placeholder',()=>{
+it('public collection offers all five playable episodes including the windmills finale',()=>{
  render(<MemoryRouter initialEntries={['/quixote']}><Routes><Route path="/quixote" element={<PublicQuixotePage/>}/></Routes></MemoryRouter>);
- expect(screen.getAllByRole('link',{name:'Play adventure'})).toHaveLength(4);
- expect(screen.getByText('Coming later · Not yet playable')).toBeInTheDocument();
- expect(screen.queryByRole('link',{name:/Windmills/})).not.toBeInTheDocument();
+ expect(screen.getAllByRole('link',{name:'Play adventure'})).toHaveLength(5);
+ expect(screen.queryByText('Coming later · Not yet playable')).not.toBeInTheDocument();
+ expect(screen.getAllByRole('link',{name:'Play adventure'})[4]).toHaveAttribute('href','/quixote/the-giants-that-were-mills');
 });
-it('a direct finale link never loads an unpublished package',()=>{
+it('an unknown episode never fetches a package',()=>{
  const fetcher=vi.fn();vi.stubGlobal('fetch',fetcher);
- render(<MemoryRouter initialEntries={['/quixote/windmills']}><Routes><Route path="/quixote/:slug" element={<PublicQuixotePage/>}/></Routes></MemoryRouter>);
- expect(screen.getByRole('heading',{name:'The windmills are on the horizon.'})).toBeInTheDocument();expect(fetcher).not.toHaveBeenCalled();
+ render(<MemoryRouter initialEntries={['/quixote/missing-episode']}><Routes><Route path="/quixote/:slug" element={<PublicQuixotePage/>}/></Routes></MemoryRouter>);
+ expect(screen.getByRole('heading',{name:'Adventure not found'})).toBeInTheDocument();expect(fetcher).not.toHaveBeenCalled();
 });

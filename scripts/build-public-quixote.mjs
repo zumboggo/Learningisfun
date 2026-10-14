@@ -17,7 +17,7 @@ for(const [i,entry] of catalog.entries()){
  if(/scene reflection/.test(pack.script))pack.assets.backgrounds.reflection=pack.assets.backgrounds.journal;
  const detail=pack.sources.filter(s=>/^(Original adaptation:|Source event sequence:|Fixed events:|Fixed sequence:|The chapter-6 catalogue|All dialogue|Only “|Non-graphic treatment:|Visual staging:|Visuals are theatrical:)/.test(s));
  pack.sources=[
- `Miguel de Cervantes, Don Quixote, ${entry.chapters.replace(' · ', ', ')}. John Ormsby translation (1885), public domain. https://www.gutenberg.org/files/996/996-h/996-h.htm#ch${[1,2,4,6][i]}`,
+ `Miguel de Cervantes, Don Quixote, ${entry.chapters.replace(' · ', ', ')}. John Ormsby translation (1885), public domain. https://www.gutenberg.org/files/996/996-h/996-h.htm#ch${[1,2,4,6,8][i]}`,
  ...detail.map(s=>s.replace(/classroom/gi,'public framing').replace(/Student/g,'Player').replace(/student/g,'player')),
  'The airport gift shop, magical book, visiting helper and anonymous English teacher are invented framing. You remain yourself, not Sancho Panza. Local choices change your responses and observations; the main events from the novel retain their source outcomes.',
  'Illustrations and costumes are theatrical interpretations, not documentary reconstructions. The English teacher uses an anonymous fictional design. No real-person likeness is intended.',
@@ -32,6 +32,7 @@ for(const [i,entry] of catalog.entries()){
  console.log(entry.id,packageBytes(pack),'bytes; validated');
 }
 const art={
+ 'windmills.webp':'the-giants-that-were-mills/assets/windmills-v1.webp',
  'courtyard.webp':'a-knight-needs-a-witness/assets/courtyard.webp',
  'inn.webp':'the-castle-that-served-supper/assets/inn-moonlight-v1.webp',
  'road.webp':'the-promise-left-behind/assets/la-mancha-road-v1.webp',
