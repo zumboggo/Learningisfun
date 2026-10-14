@@ -20,7 +20,7 @@ For every episode: verify excerpts, learning evidence, two defensible interpreta
 
 ## Publish
 
-Commit task changes first, preserving unrelated work. Run `npm run episode:publish` with the authorized Appwrite environment loaded (for example `node --env-file=/path/to/existing/.env.setup.local scripts/publish-episodes.mjs`). It requires a clean checkout, integrates production, runs tests/build, deploys changed learning-content backend code without replacing function settings/variables, confirms activation, pushes `HEAD:master` without force, waits for Pages, and verifies public story/media hashes and the production catalog. No Canvas or grading operations are included.
+Commit task changes first, preserving unrelated work. Run `npm run episode:publish` with the authorized Appwrite environment loaded (for example `node --env-file="$HOME/.config/learningisfun/appwrite.env" scripts/publish-episodes.mjs`). It requires a clean checkout, integrates production, runs tests/build, deploys changed learning-content backend code without replacing function settings/variables, confirms activation, pushes `HEAD:master` without force, waits for Pages, and verifies public story/media hashes and the production catalog. No Canvas or grading operations are included.
 
 `npm run episode:publish -- --check` runs checks and reports the publication plan without network mutations. `--check --verified` only reports the plan after separately completed checks. Local ignored acknowledgements avoid repeating a confirmed backend deployment on a retry. If build status is uncertain, inspect the returned deployment ID before trying again.
 

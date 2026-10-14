@@ -1,12 +1,15 @@
 import {fileURLToPath} from 'node:url';
 import {execFileSync} from 'node:child_process';
-import {mkdtempSync,rmSync} from 'node:fs';
-import {tmpdir} from 'node:os';
+import {existsSync,mkdtempSync,rmSync} from 'node:fs';
+import {loadEnvFile} from 'node:process';
+import {homedir,tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {Client,Functions} from 'node-appwrite';
 import {InputFile} from 'node-appwrite/file';
 export async function deployEpisodeBackend(){
- for(const key of ['APPWRITE_ENDPOINT','APPWRITE_PROJECT_ID','APPWRITE_API_KEY'])if(!process.env[key])throw new Error('Missing '+key+'; load the existing authorized setup environment');
+ const savedEnvironment=join(homedir(),'.config','learningisfun','appwrite.env');
+ if(['APPWRITE_ENDPOINT','APPWRITE_PROJECT_ID','APPWRITE_API_KEY'].some(k=>!process.env[k])&&existsSync(savedEnvironment))loadEnvFile(savedEnvironment);
+ for(const key of ['APPWRITE_ENDPOINT','APPWRITE_PROJECT_ID','APPWRITE_API_KEY'])if(!process.env[key])throw new Error('Missing '+key+'; load the existing authorized setup environment at '+savedEnvironment);
  const functions=new Functions(new Client().setEndpoint(process.env.APPWRITE_ENDPOINT).setProject(process.env.APPWRITE_PROJECT_ID).setKey(process.env.APPWRITE_API_KEY));
  const old=await functions.get({functionId:'learning-content'});if(old.entrypoint!=='src/main.js')throw new Error('Unexpected learning-content entrypoint');
  const directory=mkdtempSync(join(tmpdir(),'episode-deploy-')),archive=join(directory,'backend.tar.gz');
