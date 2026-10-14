@@ -10,6 +10,7 @@ import {performAction,actionFrames} from '../components/animated/action-motion';
 const pack=JSON.parse(readFileSync('public/stories/animated/the-giants-that-were-mills/episode.json','utf8'));
 afterEach(()=>{cleanup();vi.restoreAllMocks();});
 it('all 64 routes preserve the windmill defeat, care, unbroken belief, and finale boundary',()=>{
+ expect(compileStory('story 2\nshow Quixote neutral center\nreact Quixote mounted-charge\nI: No implicit horse.\nend',pack.assets).errors.length).toBeGreaterThan(0);
  const {story,errors}=validatePackage(pack);expect(errors).toEqual([]);let paths=0;const endings=new Set();
  function visit(state:any,steps:(string|null)[],choices:number,actions:string[],lines:string[]){
   while(!state.ended&&['say','act'].includes(story!.nodes[state.cursor].type)){

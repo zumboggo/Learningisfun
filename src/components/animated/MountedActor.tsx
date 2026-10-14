@@ -1,7 +1,10 @@
-import CartoonActor from './CartoonActor';
+import CartoonActor,{shade} from './CartoonActor';
 /** A reusable theatrical horse and the episode's own rider; never a replacement identity. */
 export default function MountedActor({character,emotion,reduced,active,performanceKey}:{character:any;emotion:string;reduced:boolean;active:boolean;performanceKey:number}){
  const ink='#344048',coat='#ab967b',skin=character.rig.palette?.skin||'#eac09c';
+ const outfit=character.rig.appearance?.outfit,tailored=['workshirt','cardigan','suit'].includes(outfit);
+ const legFill=['tunic','robe'].includes(outfit)?skin:outfit==='teacher'?'#b6a183':tailored?shade(character.rig.palette?.shirt||'#b93f46',-.4):'#354459';
+ const shoeFill=outfit==='uniform'||!outfit?'#faf2e7':'#65503d';
  return <svg className={`mounted-actor ${active&&!reduced?'galloping':''}`} viewBox="0 0 600 600" preserveAspectRatio="xMidYMax meet" role="img" aria-label={`${character.name} — mounted lance charge`}>
   <ellipse cx="300" cy="575" rx="208" ry="8" fill={ink} opacity=".16"/>
   <g className="horse-body" fill={coat} stroke={ink} strokeWidth="4" strokeLinejoin="round">
@@ -19,8 +22,8 @@ export default function MountedActor({character,emotion,reduced,active,performan
   </g>
   <g className="mounted-rider">
    <svg x="140" y="-15" width="240" height="600" overflow="visible"><CartoonActor character={character} emotion={emotion} rest="mounted-charge" prop="lance" response="mounted-charge" reduced={reduced} rider performanceKey={performanceKey}/></svg>
-   <path d="M 244 394 L 281 417 L 267 478 L 284 483 L 304 411 L 268 384" fill={skin} stroke={ink} strokeWidth="3" strokeLinejoin="round"/>
-   <path d="M 267 473 L 282 478 L 283 488 L 257 488 L 256 480 Z" fill="#65503d" stroke={ink} strokeWidth="3"/>
+   <path data-rider-leg="true" d="M 244 394 L 281 417 L 267 478 L 284 483 L 304 411 L 268 384" fill={legFill} stroke={ink} strokeWidth="3" strokeLinejoin="round"/>
+   <path d="M 267 473 L 282 478 L 283 488 L 257 488 L 256 480 Z" fill={shoeFill} stroke={ink} strokeWidth="3"/>
    <path d="M 270 371 L 270 489 Q 278 501 290 490 L 292 479" fill="none" stroke="#71604b" strokeWidth="3"/>
    <ellipse cx="225" cy="283" rx="31" ry="41" fill="#aa946d" stroke={ink} strokeWidth="4"/><ellipse cx="225" cy="283" rx="24" ry="33" fill="none" stroke="#d4c294" strokeWidth="3"/><circle cx="225" cy="283" r="8" fill="#d5dbd4" stroke={ink} strokeWidth="2"/>
   </g>

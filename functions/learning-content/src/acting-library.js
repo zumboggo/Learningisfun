@@ -5,7 +5,7 @@ export const EMOTIONS=['neutral','happy','worried','sad','angry','surprised','cu
 export const PROPS=['none','phone','sword','bow','lance'];
 export const RESTS=['arms-crossed','kneeling','crouched','sheltered','relaxed','attentive','guarded','downcast'];
 export const TALKS=['cross-arms','phone-talk','phone-shout','explain','reassure','question','insist','hesitant','celebrate','shock','laugh','rage','excited','scared','facepalm','proud','plead','disappointed'];
-export const RESPONSES=['wince','support','brace','mounted-charge','cross-arms','lance-threat','kneel','crouch','duck','cover-head','phone-talk','phone-shout','sword-strike','draw-bow','cast-beam','nod','shake-head','shrug','point','wave','recoil','laugh','sigh','bow','cheer','reach','cower','stumble','strike','block','dodge','shock','rage','excited','scared','facepalm','proud','plead','disappointed'];
+export const RESPONSES=['wince','support','brace','cross-arms','lance-threat','kneel','crouch','duck','cover-head','phone-talk','phone-shout','sword-strike','draw-bow','cast-beam','nod','shake-head','shrug','point','wave','recoil','laugh','sigh','bow','cheer','reach','cower','stumble','strike','block','dodge','shock','rage','excited','scared','facepalm','proud','plead','disappointed'];
 /** Explicit outcomes: choreography never rolls a result or changes the literary plot. */
 export const ACTIONS={
  'mounted-charge':{paired:false,actor:'mounted-charge',prop:'lance',description:'Ride a visible horse forward with a levelled lance in one finite charge. The horse is shown for this action caption only; no impact or fall is implied.'},

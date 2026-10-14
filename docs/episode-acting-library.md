@@ -62,7 +62,6 @@ Generated from `functions/learning-content/src/acting-library.js`. Use Story 2 f
 - `wince` — Draw one hand to the ribs and bend slightly with a pained flinch. No recovery or injury outcome is implied. One character.
 - `support` — Extend an arm to offer support.
 - `brace` — Lean forward and brace with bent arms.
-- `mounted-charge` — Ride a visible horse forward with a levelled lance in one finite charge. The horse is shown for this action caption only; no impact or fall is implied. One character.
 - `cross-arms` — Fold both arms tightly across the chest. Follow with rest Actor arms-crossed to stay folded during speech. One character.
 - `lance-threat` — Level a visible lance at another character, who draws back. No thrust or hit; the lance stays held. Requires a second character.
 - `kneel` — Lower onto one knee, pause, then rise. Use rest Actor kneeling to remain down. One character.
