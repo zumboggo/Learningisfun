@@ -1,0 +1,24 @@
+.quixote-public{--ep-ink:#283443;--ep-muted:#5c6268;--ep-gold:#efd098;background:#f7f3eb}
+.quixote-public .ethics-hero{background:#283443;min-height:550px}
+.quixote-public .ethics-hero:after{background:linear-gradient(90deg,#263442 8%,#263442ed 31%,#2634426e 62%,#26344218),linear-gradient(0deg,#14232dbb,transparent 45%)}
+.quixote-public .ethics-hero-art{width:75%;object-position:center}
+.quixote-public .ethics-hero h1{font-size:clamp(44px,5.2vw,65px)}
+.quixote-public .ethics-hero-copy{max-width:760px}
+.quixote-public .ethics-brand-mark{font:italic 25px Georgia,serif}
+.quixote-public .ethics-teachers{background:#e8e9e7;border-color:#d8dcd9}
+.quixote-public .ethics-button-dark:hover{background:#455367}
+.quixote-public .ethics-card-art:after{background:linear-gradient(0deg,#162533cf,transparent 75%)}
+.quixote-origin{padding:46px 0 0;display:grid;grid-template-columns:.9fr 1.1fr;gap:50px}
+.quixote-origin .ethics-eyebrow{color:#826538;font-size:9px}
+.quixote-origin h2{font:400 30px/1.3 Georgia,serif;letter-spacing:-.5px;margin:0}
+.quixote-origin p:not(.ethics-eyebrow){font:italic 19px/1.7 Georgia,serif;margin:0;color:#4e5760}
+.quixote-origin .quixote-origin-note{font:12px/1.8 Arial,sans-serif!important;margin-top:16px!important;color:var(--ep-muted)}
+.quixote-coming{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;background:#ede9e1;border-style:dashed}
+.quixote-coming-art{background:radial-gradient(ellipse at 50% 120%,#c6b99b,transparent 60%),#e4e0d7;min-height:240px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#697078;gap:14px}
+.quixote-horizon{font:italic 90px/1 Georgia,serif;opacity:.5}
+.quixote-coming-art>span:last-child{font:11px Arial,sans-serif;letter-spacing:2px;text-transform:uppercase}
+.quixote-coming-label{border:1px solid #a5a9a8;border-radius:30px;padding:8px 14px;font-size:12px;color:#565d64}
+.quixote-next{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;margin:28px 0;font-size:13px}.quixote-next a,.quixote-public .ethics-footer a{text-decoration:underline;text-underline-offset:4px}
+.quixote-progress-note{font-size:12px;color:var(--ep-muted)}
+.quixote-unavailable{min-height:55vh;padding:55px 0}.quixote-unavailable h1{font:36px/1.3 Georgia,serif}.quixote-unavailable p{margin:20px 0}
+@media(max-width:700px){.quixote-public .ethics-hero h1{font-size:36px;letter-spacing:-1.2px}.quixote-public .ethics-hero{min-height:550px}.quixote-public .ethics-hero-art{width:100%}.quixote-public .ethics-hero:after{background:linear-gradient(90deg,#263442f2,#263442aa)}.quixote-origin{grid-template-columns:1fr;gap:20px;padding-top:32px}.quixote-origin h2{font-size:28px}.quixote-coming{grid-template-columns:1fr}.quixote-coming-art{min-height:170px}.quixote-horizon{font-size:65px}}
