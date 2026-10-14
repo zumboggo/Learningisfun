@@ -50,3 +50,14 @@ it('distinct recurring cast features preserve expressions and articulated props'
  }
  expect(()=>createCharacter({id:'Bad',name:'Bad',appearance:{eyes:'script'}})).toThrow()
 })
+it('refined sibling faces keep warm eyes, smile while speaking, and isolated clip IDs',()=>{
+ const hyun=createCharacter({id:'Hyun',name:'Hyun',appearance:{face:'scrappy',hair:'tousled'}});
+ const sister=createCharacter({id:'Sister',name:'Sister',appearance:{face:'spirited',hair:'ponytail'}});
+ const {container,rerender}=render(<><PuppetActor character={hyun} emotion="happy" reduced/><PuppetActor character={sister} emotion="determined" reduced/></>);
+ expect(container.querySelector('[data-expression="family-warmth"] [data-smile="broad"]')).not.toBeNull();
+ expect(container.querySelector('[data-ponytail]')).not.toBeNull();
+ const ids=[...container.querySelectorAll('clipPath')].map(n=>n.id);expect(new Set(ids).size).toBe(ids.length);
+ expect(container.querySelectorAll('image')).toHaveLength(0);
+ rerender(<PuppetActor character={hyun} emotion="excited" reduced/>);expect(container.querySelector('[data-expression="reward"]')).not.toBeNull();
+ rerender(<PuppetActor character={hyun} emotion="sad" reduced/>);expect(container.querySelector('[data-smile="broad"]')).toBeNull();
+});
