@@ -15,7 +15,15 @@ for(const [i,entry] of catalog.entries()){
  if(/\bTeacher\b/.test(pack.script))pack.assets.characters.Teacher=teacher;
  delete pack.assets.backgrounds.classroom;
  if(/scene reflection/.test(pack.script))pack.assets.backgrounds.reflection=pack.assets.backgrounds.journal;
- const detail=pack.sources.filter(s=>/^(Original adaptation:|Source event sequence:|Fixed events:|Fixed sequence:|The chapter-6 catalogue|All dialogue|Only “|Non-graphic treatment:|Visual staging:|Visuals are theatrical:)/.test(s));
+ const editorial=entry.revision?JSON.parse(await read(`stories/public-quixote/${entry.id}.revision-${entry.revision}.json`)):null;
+ if(editorial){
+  pack.quiz=editorial.quiz;
+  for(const [actor,episode]of Object.entries(editorial.characters||{})){
+   const source=JSON.parse(await read(`public/stories/animated/${episode}/episode.json`));
+   pack.assets.characters[actor]=source.assets.characters[actor];
+  }
+ }
+ const detail=editorial?.sources??pack.sources.filter(s=>/^(Original adaptation:|Source event sequence:|Fixed events:|Fixed sequence:|The chapter-6 catalogue|All dialogue|Only “|Non-graphic treatment:|Visual staging:|Visuals are theatrical:)/.test(s));
  pack.sources=[
  `Miguel de Cervantes, Don Quixote, ${entry.chapters.replace(' · ', ', ')}. John Ormsby translation (1885), public domain. https://www.gutenberg.org/files/996/996-h/996-h.htm#ch${[1,2,4,6,8][i]}`,
  ...detail.map(s=>s.replace(/classroom/gi,'public framing').replace(/Student/g,'Player').replace(/student/g,'player')),
@@ -27,7 +35,7 @@ for(const [i,entry] of catalog.entries()){
  if(/hepting|\bdavid\b|\bcdis\b|lifeplus|instructure|CORE_VOCAB|\/Users\//i.test(text))throw Error('Identifying reference: '+entry.id);
  const result=validatePackage(pack);if(result.errors.length)throw Error(JSON.stringify(result.errors));
  if(packageBytes(pack)>5000000)throw Error('Package too large');
- const out=new URL(`public/stories/public-quixote/${entry.id}/`,root);await mkdir(out,{recursive:true});
+ const out=new URL(`public/stories/public-quixote/${entry.id}/${entry.revision?`revisions/${entry.revision}/`:""}`,root);await mkdir(out,{recursive:true});
  if(check){if(await readFile(new URL('episode.json',out),'utf8')!==text)throw Error('Stale public episode: '+entry.id);}else await writeFile(new URL('episode.json',out),text);
  console.log(entry.id,packageBytes(pack),'bytes; validated');
 }

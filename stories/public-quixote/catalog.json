@@ -3,14 +3,15 @@
     "id": "a-knight-needs-a-witness",
     "title": "A Knight Needs a Sidekick",
     "chapters": "Part I · Chapter 1",
-    "summary": "A new name, a questionable helmet, and a man determined to become a hero. What does a good sidekick owe him?",
+    "summary": "A furious argument, a homemade helmet, and a sword test that goes spectacularly wrong. Help a would-be knight prepare—and decide what deserves your applause.",
     "image": "courtyard.webp",
     "available": true,
     "questions": [
       "When does loyalty require disagreement?",
       "Which details come from Cervantes, and which belong to the game?",
       "What can a name promise—and what can it actually change?"
-    ]
+    ],
+    "revision": 2
   },
   {
     "id": "the-castle-that-served-supper",

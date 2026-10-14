@@ -1,0 +1,57 @@
+{
+  "characters": {
+    "Barber": "the-door-that-disappeared"
+  },
+  "quiz": [
+    {
+      "prompt": "Which detail from Cervantes’s chapter 1 most directly supports the inference that chivalric books have displaced ordinary priorities?",
+      "options": [
+        "The airport book opens a magical door.",
+        "Quixote sells farmland to buy books of chivalry.",
+        "The visiting helper records the helmet test.",
+        "A sock lands on the visiting helper’s shoulder."
+      ],
+      "answer": 1,
+      "explanation": "Cervantes reports that the gentleman sells land for books. The airport book, visiting helper and sock are invented framing, not evidence from Chapter 1."
+    },
+    {
+      "prompt": "Why is “most perfect construction” comic when used about the rebuilt helmet?",
+      "options": [
+        "The narrator reports that it passed a second sword test.",
+        "The phrase proves the helmet can stop a sword.",
+        "All stories about knights use exactly those words.",
+        "Its grand certainty contrasts with Quixote’s decision not to test the repair again."
+      ],
+      "answer": 3,
+      "explanation": "Close reading places the confident diction beside the avoided retest. The mismatch draws on heroic conventions while exposing their limits: parody."
+    },
+    {
+      "prompt": "How does Quixote’s imitation of “Amadis of Gaul” illustrate intertextuality?",
+      "options": [
+        "An earlier chivalric story supplies the naming pattern he adapts into “Don Quixote of La Mancha.”",
+        "The narrator proves that Quixote and Amadis are the same person.",
+        "A change of name physically improves Quixote’s equipment.",
+        "Any two books written in Spanish must have identical meanings."
+      ],
+      "answer": 0,
+      "explanation": "One text helps shape identity and meaning in another. Quixote borrows the hero-plus-place pattern; a borrowed title does not establish heroic achievement."
+    },
+    {
+      "prompt": "Which judgment best separates a declared identity from evidence about it?",
+      "options": [
+        "The name Rocinante proves the horse has gained new strength.",
+        "Naming Aldonza “Dulcinea” proves she accepts Quixote’s devotion.",
+        "The new names express Quixote’s hopes, but do not establish new abilities or another person’s agreement.",
+        "The names prove that Quixote has no sincere hopes at all."
+      ],
+      "answer": 2,
+      "explanation": "His names announce the roles he imagines. The horse’s condition and Aldonza’s reported lack of knowledge place limits on what those names can establish."
+    }
+  ],
+  "sources": [
+    "Fixed events: Chapter 1, in order: devotion to chivalric books and sale of farmland; debates about famous knights; resolve to become a knight-errant; cleaning ancestral armour; making a pasteboard helmet addition; sword test whose first blow destroys a week’s work; repair with iron bars and refusal to retest; four days naming Rocinante; eight days naming himself after the pattern of Amadis of Gaul; naming Aldonza Lorenzo as Dulcinea del Toboso. No departure or later adventure is enacted.",
+    "Original adaptation: all dialogue, the temporary helper, laundry landing, practical assistance and conversations about the work are invented. The barber’s preference for Phoebus and Galaor comes from Chapter 1. The preparations are compressed through explicit passages of days. The player never becomes Sancho or changes the fixed helmet-test outcome.",
+    "Only “a helmet of the most perfect construction” is a direct quotation, from Cervantes, Part I, Chapter 1, Ormsby translation. Other dialogue and narration are adapted.",
+    "Visual staging: the sword is rendered and the two arm strikes are animated. Armour, helmet construction and breakage, the book handoff and the horse inspection are captioned or mimed; no articulated helmet or horse is claimed for these scenes."
+  ]
+}

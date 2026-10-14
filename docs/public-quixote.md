@@ -15,3 +15,7 @@ No named teacher, school references, private paths or course metadata are includ
 `node scripts/build-public-quixote.mjs` generates the public packages and copies their artwork. `npm run build` checks source parity. Export each ZIP using `node scripts/story-package.mjs zip <episode.json> <episode.zip>`; tests verify import parity, anonymity, legal routes and knowledge scores.
 
 The explicit catalog is `stories/public-quixote/catalog.json`. Future additions require an anonymous public script, the correct source chapter in the builder, a generated package and ZIP, artwork and a reviewed catalog entry. Run the public tests and normal build before publishing. Unknown episode links show a collection link without fetching a package.
+
+## Revised first adventure
+
+Episode 1 now uses public revision 2, with the Chapter 1 helmet test enacted, the barber as a second actor, and seven brief choices. The original root JSON/ZIP remain unchanged. Catalog `revision` selects `revisions/<n>/` for player and download; the builder reads the matching `revision-<n>.json` editorial file for quiz/source updates and explicitly selected returning characters. Its script remains in the usual public script file. A future substantial rewrite should increment this revision so released packages remain intact.

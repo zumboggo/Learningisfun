@@ -8,14 +8,15 @@ import catalog from '../../stories/public-quixote/catalog.json';
 import PublicQuixotePage from '../pages/PublicQuixotePage';
 afterEach(()=>{cleanup();vi.unstubAllGlobals();});
 for(const entry of catalog.filter(e=>e.available)){
- const folder=`public/stories/public-quixote/${entry.id}/`,pack=JSON.parse(readFileSync(folder+'episode.json','utf8'));
+ const folder=`public/stories/public-quixote/${entry.id}/${entry.revision?`revisions/${entry.revision}/`:""}`,pack=JSON.parse(readFileSync(folder+'episode.json','utf8'));
  it(`${entry.id}: anonymous, portable and all narrative routes finish`,async()=>{
   expect(JSON.stringify(pack)).not.toMatch(/hepting|\bdavid\b|\bcdis\b|lifeplus|instructure|CORE_VOCAB|\/Users\//i);
   expect(pack.assets.characters.Hepting).toBeUndefined();expect(pack.assets.backgrounds.classroom).toBeUndefined();
   if(pack.assets.characters.Teacher){expect(pack.assets.characters.Teacher.name).toBe('My English teacher');expect(pack.assets.characters.Teacher.rig.finish).toBe('polished');}
   expect(pack.script).toContain('airport');expect(pack.script).toContain('marmalade');expect(pack.script).toBe(readFileSync(`stories/public-quixote/${entry.id}.story`,'utf8'));
   const original=JSON.parse(readFileSync(`public/stories/animated/${entry.id}/episode.json`,'utf8'));
-  expect(pack.quiz).toEqual(original.quiz);expect(packageSize(pack)).toBeLessThan(5000000);
+  const editorial=entry.revision?JSON.parse(readFileSync(`stories/public-quixote/${entry.id}.revision-${entry.revision}.json`,'utf8')):null;
+  expect(pack.quiz).toEqual(editorial?.quiz??original.quiz);expect(packageSize(pack)).toBeLessThan(5000000);
   expect(await importStory(readFileSync(folder+'episode.zip') as unknown as File)).toEqual(pack);
   const {story,errors}=validatePackage(pack);expect(errors).toEqual([]);let routes=0;
   function walk(state:any,steps:(string|null)[]){
