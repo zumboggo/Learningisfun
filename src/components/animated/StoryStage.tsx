@@ -1,6 +1,7 @@
 import {useEffect,useRef,useState,type CSSProperties} from 'react';
 import type {StoryPackage,StoryState} from '../../../functions/learning-content/src/story-engine.js';
 import PuppetActor from './PuppetActor';
+import MountedActor from './MountedActor';
 import {armGeometry} from './character-geometry';
 import {ACTIONS,POSES} from '../../../functions/learning-content/src/acting-library.js';
 export default function StoryStage({pack,state,current,speaking,reduced,responses={}}:{pack:StoryPackage;state:StoryState;current:any;speaking:boolean;reduced:boolean;responses?:Record<string,string>}){
@@ -15,8 +16,8 @@ export default function StoryStage({pack,state,current,speaking,reduced,response
  return <div className={`story-stage ${modern?'story-stage-living':''}`} data-shot={resolved} data-actions={/^act /m.test(pack.script)||undefined} data-paired={actors.length===2&&/^act /m.test(pack.script)||undefined}>
   <div className="story-camera" style={{transform:`translateX(${offset}%) scale(${scale})`,transitionDuration:reduced||current?.type==='act'?'0ms':undefined} as CSSProperties}>
    <div className="story-world" style={{backgroundImage:state.stage.background?`url("${pack.assets.backgrounds[state.stage.background]?.src}")`:undefined}}>
-    {actors.map(([id,a])=>{const c=pack.assets.characters[id],asset=c.expressions[a.expression]||c.expressions.neutral;return <div data-actor={id} data-expression={a.expression} key={id} className={`story-actor position-${a.position} ${c.rig?'has-rig':''}`}>
-     <div className="story-facing" style={{transform:`scaleX(${a.facing})`}}>{c.rig?<PuppetActor character={c} actorId={id} performanceKey={state.cursor} emotion={a.expression} talking={speaking&&id===speaker} gesture={id===speaker?current.gesture:undefined} rest={a.rest} prop={a.prop} response={responses[id]||current?.beatResponses?.[id]||(reduced&&current?.type==='act'?(id===current.actor?ACTIONS[current.action]?.actor:id===current.targetActor?ACTIONS[current.action]?.target:undefined):undefined)} reduced={reduced}/>:<img src={asset?.src} alt={`${c.name} — ${a.expression}`} onError={e=>{e.currentTarget.style.opacity='0';}}/>}</div>
+    {actors.map(([id,a])=>{const c=pack.assets.characters[id],asset=c.expressions[a.expression]||c.expressions.neutral;return <div data-actor={id} data-expression={a.expression} key={id} className={`story-actor position-${a.position} ${c.rig?'has-rig':''} ${current?.type==='act'&&current.action==='mounted-charge'&&current.actor===id?'is-mounted':''}`}>
+     <div className="story-facing" style={{transform:`scaleX(${a.facing})`}}>{current?.type==='act'&&current.action==='mounted-charge'&&current.actor===id?<MountedActor character={c} emotion={a.expression} reduced={reduced} active={!!responses[id]} performanceKey={state.cursor}/>:c.rig?<PuppetActor character={c} actorId={id} performanceKey={state.cursor} emotion={a.expression} talking={speaking&&id===speaker} gesture={id===speaker?current.gesture:undefined} rest={a.rest} prop={a.prop} response={responses[id]||current?.beatResponses?.[id]||(reduced&&current?.type==='act'?(id===current.actor?ACTIONS[current.action]?.actor:id===current.targetActor?ACTIONS[current.action]?.target:undefined):undefined)} reduced={reduced}/>:<img src={asset?.src} alt={`${c.name} — ${a.expression}`} onError={e=>{e.currentTarget.style.opacity='0';}}/>}</div>
      {!modern&&<span>{c.name}</span>}
     </div>;})}
     {current?.type==='act'&&['shoot-arrow','magic-beam'].includes(current.action)&&<Projectile key={state.cursor} state={state} current={current} reduced={reduced} active={!!responses[current.actor]}/>}

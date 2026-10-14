@@ -16,5 +16,11 @@
     "title": "The Door That Disappeared",
     "package": "stories/animated/the-door-that-disappeared/episode.json",
     "zip": "stories/animated/the-door-that-disappeared/episode.zip"
+  },
+  {
+    "id": "the-giants-that-were-mills",
+    "title": "The Giants That Were Mills",
+    "package": "stories/animated/the-giants-that-were-mills/episode.json",
+    "zip": "stories/animated/the-giants-that-were-mills/episode.zip"
   }
 ]

@@ -2,13 +2,13 @@ import {armGeometry,legGeometry,FACE_PATHS,heldPropPose} from './character-geome
 import {useEffect,useId,useRef,useState} from 'react';
 import {AUTO_ACTING,POSES} from '../../../functions/learning-content/src/acting-library.js';
 
-type Props={character:any;emotion?:string;talking?:boolean;gesture?:string;rest?:string;prop?:string;response?:string;reduced?:boolean;actorId?:string;performanceKey?:number;experiment?:'current'|'polished'|'hybrid';headImage?:string;portrait?:boolean};
+type Props={character:any;emotion?:string;talking?:boolean;gesture?:string;rest?:string;prop?:string;response?:string;reduced?:boolean;actorId?:string;performanceKey?:number;experiment?:'current'|'polished'|'hybrid';headImage?:string;portrait?:boolean;rider?:boolean};
 export function shade(hex:string,amount:number){const target=amount<0?0:255;return '#'+[1,3,5].map(i=>Math.round(parseInt(hex.slice(i,i+2),16)*(1-Math.abs(amount))+target*Math.abs(amount)).toString(16).padStart(2,'0')).join('');}
 const joints=['bodyDrop','leftFootX','rightFootX','head','torso','leftUpperArm','leftForearm','rightUpperArm','rightForearm','leftHand','rightHand'];
 const smooth=(t:number)=>{t=Math.max(0,Math.min(1,t));return t*t*(3-2*t);};
 /** One finite gesture: preparation, emphasis, hold, then a quiet return. */
 export function gestureEnvelope(ms:number){if(ms<180)return -.08*smooth(ms/180);if(ms<650)return -.08+1.08*smooth((ms-180)/470);if(ms<1150)return 1;if(ms<1900)return 1-smooth((ms-1150)/750);return 0;}
-export default function CartoonActor({character,emotion='neutral',talking=false,gesture,rest,prop,response,reduced=false,actorId='Lin',performanceKey=0,experiment,headImage,portrait=false}:Props){
+export default function CartoonActor({character,emotion='neutral',talking=false,gesture,rest,prop,response,reduced=false,actorId='Lin',performanceKey=0,experiment,headImage,portrait=false,rider=false}:Props){
  const gradientId=useId().replace(/:/g,'');
  const finish=experiment==='current'?undefined:experiment||character.rig.finish;
  const headSource=headImage||character.rig.head?.src;
@@ -19,8 +19,8 @@ export default function CartoonActor({character,emotion='neutral',talking=false,
  const automatic=AUTO_ACTING[emotion]||AUTO_ACTING.neutral;
  const expressive=['shock','laugh','rage','excited','scared','facepalm','proud','plead','disappointed'];
  const acting=response||(rest==='arms-crossed'&&!gesture?'cross-arms':talking?(gesture||automatic.talk):expressive.includes(automatic.talk)?automatic.talk:'');
- const grip=POSES[heldPropPose(prop)]||{};
- const resting={...(POSES[rest||automatic.rest]||{}),...grip},action={...resting,...(POSES[acting]||{}),...((prop==='phone'||(prop==='lance'&&acting!=='lance-threat'))?grip:{})};
+ const grip=rider?POSES['mounted-charge']:POSES[heldPropPose(prop)]||{};
+ const resting={...(POSES[rest||automatic.rest]||{}),...grip},action={...resting,...(POSES[acting]||{}),...((prop==='phone'||(prop==='lance'&&!['lance-threat','mounted-charge'].includes(acting)))?grip:{})};
  const [pose,setPose]=useState<Record<string,number>>(resting),[blink,setBlink]=useState(false),[mouth,setMouth]=useState(0);
  const current=useRef(pose);
  const phase=[...actorId].reduce((a,c)=>a*31+c.charCodeAt(0),0)>>>0;
@@ -51,15 +51,15 @@ export default function CartoonActor({character,emotion='neutral',talking=false,
  <linearGradient id={`${gradientId}-hair`} x1="0" y1="0" x2=".8" y2="1"><stop stopColor={shade(hairBase,.14)}/><stop offset=".5" stopColor={hairBase}/><stop offset="1" stopColor={shade(hairBase,-.4)}/></linearGradient>
  <linearGradient id={`${gradientId}-shirt`} x1="0" y1="0" x2="1" y2=".3"><stop stopColor={shade(shirtBase,-.22)}/><stop offset=".4" stopColor={shade(shirtBase,.1)}/><stop offset=".7" stopColor={shirtBase}/><stop offset="1" stopColor={shade(shirtBase,-.3)}/></linearGradient>
  </defs>}
- <ellipse cx="120" cy="582" rx="48" ry="5" fill="#233b42" opacity=".13"/>
- {low?<g data-lowered-body={acting||rest} stroke={ink} strokeWidth="2.5" strokeLinejoin="round">
+ {!rider&&<ellipse cx="120" cy="582" rx="48" ry="5" fill="#233b42" opacity=".13"/>}
+ {!rider&&(low?<g data-lowered-body={acting||rest} stroke={ink} strokeWidth="2.5" strokeLinejoin="round">
  {(['left','right'] as const).map(side=>{const g=legGeometry(side,drop,pose[side+'FootX']||0,action[side+'Bend']??(side==='left'?-1:1));return <g key={side} data-leg={side}>
  <path d={g.path} fill="none" stroke={ink} strokeWidth="31" strokeLinecap="round"/>
  <path d={g.path} fill="none" stroke={historical?skin:tailored?shade(shirtBase,-.4):teacher?'#b6a183':'#354459'} strokeWidth="26" strokeLinecap="round"/>
  <path d={`M ${g.fx-13} 558 L ${g.fx+13} 558 L ${g.fx+20} 570 Q ${g.fx+24} 579 ${g.fx+14} 579 L ${g.fx-18} 579 L ${g.fx-18} 569 Z`} fill={historical?skin:tailored?'#34363a':teacher?'#634d3e':'#faf2e7'}/>
  {historical&&<path d={`M ${g.fx-13} 562 H ${g.fx+13} M ${g.fx-15} 574 H ${g.fx+18}`} stroke="#84664b" strokeWidth="3"/>}</g>;})}
  <path d={`M 78 ${335+drop} Q 120 ${326+drop} 162 ${335+drop} L 158 ${365+drop} Q 120 ${377+drop} 82 ${365+drop} Z`} fill={historical?skin:tailored?shade(shirtBase,-.4):teacher?'#b6a183':'#354459'}/>
- </g>:<> <g stroke={ink} strokeWidth="2.5" strokeLinejoin="round"><path d="M 77 335 Q 120 326 163 335 L 156 568 L 126 568 L 121 407 L 114 568 L 83 568 Z" fill={historical?skin:tailored?shade(shirtBase,-.4):teacher?'#b6a183':'#354459'}/><path d="M 84 556 L 113 556 L 112 579 L 72 579 Q 68 571 84 564 Z M 127 556 L 155 556 L 166 572 Q 172 579 163 579 L 128 579 Z" fill={historical?skin:tailored?'#34363a':teacher?'#634d3e':'#faf2e7'}/><path d="M 79 574 L 110 574 M 132 574 L 162 574" stroke={historical?'#84664b':'#8b969a'}/>{historical&&<path d="M 85 558 L 112 558 M 128 558 L 154 558 M 80 569 L 112 569 M 129 569 L 163 569" stroke="#84664b" strokeWidth="4"/>}</g></>}
+ </g>:<> <g stroke={ink} strokeWidth="2.5" strokeLinejoin="round"><path d="M 77 335 Q 120 326 163 335 L 156 568 L 126 568 L 121 407 L 114 568 L 83 568 Z" fill={historical?skin:tailored?shade(shirtBase,-.4):teacher?'#b6a183':'#354459'}/><path d="M 84 556 L 113 556 L 112 579 L 72 579 Q 68 571 84 564 Z M 127 556 L 155 556 L 166 572 Q 172 579 163 579 L 128 579 Z" fill={historical?skin:tailored?'#34363a':teacher?'#634d3e':'#faf2e7'}/><path d="M 79 574 L 110 574 M 132 574 L 162 574" stroke={historical?'#84664b':'#8b969a'}/>{historical&&<path d="M 85 558 L 112 558 M 128 558 L 154 558 M 80 569 L 112 569 M 129 569 L 163 569" stroke="#84664b" strokeWidth="4"/>}</g></>)}
 
  <g data-body-drop={drop} transform={`translate(0 ${drop}) rotate(${(pose.torso||0)*.55} 120 348)`}>
  <path d="M 106 161 L 105 194 Q 120 206 135 194 L 134 161" fill={skin} stroke={ink} strokeWidth="2"/>

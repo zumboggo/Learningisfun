@@ -38,7 +38,7 @@ Use coordinated actions when bodies interacting matter: `give` for a mimed hando
 
 Use `act Actor cross-arms "Caption"` for the transition, then `rest Actor arms-crossed` to keep both arms folded through dialogue and choices. Pair with `[angry]` for a sustained stern expression; the held pose suppresses automatic arm swinging. An explicit talking gesture or reaction may temporarily override it. Return to `rest Actor relaxed` to release. The action clears a held prop; put props away before using the held rest directly.
 
-`prop Actor lance` attaches a long lance to the hand. `act Actor lance-threat Other "Caption"` levels it while the other character draws back, without a hit, and leaves it equipped. Stage both actors and use wide framing. This is not a mounted charge: horses, falls from horseback and broken-lance fragments still require honest narrative staging. Clear the prop when it is dropped or destroyed. Existing published episodes remain unchanged.
+`prop Actor lance` attaches a long lance to the hand. `act Actor lance-threat Other "Caption"` levels it while the other character draws back, without a hit, and leaves it equipped. Stage both actors and use wide framing. For the separate `mounted-charge`, `wince` and `steady` cues, see acting-library.md (v6). Falls from horseback and broken-lance fragments still require honest narrative staging. Clear the prop when it is dropped or destroyed. Existing published episodes remain unchanged.
 
 ### Kneeling and defensive movement
 

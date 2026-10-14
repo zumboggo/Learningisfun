@@ -1,0 +1,71 @@
+{
+  "title": "The Giants That Were Mills",
+  "episode": 5,
+  "readingBoundary": "Part I chapter 8, windmills through Sancho's meal on the road; classroom-sequence finale, not novel ending",
+  "duration": "10–12 minutes plus quiz",
+  "openingPromise": "Travel beside Sancho, try to make a warning heard, and witness how disagreement and care survive a disastrous charge.",
+  "harmon": [
+    "You: curious witness wants to understand courage",
+    "Need: distinguish conviction from perception",
+    "Go: one-question journal brings student to La Mancha",
+    "Search: compare giants and mills; try a warning",
+    "Find: Quixote charges with absolute certainty",
+    "Take: broken lance, injured rider and horse; certainty survives",
+    "Return: Sancho helps, argues and jokes; journal returns student",
+    "Change: courage includes warning, evidence and practical care"
+  ],
+  "choices": [
+    [
+      "look",
+      "Ask for evidence / ask about fortune",
+      "Sancho explains function / Quixote explains his mission",
+      "evidence callback",
+      "refusal"
+    ],
+    [
+      "warning",
+      "Call out physical evidence / ask for a pause",
+      "Sancho repeats concrete warning / plea to listen",
+      "evidence or care callback",
+      "departure"
+    ],
+    [
+      "first-words",
+      "Offer help / acknowledge being right",
+      "Make space / right is less useful than heard",
+      "care callback",
+      "explanation"
+    ],
+    [
+      "magician",
+      "Challenge timing / ask why explanation matters",
+      "Belief absorbs objection / motive becomes clear",
+      "evidence callback",
+      "assistance"
+    ],
+    [
+      "stories",
+      "Question books as orders / ask about island",
+      "Practical use versus script / hope and bodily needs",
+      "honest callback",
+      "pain"
+    ],
+    [
+      "permission",
+      "Appreciate honesty / ask to complain",
+      "Loyalty allows pain / shared humour",
+      "honest callback",
+      "meal"
+    ]
+  ],
+  "sceneTrim": "Focus on encounter and immediate recovery; omit later night and friar encounter. Keep Sancho's accurate perception, desire for reward, help and humour together. No invented redemption or renunciation by Quixote.",
+  "fixedEvents": "Listed in sources.json; exhaustive test covers 64 routes.",
+  "animation": "New reusable mounted-charge, wince and steady actions. Horse, saddle, buckler and rider are runtime vectors; all episode character identities reused. No new runtime command grammar. Charge does not simulate contact or a fall; cut, shake and caption handle these, followed by low aftermath staging.",
+  "background": {
+    "tool": "Built-in imagegen",
+    "original": "/Users/david.hepting/.codex/generated_images/01a1333e-aafc-7043-a037-0ac5434b2de8/exec-f1c20287-4ea9-42e9-9f51-0aa4c5ad3926.png",
+    "asset": "public/stories/animated/the-giants-that-were-mills/assets/windmills-v1.webp",
+    "prompt": "Use case: historical-scene. Asset type: 16:9 visual-novel background for Don Quixote's windmill encounter. A wide sunlit plain in La Mancha, Spain, early seventeenth century. Whitewashed cylindrical windmills with dark conical roofs and four wooden lattice sails; one prominent mill in the right third, other smaller mills receding across a low distant ridge. Broad open ochre dirt foreground in the left and center, unobstructed, for animated characters and a horse. Dry grasses at frame edges, pale blue sky, gentle hills. Clean dark slate linework, warm cream and muted ochre colours, restrained cel shading, simplified manga-inspired graphic-novel scenery matching polished SVG figures. Eye-level camera, full landscape frame, readable silhouettes, background less contrasted than actors. No people, no horses, no giants, no modern turbines, no lettering, no captions, no border, no photorealism."
+  },
+  "publication": "Unassigned public preview and portable ZIP. No class/date or Canvas assignment."
+}

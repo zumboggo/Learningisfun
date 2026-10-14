@@ -1,13 +1,16 @@
 /** Closed, versioned vocabulary shared by parser, renderer, studio and authoring tools. */
-export const ACTING_VERSION=5;
+export const ACTING_VERSION=6;
 export const CHARACTER_OPTIONS={age:['teen','adult','elder'],hair:['layered','side-part','long','bob','cropped','tousled','bun','swept'],glasses:['none','round'],outfit:['uniform','teacher','tunic','robe','workshirt','cardigan','suit'],face:['default','oval','round','angular','lean','broad'],eyes:['default','keen','gentle','narrow'],facialHair:['none','full']};
 export const EMOTIONS=['neutral','happy','worried','sad','angry','surprised','curious','confused','skeptical','embarrassed','relieved','determined','shocked','laughing','excited','scared','frustrated','proud','pleading','disappointed'];
 export const PROPS=['none','phone','sword','bow','lance'];
 export const RESTS=['arms-crossed','kneeling','crouched','sheltered','relaxed','attentive','guarded','downcast'];
 export const TALKS=['cross-arms','phone-talk','phone-shout','explain','reassure','question','insist','hesitant','celebrate','shock','laugh','rage','excited','scared','facepalm','proud','plead','disappointed'];
-export const RESPONSES=['cross-arms','lance-threat','kneel','crouch','duck','cover-head','phone-talk','phone-shout','sword-strike','draw-bow','cast-beam','nod','shake-head','shrug','point','wave','recoil','laugh','sigh','bow','cheer','reach','cower','stumble','strike','block','dodge','shock','rage','excited','scared','facepalm','proud','plead','disappointed'];
+export const RESPONSES=['wince','support','brace','mounted-charge','cross-arms','lance-threat','kneel','crouch','duck','cover-head','phone-talk','phone-shout','sword-strike','draw-bow','cast-beam','nod','shake-head','shrug','point','wave','recoil','laugh','sigh','bow','cheer','reach','cower','stumble','strike','block','dodge','shock','rage','excited','scared','facepalm','proud','plead','disappointed'];
 /** Explicit outcomes: choreography never rolls a result or changes the literary plot. */
 export const ACTIONS={
+ 'mounted-charge':{paired:false,actor:'mounted-charge',prop:'lance',description:'Ride a visible horse forward with a levelled lance in one finite charge. The horse is shown for this action caption only; no impact or fall is implied.'},
+ wince:{paired:false,actor:'wince',description:'Draw one hand to the ribs and bend slightly with a pained flinch. No recovery or injury outcome is implied.'},
+ steady:{paired:true,actor:'support',target:'brace',prop:'none',description:'Step close and offer a supporting arm as the other character braces. A mimed helping gesture; narrate any rise or remount separately.'},
  'cross-arms':{paired:false,actor:'cross-arms',prop:'none',description:'Fold both arms tightly across the chest. Follow with rest Actor arms-crossed to stay folded during speech.'},
  'lance-threat':{paired:true,actor:'lance-threat',target:'cower',prop:'lance',description:'Level a visible lance at another character, who draws back. No thrust or hit; the lance stays held.'},
  kneel:{paired:false,actor:'kneel',description:'Lower onto one knee, pause, then rise. Use rest Actor kneeling to remain down.'},
@@ -56,6 +59,10 @@ const crouched={bodyDrop:80,leftFootX:18,rightFootX:-18,leftBend:-1,rightBend:1,
 const sheltered={...crouched,bodyDrop:95,torso:12,head:18,leftUpperArm:-160,leftForearm:-20,rightUpperArm:160,rightForearm:20};
 const crossed={head:7,torso:3,leftUpperArm:-40,leftForearm:-85,leftHand:15,rightUpperArm:40,rightForearm:90,rightHand:-15};
 export const POSES={
+ 'mounted-charge':{torso:9,head:-4,rightUpperArm:-75,rightForearm:-15,rightHand:180,leftUpperArm:-10,leftForearm:-70},
+ wince:{torso:14,head:13,leftUpperArm:12,leftForearm:-90,rightUpperArm:5,rightForearm:-30},
+ support:{torso:8,head:5,rightUpperArm:-55,rightForearm:-25,leftForearm:25},
+ brace:{torso:10,head:12,leftUpperArm:-20,leftForearm:-35,rightForearm:30},
  'arms-crossed':crossed,'cross-arms':crossed,
  'lance-hold':{rightUpperArm:-15,rightForearm:-25,rightHand:40},
  'lance-threat':{torso:5,rightUpperArm:-75,rightForearm:-15,rightHand:180,leftForearm:25},
@@ -104,6 +111,7 @@ export const POSES={
  sigh:{head:9,torso:3,leftUpperArm:5,rightUpperArm:-5},
 };
 export const ACTING_DESCRIPTIONS={
+ support:'Extend an arm to offer support.',brace:'Lean forward and brace with bent arms.',
  'arms-crossed':'Keep both arms firmly folded across the chest, including while speaking. Pair with angry emotion for a sustained angry stance.',
  kneeling:'Remain on one knee until the resting pose changes.',crouched:'Remain low with bent knees.',sheltered:'Stay crouched with hands shielding the head.',
  shock:'Both hands fly to the cheeks as the eyes widen and mouth opens.',rage:'Clench both fists and swing the arms in two frustrated emphases.',excited:'Throw both hands overhead with an eager bounce.',scared:'Recoil with open hands shielding the face.',facepalm:'Bring one hand over the face and bow the head.',proud:'Plant hands at the waist and lift the chin.',plead:'Bring both hands together at the chest and lean forward.',disappointed:'Let both arms fall as the head and shoulders sink.',

@@ -1,0 +1,46 @@
+[
+  {
+    "prompt": "Why does Sancho identify the supposed giants as windmills?",
+    "options": [
+      "He recognizes towers and sails that turn millstones.",
+      "Fristón tells him what they are.",
+      "The wind stops as soon as he speaks.",
+      "He has already defeated one."
+    ],
+    "answer": 0,
+    "explanation": "Sancho explains the objects through their structure and work: the sails turn in the wind to drive millstones. Quixote instead reads their shape through stories of giants."
+  },
+  {
+    "prompt": "What happens when Quixote attacks the first windmill?",
+    "options": [
+      "Sancho breaks the lance to prevent the attack.",
+      "The mill collapses and Quixote wins its treasure.",
+      "The turning sail shatters the lance and sweeps horse and rider over.",
+      "Quixote recognizes the mill and stops before contact."
+    ],
+    "answer": 2,
+    "explanation": "Quixote strikes a sail with his lance. Wind turns it with enough force to break the lance and throw both Rocinante and his rider. The warning does not prevent the canonical event."
+  },
+  {
+    "prompt": "How does Quixote explain the defeat afterward?",
+    "options": [
+      "He admits that he mistook ordinary machinery for giants.",
+      "He blames Fristón for changing the giants into mills.",
+      "He says Sancho secretly moved the windmill.",
+      "He decides that books should never be read again."
+    ],
+    "answer": 1,
+    "explanation": "He uses the same enchanter associated with the lost library to explain away this defeat. His explanation changes to protect his heroic interpretation."
+  },
+  {
+    "prompt": "Which description best captures Sancho in this encounter?",
+    "options": [
+      "He agrees with everything Quixote says.",
+      "He abandons Quixote as soon as he is proved right.",
+      "He knows the danger but encourages the charge for profit.",
+      "He warns and contradicts Quixote, then helps him and speaks openly about pain."
+    ],
+    "answer": 3,
+    "explanation": "Sancho combines accurate observation, disagreement, practical help and humour. His care does not require accepting the claim about giants."
+  }
+]

@@ -22,3 +22,15 @@
 .story-nocked-arrow{animation:story-nock 2200ms linear both}@keyframes story-nock{0%,34%{opacity:1}35%,100%{opacity:0}}
 
 .story-projectile.settled{visibility:hidden}
+
+/* Mounted actions use one contained silhouette, with finite gallop motion only. */
+.story-stage-living .story-actor.is-mounted{width:70%;left:15%;height:96%}
+.story-stage-living .story-actor.is-mounted.position-left{left:0}
+.story-stage-living .story-actor.is-mounted.position-right{left:30%}
+.mounted-actor{width:100%;height:100%;overflow:visible}
+.galloping .horse-leg{transform-box:view-box;transform-origin:300px 400px;animation:horse-stride 480ms ease-in-out 4}
+.galloping .horse-far{animation-direction:reverse}
+.galloping .mounted-rider{animation:rider-bob 480ms ease-in-out 4}
+@keyframes horse-stride{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(8deg)}}
+@keyframes rider-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@media(prefers-reduced-motion:reduce){.galloping .horse-leg,.galloping .mounted-rider{animation:none!important}}
