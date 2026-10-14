@@ -5,7 +5,7 @@ export default function MountedActor({character,emotion,reduced,active,performan
  const outfit=character.rig.appearance?.outfit,tailored=['workshirt','cardigan','suit'].includes(outfit);
  const legFill=['tunic','robe'].includes(outfit)?skin:outfit==='teacher'?'#b6a183':tailored?shade(character.rig.palette?.shirt||'#b93f46',-.4):'#354459';
  const shoeFill=outfit==='uniform'||!outfit?'#faf2e7':'#65503d';
- return <svg className={`mounted-actor ${active&&!reduced?'galloping':''}`} viewBox="0 0 600 600" preserveAspectRatio="xMidYMax meet" role="img" aria-label={`${character.name} — mounted lance charge`}>
+ return <svg className={`mounted-actor ${active&&!reduced?'galloping':''}`} viewBox="0 0 680 600" preserveAspectRatio="xMidYMax meet" role="img" aria-label={`${character.name} — mounted lance charge`}>
   <ellipse cx="300" cy="575" rx="208" ry="8" fill={ink} opacity=".16"/>
   <g className="horse-body" fill={coat} stroke={ink} strokeWidth="4" strokeLinejoin="round">
    <path d="M 145 345 Q 93 348 65 419 Q 83 421 94 399 Q 116 376 146 382" fill="#645c51"/>
