@@ -1,0 +1,23 @@
+/* The public prologue deliberately contains no scenery or other page chrome. */
+.stone-opening{position:fixed;inset:0;width:100%;max-width:none;height:100%;max-height:none;margin:0;border:0;background:#fff;color:#222;padding:32px;overflow:auto;box-sizing:border-box}
+.stone-opening::backdrop{background:#fff}
+.stone-opening-content{max-width:720px;margin:clamp(80px,20vh,220px) auto 60px}
+.stone-opening h2{font:400 clamp(28px,4vw,40px)/1.2 Georgia,serif;margin:16px 0 24px}
+.stone-kicker{font:11px/1.5 system-ui,sans-serif;letter-spacing:2px;text-transform:uppercase;color:#616161}
+.stone-notice{font:17px/1.8 system-ui,sans-serif;max-width:580px;margin:0 0 30px;color:#555}
+.stone-typed{font:400 clamp(23px,3.3vw,35px)/1.65 'Courier New',monospace;letter-spacing:-.8px;min-height:230px;margin:0 0 30px;overflow-wrap:break-word}
+.stone-cursor{font-size:.85em;color:#777}
+.stone-choices{display:flex;flex-wrap:wrap;gap:14px}
+.stone-choice{font:15px/1.5 system-ui,sans-serif;min-height:48px;padding:13px 22px;border:1px solid #b6b6b6;border-radius:5px;color:#333;background:#fff;cursor:pointer}
+.stone-primary{background:#222;color:#fff;border-color:#222}
+.stone-choice:hover{background:#eee}.stone-primary:hover{background:#444}
+.stone-exit,.stone-skip{font:13px/1.5 system-ui,sans-serif;color:#666;cursor:pointer;padding:10px 0;background:none;border:0;text-decoration:underline;text-underline-offset:4px;min-height:44px}
+.stone-opening button:focus-visible{outline:3px solid #b27924;outline-offset:5px}
+.stone-arrival{scroll-margin-top:16px}.stone-entering .story-stage{background:#000}
+/* Reveal the actual stage through a widening horizontal aperture, once. */
+.stone-entering .story-camera{clip-path:ellipse(65% 0% at 50% 50%);animation:stone-eye-open 2400ms cubic-bezier(.2,.65,.35,1) both}
+.stone-entering .story-dialogue,.stone-entering .story-meters,.stone-entering footer{visibility:hidden}
+.stone-transition-status{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@keyframes stone-eye-open{0%,16%{clip-path:ellipse(65% 0% at 50% 50%);filter:blur(7px)}45%{clip-path:ellipse(68% 13% at 50% 50%);filter:blur(3px)}100%{clip-path:ellipse(110% 110% at 50% 50%);filter:blur(0)}}
+@media(max-width:600px){.stone-opening{padding:24px}.stone-opening-content{margin-top:16vh}.stone-typed{min-height:260px;font-size:25px;line-height:1.6}.stone-choices{flex-direction:column}.stone-choice{width:100%}}
+@media(prefers-reduced-motion:reduce){.stone-entering .story-camera{animation:none;clip-path:none;filter:none}}

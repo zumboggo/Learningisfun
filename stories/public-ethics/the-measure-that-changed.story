@@ -4,11 +4,9 @@ variable private = false hidden
 variable policy = 0 range 0 2 hidden
 variable review = false hidden
 label opening
-scene path
-I: Beside the path, something catches the light: a dark stone with a thin gold circle running through it. I pick it up. It is warm, although it has been lying in the shade.
-I: Inside the circle I see a courtyard, a grain store, and people waiting with empty baskets. Someone needs help. I touch the circle.
-effect magic
-I: The path folds into light. Warm wind brushes my face. I step through, still myself, still holding the stone.
+I: You are going about your day and find a small strange stone with markings on it. Do you pick it up?
+I: I pick it up. The markings warm beneath my fingers. A thin gold circle begins to glow.
+I: For a moment, everything goes dark. Then light opens around me. Warm wind brushes my face. I am still myself, still holding the stone.
 label arrival
 scene village
 show Seneb happy center

@@ -5,16 +5,14 @@ variable repaired = false hidden
 variable evidence = false hidden
 # YOU / NEED: a student temporarily trusted with a real decision, not an ancient body.
 label opening
-scene path
-I: Beside the path, something catches the light: a dark stone with a thin gold circle running through it. I pick it up. It is warm, although it has been lying in the shade.
-I: Inside the circle I see a courtyard, a grain store, and people waiting with empty baskets. Someone needs help. I touch the circle.
-effect magic
-I: The path folds into light. Warm wind brushes my face. I step through, still myself, still holding the stone.
+I: You are going about your day and find a small strange stone with markings on it. Do you pick it up?
+I: I pick it up. The markings warm beneath my fingers. A thin gold circle begins to glow.
+I: For a moment, everything goes dark. Then light opens around me. Warm wind brushes my face. I am still myself, still holding the stone.
 label arrival
 scene village
 show Djehu surprised center
 camera wide
-Djehu [surprised, question]: Are you the adviser the stone promised? I had imagined more luggage. Or fewer falling objects.
+Djehu [surprised, question]: Are you the adviser the stone promised? I had imagined more luggage. Or at least a warning before you arrived.
 I: Mudbrick walls surround a grain store beside the Nile. The stone warms my palm: Egypt, around 1900 BCE. A low flood has left the fields thirsty.
 camera medium Djehu
 Djehu [worried, explain]: I am Djehu, the scribe. Our administrator is away. The village has agreed to let its visitor direct today's emergency distribution.

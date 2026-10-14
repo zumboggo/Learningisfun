@@ -1,7 +1,7 @@
 import {useEffect,useState} from 'react';
 import {Link,useParams} from 'react-router-dom';
 import './public-ethics.css';
-import StoryPlayer from '../components/animated/StoryPlayer';
+import PublicStonePlayer from '../components/animated/PublicStonePlayer';
 import type {StoryPackage} from '../../functions/learning-content/src/story-engine.js';
 const episodes=[
  {id:'the-grain-we-keep',title:'The Grain We Keep',summary:'A village has too little grain. Whose needs come first—and who gets to question your decision?',questions:['Who paid the cost of your most generous decision?','What evidence changed your mind?','What could people question after you left?']},
@@ -35,5 +35,5 @@ function PublicEpisode({entry}:{entry:typeof episodes[number]}){
  const [pack,setPack]=useState<StoryPackage|null>(null),[error,setError]=useState(''),[run,setRun]=useState(0);
  const base=import.meta.env.BASE_URL+`stories/public-ethics/${entry.id}/`;
  useEffect(()=>{const controller=new AbortController();void fetch(base+'episode.json',{signal:controller.signal}).then(r=>{if(!r.ok)throw Error('The adventure could not be loaded. Please reload to try again.');return r.json();}).then(setPack).catch(e=>{if(e.name!=='AbortError')setError(e.message);});return()=>controller.abort();},[base]);
- return <><p>{entry.summary}</p><p className="text-sm text-slate-600">Progress lasts until you leave or reload this page. No class grades are recorded.</p>{error?<p role="alert">{error}</p>:pack?<><button className="underline" onClick={()=>{if(window.confirm('Restart this adventure? Your current progress will be cleared.'))setRun(r=>r+1);}}>Restart adventure</button><StoryPlayer key={run} pack={pack}/><details className="rounded-xl border p-4"><summary className="cursor-pointer font-bold">Discussion guide and sources</summary><ul className="my-4 list-disc space-y-2 pl-6">{entry.questions.map(q=><li key={q}>{q}</li>)}</ul>{pack.sources?.map(s=><p className="my-3" key={s}>{s}</p>)}<a className="text-blue-700 underline" href={base+'episode.zip'} download>Download episode package for the Story 2 player</a></details></>:<p role="status">Loading adventure…</p>}</>;
+ return <><p>{entry.summary}</p><p className="text-sm text-slate-600">Progress lasts until you leave or reload this page. No class grades are recorded.</p>{error?<p role="alert">{error}</p>:pack?<><button className="underline" onClick={()=>{if(window.confirm('Restart this adventure? Your current progress will be cleared.'))setRun(r=>r+1);}}>Restart adventure</button><PublicStonePlayer key={run} pack={pack}/><details className="rounded-xl border p-4"><summary className="cursor-pointer font-bold">Discussion guide and sources</summary><ul className="my-4 list-disc space-y-2 pl-6">{entry.questions.map(q=><li key={q}>{q}</li>)}</ul>{pack.sources?.map(s=><p className="my-3" key={s}>{s}</p>)}<a className="text-blue-700 underline" href={base+'episode.zip'} download>Download episode package for the Story 2 player</a></details></>:<p role="status">Loading adventure…</p>}</>;
 }
