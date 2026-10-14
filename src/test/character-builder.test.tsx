@@ -40,3 +40,13 @@ it('rounded elbows keep fixed bone lengths and continuous finite paths across al
   expect(g.path).not.toMatch(/NaN|Infinity| T /);expect(g.path.endsWith(`L ${g.wx} ${g.wy}`)).toBe(true);
  }
 });
+it('distinct recurring cast features preserve expressions and articulated props',()=>{
+ for(const appearance of [{age:'adult',hair:'tousled',face:'lean',eyes:'keen',outfit:'workshirt'},{age:'elder',hair:'bun',face:'oval',eyes:'gentle',outfit:'cardigan'},{age:'adult',hair:'swept',face:'broad',eyes:'narrow',outfit:'suit'}]){
+  const c=createCharacter({id:'Actor',name:'Actor',appearance});expect(validatePackage({...pack,assets:{...pack.assets,characters:{...pack.assets.characters,Actor:c}}}).errors).toEqual([])
+  const {container,rerender,unmount}=render(<PuppetActor character={c} reduced prop="phone"/>);const neutral=container.querySelector('[data-mouth]')!.innerHTML
+  expect(container.querySelectorAll('[data-arm]')).toHaveLength(2);expect(container.querySelector('[data-prop="phone"]')).not.toBeNull()
+  if(appearance.age==='elder')expect(container.querySelector('[data-age-lines]')).not.toBeNull()
+  for(const emotion of ['worried','shocked','laughing','angry']){rerender(<PuppetActor character={c} emotion={emotion} reduced prop="phone"/>);expect(container.querySelector('[data-mouth]')!.innerHTML).not.toEqual(neutral);expect(container.innerHTML).not.toMatch(/NaN|Infinity/)}unmount()
+ }
+ expect(()=>createCharacter({id:'Bad',name:'Bad',appearance:{eyes:'script'}})).toThrow()
+})

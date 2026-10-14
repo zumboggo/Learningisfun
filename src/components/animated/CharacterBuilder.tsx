@@ -3,7 +3,7 @@ import {CHARACTER_OPTIONS} from '../../../functions/learning-content/src/acting-
 import {createCharacter,type CharacterRecipe} from '../../../functions/learning-content/src/character-builder.js';
 import type {StoryPackage} from '../../../functions/learning-content/src/story-engine.js';
 import PuppetActor from './PuppetActor';
-const labels:Record<string,string>={age:'Age',hair:'Hairstyle',glasses:'Glasses',outfit:'Clothing',facialHair:'Facial hair',face:'Face shape'};
+const labels:Record<string,string>={age:'Age',hair:'Hairstyle',glasses:'Glasses',outfit:'Clothing',facialHair:'Facial hair',face:'Face shape',eyes:'Eye character'};
 const initial:CharacterRecipe={id:'NewCharacter',name:'New character',palette:{skin:'#eac09c',hair:'#293338',shirt:'#b93f46',glasses:'#35424a',beard:'#514239',trim:'#b19a63'},appearance:{age:'teen',hair:'layered',glasses:'none',outfit:'uniform',facialHair:'none',face:'default'}};
 export default function CharacterBuilder({pack,onAdd}:{pack:StoryPackage;onAdd:(id:string,character:any)=>void}){
  const [recipe,setRecipe]=useState<CharacterRecipe>(initial),[error,setError]=useState('');
