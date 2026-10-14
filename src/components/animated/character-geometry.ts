@@ -10,3 +10,5 @@ export const FACE_PATHS:Record<string,string>={
  round:'M 82 88 Q 120 62 158 88 L 157 132 Q 156 157 139 167 Q 120 178 101 167 Q 84 157 83 132 Z',
  angular:'M 82 88 Q 120 62 158 88 L 156 135 L 145 155 L 128 172 Q 120 177 112 172 L 95 155 L 84 135 Z',
 };
+
+export function heldPropPose(prop?:string){return prop==='phone'?'phone-hold':prop==='sword'?'sword-hold':prop==='bow'?'bow-hold':'relaxed';}

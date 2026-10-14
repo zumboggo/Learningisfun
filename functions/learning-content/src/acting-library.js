@@ -1,12 +1,20 @@
 /** Closed, versioned vocabulary shared by parser, renderer, studio and authoring tools. */
-export const ACTING_VERSION=2;
+export const ACTING_VERSION=3;
 export const CHARACTER_OPTIONS={age:['teen','adult'],hair:['layered','side-part','long','bob','cropped'],glasses:['none','round'],outfit:['uniform','teacher','tunic','robe'],face:['default','oval','round','angular'],facialHair:['none','full']};
 export const EMOTIONS=['neutral','happy','worried','sad','angry','surprised','curious','confused','skeptical','embarrassed','relieved','determined','shocked','laughing','excited','scared','frustrated','proud','pleading','disappointed'];
+export const PROPS=['none','phone','sword','bow'];
 export const RESTS=['relaxed','attentive','guarded','downcast'];
-export const TALKS=['explain','reassure','question','insist','hesitant','celebrate','shock','laugh','rage','excited','scared','facepalm','proud','plead','disappointed'];
-export const RESPONSES=['nod','shake-head','shrug','point','wave','recoil','laugh','sigh','bow','cheer','reach','cower','stumble','strike','block','dodge','shock','rage','excited','scared','facepalm','proud','plead','disappointed'];
+export const TALKS=['phone-talk','phone-shout','explain','reassure','question','insist','hesitant','celebrate','shock','laugh','rage','excited','scared','facepalm','proud','plead','disappointed'];
+export const RESPONSES=['phone-talk','phone-shout','sword-strike','draw-bow','cast-beam','nod','shake-head','shrug','point','wave','recoil','laugh','sigh','bow','cheer','reach','cower','stumble','strike','block','dodge','shock','rage','excited','scared','facepalm','proud','plead','disappointed'];
 /** Explicit outcomes: choreography never rolls a result or changes the literary plot. */
 export const ACTIONS={
+ 'phone-talk':{paired:false,actor:'phone-talk',prop:'phone',description:'Hold a visible phone at the ear and talk. The phone stays equipped until prop Actor none.'},
+ 'phone-shout':{paired:false,actor:'phone-shout',prop:'phone',description:'Keep the phone at the ear while leaning forward and emphasizing with the free hand.'},
+ 'sword-strike':{paired:true,actor:'sword-strike',target:'recoil',prop:'sword',description:'Strike with a visible sword; the target recoils without gore.'},
+ 'sword-blocked':{paired:true,actor:'sword-strike',target:'block',prop:'sword',description:'A sword strike meets the target’s guard; no hit lands.'},
+ 'sword-dodged':{paired:true,actor:'sword-strike',target:'dodge',prop:'sword',description:'The target dodges the sword strike.'},
+ 'shoot-arrow':{paired:true,actor:'draw-bow',target:'recoil',prop:'bow',description:'Draw the bowstring and release a visible arrow toward the target, who recoils.'},
+ 'magic-beam':{paired:true,actor:'cast-beam',target:'recoil',prop:'none',description:'Extend an empty palm and cast a finite beam toward the target, who recoils.'},
  attack:{paired:true,actor:'strike',target:'recoil',description:'A stylized lunge and strike; the other character recoils.'},
  'attack-blocked':{paired:true,actor:'strike',target:'block',description:'A strike meets a raised guard; both return to their marks.'},
  'attack-dodged':{paired:true,actor:'strike',target:'dodge',description:'A strike misses as the other character leans away.'},
@@ -37,6 +45,14 @@ export const AUTO_ACTING={
 };
 // Joint angles in degrees. Every preset uses the same anatomy; skins supply only artwork.
 export const POSES={
+ 'phone-hold':{rightUpperArm:100,rightForearm:135,rightHand:125},
+ 'phone-talk':{head:3,leftUpperArm:20,leftForearm:48},
+ 'phone-shout':{torso:8,head:4,leftUpperArm:35,leftForearm:-65},
+ 'sword-hold':{rightUpperArm:-18,rightForearm:-30,rightHand:48},
+ 'sword-strike':{torso:6,rightUpperArm:-70,rightForearm:-15,rightHand:85,leftForearm:35},
+ 'bow-hold':{rightUpperArm:-36,rightForearm:-25,rightHand:61,leftUpperArm:-15,leftForearm:-55},
+ 'draw-bow':{rightUpperArm:-78,rightForearm:-12,rightHand:90,leftUpperArm:-60,leftForearm:-75},
+ 'cast-beam':{rightUpperArm:-78,rightForearm:-12,rightHand:0,leftForearm:40},
  bow:{torso:16,head:18,leftUpperArm:-6,rightUpperArm:6},
  cheer:{head:-9,leftUpperArm:100,leftForearm:35,rightUpperArm:-100,rightForearm:-35},
  reach:{head:4,rightUpperArm:-55,rightForearm:-20},
