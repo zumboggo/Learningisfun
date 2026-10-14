@@ -39,3 +39,21 @@ it('a real competing edit remains a conflict and is never overwritten',async()=>
  await screen.findByText(/Error: Draft changed elsewhere/);
  expect(call.mock.calls.filter(([b])=>b.action==='animatedSaveDraft')).toHaveLength(1);
 });
+
+it('only exposes assignment for the exact published draft, including edits during publication',async()=>{
+ let finish!:(v:any)=>void;
+ call.mockImplementation(async b=>b.action==='animatedLibrary'?{assignments:[],drafts:[]}:b.action==='animatedReadDraft'?{pack,revision:1}:b.action==='animatedSaveDraft'?{revision:2}:b.action==='animatedPublish'?new Promise(resolve=>{finish=resolve;}):{});
+ render(<MemoryRouter initialEntries={['/game/create?draft=publication-race']}><Studio/></MemoryRouter>);
+ await screen.findByDisplayValue(pack.title);
+ fireEvent.click(screen.getByRole('button',{name:'Publish fixed version'}));
+ await waitFor(()=>expect(finish).toBeTypeOf('function'));
+ fireEvent.change(screen.getByLabelText('Episode title'),{target:{value:'Edited during publication'}});
+ finish({version:2,versionId:'old-snapshot'});
+ await screen.findByText('Published snapshot saved. The draft has changed; publish again before assigning.');
+ expect(screen.queryByLabelText('Assign to class')).not.toBeInTheDocument();
+ call.mockImplementation(async b=>b.action==='animatedSaveDraft'?{revision:3}:b.action==='animatedPublish'?{version:3,versionId:'current-snapshot'}:{});
+ fireEvent.click(screen.getByRole('button',{name:'Publish fixed version'}));
+ await screen.findByLabelText('Assign to class');
+ fireEvent.change(screen.getByLabelText('Episode title'),{target:{value:'Edited after publication'}});
+ expect(screen.queryByLabelText('Assign to class')).not.toBeInTheDocument();
+});
