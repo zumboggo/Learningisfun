@@ -10,5 +10,11 @@
     "title": "The Promise Left Behind",
     "package": "stories/animated/the-promise-left-behind/episode.json",
     "zip": "stories/animated/the-promise-left-behind/episode.zip"
+  },
+  {
+    "id": "the-door-that-disappeared",
+    "title": "The Door That Disappeared",
+    "package": "stories/animated/the-door-that-disappeared/episode.json",
+    "zip": "stories/animated/the-door-that-disappeared/episode.zip"
   }
 ]

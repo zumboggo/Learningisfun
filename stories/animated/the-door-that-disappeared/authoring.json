@@ -1,0 +1,94 @@
+{
+  "title": "The Door That Disappeared",
+  "episode": 4,
+  "readingBoundary": "Don Quixote, Part I chapters 6–7",
+  "openingPromise": "Help record the household’s attempt to protect Quixote, and discover whether removing a story’s source removes its power.",
+  "duration": "12–15 minutes plus quiz",
+  "fixedEvents": "See sources.json; all 128 routes retain the canonical sequence.",
+  "harmon": [
+    "You: returning student wants to understand what changes a mind",
+    "Need: distinguish a controlled room from an altered belief",
+    "Go: one-question journal opens into library",
+    "Search: hear and record disputed book judgements",
+    "Find: books removed and door hidden, apparent remedy",
+    "Take: invented enchanter strengthens heroic explanation; Sancho accepts promise",
+    "Return: witness second departure, leave new squire in canonical role, return to classroom",
+    "Change: examine motives and explanations as well as physical evidence"
+  ],
+  "choices": [
+    {
+      "id": "fear",
+      "intentions": "Listen to niece / question collective blame",
+      "responses": "Fear of losing uncle / need for certainty",
+      "callback": "family -> return",
+      "rejoin": "scrutiny"
+    },
+    {
+      "id": "judgement",
+      "intentions": "Probe reasoning / affirm speaking up",
+      "responses": "Distinction in merit / importance of hearing defence",
+      "callback": "questioned -> return",
+      "rejoin": "son"
+    },
+    {
+      "id": "author",
+      "intentions": "Ask about friendship / ask about waiting",
+      "responses": "Mixed motives / hope in unfinished work",
+      "callback": "Immediate only",
+      "rejoin": "interrupted"
+    },
+    {
+      "id": "wall",
+      "intentions": "Notice plaster / ask motive",
+      "responses": "Explanation absorbs evidence / future victory justifies loss",
+      "callback": "practical -> return",
+      "rejoin": "enemy"
+    },
+    {
+      "id": "offer",
+      "intentions": "Ask about family / test certainty",
+      "responses": "Sancho’s hope / opportunity interpreted as reason to join",
+      "callback": "family or questioned -> return",
+      "rejoin": "persuaded"
+    },
+    {
+      "id": "pack",
+      "intentions": "Check supplies / defend donkey",
+      "responses": "Sensible packing / practical humorous answer",
+      "callback": "practical -> return",
+      "rejoin": "departure"
+    },
+    {
+      "id": "morning",
+      "intentions": "Ask about governing / ask what promise matters",
+      "responses": "Food and local knowledge / expectation of reward",
+      "callback": "Immediate only",
+      "rejoin": "ranks"
+    }
+  ],
+  "sceneTrim": {
+    "opening": "Short question and physical arrival",
+    "scrutiny": "Selected contrasting verdicts, no exhaustive catalogue",
+    "poetry": "Fear of changing roles; author judges his own text through a character",
+    "interruption": "Plans interrupted, hastiness has irreversible cost",
+    "missing door": "Intervention becomes evidence for the belief it meant to end",
+    "fortnight": "Compress waiting, preserve lively arguments and preparation",
+    "Sancho": "Contrast practical needs with extraordinary hope",
+    "departure": "Keep secret departure and family cost",
+    "morning": "Complete I.7 and student insight without importing I.8"
+  },
+  "nextSuggested": "Part I chapter 8: windmills and the Basque encounter. Chapter 8 ends with the suspended sword fight; request/include chapter 9 only if continuing its resolution.",
+  "background": {
+    "tool": "Built-in imagegen",
+    "original": "/Users/david.hepting/.codex/generated_images/01a1333e-aafc-7043-a037-0ac5434b2de8/exec-420a9534-7b11-4b43-839e-ca32a0c45986.png",
+    "asset": "public/stories/animated/the-door-that-disappeared/assets/library-v1.webp",
+    "prompt": "Use case: historical-scene. Create a 16:9 visual-novel background: the modest private library of a rural gentleman in La Mancha, Spain, early seventeenth century. Whitewashed plaster walls, dark timber ceiling beams, rough terracotta floor, shelves crowded with worn leather-bound books on left and rear edges, a small side table with two books at far left, a small open window at far right looking into a sunlit courtyard. Broad unobstructed central foreground for two full-body animated characters. No people, no legible lettering, no fire, no modern objects. Clean dark slate outlines, muted warm cream and brown colours, restrained cel shadows, simplified manga-inspired graphic-novel scenery that suits polished SVG characters. Eye-level camera. Clear readable shapes, subdued contrast, no photorealism or painterly texture, no border."
+  },
+  "sealedBackground": {
+    "tool": "Built-in imagegen edit",
+    "original": "/Users/david.hepting/.codex/generated_images/01a1333e-aafc-7043-a037-0ac5434b2de8/exec-e91bdae3-4adb-438a-804a-e2dce27db046.png",
+    "reference": "Embedded home background from The Promise Left Behind",
+    "asset": "public/stories/animated/the-door-that-disappeared/assets/sealed-courtyard-v1.webp",
+    "prompt": "Use case: precise-object-edit. This reference image is the existing courtyard background in a Don Quixote visual novel. Create a matching version AFTER the household has burned the books and concealed the library entrance. Replace the open wooden doorway into the library (left third of frame), including the door, visible room interior and shelves, with a continuous freshly white-plastered wall flush with the surrounding wall. No doorway outline, no handle or visible books in that area. Also remove the two closed books and loose writing papers from the far-left table; retain the table, vase, quill and other non-book objects. Preserve everything else: exact courtyard composition, open garden gate on the right, distant countryside, foliage, well, furniture, sunlight, warm muted manga linework, and clear central foreground. No people, text, fire or new objects. Keep the same landscape frame."
+  }
+}

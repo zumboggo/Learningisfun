@@ -1,0 +1,46 @@
+[
+  {
+    "prompt": "What does the treatment of Amadís of Gaul reveal about the library scrutiny?",
+    "options": [
+      "Every book is condemned without discussion from the beginning.",
+      "The student secretly saves every condemned book.",
+      "The barber defends its quality, and the priest changes his initial judgement and spares it for the present.",
+      "Quixote wakes and orders it burned."
+    ],
+    "answer": 2,
+    "explanation": "The priest initially treats its influence as a reason to condemn it. The barber argues that its quality makes it exceptional. Their exchange complicates the idea of a simple blanket rejection of all books."
+  },
+  {
+    "prompt": "Why is Galatea especially striking among the books being judged?",
+    "options": [
+      "It is written by Cervantes, so a work by the author appears inside his own novel and receives a mixed judgement.",
+      "It proves that Sancho has already governed an island.",
+      "It is the only book the priest refuses to name.",
+      "It is Quixote’s own diary."
+    ],
+    "answer": 0,
+    "explanation": "Cervantes places his own Galatea in the library. The priest calls its author a friend but criticizes its unfinished matters and waits for a promised continuation. This is a playful, self-referential use of another text."
+  },
+  {
+    "prompt": "What happens when Quixote discovers the library entrance has been walled up?",
+    "options": [
+      "He accepts that the household has cured him by removing his books.",
+      "He decides that knights and enchantments cannot exist.",
+      "He sees the books being carried away by a real magician.",
+      "The household’s invented magician story becomes part of his existing belief in an enemy enchanter."
+    ],
+    "answer": 3,
+    "explanation": "The household hides the entrance and offers a false explanation. Quixote identifies the supposed visitor as Fristón and explains the loss through a future heroic conflict. Removing the books has not removed his interpretive habits."
+  },
+  {
+    "prompt": "Which account of Sancho’s recruitment and departure matches Chapters 6–7?",
+    "options": [
+      "He is already an experienced governor and hires Quixote.",
+      "Promises of an island help persuade him; he takes his donkey and supplies, and the pair leave secretly without family farewells.",
+      "He joins only after the windmill battle.",
+      "The student recruits him and guarantees his wages."
+    ],
+    "answer": 1,
+    "explanation": "Quixote’s promises persuade his neighbour to become a squire. Sancho’s practical concern about walking coexists with hope of an island. Both men leave at night without saying goodbye to their households. The windmills occur in Chapter 8."
+  }
+]

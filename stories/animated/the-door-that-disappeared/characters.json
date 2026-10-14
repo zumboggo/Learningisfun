@@ -1,0 +1,86 @@
+[
+  {
+    "id": "Priest",
+    "name": "Pero Pérez, the priest",
+    "version": 1,
+    "palette": {
+      "skin": "#cfab8b",
+      "hair": "#716250",
+      "shirt": "#3b424b",
+      "trim": "#cbbb98"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "cropped",
+      "face": "angular",
+      "facialHair": "none",
+      "eyes": "narrow",
+      "glasses": "none",
+      "outfit": "robe"
+    },
+    "provenance": "Fictional depiction of Pero Pérez, the priest from Cervantes, Don Quixote I.6–7. Shared polished SVG rig and stylized period costume; not an exact physical or historical reconstruction. No personal likeness."
+  },
+  {
+    "id": "Barber",
+    "name": "Nicolás, the barber",
+    "version": 1,
+    "palette": {
+      "skin": "#c99a78",
+      "hair": "#50362e",
+      "shirt": "#86565d",
+      "trim": "#cbbb98"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "swept",
+      "face": "oval",
+      "facialHair": "full",
+      "eyes": "keen",
+      "glasses": "none",
+      "outfit": "tunic"
+    },
+    "provenance": "Fictional depiction of Nicolás, the barber from Cervantes, Don Quixote I.6–7. Shared polished SVG rig and stylized period costume; not an exact physical or historical reconstruction. No personal likeness."
+  },
+  {
+    "id": "Housekeeper",
+    "name": "The housekeeper",
+    "version": 1,
+    "palette": {
+      "skin": "#d7ad8c",
+      "hair": "#726758",
+      "shirt": "#596980",
+      "trim": "#cbbb98"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "bun",
+      "face": "broad",
+      "facialHair": "none",
+      "eyes": "keen",
+      "glasses": "none",
+      "outfit": "robe"
+    },
+    "provenance": "Fictional depiction of The housekeeper from Cervantes, Don Quixote I.6–7. Shared polished SVG rig and stylized period costume; not an exact physical or historical reconstruction. No personal likeness."
+  },
+  {
+    "id": "Sancho",
+    "name": "Sancho Panza",
+    "version": 1,
+    "palette": {
+      "skin": "#c49773",
+      "hair": "#3c332c",
+      "shirt": "#6d7852",
+      "trim": "#cbbb98"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "cropped",
+      "face": "round",
+      "facialHair": "none",
+      "eyes": "gentle",
+      "glasses": "none",
+      "outfit": "tunic"
+    },
+    "provenance": "Fictional depiction of Sancho Panza from Cervantes, Don Quixote I.6–7. Shared polished SVG rig and stylized period costume; not an exact physical or historical reconstruction. No personal likeness."
+  }
+]

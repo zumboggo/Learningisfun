@@ -1,0 +1,13 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {createCharacter} from '../../../functions/learning-content/src/character-builder.js';
+import {validatePackage} from '../../../functions/learning-content/src/story-engine.js';
+import {packageBytes} from '../../../functions/learning-content/src/animated-episodes.js';
+const root=new URL('../../../',import.meta.url),read=p=>readFile(new URL(p,root));
+const prior=JSON.parse(await read('public/stories/animated/the-promise-left-behind/episode.json'));
+const recipes=JSON.parse(await readFile(new URL('characters.json',import.meta.url),'utf8'));
+const pack={format:2,title:'The Door That Disappeared',description:'Don Quixote, episode 4 · Part I chapters 6–7. The library goes on trial, a doorway disappears, and Sancho joins the adventure. Seven conversational choices with remembered replies and four knowledge questions. Approximately 12–15 minutes plus quiz.',profile:'world-literature',script:await readFile(new URL('episode.story',import.meta.url),'utf8'),assets:{backgrounds:{...prior.assets.backgrounds,sealed:{src:'data:image/webp;base64,'+(await read('public/stories/animated/the-door-that-disappeared/assets/sealed-courtyard-v1.webp')).toString('base64')},library:{src:'data:image/webp;base64,'+(await read('public/stories/animated/the-door-that-disappeared/assets/library-v1.webp')).toString('base64')}},characters:{Hepting:prior.assets.characters.Hepting,Quixote:prior.assets.characters.Quixote,Niece:prior.assets.characters.Niece,...Object.fromEntries(recipes.map(r=>[r.id,createCharacter(r)]))}},quiz:JSON.parse(await readFile(new URL('quiz.json',import.meta.url),'utf8')),sources:JSON.parse(await readFile(new URL('sources.json',import.meta.url),'utf8'))};
+const {errors}=validatePackage(pack);if(errors.length)throw Error(JSON.stringify(errors));
+const bytes=packageBytes(pack);if(bytes>5000000)throw Error('Episode exceeds 5 MB');
+const destination=new URL('public/stories/animated/the-door-that-disappeared/episode.json',root),serialized=JSON.stringify(pack,null,2)+'\n';
+if(process.argv.includes('--check')){if(await readFile(destination,'utf8')!==serialized)throw Error('Door episode is stale');}else await writeFile(destination,serialized);
+console.log(`Door episode validates: ${bytes} bytes.`);
