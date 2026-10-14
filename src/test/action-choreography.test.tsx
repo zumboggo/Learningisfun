@@ -61,3 +61,24 @@ it('finishing the pair enables exactly one continuation and records its caption 
  await act(async()=>{finishers.forEach(f=>f());});const next=screen.getByRole('button',{name:'Continue →'});expect(next).toBeEnabled();fireEvent.click(next);fireEvent.click(next);await waitFor(()=>expect(screen.getByText('After.')).toBeInTheDocument());expect(save).toHaveBeenCalledTimes(2);expect(save.mock.lastCall?.[0].steps).toEqual([null,null]);
  }finally{cleanup();HTMLElement.prototype.animate=old;HTMLElement.prototype.getAnimations=oldGet;}
 });
+it('holds a kneeling rest across dialogue and restores it from history',()=>{
+ const {story,errors}=compileStory('story 2\nshow Quixote neutral center\nrest Quixote kneeling\nQuixote: I await the ceremony.\nI: Still kneeling.\nrest Quixote relaxed\nI: Upright again.\nend',pack.assets);
+ expect(errors).toEqual([]);let s=settleStory(story,initialStoryState(story,1));
+ expect(s.stage.actors.Quixote.rest).toBe('kneeling');s=advanceStory(story,s,null);
+ expect(s.stage.actors.Quixote.rest).toBe('kneeling');expect(replayStory(story,[null],1)).toEqual(s);
+ expect(advanceStory(story,s,null).stage.actors.Quixote.rest).toBe('relaxed');
+});
+it('low poses bend connected legs with grounded feet and render without motion',async()=>{
+ const {legGeometry}=await import('../components/animated/character-geometry');
+ const {POSES}=await import('../../functions/learning-content/src/acting-library.js');
+ const {default:CartoonActor}=await import('../components/animated/CartoonActor');
+ const character={name:'Knight',rig:{version:2,preset:'cartoon-v1',finish:'polished',palette:{skin:'#eac09c',hair:'#293338',shirt:'#b93f46'},appearance:{outfit:'robe'}}};
+ for(const cue of ['kneel','duck','crouch','cover-head']){
+  const pose=POSES[cue];for(const side of ['left','right'] as const){const g=legGeometry(side,pose.bodyDrop,pose[side+'FootX'],pose[side+'Bend']);
+   expect(Math.hypot(g.kx-g.x,g.ky-g.y)).toBeCloseTo(109);expect(Math.hypot(g.fx-g.kx,g.fy-g.ky)).toBeCloseTo(109);
+   expect(g.fy).toBe(566);expect(g.ky).toBeLessThanOrEqual(579);expect(g.kx).toBeGreaterThan(0);expect(g.kx).toBeLessThan(240);
+  }
+  const {container,unmount}=render(<CartoonActor character={character} response={cue} reduced/>);
+  expect(container.querySelectorAll('[data-leg]')).toHaveLength(2);expect(Number(container.querySelector('[data-body-drop]')?.getAttribute('data-body-drop'))).toBeGreaterThan(75);unmount();
+ }
+});

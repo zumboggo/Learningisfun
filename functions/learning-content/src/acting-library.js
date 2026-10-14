@@ -1,13 +1,18 @@
 /** Closed, versioned vocabulary shared by parser, renderer, studio and authoring tools. */
-export const ACTING_VERSION=3;
+export const ACTING_VERSION=4;
 export const CHARACTER_OPTIONS={age:['teen','adult','elder'],hair:['layered','side-part','long','bob','cropped','tousled','bun','swept'],glasses:['none','round'],outfit:['uniform','teacher','tunic','robe','workshirt','cardigan','suit'],face:['default','oval','round','angular','lean','broad'],eyes:['default','keen','gentle','narrow'],facialHair:['none','full']};
 export const EMOTIONS=['neutral','happy','worried','sad','angry','surprised','curious','confused','skeptical','embarrassed','relieved','determined','shocked','laughing','excited','scared','frustrated','proud','pleading','disappointed'];
 export const PROPS=['none','phone','sword','bow'];
-export const RESTS=['relaxed','attentive','guarded','downcast'];
+export const RESTS=['kneeling','crouched','sheltered','relaxed','attentive','guarded','downcast'];
 export const TALKS=['phone-talk','phone-shout','explain','reassure','question','insist','hesitant','celebrate','shock','laugh','rage','excited','scared','facepalm','proud','plead','disappointed'];
-export const RESPONSES=['phone-talk','phone-shout','sword-strike','draw-bow','cast-beam','nod','shake-head','shrug','point','wave','recoil','laugh','sigh','bow','cheer','reach','cower','stumble','strike','block','dodge','shock','rage','excited','scared','facepalm','proud','plead','disappointed'];
+export const RESPONSES=['kneel','crouch','duck','cover-head','phone-talk','phone-shout','sword-strike','draw-bow','cast-beam','nod','shake-head','shrug','point','wave','recoil','laugh','sigh','bow','cheer','reach','cower','stumble','strike','block','dodge','shock','rage','excited','scared','facepalm','proud','plead','disappointed'];
 /** Explicit outcomes: choreography never rolls a result or changes the literary plot. */
 export const ACTIONS={
+ kneel:{paired:false,actor:'kneel',description:'Lower onto one knee, pause, then rise. Use rest Actor kneeling to remain down.'},
+ crouch:{paired:false,actor:'crouch',description:'Bend both knees into a low crouch, then rise. Use rest Actor crouched to stay low.'},
+ duck:{paired:false,actor:'duck',description:'Drop the head and bend the knees beneath an incoming threat, then recover.'},
+ 'cover-head':{paired:false,actor:'cover-head',description:'Crouch with both hands shielding the head. Use rest Actor sheltered to hold the pose.'},
+ 'attack-ducked':{paired:true,actor:'strike',target:'duck',description:'A strike passes over the target as they duck; no hit lands.'},
  'phone-talk':{paired:false,actor:'phone-talk',prop:'phone',description:'Hold a visible phone at the ear and talk. The phone stays equipped until prop Actor none.'},
  'phone-shout':{paired:false,actor:'phone-shout',prop:'phone',description:'Keep the phone at the ear while leaning forward and emphasizing with the free hand.'},
  'sword-strike':{paired:true,actor:'sword-strike',target:'recoil',prop:'sword',description:'Strike with a visible sword; the target recoils without gore.'},
@@ -44,7 +49,13 @@ export const AUTO_ACTING={
  relieved:{rest:'relaxed',talk:'reassure'},determined:{rest:'attentive',talk:'insist'},
 };
 // Joint angles in degrees. Every preset uses the same anatomy; skins supply only artwork.
+const kneeling={bodyDrop:115,leftFootX:89,rightFootX:16,leftBend:-1,rightBend:-1,head:8,leftForearm:30,rightForearm:-35};
+const crouched={bodyDrop:80,leftFootX:18,rightFootX:-18,leftBend:-1,rightBend:1,torso:10,head:8,leftForearm:40,rightForearm:-40};
+const sheltered={...crouched,bodyDrop:95,torso:12,head:18,leftUpperArm:-160,leftForearm:-20,rightUpperArm:160,rightForearm:20};
 export const POSES={
+ kneeling,crouched,sheltered,kneel:kneeling,crouch:crouched,
+ duck:{...crouched,bodyDrop:105,torso:22,head:20,leftForearm:75,rightForearm:-75},
+ 'cover-head':sheltered,
  'phone-hold':{rightUpperArm:100,rightForearm:135,rightHand:125},
  'phone-talk':{head:3,leftUpperArm:20,leftForearm:48},
  'phone-shout':{torso:8,head:4,leftUpperArm:35,leftForearm:-65},
@@ -87,6 +98,7 @@ export const POSES={
  sigh:{head:9,torso:3,leftUpperArm:5,rightUpperArm:-5},
 };
 export const ACTING_DESCRIPTIONS={
+ kneeling:'Remain on one knee until the resting pose changes.',crouched:'Remain low with bent knees.',sheltered:'Stay crouched with hands shielding the head.',
  shock:'Both hands fly to the cheeks as the eyes widen and mouth opens.',rage:'Clench both fists and swing the arms in two frustrated emphases.',excited:'Throw both hands overhead with an eager bounce.',scared:'Recoil with open hands shielding the face.',facepalm:'Bring one hand over the face and bow the head.',proud:'Plant hands at the waist and lift the chin.',plead:'Bring both hands together at the chest and lean forward.',disappointed:'Let both arms fall as the head and shoulders sink.',
  ...Object.fromEntries(Object.entries(ACTIONS).filter(([,a])=>!a.paired).map(([id,a])=>[id,a.description])),
  strike:'Extend the leading arm in a stylized strike.',block:'Raise both forearms to guard.',dodge:'Lean away and recover balance.',
