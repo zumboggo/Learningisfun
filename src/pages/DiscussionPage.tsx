@@ -1,3 +1,4 @@
+import {executeLearningContent} from '@/services/learning-content.service';
 import { validOptionalSourceLink } from '@/utils/source-link';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
@@ -323,10 +324,7 @@ export function DiscussionPage() {
       syncStatus: 'local',
     });
     try {
-      const { databases, DATABASE_ID, COLLECTIONS } = await import('@/lib/appwrite');
-      await databases.updateDocument(DATABASE_ID, COLLECTIONS.discussion_questions, questionId, {
-        moderationStatus: status,
-      });
+      await executeLearningContent({action:'mutate',collection:'discussion_questions',operation:'update',id:questionId,data:{moderationStatus:status}});
       await db.discussion_questions.update(questionId, { syncStatus: 'synced' });
     } catch {
       const question = await db.discussion_questions.get(questionId);
@@ -345,10 +343,7 @@ export function DiscussionPage() {
       syncStatus: 'local',
     });
     try {
-      const { databases, DATABASE_ID, COLLECTIONS } = await import('@/lib/appwrite');
-      await databases.updateDocument(DATABASE_ID, COLLECTIONS.discussion_questions, questionId, {
-        discussionStatus: status,
-      });
+      await executeLearningContent({action:'mutate',collection:'discussion_questions',operation:'update',id:questionId,data:{discussionStatus:status}});
       await db.discussion_questions.update(questionId, { syncStatus: 'synced' });
     } catch {
       const question = await db.discussion_questions.get(questionId);

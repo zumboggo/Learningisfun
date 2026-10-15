@@ -1,3 +1,4 @@
+import {writingWorkspace, writingSettings, writingArchive, writingRoots} from './writing-discussion.js';
 import { createHash } from 'node:crypto';
 import { Query } from 'node-appwrite';
 import { atomicDiscussion, guardWorkspace, curatedActions, allocateQuestions } from './curated-questions.js';
@@ -61,21 +62,44 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
     }
     return {readings:readings.map(row=>({...row,...(activity.get(row.id)||{questionCount:0,replyCount:0})}))};
   }
-  const cls = await db.getDocument(databaseId, 'classes', body.classId);
+  let writing = body.writingSessionId ? await db.getDocument(databaseId,'class_sessions',body.writingSessionId) : null;
+  if(writing && writing.discussionType!=='presentation')fail('Not a writing prompt');
+  if(!writing&&['exportWritingResponses','setWritingDiscussionSettings'].includes(body.action))fail('A writing session is required');
+  let config=writing?writingSettings(writing):null;
+  const cls = await db.getDocument(databaseId, 'classes', writing?.classId || body.classId);
   const teacher = profile.role === 'teacher' && cls.teacherId === userId;
   if (!teacher && (profile.role === 'teacher' || !memberClassIds.has(cls.$id))) fail('Class access required');
-  const text = await db.getDocument(databaseId, 'texts', body.textId);
-  const assigned = await list('text_assignments', [Query.equal('textId', text.$id), Query.equal('classId', cls.$id)]);
-  if (!assigned.some(a => teacher || textAssignmentAvailable(a)) || (!teacher && text.status !== 'published')) fail('This reading is not available to this class yet');
-  const eligible = assigned.some(a => a.isAssignedReading === true);
-  if (!eligible && !teacher) fail('Only Assigned Readings have text discussions');
-  if (!eligible && !['readReadingDiscussion','moderateReadingDiscussion'].includes(body.action)) fail('Mark this text as Assigned Reading to contribute');
-  const workspaceId = discussionKey(text.$id, cls.$id);
-  if(transactionId)await guardWorkspace(db,databaseId,workspaceId);
+  if(writing&&transactionId){await guardWorkspace(db,databaseId,writingWorkspace(writing.$id));writing=await db.getDocument(databaseId,'class_sessions',writing.$id);config=writingSettings(writing);}
+  let text,eligible,workspaceId;
+  if(writing){
+    text={title:writing.promptMarkdown||writing.title};eligible=writing.status==='active';workspaceId=writingWorkspace(writing.$id);
+    const allowed=['readReadingDiscussion','exportWritingResponses','setWritingDiscussionSettings','previewReadingAssignments','publishReadingAssignments','postReadingDiscussion','editReadingDiscussion','voteReadingDiscussion','reportReadingDiscussion','moderateReadingDiscussion'];
+    if(!allowed.includes(body.action))fail('This action is not available for writing prompts');
+    if(['exportWritingResponses','setWritingDiscussionSettings'].includes(body.action)&&!teacher)fail('Only the class teacher may use this action');
+    if(!teacher&&!config.studentsCanView&&body.action!=='readReadingDiscussion')fail('Submissions are private');
+    if(!['readReadingDiscussion','exportWritingResponses','setWritingDiscussionSettings','moderateReadingDiscussion'].includes(body.action)&&(!eligible||!config.discussionMode||(!teacher&&!config.studentsCanView)))fail('This discussion is read-only');
+  }else{
+    text=await db.getDocument(databaseId,'texts',body.textId);
+    const assigned=await list('text_assignments',[Query.equal('textId',text.$id),Query.equal('classId',cls.$id)]);
+    if(!assigned.some(a=>teacher||textAssignmentAvailable(a))||(!teacher&&text.status!=='published'))fail('This reading is not available to this class yet');
+    eligible=assigned.some(a=>a.isAssignedReading===true);
+    if(!eligible&&!teacher)fail('Only Assigned Readings have text discussions');
+    if(!eligible&&!['readReadingDiscussion','moderateReadingDiscussion'].includes(body.action))fail('Mark this text as Assigned Reading to contribute');
+    workspaceId=discussionKey(text.$id,cls.$id);
+  }
+  if(transactionId&&!writing)await guardWorkspace(db,databaseId,workspaceId);
   let settings;
   try { settings = await db.getDocument(databaseId,'reading_settings',workspaceId); }
   catch (error) { if(error.code!==404)throw error; }
-  const showStudentNames = settings ? JSON.parse(settings.dataJson).showStudentNames === true : false;
+  const savedSettings=settings?JSON.parse(settings.dataJson):{};
+  const showStudentNames = !writing && savedSettings.showStudentNames===true;
+  if(body.action==='setWritingDiscussionSettings'){
+    const next={...config};
+    if(typeof body.discussionMode==='boolean'){next.discussionMode=body.discussionMode;if(body.discussionMode&&!config.discussionMode)next.studentsCanView=true;}
+    if(typeof body.studentsCanView==='boolean')next.studentsCanView=body.studentsCanView;
+    await db.updateDocument(databaseId,'class_sessions',writing.$id,{notesMarkdown:JSON.stringify(next),publishedNotesMarkdown:writing.status==='published'?writingArchive(writing):'',updatedAt:new Date().toISOString()});
+    return {ok:true};
+  }
   if(body.action==='setReadingDiscussionIdentity') {
     if(!teacher)fail('Only the class teacher may change name visibility');
     if(typeof body.showStudentNames!=='boolean')fail('Choose a name visibility setting');
@@ -91,7 +115,17 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
   const queries = [Query.equal('workspaceId', workspaceId)];
   const rows = await list('reading_posts', queries);
   const unpack = r => ({ ...JSON.parse(r.dataJson), id: r.$id, authorId: r.authorId });
-  const posts = rows.map(unpack);
+  const roots=writing?await writingRoots(db,databaseId,writing):[];
+  const posts = [...roots.map(p=>({...p,...savedSettings.submissions?.[p.id]})),...rows.map(unpack)];
+  const savePost=async(post,patch)=>{
+    const {id,authorId,...data}=post;
+    if(post.writingRoot){
+      savedSettings.submissions={...savedSettings.submissions,[id]:{...savedSettings.submissions?.[id],...patch}};
+      const payload={workspaceId,dataJson:JSON.stringify(savedSettings)};
+      if(settings)await db.updateDocument(databaseId,'reading_settings',workspaceId,payload);
+      else {settings=await db.createDocument(databaseId,'reading_settings',workspaceId,payload,[]);}
+    }else await db.updateDocument(databaseId,'reading_posts',id,{dataJson:JSON.stringify({...data,...patch})});
+  };
   const byId = new Map(posts.map(p => [p.id, p]));
   const ancestors = post => {
     const result = []; let current = post;
@@ -101,10 +135,10 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
     }
     return result;
   };
-  const visible = p => ancestors(p).every(a=>!a.withdrawn)&&(teacher || ancestors(p).every(a => !a.hidden));
+  const visible = p => (!writing||teacher||config.studentsCanView)&&ancestors(p).every(a=>!a.withdrawn)&&(teacher || ancestors(p).every(a => !a.hidden));
   const ownQuestions=posts.filter(p=>p.authorId===userId&&!p.parentId&&p.category==='question'&&!p.withdrawn);
   const publishedCount=ownQuestions.length;
-  const draftRows=profile.role==='student'?await list('reading_question_drafts',[...queries,Query.equal('authorId',userId)]):[];
+  const draftRows=!writing&&profile.role==='student'?await list('reading_question_drafts',[...queries,Query.equal('authorId',userId)]):[];
   const drafts=draftRows.map(unpack);
   const roundRows=await list('reading_reply_rounds',queries);
   const allRounds=roundRows.map(r=>({...JSON.parse(r.dataJson),id:r.$id}));
@@ -237,7 +271,7 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
       return {ok:true};
     }
   }
-  if (body.action === 'readReadingDiscussion') {
+  if (body.action === 'readReadingDiscussion' || body.action==='exportWritingResponses') {
     const votes = await list('reading_votes', queries);
     const reports = teacher ? await list('reading_reports', queries) : [];
     const members = teacher ? await list('class_members', [Query.equal('classId', cls.$id), Query.equal('role', 'student')]) : [];
@@ -250,11 +284,13 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
     const voting=teacher&&votingSession?{sessionId:votingSession.id,active:votingSession.active,roundCount:votingSession.roundCount,questionsPerRound:votingSession.questionsPerRound,
       progress:votingSession.ballots.filter(b=>studentIds.includes(b.studentId)).map(b=>{const ballot=votingBallot(votingSession,b.studentId,votingQuestions);return {studentId:b.studentId,completedRounds:ballot.completedRounds,totalRounds:ballot.totalRounds,completed:ballot.completed};})}
       :profile.role==='student'&&studentBallot?votingBallot(votingSession,userId,votingQuestions):undefined;
+    if(body.action==='exportWritingResponses')return {prompt:writing.promptMarkdown,className:`${cls.courseName||''} · ${cls.name}`,date:writing.sessionDate,posts:posts.filter(p=>body.includeReplies||!p.parentId).map(p=>({id:p.id,parentId:p.parentId,label:p.label,content:p.content,createdAt:p.createdAt,...(body.includeNames?{name:p.teacher?'Teacher':people.find(person=>person.$id===p.authorId)?.name||'Unknown student'}:{})}))};
     return {
+      ...(writing?{discussionMode:config.discussionMode,studentsCanView:config.studentsCanView,canSubmit:eligible&&Boolean(writing.assignmentId)&&profile.role==='student',canReply:eligible&&config.discussionMode&&(teacher||config.studentsCanView)}:{}),
       ...(voting?{voting}:{}),
-      curatedReady:true, ...(profile.role==='student'?{notebook:drafts.filter(d=>!d.publishedId).map(({id,content,draftId,updatedAt})=>({id,content,draftId,updatedAt})),publishedCount,remainingSpaces:Math.max(0,3-publishedCount),assignments:rounds.flatMap(r=>r.assignments.filter(a=>a.studentId===userId).map(a=>({...a,roundId:r.id,createdAt:r.createdAt})))}:{}),
+      curatedReady:true, ...(profile.role==='student'?{notebook:drafts.filter(d=>!d.publishedId).map(({id,content,draftId,updatedAt})=>({id,content,draftId,updatedAt})),publishedCount,remainingSpaces:Math.max(0,3-publishedCount),assignments:(writing&&!config.studentsCanView?[]:rounds).flatMap(r=>r.assignments.filter(a=>a.studentId===userId).map(a=>({...a,roundId:r.id,createdAt:r.createdAt})))}:{}),
       ...(teacher?{rounds:rounds.map(round=>({...round,assignments:round.assignments.map(a=>a.status==='pending'&&!studentIds.includes(a.studentId)?{...a,status:'cancelled',cancelledReason:'Student left class'}:a)})),awaitingReplies:posts.filter(p=>!p.parentId&&p.category==='question'&&!p.withdrawn&&!p.hidden&&!posts.some(r=>r.parentId===p.id)).map(p=>p.id)}:{}),
-      title: text.title, className: `${cls.courseName || ''} · ${cls.name}`, teacher, showStudentNames, canWrite: eligible && (teacher || profile.role === 'student'),
+      title: text.title, className: `${cls.courseName || ''} · ${cls.name}`, teacher, showStudentNames, canWrite: eligible && (teacher || profile.role === 'student') && (!writing || (config.discussionMode && (teacher||config.studentsCanView))),
       posts: posts.filter(visible).map(p => {
         const { authorId, ...safe } = p;
         return { ...safe, everReplied:p.everReplied||posts.some(r=>r.parentId===p.id), mine: authorId === userId, ...(teacher ? {authorId} : {}), ...(showNames ? {username:people.find(person=>person.$id===authorId)?.name||p.label} : {}),
@@ -275,6 +311,7 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
     const id = key(workspaceId, userId, requestId);
     if (byId.has(id)) return { ok: true }; // A retry after a dropped response is safe.
     const parent = body.parentId ? byId.get(body.parentId) : null;
+    if(writing&&!parent)fail('Submit your response using the writing prompt');
     if (body.parentId && (!parent || ancestors(parent).some(p => p.withdrawn || p.hidden || p.locked))) fail('This thread is hidden or locked');
     if (parent && ancestors(parent).length >= 4) fail('Replies may be nested three levels');
     const category = parent?.category || body.category;
@@ -288,14 +325,15 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
     try { await db.createDocument(databaseId, 'reading_posts', id, { workspaceId, authorId: userId, dataJson: JSON.stringify(data) }, []); }
     catch (error) { if (error.code !== 409) throw error; }
     if(parent){
-      const root=ancestors(parent).at(-1);const {id:rootId,authorId,...saved}=root;void authorId;
-      await db.updateDocument(databaseId,'reading_posts',rootId,{dataJson:JSON.stringify({...saved,everReplied:true})});
+      const root=ancestors(parent).at(-1),rootId=root.id;
+      await savePost(root,{everReplied:true});
       if(parent.id===rootId)for(const round of rounds){let changed=false;for(const a of round.assignments)if(a.studentId===userId&&a.questionId===rootId&&a.status==='pending'){a.status='completed';a.replyId=id;a.completedAt=data.createdAt;changed=true;}if(changed)await writeRound(round);}
     }
     return { ok: true };
   }
   if (!selected || !visible(selected)) fail('Contribution is not available');
   if (body.action === 'editReadingDiscussion') {
+    if(writing&&selected.writingRoot)fail('Revise your submission using the writing prompt');
     if(selected.authorId!==userId)fail('Only your own contributions can be edited');
     if(ancestors(selected).some(p=>p.hidden||p.locked))fail('This thread is hidden or locked');
     if(body.expectedUpdatedAt!==(selected.updatedAt||selected.createdAt))throw Object.assign(new Error('This post changed. Refresh before editing again.'),{code:409});
@@ -331,8 +369,7 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
       for (const report of reports) await db.deleteDocument(databaseId, 'reading_reports', report.$id);
     } else {
       const change = fields[body.operation]; if (!change) fail('Invalid moderation action');
-      const { id, authorId, ...data } = selected;
-      await db.updateDocument(databaseId, 'reading_posts', id, { dataJson: JSON.stringify({ ...data, [change[0]]: change[1] }) });
+      await savePost(selected,{[change[0]]:change[1]});
     }
     return { ok: true };
   }

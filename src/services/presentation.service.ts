@@ -1,3 +1,4 @@
+import type {ReadingDiscussion} from './reading-discussion.service';
 import { db } from '@/db/schema';
 import { executeLearningContent } from '@/services/learning-content.service';
 import type { ClassSession, PresentationLink } from '@/types';
@@ -7,6 +8,7 @@ export type WritingPromptSize = 'standard' | 'large' | 'extra-large';
 export interface LiveQuestionDraft { type: LiveQuestionType; text: string; options: string[]; answer: string; }
 export interface LiveQuestion extends LiveQuestionDraft { id: string; sortOrder: number; }
 export interface LivePresentationState {
+  discussion?: ReadingDiscussion;
   session: ClassSession;
   questions: LiveQuestion[];
   activeQuestion: LiveQuestion | null;
@@ -50,8 +52,8 @@ export async function createLivePresentation(classId: string, title: string, que
   return result.sessionId;
 }
 
-export async function createWritingPrompt(classId: string, prompt: string, allowResubmission = true, promptSize: WritingPromptSize = 'large', exampleResponse = ''): Promise<string> {
-  const result = await executeLearningContent<{ sessionId: string }>({ action: 'createLivePresentation', classId, title: 'Writing Prompt', questions: [{ type: 'paragraph', text: prompt.trim(), options: [], answer: '' }], allowResubmission, promptSize, exampleResponse: exampleResponse.trim() });
+export async function createWritingPrompt(classId: string, prompt: string, allowResubmission = true, promptSize: WritingPromptSize = 'large', exampleResponse = '', discussionMode = false): Promise<string> {
+  const result = await executeLearningContent<{ sessionId: string }>({ action: 'createLivePresentation', classId, title: 'Writing Prompt', questions: [{ type: 'paragraph', text: prompt.trim(), options: [], answer: '' }], allowResubmission, promptSize, exampleResponse: exampleResponse.trim(), discussionMode });
   return result.sessionId;
 }
 

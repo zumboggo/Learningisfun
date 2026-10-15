@@ -1,3 +1,4 @@
+import {executeLearningContent} from './learning-content.service';
 import { functions, databases, DATABASE_ID, COLLECTIONS, FUNCTION_IDS } from '@/lib/appwrite';
 import { db } from '@/db/schema';
 import { generateId, getTimestamp } from '@/utils/helpers';
@@ -298,9 +299,7 @@ export async function moderateQuestion(
 ): Promise<void> {
   await db.discussion_questions.update(questionId, { moderationStatus: status });
   try {
-    await databases.updateDocument(DATABASE_ID, COLLECTIONS.discussion_questions, questionId, {
-      moderationStatus: status,
-    });
+    await executeLearningContent({action:'mutate',collection:'discussion_questions',operation:'update',id:questionId,data:{moderationStatus:status}});
   } catch {
     // Will sync later
   }
@@ -313,9 +312,7 @@ export async function markForDiscussion(
 ): Promise<void> {
   await db.discussion_questions.update(questionId, { discussionStatus: status, syncStatus: 'local' });
   try {
-    await databases.updateDocument(DATABASE_ID, COLLECTIONS.discussion_questions, questionId, {
-      discussionStatus: status,
-    });
+    await executeLearningContent({action:'mutate',collection:'discussion_questions',operation:'update',id:questionId,data:{discussionStatus:status}});
     await db.discussion_questions.update(questionId, { syncStatus: 'synced' });
   } catch {
     const question = await db.discussion_questions.get(questionId);

@@ -209,7 +209,7 @@ export async function syncClassSessionsFromServer(classIds: string[]): Promise<b
         votesPerStudent: (doc.votesPerStudent as number) ?? 4,
         allowStackedVotes: Boolean(doc.allowStackedVotes),
         notesMarkdown: (doc.notesMarkdown as string) || '',
-        publishedNotesMarkdown: (doc.publishedNotesMarkdown as string) || '',
+        publishedNotesMarkdown: doc.discussionType==='presentation'?`[Open writing prompt](/presentations/${id}/live)`:(doc.publishedNotesMarkdown as string) || '',
         publishedAt: (doc.publishedAt as string) || null,
         createdAt: doc.createdAt as string,
         updatedAt: (doc.updatedAt as string) || (doc.createdAt as string),

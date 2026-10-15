@@ -3,6 +3,7 @@ import path from 'path'
 
 export default defineConfig({
   resolve: {
+    dedupe: ['node-appwrite'],
     alias: {
       '@': path.resolve(__dirname, './src'),
     },

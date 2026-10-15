@@ -14,6 +14,7 @@ export interface QuestionVoting {
   progress?: {studentId:string;completedRounds:number;totalRounds:number;completed:boolean}[];
 }
 export interface ReadingDiscussion {
+  discussionMode?:boolean; studentsCanView?:boolean; canSubmit?:boolean; canReply?:boolean;
   voting?: QuestionVoting;
   curatedReady?:boolean;notebook?:{id:string;draftId:string;content:string;updatedAt:string}[];publishedCount?:number;remainingSpaces?:number;assignments?:ReplyAssignment[];rounds?:{id:string;createdAt:string;assignments:ReplyAssignment[]}[];awaitingReplies?:string[];
   title:string; className:string; teacher:boolean; showStudentNames?:boolean; canWrite:boolean; posts:ReadingDiscussionPost[];
@@ -43,3 +44,8 @@ export function currentReadingWeek(now = new Date()) {
 }
 
 export const hasReadingDiscussionActivity=(row:ReadingDiscussionListing)=>(row.questionCount||0)+(row.replyCount||0)>0;
+
+export type DiscussionTarget = {kind:'text';textId:string;classId:string}|{kind:'writing';sessionId:string};
+export const discussionCall = <T>(action:string,target:DiscussionTarget,fields:Record<string,unknown>={}) => target.kind==='text'
+  ? readingDiscussion<T>(action,target.textId,target.classId,fields)
+  : executeLearningContent<T>({action,...fields,writingSessionId:target.sessionId});

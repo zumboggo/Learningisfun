@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 export const curatedActions = ['saveReadingQuestionDraft','deleteReadingQuestionDraft','publishReadingQuestions','withdrawReadingQuestion','previewReadingAssignments','publishReadingAssignments'];
-export const readingMutation = action => !['readReadingDiscussion','listReadingDiscussions','previewReadingAssignments'].includes(action);
+export const readingMutation = action => !['readReadingDiscussion','listReadingDiscussions','previewReadingAssignments','exportWritingResponses','readLivePresentation'].includes(action);
 
 // Stage the shared workspace guard BEFORE reading posts or rounds. Every writer
 // touches it, so a conflicting commit retries with fresh quota/thread state.

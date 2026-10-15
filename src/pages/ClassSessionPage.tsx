@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ID } from 'appwrite';
 import { db } from '@/db/schema';
@@ -201,6 +201,7 @@ export function ClassSessionPage() {
     setRefreshKey(key => key + 1);
   };
 
+  if(session?.discussionType==='presentation')return <Navigate replace to={`/presentations/${session.$id}/live`}/>;
   if (!session) {
     return <div className="p-4 text-gray-400">Loading class period...</div>;
   }

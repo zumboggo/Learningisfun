@@ -1,3 +1,5 @@
+import {writingSettings,writingArchive,writingWorkspace,listAll} from './writing-discussion.js';
+import {atomicDiscussion,guardWorkspace} from './curated-questions.js';
 import {animatedEpisodeAction} from './animated-episodes.js';
 import {episodeTextAction} from './episode-text.js';
 import {ethicsPortfolioAction} from './ethics-portfolio.js';
@@ -21,7 +23,7 @@ import { readingDiscussionAction } from './reading-discussion.js';
 
 const studentCollections = new Set(['quiz_attempts', 'writing_submissions', 'peer_reviews', 'discussion_questions', 'discussion_answers', 'question_votes', 'text_annotations', 'text_discussion_posts', 'text_discussion_votes']);
 const substitutePostCollections = new Set(['discussion_questions', 'discussion_answers', 'text_annotations', 'text_discussion_posts']);
-const teacherCollections = new Set(['classes', 'deck_assignments', 'quizzes', 'quiz_assignments', 'quiz_questions', 'writing_prompts', 'writing_prompt_assignments', 'texts', 'text_assignments', 'text_paragraphs']);
+const teacherCollections = new Set(['class_sessions','classes', 'deck_assignments', 'quizzes', 'quiz_assignments', 'quiz_questions', 'writing_prompts', 'writing_prompt_assignments', 'texts', 'text_assignments', 'text_paragraphs']);
 const clean = document => { const output = { ...document }; for (const key of Object.keys(output)) if (key.startsWith('$')) delete output[key]; output.$id = document.$id; return output; };
 const membershipId = (classId, userId) => `member_${createHash('sha256').update(`${classId}:${userId}`).digest('hex').slice(0, 29)}`;
 const stableId = (prefix, value) => `${prefix}_${createHash('sha256').update(value).digest('hex').slice(0, 30-prefix.length)}`;
@@ -179,7 +181,7 @@ export default async ({ req, res, error }) => {
     if (body.action === 'saveTqe' || ['flagTextAnnotation','moderateTextAnnotation','setAnnotationMode'].includes(body.action) || (body.action === 'mutate' && body.collection === 'text_annotations')) {
       return res.json({ error: 'Legacy annotations and TQE are read-only. Your existing work is preserved; use Discussions → Texts for new contributions.' }, 403);
     }
-    if (['startReadingQuestionVoting','endReadingQuestionVoting','chooseReadingQuestionVote','saveReadingQuestionDraft','deleteReadingQuestionDraft','publishReadingQuestions','withdrawReadingQuestion','previewReadingAssignments','publishReadingAssignments','setReadingDiscussionIdentity','listReadingDiscussions','readReadingDiscussion','postReadingDiscussion','editReadingDiscussion','voteReadingDiscussion','reportReadingDiscussion','moderateReadingDiscussion'].includes(body.action)) {
+    if (['exportWritingResponses','setWritingDiscussionSettings','startReadingQuestionVoting','endReadingQuestionVoting','chooseReadingQuestionVote','saveReadingQuestionDraft','deleteReadingQuestionDraft','publishReadingQuestions','withdrawReadingQuestion','previewReadingAssignments','publishReadingAssignments','setReadingDiscussionIdentity','listReadingDiscussions','readReadingDiscussion','postReadingDiscussion','editReadingDiscussion','voteReadingDiscussion','reportReadingDiscussion','moderateReadingDiscussion'].includes(body.action)) {
       try { return res.json(await readingDiscussionAction({ body, profile, userId, memberClassIds, db, databaseId })); }
       catch (cause) { if([403,409].includes(cause.code))return res.json({error:cause.message},cause.code);throw cause; }
     }
@@ -489,7 +491,7 @@ export default async ({ req, res, error }) => {
         db.listDocuments(databaseId, 'presentation_links', [Query.equal('classId', allowed), Query.limit(5000)]),
         db.listDocuments(databaseId, 'class_sessions', [Query.equal('classId', allowed), Query.equal('discussionType', 'presentation'), Query.limit(5000)]),
       ]);
-      return res.json({ links: result.documents.map(clean), liveSessions: sessionResult.documents.map(clean) });
+      return res.json({ links: result.documents.map(clean), liveSessions: sessionResult.documents.map(session=>clean({...session,publishedNotesMarkdown:session.status==='published'?writingArchive(session):''})) });
     }
 
     if (body.action === 'addPresentationLinks') {
@@ -527,23 +529,25 @@ export default async ({ req, res, error }) => {
       const allowResubmission = normalizedQuestions.some(q => q.type === 'paragraph') || Boolean(body.allowResubmission);
       const promptSize = ['standard', 'large', 'extra-large'].includes(body.promptSize) ? body.promptSize : 'large';
       const exampleResponse = String(body.exampleResponse || '').trim().slice(0, 10000);
-      const session = await db.createDocument(databaseId, 'class_sessions', ID.unique(), { classId: body.classId, assignmentId: null, discussionType: 'presentation', textId: null, promptMarkdown: String(normalizedQuestions[0].text).trim(), title: String(body.title || '').trim() || 'Writing Prompt', sessionDate: now.slice(0, 10), status: 'active', votesPerStudent: 0, allowStackedVotes: false, notesMarkdown: JSON.stringify({ reveal: false, allowResubmission, promptSize, exampleResponse }), publishedNotesMarkdown: '', publishedAt: null, createdAt: now, updatedAt: now });
+      const session = await db.createDocument(databaseId, 'class_sessions', ID.unique(), { classId: body.classId, assignmentId: null, discussionType: 'presentation', textId: null, promptMarkdown: String(normalizedQuestions[0].text).trim(), title: String(body.title || '').trim() || 'Writing Prompt', sessionDate: now.slice(0, 10), status: 'active', votesPerStudent: 0, allowStackedVotes: false, notesMarkdown: JSON.stringify({ reveal: false, allowResubmission, promptSize, exampleResponse, discussionMode:body.discussionMode===true, studentsCanView:body.discussionMode===true }), publishedNotesMarkdown: '', publishedAt: null, createdAt: now, updatedAt: now });
       let firstQuestionId = null;
       for (let index = 0; index < normalizedQuestions.length; index++) {
         const q = normalizedQuestions[index], options = q.options;
         const created = await db.createDocument(databaseId, 'discussion_questions', ID.unique(), { classSessionId: session.$id, authorId: userId, questionText: String(q.text).trim(), selectedPassage: JSON.stringify({ type: q.type, options, answer: String(q.answer || '') }), voteCount: index, moderationStatus: 'visible', discussionStatus: 'none', discussionNotesMarkdown: '', notesUpdatedAt: null, isTeacherQuestion: true, teacherVisibleBeforeSubmission: true, createdAt: now });
         if (!firstQuestionId) firstQuestionId = created.$id;
       }
-      await db.updateDocument(databaseId, 'class_sessions', session.$id, { assignmentId: firstQuestionId, notesMarkdown: JSON.stringify({ reveal: false, lastQuestionId: firstQuestionId, allowResubmission, promptSize, exampleResponse }) });
+      await db.updateDocument(databaseId, 'class_sessions', session.$id, { assignmentId: firstQuestionId, notesMarkdown: JSON.stringify({ reveal: false, lastQuestionId: firstQuestionId, allowResubmission, promptSize, exampleResponse, discussionMode:body.discussionMode===true, studentsCanView:body.discussionMode===true }) });
       return res.json({ sessionId: session.$id });
     }
 
     if (body.action === 'updateWritingPrompt') {
+      return await atomicDiscussion({body,db,databaseId},async({db,transactionId})=>{
       if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
-      const session = await db.getDocument(databaseId, 'class_sessions', body.sessionId);
+      let session = await db.getDocument(databaseId, 'class_sessions', body.sessionId);
       if (session.discussionType !== 'presentation') return res.json({ error: 'Not a writing prompt' }, 400);
       const targetClass = await db.getDocument(databaseId, 'classes', session.classId);
       if (targetClass.teacherId !== userId) return res.json({ error: 'Not the class owner' }, 403);
+      if(transactionId){await guardWorkspace(db,databaseId,writingWorkspace(body.sessionId));session=await db.getDocument(databaseId,'class_sessions',body.sessionId);}
       const prompt = String(body.prompt || '').trim();
       if (!prompt || prompt.length > 10000) return res.json({ error: 'Enter a valid prompt' }, 400);
       const promptSize = ['standard', 'large', 'extra-large'].includes(body.promptSize) ? body.promptSize : 'large';
@@ -554,12 +558,10 @@ export default async ({ req, res, error }) => {
       const now = new Date().toISOString();
       const notesMarkdown = JSON.stringify({ ...priorState, allowResubmission: true, promptSize, exampleResponse });
       let publishedNotesMarkdown = session.publishedNotesMarkdown || '';
-      if (session.status === 'published' && questionResult.total) {
-        const answers = await db.listDocuments(databaseId, 'discussion_answers', [Query.equal('questionId', questionResult.documents[0].$id), Query.limit(5000)]);
-        publishedNotesMarkdown = `# Writing Prompt\n\n## ${prompt}${exampleResponse ? `\n\n### Example response\n\n${exampleResponse}` : ''}\n\n### Class responses\n\n${answers.total ? answers.documents.map(row => `- ${row.answerText}`).join('\n\n') : '_No responses submitted._'}`;
-      }
+      if(session.status==='published')publishedNotesMarkdown=writingArchive({...session,promptMarkdown:prompt});
       const updated = await db.updateDocument(databaseId, 'class_sessions', session.$id, { promptMarkdown: prompt, notesMarkdown, publishedNotesMarkdown, updatedAt: now });
       return res.json({ session: clean(updated) });
+      });
     }
 
     if (body.action === 'setClassSessionStatus') {
@@ -575,12 +577,14 @@ export default async ({ req, res, error }) => {
     }
 
     if (['readLivePresentation', 'controlLivePresentation', 'submitLiveAnswer'].includes(body.action)) {
-      const session = await db.getDocument(databaseId, 'class_sessions', body.sessionId);
+      return await atomicDiscussion({body,db,databaseId},async({db,transactionId})=>{
+      let session = await db.getDocument(databaseId, 'class_sessions', body.sessionId);
       if (session.discussionType !== 'presentation') return res.json({ error: 'Not a live presentation' }, 400);
       const targetClass = await db.getDocument(databaseId, 'classes', session.classId);
       const owns = profile.role === 'teacher' && targetClass.teacherId === userId;
       const enrolled = memberClassIds.has(session.classId);
       if (!owns && !enrolled) return res.json({ error: 'Not enrolled' }, 403);
+      if(transactionId){await guardWorkspace(db,databaseId,writingWorkspace(body.sessionId));session=await db.getDocument(databaseId,'class_sessions',body.sessionId);}
       const questionResult = await db.listDocuments(databaseId, 'discussion_questions', [Query.equal('classSessionId', session.$id), Query.limit(500)]);
       const questions = questionResult.documents.sort((a, b) => a.voteCount - b.voteCount);
       if (body.action === 'controlLivePresentation') {
@@ -595,17 +599,13 @@ export default async ({ req, res, error }) => {
         let publishedNotesMarkdown = session.publishedNotesMarkdown || '';
         if (body.command === 'end') {
           assignmentId = null; status = 'published';
-          const ids = questions.map(q => q.$id);
-          const allAnswers = ids.length ? await db.listDocuments(databaseId, 'discussion_answers', [Query.equal('questionId', ids), Query.limit(5000)]) : { documents: [] };
-          const example = String(priorState.exampleResponse || '').trim();
-          const sections = questions.map(q => { const responses = allAnswers.documents.filter(row => row.questionId === q.$id); return `## ${q.questionText}${example ? `\n\n### Example response\n\n${example}` : ''}\n\n### Class responses\n\n${responses.length ? responses.map(row => `- ${row.answerText}`).join('\n\n') : '_No responses submitted._'}`; });
-          publishedNotesMarkdown = `# Writing Prompt\n\n${sections.join('\n\n---\n\n')}`;
+          publishedNotesMarkdown=writingArchive(session);
         }
         if (assignmentId) lastQuestionId = assignmentId;
-        await db.updateDocument(databaseId, 'class_sessions', session.$id, { assignmentId, status, notesMarkdown: JSON.stringify({ reveal, lastQuestionId, allowResubmission: Boolean(priorState.allowResubmission), promptSize: priorState.promptSize || 'large', exampleResponse: priorState.exampleResponse || '' }), publishedNotesMarkdown, updatedAt: new Date().toISOString(), publishedAt: status === 'published' ? new Date().toISOString() : null });
+        await db.updateDocument(databaseId, 'class_sessions', session.$id, { assignmentId, status, notesMarkdown: JSON.stringify({ ...writingSettings(session), reveal, lastQuestionId, allowResubmission: Boolean(priorState.allowResubmission), promptSize: priorState.promptSize || 'large', exampleResponse: priorState.exampleResponse || '' }), publishedNotesMarkdown, updatedAt: new Date().toISOString(), publishedAt: status === 'published' ? new Date().toISOString() : null });
         return res.json({ ok: true });
       }
-      const active = questions.find(q => q.$id === session.assignmentId) || null;
+      const active = questions.find(q => q.$id === session.assignmentId) || (session.status==='published'?questions[0]:null);
       if (body.action === 'submitLiveAnswer') {
         if (profile.role !== 'student' || !active || session.status !== 'active') return res.json({ error: 'No question is accepting answers' }, 403);
         let config = {}; try { config = JSON.parse(active.selectedPassage || '{}'); } catch { /* invalid configuration */ }
@@ -619,9 +619,7 @@ export default async ({ req, res, error }) => {
         if (prior.total) await db.updateDocument(databaseId, 'discussion_answers', prior.documents[0].$id, data); else await db.createDocument(databaseId, 'discussion_answers', ID.unique(), data);
         return res.json({ ok: true });
       }
-      const answerQueries = active ? [Query.equal('questionId', active.$id), Query.limit(owns ? 500 : 1)] : [];
-      if (active && !owns) answerQueries.unshift(Query.equal('authorId', userId));
-      const answerResult = active ? await db.listDocuments(databaseId, 'discussion_answers', answerQueries) : { documents: [] };
+      const answerResult = {documents:active?await listAll(db,databaseId,'discussion_answers',[Query.equal('questionId',active.$id),...(!owns?[Query.equal('authorId',userId)]:[])]):[]};
       const myAnswer = answerResult.documents.find(row => row.authorId === userId)?.answerText || null;
       let config = {}; try { config = active ? JSON.parse(active.selectedPassage || '{}') : {}; } catch { /* invalid configuration */ }
       const reveal = (() => { try { return Boolean(JSON.parse(session.notesMarkdown || '{}').reveal); } catch { return false; } })();
@@ -631,7 +629,9 @@ export default async ({ req, res, error }) => {
       const promptState = (() => { try { return JSON.parse(session.notesMarkdown || '{}'); } catch { return {}; } })();
       const allowResubmission = config.type === 'paragraph' || Boolean(promptState.allowResubmission);
       const promptSize = ['standard', 'large', 'extra-large'].includes(promptState.promptSize) ? promptState.promptSize : 'large';
-      return res.json({ session: clean(session), questions: owns ? questions.map(projectQuestion) : [], activeQuestion: active ? projectQuestion(active) : null, ownAnswer: myAnswer, answeredCount: answerResult.documents.length, enrolledCount: roster.total, mcCounts: owns || myAnswer ? mcCounts : [], reveal, responses: owns && active ? answerResult.documents.map((row, i) => ({ id: row.$id, answer: row.answerText, label: `Response ${i + 1}` })) : [], isTeacher: owns, allowResubmission, promptSize, exampleResponse: String(promptState.exampleResponse || '') });
+      const discussion=await readingDiscussionAction({body:{action:'readReadingDiscussion',writingSessionId:session.$id},profile,userId,memberClassIds,db,databaseId});
+      return res.json({ discussion, session: clean({...session,publishedNotesMarkdown:session.status==='published'?writingArchive(session):''}), questions: owns ? questions.map(projectQuestion) : [], activeQuestion: active ? projectQuestion(active) : null, ownAnswer: myAnswer, answeredCount: answerResult.documents.length, enrolledCount: roster.total, mcCounts: owns || myAnswer ? mcCounts : [], reveal, responses: discussion.posts.filter(p=>!p.parentId).map(p=>({id:p.id,answer:p.content,label:p.label})), isTeacher: owns, allowResubmission, promptSize, exampleResponse: String(promptState.exampleResponse || '') });
+      });
     }
 
     if (body.action === 'deleteQuiz') {
@@ -1234,6 +1234,7 @@ export default async ({ req, res, error }) => {
 
     if (body.action === 'readClassDiscussion') {
       const session = await db.getDocument(databaseId, 'class_sessions', body.sessionId);
+      if(session.discussionType==='presentation')return res.json({error:'Use the writing prompt discussion'},403);
       const ownsClass = profile.role === 'teacher' && (await db.listDocuments(databaseId, 'classes', [Query.equal('$id', session.classId), Query.equal('teacherId', userId), Query.limit(1)])).total > 0;
       if (!memberClassIds.has(session.classId) && !ownsClass) return res.json({ error: 'Not enrolled' }, 403);
       const questionResult = await db.listDocuments(databaseId, 'discussion_questions', [Query.equal('classSessionId', body.sessionId), Query.limit(5000)]);
@@ -1262,7 +1263,8 @@ export default async ({ req, res, error }) => {
     const data = { ...body.data }; delete data.$id; delete data.syncStatus;
     try { await authorizeTextMutation({ collection, id, data, userId, db, databaseId }); }
     catch (cause) { return res.json({ error: cause.message }, 403); }
-    let existing = null; if (operation !== 'create' || collection === 'text_annotations') { try { existing = await db.getDocument(databaseId, collection, id); } catch { /* upsert */ } }
+    let existing = null; try { existing = await db.getDocument(databaseId, collection, id); } catch(cause) { if(cause.code!==404)throw cause; }
+    for(const field of ['classId','classSessionId','questionId'])if(existing?.[field]&&data[field]&&existing[field]!==data[field])return res.json({error:'Cannot move an existing contribution'},403);
     if (collection === 'text_annotations' && existing && operation === 'create') {
       if (existing.authorId !== userId) return res.json({error:'Cannot replace another annotation'},403);
       return res.json({ok:true});
@@ -1278,19 +1280,22 @@ export default async ({ req, res, error }) => {
       return res.json({ ok: true });
     }
     let classId = data.classId || existing?.classId;
-    if (!classId && data.classSessionId) { const session = await db.getDocument(databaseId, 'class_sessions', data.classSessionId); classId = session.classId; }
+    if (!classId && (data.classSessionId||existing?.classSessionId)) { const session = await db.getDocument(databaseId, 'class_sessions', data.classSessionId||existing.classSessionId); classId = session.classId; }
     if (!classId && collection === 'discussion_answers' && (data.questionId || existing?.questionId)) { const question = await db.getDocument(databaseId, 'discussion_questions', data.questionId || existing.questionId); const session = await db.getDocument(databaseId, 'class_sessions', question.classSessionId); classId = session.classId; }
     const isMember = classId ? memberClassIds.has(classId) : false;
     const ownedClass = classId ? await db.listDocuments(databaseId, 'classes', [Query.equal('$id', classId), Query.equal('teacherId', userId), Query.limit(1)]) : { total: 0 };
     const isTeacher = profile.role === 'teacher' && ownedClass.total > 0;
     if (studentCollections.has(collection) && classId && !isMember && !isTeacher) return res.json({ error: 'Not enrolled' }, 403);
+    if(collection==='class_sessions'&&!classId)return res.json({error:'A class is required'},403);
     if (teacherCollections.has(collection) && classId && !isTeacher) return res.json({ error: 'Not the class owner' }, 403);
-    if (!isTeacher && ['discussion_questions', 'discussion_answers', 'question_votes', 'text_discussion_posts', 'text_discussion_votes'].includes(collection)) {
+    if (collection==='class_sessions'&&(existing?.discussionType==='presentation'||data.discussionType==='presentation'))return res.json({error:'Use the writing prompt controls'},403);
+    if (['discussion_questions', 'discussion_answers', 'question_votes', 'text_discussion_posts', 'text_discussion_votes'].includes(collection)) {
       let discussionSession = null;
       if (data.classSessionId || existing?.classSessionId) discussionSession = await db.getDocument(databaseId, 'class_sessions', data.classSessionId || existing.classSessionId);
       else if (collection === 'discussion_answers' || collection === 'question_votes') { const question = await db.getDocument(databaseId, 'discussion_questions', data.questionId || existing?.questionId); discussionSession = await db.getDocument(databaseId, 'class_sessions', question.classSessionId); }
       else if (collection === 'text_discussion_votes') { const post = await db.getDocument(databaseId, 'text_discussion_posts', data.postId || existing?.postId); discussionSession = await db.getDocument(databaseId, 'class_sessions', post.classSessionId); }
-      if (discussionSession && discussionSession.status !== 'active') return res.json({ error: 'This discussion is finished and read-only' }, 403);
+      if(discussionSession?.discussionType==='presentation')return res.json({error:'Use the writing prompt controls'},403);
+      if (!isTeacher && discussionSession && discussionSession.status !== 'active') return res.json({ error: 'This discussion is finished and read-only' }, 403);
     }
     if (existing && !isTeacher) { const owner = existing.authorId || existing.userId || existing.reviewerId; if (owner && owner !== userId) return res.json({ error: 'Cannot change another student’s work' }, 403); }
     if (existing && isTeacher) { const owner = existing.authorId || existing.userId || existing.reviewerId; if (owner && owner !== userId) { if (collection === 'discussion_questions') { data.questionText = existing.questionText; data.selectedPassage = existing.selectedPassage; data.sourceTitle = existing.sourceTitle || ''; data.sourceUrl = existing.sourceUrl || ''; } if (collection === 'discussion_answers') { data.answerText = existing.answerText; data.sourceTitle = existing.sourceTitle || ''; data.sourceUrl = existing.sourceUrl || ''; } if (collection === 'text_discussion_posts') data.content = existing.content; } }
