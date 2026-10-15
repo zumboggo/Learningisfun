@@ -1,11 +1,11 @@
 import StoryAtmosphere from './StoryAtmosphere';
-import {useEffect,useMemo,useRef,useState} from 'react';
+import {useEffect,useMemo,useRef,useState,type ReactNode} from 'react';
 import {advanceStory,initialStoryState,settleStory,validatePackage,quizScore,type StoryPackage,type StoryState} from '../../../functions/learning-content/src/story-engine.js';
 import './story-player.css';
 import StoryStage from './StoryStage';
 import {playSceneMotion} from './scene-motion';
 export interface StoryProgress {steps:(string|null)[];quizzes:number[][];seed:number}
-export default function StoryPlayer({pack,initial,onProgress,debug=false}:{pack:StoryPackage;initial?:StoryProgress;onProgress?:(p:StoryProgress)=>void;debug?:boolean}){
+export default function StoryPlayer({pack,initial,onProgress,debug=false,endContent}:{pack:StoryPackage;initial?:StoryProgress;onProgress?:(p:StoryProgress)=>void;debug?:boolean;endContent?:ReactNode}){
  const compiled=useMemo(()=>validatePackage(pack),[pack]);const story=compiled.story;
  const [accepted,setAccepted]=useState(!!initial?.steps.length),[progress,setProgress]=useState<StoryProgress>(initial||{steps:[],quizzes:[],seed:1});
  const [state,setState]=useState<StoryState>(()=>{if(!story)return null as any;let s=settleStory(story,initialStoryState(story,initial?.seed||1));for(const step of initial?.steps||[])s=advanceStory(story,s,step);return s;});
@@ -47,7 +47,7 @@ export default function StoryPlayer({pack,initial,onProgress,debug=false}:{pack:
   <div className="story-meters">{Object.entries(story.variables).filter(([,v]:any)=>v.visible).map(([k])=><span key={k}>{k}: {String(state.variables[k])}</span>)}</div>
   <section className="story-dialogue" aria-live="polite">{!state.ended&&current.type==='say'&&<><strong>{current.beat?'On the scene':current.actor==='I'?'My story':pack.assets.characters[current.actor].name}</strong><p>{current.text}</p><button data-next disabled={busy} onClick={()=>advance(null)}>{current.beat?'Continue →':'Next →'}</button></>}{!state.ended&&current.type==='act'&&<><strong>On the scene</strong><p>{current.text}</p><button data-next disabled={busy} onClick={()=>advance(null)}>{busy?'Action playing…':'Continue →'}</button></>}{!state.ended&&current.type==='choice'&&<><h2>What do I do?</h2>{current.options.map((o:any)=><button key={o.id} disabled={busy} onClick={()=>advance(o.id)}>{o.text}</button>)}</>}
   {state.ended&&<><h2>{passed?'Home again':'Four questions before we return'}</h2>{score!==null&&<p role="status">{score}/100 · {passed?'Complete. Your story choices are separate from this knowledge score.':'Review the explanations, then try again.'}</p>}{!passed&&pack.quiz.map((q,i)=><fieldset key={i}><legend>{i+1}. {q.prompt}</legend>{q.options.map((o,j)=><label key={j}><input type="radio" name={'question-'+i} checked={answers[i]===j} onChange={()=>setAnswers(answers.map((v,k)=>k===i?j:v))}/>{o}</label>)}{score!==null&&<p>{q.explanation}</p>}</fieldset>)}{!passed&&<button disabled={answers.includes(-1)} onClick={()=>{if(lock.current)return;lock.current=true;save({...progress,quizzes:[...progress.quizzes,answers.slice()]});setAnswers([-1,-1,-1,-1]);timer.current=setTimeout(()=>{lock.current=false;},300);}}>Check answers</button>}</>}
-  </section><footer><button onClick={()=>setShowHistory(!showHistory)}>Recall the conversation</button>{pack.assets.music&&<><audio ref={audio} src={pack.assets.music.src} loop/><button onClick={()=>{if(music)audio.current?.pause();else void audio.current?.play();setMusic(!music);}}>Music {music?'off':'on'}</button></>}</footer>
+  </section>{state.ended&&endContent}<footer><button onClick={()=>setShowHistory(!showHistory)}>Recall the conversation</button>{pack.assets.music&&<><audio ref={audio} src={pack.assets.music.src} loop/><button onClick={()=>{if(music)audio.current?.pause();else void audio.current?.play();setMusic(!music);}}>Music {music?'off':'on'}</button></>}</footer>
   {showHistory&&<aside aria-label="Conversation history">{state.history.map((h,i)=><p key={i}><strong>{h.actor==='I'?'I':pack.assets.characters[h.actor]?.name}: </strong>{h.text}</p>)}</aside>}
  </div>;
 }

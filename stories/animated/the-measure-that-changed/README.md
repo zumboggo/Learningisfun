@@ -12,3 +12,11 @@ Build: `node stories/animated/the-measure-that-changed/build.mjs`.
 Validate source parity: add `--check`.
 Export: `node scripts/story-package.mjs zip public/stories/animated/the-measure-that-changed/episode.json public/stories/animated/the-measure-that-changed/episode.zip`.
 Route/replay/quiz/ZIP checks: `npx vitest run src/test/measure-episode.test.ts`.
+
+## Ethics assignment Decision Note
+
+The assigned app player displays five separate Decision Note prompts after the story ends, before and after the knowledge quiz is passed. They appear for `measure-that-changed-ethics` in Ethics class `e24ec8d9-21d7-4c32-a30e-08655c2f4e65`. The companion is rendered by `EthicsDecisionNote`; the published package, assignment version, quiz and saved attempts remain unchanged. This also makes the questions available when reopening a completed attempt. The public reading and unassigned studio previews are not assignment views.
+
+Focus: **2a.1 — compare belief and action.** Students explain whether Seneb’s action fits his stated value of ma’at, using a specific detail. Success is a supported connection between the stated value and an action, not a preferred moral verdict. The familiar five prompts ask students to choose, explain with evidence, present the strongest alternative, state a principle and test it. Allow 8–10 minutes and about 80–120 words or five concise bullets in the episode assignment; the app displays prompts and does not collect or submit these responses. Writing never gates gameplay.
+
+Teacher cues: a student may defend compassionate exceptions while requiring honest records and fair access, or defend consistent distribution because reserves are limited while seeking another way to meet need. Both require evidence and a fair opposing reason. Watch for treating ma’at as mere obedience or an identical allocation as automatically fair. Feedback: “Which action fits or conflicts with the stated value, and how does your detail establish that?” Completion with revision asks for all five relevant responses and a specific detail. This addition creates no new Canvas assignment, deadline or grade.
