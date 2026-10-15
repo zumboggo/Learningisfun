@@ -1,10 +1,31 @@
+import { useId, useState, type ReactNode } from 'react';
+
 const ethicsClassId = 'e24ec8d9-21d7-4c32-a30e-08655c2f4e65';
 
+type Assignment = { episodeId: string; classId: string };
+const hasDecisionNote = ({ episodeId, classId }: Assignment) => episodeId === 'measure-that-changed-ethics' && classId === ethicsClassId;
+
+export function EthicsAssignmentAccess({ episodeId, classId, children }: Assignment & { children: ReactNode }) {
+  const [showQuestions, setShowQuestions] = useState(false);
+  const questionsId = useId();
+  if (!hasDecisionNote({ episodeId, classId })) return <>{children}</>;
+  return <>
+    <button className="mb-4 min-h-11 rounded-lg border border-teal-700 bg-teal-50 px-4 py-3 font-semibold text-teal-900" aria-expanded={showQuestions} aria-controls={questionsId} onClick={() => setShowQuestions(value => !value)}>
+      {showQuestions ? 'Back to episode' : 'Go to assignment questions'}
+    </button>
+    <div id={questionsId} hidden={!showQuestions}>
+      {showQuestions && <EthicsDecisionNote episodeId={episodeId} classId={classId} />}
+    </div>
+    <div hidden={showQuestions}>{children}</div>
+  </>;
+}
+
 /** Assignment companion content: does not change the published story or saved attempts. */
-export default function EthicsDecisionNote({ episodeId, classId }: { episodeId: string; classId: string }) {
-  if (episodeId !== 'measure-that-changed-ethics' || classId !== ethicsClassId) return null;
-  return <section className="ethics-decision-note" aria-labelledby="ethics-decision-note-title">
-    <h2 id="ethics-decision-note-title">Your Decision Note · Ethics and Leadership</h2>
+export default function EthicsDecisionNote({ episodeId, classId }: Assignment) {
+  const titleId = useId();
+  if (!hasDecisionNote({ episodeId, classId })) return null;
+  return <section className="ethics-decision-note" aria-labelledby={titleId}>
+    <h2 id={titleId}>Your Decision Note · Ethics and Leadership</h2>
     <p>Take 8–10 minutes. Answer these five questions in your episode assignment, using about 80–120 words total or five concise bullets. Keep your original response for later reconsideration.</p>
     <p><strong>Remember the case:</strong> Seneb gives extra grain to Iset, whom he knows, but records only the usual amount. Kha’s household also needs help. The reserve is small, so helping one household affects what remains for others.</p>
     <ol>
