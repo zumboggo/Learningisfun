@@ -1,3 +1,4 @@
+import {emitSound} from './scene-sound';
 import {armGeometry} from './character-geometry';
 import {ACTIONS,ACTION_DURATION,POSES} from '../../../functions/learning-content/src/acting-library.js';
 /** Finite, paired choreography. Coordinates use the actual stage, including phone layouts. */
@@ -16,10 +17,12 @@ export async function performAction(root:HTMLElement,node:any,reduced:boolean,se
  const cue=ACTIONS[node.action];if(!cue||reduced||!valid()||signal?.aborted)return;
  const actor=root.querySelector<HTMLElement>(`[data-actor="${node.actor}"]`),target=node.targetActor?root.querySelector<HTMLElement>(`[data-actor="${node.targetActor}"]`):null;
  if(!actor)return;
- const a=actor.getBoundingClientRect(),b=target?.getBoundingClientRect();const direction=b?(b.x<a.x?-1:1):(actor.querySelector<HTMLElement>('.story-facing')?.style.transform.includes('-1')?-1:1);
+ const world=root.querySelector<HTMLElement>('.story-world'),zoom=world?.offsetWidth?(world.getBoundingClientRect().width/world.offsetWidth)||1:1;
+ const rect=(el:Element)=>{const b=el.getBoundingClientRect();return {x:b.x/zoom,y:b.y/zoom,width:b.width/zoom,height:b.height/zoom,left:b.left/zoom,right:b.right/zoom};};
+ const a=rect(actor),b=target?rect(target):undefined;const direction=b?(b.x<a.x?-1:1):(actor.querySelector<HTMLElement>('.story-facing')?.style.transform.includes('-1')?-1:1);
  // Close most of the gap, retaining room for the arm; never travel off the stage.
  const gap=b?Math.abs((b.x+b.width/2)-(a.x+a.width/2)):0;
- const stage=root.querySelector('.story-stage')?.getBoundingClientRect();
+ const stageElement=root.querySelector('.story-stage'),stage=stageElement?rect(stageElement):undefined;
  const room=b&&stage?(direction>0?stage.right-(b.x+b.width/2):(b.x+b.width/2)-stage.left)-b.height*.12:1000;
  const reactionScale=b?Math.min(1,Math.max(0,room)/(32+b.height*.21)):1;
  const soloRoom=stage?Math.max(0,direction>0?stage.right-a.right:a.left-stage.left):0;
@@ -30,12 +33,16 @@ export async function performAction(root:HTMLElement,node:any,reduced:boolean,se
  const frames=actionFrames(node.action,direction,travel,reactionScale);
  const dummy=target?.dataset.impact==='anchored';
  if(dummy&&node.action==='sword-strike')frames.target=[0,0,0,7,-2,0].map((angle,i)=>({transform:`rotate(${direction*angle}deg)`,transformOrigin:'50% 96%',offset:[0,.15,.34,.48,.72,1][i]}));
+ const sounds:ReturnType<typeof setTimeout>[]=[];
+ const at=(ms:number,cue:string)=>sounds.push(setTimeout(()=>{if(valid()&&!signal?.aborted)emitSound(root,cue);},ms));
+ if(node.action.startsWith('sword-')){at(ACTION_DURATION*.15,'swish');if(node.action==='sword-strike')at(ACTION_DURATION*.34,dummy?'straw':'thud');else if(node.action==='sword-blocked')at(ACTION_DURATION*.34,'clang');}
+ else if(['attack','mounted-charge'].includes(node.action))at(ACTION_DURATION*.34,'thud');
  const reaction={[node.actor]:cue.actor,...(node.targetActor&&cue.target?{[node.targetActor]:cue.target}:{})};
  const delayed=cue.target==='recoil';
  setResponses(delayed?{[node.actor]:cue.actor}:reaction);
  const impact=delayed?setTimeout(()=>{if(valid()&&!signal?.aborted)setResponses(reaction);},ACTION_DURATION*.34):undefined;
  const animations=[actor.animate?.(frames.actor,{duration:ACTION_DURATION,easing:'ease-in-out'}),target?.animate?.(frames.target,{duration:ACTION_DURATION,easing:'ease-in-out'})].filter(Boolean) as Animation[];
- const cancel=()=>{clearTimeout(impact);animations.forEach(a=>a.cancel());};signal?.addEventListener('abort',cancel,{once:true});
- try{await Promise.all(animations.map(a=>a.finished));}catch{/* Navigation cancels this performance. */}finally{clearTimeout(impact);signal?.removeEventListener('abort',cancel);}
+ const cancel=()=>{sounds.forEach(clearTimeout);clearTimeout(impact);animations.forEach(a=>a.cancel());};signal?.addEventListener('abort',cancel,{once:true});
+ try{await Promise.all(animations.map(a=>a.finished));}catch{/* Navigation cancels this performance. */}finally{sounds.forEach(clearTimeout);clearTimeout(impact);signal?.removeEventListener('abort',cancel);}
  if(valid())setResponses({});
 }

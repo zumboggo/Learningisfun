@@ -1,4 +1,5 @@
-import {useEffect,useRef,useState,type CSSProperties} from 'react';
+import {actorBounds,fitCamera,unionBoxes} from './camera-framing';
+import {useEffect,useLayoutEffect,useRef,useState,type CSSProperties} from 'react';
 import type {StoryPackage,StoryState} from '../../../functions/learning-content/src/story-engine.js';
 import PuppetActor from './PuppetActor';
 import MountedActor from './MountedActor';
@@ -7,16 +8,34 @@ import {ACTIONS,POSES} from '../../../functions/learning-content/src/acting-libr
 export default function StoryStage({pack,state,current,speaking,reduced,responses={}}:{pack:StoryPackage;state:StoryState;current:any;speaking:boolean;reduced:boolean;responses?:Record<string,string>}){
  const modern=pack.format===2,actors=Object.entries(state.stage.actors),speaker=current?.type==='say'&&current.actor!=='I'?current.actor:undefined;
  const performance=current?.type==='act'?current:state.cues?.find(n=>n.type==='perform');
- const shot=performance?'wide':state.stage.camera?.shot||'auto';
+ const camera=state.stage.camera,requested=camera?.shot||'auto';
+ const shot=performance?(requested==='action'?'action':'wide'):requested;
  const resolved=shot==='auto'?(speaker&&actors.length===1?'medium':'wide'):shot;
- const focus=state.stage.camera?.actor||speaker;
+ const focus=camera?.actor||speaker||actors[0]?.[0];
  const positions:Record<string,number>={left:24,center:50,right:76};
- const scale=!modern?1:resolved==='close'?2.05:resolved==='medium'?1.42:1;
- const x=positions[state.stage.actors[focus||'']?.position]||50;
- const offset=Math.max(-(scale-1)*50,Math.min((scale-1)*50,(50-x)*scale));
- return <div className={`story-stage ${modern?'story-stage-living':''}`} data-shot={resolved} data-actions={/^(act|perform) /m.test(pack.script)||undefined} data-paired={actors.length===2&&/^(act|perform) /m.test(pack.script)||undefined}>
-  <div className="story-camera" style={{transform:`translateX(${offset}%) scale(${scale})`,transitionDuration:reduced||performance?'0ms':undefined} as CSSProperties}>
-   <div className="story-world" style={{backgroundImage:state.stage.background?`url("${pack.assets.backgrounds[state.stage.background]?.src}")`:undefined}}>
+ const stageRef=useRef<HTMLDivElement>(null),worldRef=useRef<HTMLDivElement>(null);
+ const [frame,setFrame]=useState({scale:1,x:0,y:0});
+ const targetKey=actors.map(([id,a])=>`${id}:${a.position}:${a.rest}`).join('|');
+ useLayoutEffect(()=>{
+  const stage=stageRef.current,world=worldRef.current;if(!stage||!world)return;
+  const update=()=>{
+   const pair=['two','action'].includes(resolved);
+   const ids=pair?[camera?.actor||performance?.actor||focus,camera?.otherActor||performance?.targetActor||actors.find(([id])=>id!==focus)?.[0]]:[focus];
+   const boxes=ids.filter(Boolean).flatMap(id=>{const el=world.querySelector<HTMLElement>(`[data-actor="${id}"]`);return el?[actorBounds(el,resolved,POSES[state.stage.actors[id!]?.rest||'']?.bodyDrop||0)]:[];});
+   const next=fitCamera(stage.clientWidth,stage.clientHeight,!modern||resolved==='wide'?null:unionBoxes(boxes),resolved==='action'?1.6:resolved==='medium'||resolved==='two'?2.2:3.4);
+   setFrame(old=>old.scale===next.scale&&old.x===next.x&&old.y===next.y?old:next);
+  };
+  update();if(typeof ResizeObserver==='undefined')return;
+  const observer=new ResizeObserver(update);observer.observe(stage);return()=>observer.disconnect();
+ // Measure stable SVG geometry and stage layout, not animated screen rectangles.
+ // eslint-disable-next-line react-hooks/exhaustive-deps
+ },[resolved,focus,camera?.otherActor,targetKey,modern,performance?.actor,performance?.targetActor]);
+ const duration=reduced||performance?0:camera?.duration??.65;
+ return <div ref={stageRef} className={`story-stage ${modern?'story-stage-living':''}`} data-shot={resolved} data-camera-scale={frame.scale.toFixed(3)} data-actions={/^(act|perform) /m.test(pack.script)||undefined} data-paired={actors.length===2&&/^(act|perform) /m.test(pack.script)||undefined}>
+  <div className="story-camera" style={{transform:`translate(${frame.x}px, ${frame.y}px) scale(${frame.scale})`,transformOrigin:'0 0',transitionDuration:`${duration}s`} as CSSProperties}>
+   <div ref={worldRef} className="story-world" style={{backgroundImage:state.stage.background?`url("${pack.assets.backgrounds[state.stage.background]?.src}")`:undefined}}>
+    {!reduced&&['dust','rain'].includes(state.stage.environment||'')&&<div className={`story-environment environment-${state.stage.environment}`} aria-hidden="true">{Array.from({length:12},(_,i)=><i key={i} style={{left:`${(i*37+11)%100}%`,top:`${(i*23)%100}%`,animationDelay:`-${i*.71}s`,animationDuration:`${state.stage.environment==='rain'?1.4+(i%3)*.3:12+(i%5)*2}s`}}/>)}</div>}
+
     {actors.map(([id,a])=>{const c=pack.assets.characters[id],asset=c.expressions[a.expression]||c.expressions.neutral;
      const target=a.gaze&&!['auto','away','down','front'].includes(a.gaze)?a.gaze:(performance?.actor===id?performance.targetActor:speaker&&speaker!==id?speaker:actors.find(([other])=>other!==id)?.[0]);
      const targetPosition=state.stage.actors[target||'']?.position;

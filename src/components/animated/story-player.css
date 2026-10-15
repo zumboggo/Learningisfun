@@ -34,3 +34,17 @@
 @keyframes horse-stride{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(8deg)}}
 @keyframes rider-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 @media(prefers-reduced-motion:reduce){.galloping .horse-leg,.galloping .mounted-rider{animation:none!important}}
+
+/* Quiet, authored environmental motion stays behind the cast. */
+.story-environment{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.story-environment i{position:absolute;display:block;opacity:0}
+.environment-dust i{width:3px;height:3px;border-radius:50%;background:#f8e7b9;animation:story-dust 16s linear infinite}
+.environment-rain i{width:1px;height:30px;background:linear-gradient(transparent,#c6dce9);animation:story-rain 1.8s linear infinite}
+@keyframes story-dust{0%{opacity:0;transform:translate(0,12px)}20%,75%{opacity:.28}100%{opacity:0;transform:translate(24px,-34px)}}
+@keyframes story-rain{0%{opacity:0;transform:translate(0,-60px)}15%,80%{opacity:.22}100%{opacity:0;transform:translate(-15px,150px)}}
+@media(prefers-reduced-motion:reduce){.story-environment{display:none}}
+.story-atmosphere{font-size:14px;background:#f3f4eb}
+.story-atmosphere details{padding:8px 16px}.story-atmosphere summary{cursor:pointer;padding:8px}
+.story-atmosphere label{display:inline-flex;align-items:center;gap:8px;margin:6px 12px 6px 0;min-height:44px;flex-wrap:wrap}
+.story-atmosphere input[type=range]{width:100px;min-height:32px}
+.story-sound-caption{margin:0;padding:4px 16px;min-height:1.5em;color:#536763;font-size:13px}

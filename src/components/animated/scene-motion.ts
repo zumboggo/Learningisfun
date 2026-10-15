@@ -1,8 +1,10 @@
+import {emitSound} from './scene-sound';
 import {performAction} from './action-motion';
 /** Run finite performances alongside a readable beat. Each actor has one motion owner.
  * Cancel before navigation; old completions must never clear a newer reaction. */
 export function playSceneMotion(root:HTMLElement,cues:any[],current:any,reduced:boolean,publish:(r:Record<string,string>)=>void,signal:AbortSignal){
- if(reduced||signal.aborted)return Promise.resolve();
+ if(signal.aborted)return Promise.resolve();
+ signal.addEventListener('abort',()=>root.dispatchEvent(new Event('story-sound-stop')),{once:true});
  let responses:Record<string,string>={};
  const valid=()=>!signal.aborted;
  const wait=(ms:number)=>new Promise<void>(resolve=>{if(!valid()){resolve();return;}const done=()=>{clearTimeout(timer);signal.removeEventListener('abort',done);resolve();};const timer=setTimeout(done,ms);signal.addEventListener('abort',done,{once:true});});
@@ -15,12 +17,14 @@ export function playSceneMotion(root:HTMLElement,cues:any[],current:any,reduced:
  const jobs=new Map<string,Promise<void>>();
  const nodes=[...cues,...(current?.type==='act'?[current]:[])];
  for(const n of nodes){
-  if(!['react','perform','act','show','move','effect'].includes(n.type))continue;
+  if(!['react','perform','act','show','move','effect','sound'].includes(n.type))continue;
   if(n.type==='move'&&['exit','left','center','right','turn'].includes(n.action))continue;
   const owners=[n.actor||'world',n.targetActor].filter(Boolean);
   const update=(value:Record<string,string>)=>{if(!valid())return;for(const id of owners)delete responses[id];responses={...responses,...value};publish({...responses});};
   const run=async()=>{
    if(!valid())return;
+   if(n.type==='sound'){emitSound(root,n.preset);return;}
+   if(reduced)return;
    const el=root.querySelector<HTMLElement>(n.actor?`[data-actor="${n.actor}"]`:'.story-world');
    if(n.type==='act'||n.type==='perform'){
     for(let i=0;i<(n.repeat||1)&&valid();i++){

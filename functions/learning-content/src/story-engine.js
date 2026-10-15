@@ -65,7 +65,20 @@ export function compileStory(source,assets={}) {
    if(m[1]===m[3])error(line,'An interaction needs two different characters');
    add({type:'act',actor:m[1],action:m[2],targetActor:m[3],text:m[4]},line);continue;
   }
-  if(version===2&&(m=s.match(new RegExp(`^camera (${CAMERAS.join('|')})(?: (${id}))?$`)))){if(m[2]&&!assets.characters?.[m[2]])error(line,'Unknown camera target');add({type:'camera',shot:m[1],actor:m[2]},line);continue;}
+  if(version===2&&s.startsWith('camera ')){
+   const parts=s.split(/\s+/).slice(1),shot=parts.shift();let duration;
+   if(parts.at(-1)==='cut'){duration=0;parts.pop();}
+   else if(parts.at(-2)==='over'){const raw=parts.pop();parts.pop();duration=Number(raw);if(!/^(?:[0-3](?:\.\d{1,3})?)$/.test(raw)||duration>3)error(line,'Camera duration must be 0–3 seconds');}
+   if(!CAMERAS.includes(shot))error(line,'Unknown camera shot');
+   const pair=['two','action'].includes(shot);
+   if(pair?parts.length!==2:parts.length>1||shot==='listener'&&parts.length!==1)error(line,'Use two actors for two/action, and one for listener');
+   if(parts.some(a=>!assets.characters?.[a])||pair&&parts[0]===parts[1])error(line,'Camera targets must be known distinct characters');
+   add({type:'camera',shot,actor:parts[0],...(parts[1]?{otherActor:parts[1]}:{}),...(duration!==undefined?{duration}: {})},line);continue;
+  }
+  if(version===2&&(m=s.match(/^ambience (none|hall|wind|rain)$/))){add({type:'ambience',preset:m[1]},line);continue;}
+  if(version===2&&(m=s.match(/^environment (none|dust|rain)$/))){add({type:'environment',preset:m[1]},line);continue;}
+  if(version===2&&(m=s.match(/^sound (swish|straw|thud|clang|step|chime)$/))){add({type:'sound',preset:m[1]},line);continue;}
+
   if(version===2&&(m=s.match(new RegExp(`^(rest|react) (${id}) (${id})$`)))){if(!assets.characters?.[m[2]])error(line,'Unknown actor');if(!(m[1]==='rest'?RESTS:RESPONSES).includes(m[3]))error(line,'Unknown '+m[1]+' cue '+m[3]);add({type:m[1],actor:m[2],action:m[3]},line);continue;}
   if(version===2&&(m=s.match(new RegExp(String.raw`^(${id}) \[(${id})(?:, *(${id}))?\]: (.+)$`)))){if(!assets.characters?.[m[1]])error(line,'Unknown speaker');if(!EMOTIONS.includes(m[2]))error(line,'Unknown emotion '+m[2]);if(m[3]&&!TALKS.includes(m[3]))error(line,'Unknown talking animation '+m[3]);add({type:'say',actor:m[1],emotion:m[2],gesture:m[3],text:m[4]},line);continue;}
   if((m=s.match(new RegExp(`^show (${id})(?: (${id}))?(?: (left|center|right))?$`)))){if(!assets.characters?.[m[1]])error(line,'Unknown character '+m[1]);else if(m[2]&&(version===2?!EMOTIONS.includes(m[2]):!assets.characters[m[1]].expressions?.[m[2]]))error(line,'Unknown expression '+m[2]);add({type:'show',actor:m[1],expression:m[2]||'neutral',position:m[3]||'center'},line);continue;}
@@ -88,11 +101,11 @@ export function compileStory(source,assets={}) {
  }
  const edges=i=>{const n=nodes[i];return n.type==='end'?[]:n.type==='choice'?n.options.map(o=>labels[o.target]):['if','chance'].includes(n.type)?[labels[n.target],labels[n.otherwise]]:n.type==='goto'?[labels[n.target]]:[i+1];};
  if(!errors.length){const reached=new Set(),active=new Set();const visit=i=>{if(i>=nodes.length){error(lines.length,'A path falls off the script without end');return;}if(active.has(i)){error(nodes[i].line,'Loops are not supported; reconnect branches farther ahead');return;}if(reached.has(i))return;reached.add(i);active.add(i);edges(i).forEach(visit);active.delete(i);};if(nodes.length)visit(0);else error(1,'Add a story');nodes.forEach((n,i)=>{if(!reached.has(i))error(n.line,'Unreachable content');});}
- if(!errors.length&&nodes.some(n=>['act','perform','prop','express','look'].includes(n.type))){
+ if(!errors.length&&nodes.some(n=>(['act','perform','prop','express','look'].includes(n.type)||n.type==='camera'&&['two','action','listener'].includes(n.shot)))){
   const incoming=nodes.map(()=>[]);nodes.forEach((_,i)=>edges(i).forEach(j=>incoming[j].push(i)));
   const cache=new Map();
   const after=i=>{if(cache.has(i))return cache.get(i);const parents=incoming[i].map(after);let visible=parents.length?new Map([...parents[0]].filter(([a,pos])=>parents.every(p=>p.get(a)===pos))):new Map();const n=nodes[i];
-   if(['act','perform','prop','express','look'].includes(n.type)){for(const a of [n.actor,n.targetActor,n.type==='look'&&!['auto','front','away','down'].includes(n.value)?n.value:null].filter(Boolean))if(!visible.has(a))error(n.line,'Show '+a+' in a distinct position on every path before this action');}
+   if((['act','perform','prop','express','look'].includes(n.type)||n.type==='camera'&&['two','action','listener'].includes(n.shot))){for(const a of [n.actor,n.targetActor,n.otherActor,n.type==='look'&&!['auto','front','away','down'].includes(n.value)?n.value:null].filter(Boolean))if(!visible.has(a))error(n.line,'Show '+a+' in a distinct position on every path before this action');}
    if(n.type==='ensemble')visible=new Map([...visible].filter(([a])=>n.actors.includes(a)));
    if(n.type==='scene')visible=new Map();
    if(n.type==='show'||n.type==='move'&&visible.has(n.actor)&&['left','center','right'].includes(n.action)){const position=n.position||n.action;for(const [a,p]of visible)if(p===position)visible.delete(a);visible.set(n.actor,position);}
@@ -104,12 +117,13 @@ export function compileStory(source,assets={}) {
 export function initialStoryState(story,seed=1){return {cursor:0,variables:Object.fromEntries(Object.entries(story.variables).map(([k,v])=>[k,v.initial])),stage:{background:null,actors:{},...(story.version===2?{camera:{shot:'auto'}}:{})},history:[],events:[],seed:seed>>>0,ended:false};}
 export function settleStory(story,state){const s=structuredClone(state);s.cues=[];let steps=0;while(!s.ended&&steps++<10000){const n=story.nodes[s.cursor];if(!n)throw Error('Invalid story position');if(['say','choice','act'].includes(n.type)){if(n.type==='act'){const a=s.stage.actors[n.actor],b=s.stage.actors[n.targetActor];if(!a||n.targetActor&&!b)throw Error('Action characters must be on stage');if(ACTIONS[n.action]?.prop)a.prop=ACTIONS[n.action].prop;if(b){const order={left:0,center:1,right:2};a.facing=order[a.position]<order[b.position]?1:-1;b.facing=-a.facing;}}if(story.version===2&&n.type==='say'&&s.stage.actors[n.actor]&&n.emotion)s.stage.actors[n.actor].expression=n.emotion;return s;}
  if(n.type==='end'){s.ended=true;return s;}
- if(['scene','show','move','effect','react','camera','perform'].includes(n.type))s.cues.push(n);
+ if(['scene','show','move','effect','react','camera','perform','sound'].includes(n.type))s.cues.push(n);
  if(n.type==='scene'){s.stage={background:n.asset,actors:{},...(story.version===2?{camera:{shot:'auto'}}:{})};}
  if(n.type==='show'){for(const [id,a] of Object.entries(s.stage.actors))if(id!==n.actor&&a.position===n.position){delete s.stage.actors[id];s.cues.push({type:'move',actor:id,action:'exit'});}s.stage.actors[n.actor]={expression:n.expression,position:n.position,facing:1};}
  if(n.type==='ensemble')s.stage.actors=Object.fromEntries(Object.entries(s.stage.actors).filter(([id])=>n.actors.includes(id)));
  if(n.type==='face'&&s.stage.actors[n.actor])s.stage.actors[n.actor].facing=n.direction;
- if(n.type==='camera')s.stage.camera={shot:n.shot,actor:n.actor};
+ if(n.type==='camera')s.stage.camera={shot:n.shot,actor:n.actor,...(n.otherActor?{otherActor:n.otherActor}:{}),...(n.duration!==undefined?{duration:n.duration}:{})};
+ if(n.type==='ambience'||n.type==='environment')s.stage[n.type]=n.preset;
  if(n.type==='express'&&s.stage.actors[n.actor])s.stage.actors[n.actor].expression=n.value;
  if(n.type==='look'&&s.stage.actors[n.actor])s.stage.actors[n.actor].gaze=n.value;
  if(n.type==='perform'){

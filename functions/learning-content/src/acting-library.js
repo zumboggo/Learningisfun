@@ -39,7 +39,7 @@ export const ACTIONS={
 export const ACTION_DURATION=2200;
 export const MOVES=['enter','exit','left','center','right','turn','nod','shake','bounce','recoil'];
 export const EFFECTS=['fade','closeup','shake','magic'];
-export const CAMERAS=['auto','wide','medium','close'];
+export const CAMERAS=['auto','wide','medium','close','two','action','speaker','listener'];
 export const RIG_PARTS=['torso','pelvis','head','leftUpperArm','leftForearm','leftHand','rightUpperArm','rightForearm','rightHand','leftThigh','leftShin','rightThigh','rightShin'];
 export const AUTO_ACTING={
  shocked:{rest:'attentive',talk:'shock'},laughing:{rest:'relaxed',talk:'laugh'},

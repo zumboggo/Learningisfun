@@ -31,3 +31,11 @@ Hyun: All right.
 Large automatic emotional gestures begin when emotion changes rather than on every story cursor change. Starting speech can cue a talking gesture; stopping it returns to rest without replaying the same strong emotion. Eye direction eases over 240 ms; expression changes fade in over 220 ms and body poses settle continuously. Reduced motion applies the final pose immediately. Embarrassment and disappointment have distinct mouth shapes, with blush on refined embarrassed faces.
 
 Publish a new package version when changing scripts; never map old saved steps onto a rewritten script. The Chunky Chinese training revision is `moonlight-08-v2`; v1 is retained.
+
+## Framing and atmosphere
+
+Use `camera listener Hyun over 0.65` for an emotional reaction, `camera speaker over 0.4` to follow the next speaker, `camera two Hyun Instructor cut` for a shared composition, and `camera action Hyun Dummy cut` before training. Framing uses actual face/body bounds and fits phone and desktop stages. Action shots cut immediately so contact geometry stays stable. Other cameras accept `cut` or `over 0..3`; reduced motion cuts immediately. The acting library previews these shots and inserts both targets when needed.
+
+`ambience hall|wind|rain|none` and `environment dust|rain|none` persist until changed or the next scene. `sound swish|straw|thud|clang|step|chime` is a one-shot cue. Sword actions also time their swish/contact effects automatically; avoid adding duplicate impacts. Sound is synthesized locally. Hall effects include a quiet short reflection.
+
+Sound & atmosphere starts with ambience, effects, and captions off. Readers enable each explicitly and control volumes independently; Chunky Chinese also exposes Mandarin voice volume. Atmosphere ducks during speech. Navigation cancels pending effects, hidden pages stop sound, and leaving/completing an episode closes audio. Resume restores scenery without replaying transient sounds. Reduced motion removes environmental particles and action sequences but preserves explicitly authored sound cues.
