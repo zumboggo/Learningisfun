@@ -1,0 +1,19 @@
+{
+ "promise":"As an official's assistant, protect a person without treating a peace agreement as either worthless or a guarantee of safety.",
+ "focus":"3b.3: identify a need and compare responses using relevant benefits and costs",
+ "circle":["Student wants to help the voice in the stone","A person wants protection inside a peace agreement","Teaching Stone enters a fictional Egyptian courtyard","Read terms and hear testimony","Return includes protective provisions","No independently confirmed implementation; each response costs something","Local decision implemented with limited information; safe classroom return","Remember the person and the strongest opposing reason"],
+ "motives":{"Dedu":"Maintain peace and give an accountable answer within limited authority","Aruna":"Avoid feared harm while retaining the possibility of seeing his brother","Tili":"Uphold reciprocal commitments and protect families from renewed conflict"},
+ "choices":[
+  {"id":"first_voice","responses":"Person: brother and fear; terms: read before promising","callback":"heard: Aruna recalls listening or careful reading","rejoin":"shared_terms"},
+  {"id":"evidence","responses":"Check: missing receiving official; testimony: specific but unconfirmed fear","callback":"checked: identifies the information actually obtained","rejoin":"hearing"},
+  {"id":"approach","responses":"Direct: requests a name; formal: reiterates protections while recognizing limits","callback":"none; local expressive choice","rejoin":"decision_setup"},
+  {"id":"recommendation","responses":"Return proceeds / bounded delay / refusal with escalation","callback":"policy: next morning has different location, obligation and cost","rejoin":"after_decision"},
+  {"id":"responsibility","responses":"Welfare report owner / written reasoning for review","callback":"followup: outstanding duty or reviewable reasoning","rejoin":"morning"},
+  {"id":"test_principle","responses":"Reliable protection / reliable harm; each changes relevant evidence","callback":"none; explicit hypothetical reflection","rejoin":"home"}
+ ],
+ "suitability":"Common terms and recap available on every route; two or more defensible responses; concrete details include unnamed receiver, unconfirmed testimony, reciprocal promise and separated family. Students can formulate and test principles without outside research.",
+ "history":"Treaty fixed. Case, characters, procedures, local authority and all branch outcomes invented. No claimed ancient quotation. No modern universal refugee-rights framework attributed to the treaty.",
+ "passes":"Opening puts the threatened return within the first scene. Each option has a distinct response and major choices return later. Scenes change information, stakes, policy or accountability; listener close-ups hold fear and respect before replies. Humor humanizes without mocking vulnerability.",
+ "assets":"Reuse hybrid Hepting/Lin and classroom/Egyptian courtyard. Three original polished SVG characters through shared builder. No music, audio or new bitmap images. Cord and papers narrated/mimed.",
+ "assessment":"Four knowledge MCQs separate from six moral choices. Decision Note and fortnightly presentation handoff in teaching-guide.html. No Canvas posting."
+}

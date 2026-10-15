@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-15",
+  "packageBytes": 601084,
+  "routes": 96,
+  "checks": [
+    "Shared parser validates story and four-question quiz",
+    "All routes finish with six choices",
+    "All reachable stages have a background and non-overlapping actor positions",
+    "All routes replay deterministically for resume",
+    "Quiz perfect and 75-point threshold scores",
+    "ZIP round-trip matches package",
+    "Five backend tests: access, publication, assignments, retries, immutable completion, preserved started versions",
+    "Production build passed",
+    "Desktop two-character and phone close-up previews inspected in production player"
+  ],
+  "limits": [
+    "No live student attempt or grade created",
+    "Reduced-motion behavior covered by shared runtime, not separately toggled in this browser preview"
+  ],
+  "contentBoundary": "No app runtime or backend changes; new immutable episode version and class assignment only"
+}
