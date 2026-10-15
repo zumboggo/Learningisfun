@@ -6,21 +6,28 @@ import {armGeometry} from './character-geometry';
 import {ACTIONS,POSES} from '../../../functions/learning-content/src/acting-library.js';
 export default function StoryStage({pack,state,current,speaking,reduced,responses={}}:{pack:StoryPackage;state:StoryState;current:any;speaking:boolean;reduced:boolean;responses?:Record<string,string>}){
  const modern=pack.format===2,actors=Object.entries(state.stage.actors),speaker=current?.type==='say'&&current.actor!=='I'?current.actor:undefined;
- const shot=current?.type==='act'?'wide':state.stage.camera?.shot||'auto';
+ const performance=current?.type==='act'?current:state.cues?.find(n=>n.type==='perform');
+ const shot=performance?'wide':state.stage.camera?.shot||'auto';
  const resolved=shot==='auto'?(speaker&&actors.length===1?'medium':'wide'):shot;
  const focus=state.stage.camera?.actor||speaker;
  const positions:Record<string,number>={left:24,center:50,right:76};
  const scale=!modern?1:resolved==='close'?2.05:resolved==='medium'?1.42:1;
  const x=positions[state.stage.actors[focus||'']?.position]||50;
  const offset=Math.max(-(scale-1)*50,Math.min((scale-1)*50,(50-x)*scale));
- return <div className={`story-stage ${modern?'story-stage-living':''}`} data-shot={resolved} data-actions={/^act /m.test(pack.script)||undefined} data-paired={actors.length===2&&/^act /m.test(pack.script)||undefined}>
-  <div className="story-camera" style={{transform:`translateX(${offset}%) scale(${scale})`,transitionDuration:reduced||current?.type==='act'?'0ms':undefined} as CSSProperties}>
+ return <div className={`story-stage ${modern?'story-stage-living':''}`} data-shot={resolved} data-actions={/^(act|perform) /m.test(pack.script)||undefined} data-paired={actors.length===2&&/^(act|perform) /m.test(pack.script)||undefined}>
+  <div className="story-camera" style={{transform:`translateX(${offset}%) scale(${scale})`,transitionDuration:reduced||performance?'0ms':undefined} as CSSProperties}>
    <div className="story-world" style={{backgroundImage:state.stage.background?`url("${pack.assets.backgrounds[state.stage.background]?.src}")`:undefined}}>
-    {actors.map(([id,a])=>{const c=pack.assets.characters[id],asset=c.expressions[a.expression]||c.expressions.neutral;return <div data-actor={id} data-expression={a.expression} key={id} className={`story-actor position-${a.position} ${c.rig?'has-rig':''} ${current?.type==='act'&&current.action==='mounted-charge'&&current.actor===id?'is-mounted':''}`}>
-     <div className="story-facing" style={{transform:`scaleX(${a.facing})`}}>{current?.type==='act'&&current.action==='mounted-charge'&&current.actor===id?<MountedActor character={c} emotion={a.expression} reduced={reduced} active={!!responses[id]} performanceKey={state.cursor}/>:c.rig?<PuppetActor character={c} actorId={id} performanceKey={state.cursor} emotion={a.expression} talking={speaking&&id===speaker} gesture={id===speaker?current.gesture:undefined} rest={a.rest} prop={a.prop} response={responses[id]||current?.beatResponses?.[id]||(reduced&&current?.type==='act'?(id===current.actor?ACTIONS[current.action]?.actor:id===current.targetActor?ACTIONS[current.action]?.target:undefined):undefined)} reduced={reduced}/>:<img src={asset?.src} alt={`${c.name} — ${a.expression}`} onError={e=>{e.currentTarget.style.opacity='0';}}/>}</div>
+    {actors.map(([id,a])=>{const c=pack.assets.characters[id],asset=c.expressions[a.expression]||c.expressions.neutral;
+     const target=a.gaze&&!['auto','away','down','front'].includes(a.gaze)?a.gaze:(performance?.actor===id?performance.targetActor:speaker&&speaker!==id?speaker:actors.find(([other])=>other!==id)?.[0]);
+     const targetPosition=state.stage.actors[target||'']?.position;
+     const direction=targetPosition?Math.sign(positions[targetPosition]-positions[a.position]):0;
+     const gazeX=a.gaze==='front'||a.gaze==='down'?0:(a.gaze==='away'?-(direction||1):direction)*a.facing*2.5;
+     const gazeY=a.gaze==='down'||(!a.gaze&&a.expression==='embarrassed')?2:0;
+     return <div data-actor={id} data-expression={a.expression} data-gaze={a.gaze||'auto'} data-impact={c.impact} style={{zIndex:performance?.actor===id?2:undefined}} key={id} className={`story-actor position-${a.position} ${c.rig?'has-rig':''} ${performance?.action==='mounted-charge'&&performance.actor===id?'is-mounted':''}`}>
+     <div className="story-facing" style={{transform:`scaleX(${a.facing})`}}>{performance?.action==='mounted-charge'&&performance.actor===id?<MountedActor character={c} emotion={a.expression} reduced={reduced} active={!!responses[id]} performanceKey={state.cursor}/>:c.rig?<PuppetActor gazeX={gazeX} gazeY={gazeY} character={c} actorId={id} performanceKey={state.cursor} emotion={a.expression} talking={speaking&&id===speaker} gesture={id===speaker?current.gesture:undefined} rest={a.rest} prop={a.prop} response={responses[id]||current?.beatResponses?.[id]||(reduced&&current?.type==='act'?(id===current.actor?ACTIONS[current.action]?.actor:id===current.targetActor?ACTIONS[current.action]?.target:undefined):undefined)} reduced={reduced}/>:<img src={asset?.src} alt={`${c.name} — ${a.expression}`} onError={e=>{e.currentTarget.style.opacity='0';}}/>}</div>
      {!modern&&<span>{c.name}</span>}
     </div>;})}
-    {current?.type==='act'&&['shoot-arrow','magic-beam'].includes(current.action)&&<Projectile key={state.cursor} state={state} current={current} reduced={reduced} active={!!responses[current.actor]}/>}
+    {performance&&['shoot-arrow','magic-beam'].includes(performance.action)&&<Projectile key={`${state.cursor}-${!!responses[performance.actor]}`} state={state} current={performance} reduced={reduced} active={!!responses[performance.actor]}/>}
    </div>
   </div>
  </div>;

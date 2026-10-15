@@ -1,4 +1,5 @@
-import {ACTIONS,ACTION_DURATION} from '../../../functions/learning-content/src/acting-library.js';
+import {armGeometry} from './character-geometry';
+import {ACTIONS,ACTION_DURATION,POSES} from '../../../functions/learning-content/src/acting-library.js';
 /** Finite, paired choreography. Coordinates use the actual stage, including phone layouts. */
 export function actionFrames(action:string,direction:number,distance:number,reactionScale=1){
  const d=direction,r=Math.max(0,Math.min(1,reactionScale)),step=Math.max(0,distance)*d;
@@ -11,8 +12,8 @@ export function actionFrames(action:string,direction:number,distance:number,reac
  const target=keys(['translateX(0)','translateX(0)','translateX(0)',`translateX(${d*r*(['attack-dodged','sword-dodged'].includes(action)?32:['attack','sword-strike','shoot-arrow','magic-beam'].includes(action)?18:4)}px) rotate(${d*r*(action==='attack-dodged'?12:action==='attack'?7:0)}deg)`,`translateX(${d*r*4}px)`,'translateX(0)']);
  return {actor,target};
 }
-export async function performAction(root:HTMLElement,node:any,reduced:boolean,setResponses:(r:Record<string,string>)=>void,valid:()=>boolean){
- const cue=ACTIONS[node.action];if(!cue||reduced||!valid())return;
+export async function performAction(root:HTMLElement,node:any,reduced:boolean,setResponses:(r:Record<string,string>)=>void,valid:()=>boolean,signal?:AbortSignal){
+ const cue=ACTIONS[node.action];if(!cue||reduced||!valid()||signal?.aborted)return;
  const actor=root.querySelector<HTMLElement>(`[data-actor="${node.actor}"]`),target=node.targetActor?root.querySelector<HTMLElement>(`[data-actor="${node.targetActor}"]`):null;
  if(!actor)return;
  const a=actor.getBoundingClientRect(),b=target?.getBoundingClientRect();const direction=b?(b.x<a.x?-1:1):(actor.querySelector<HTMLElement>('.story-facing')?.style.transform.includes('-1')?-1:1);
@@ -22,10 +23,19 @@ export async function performAction(root:HTMLElement,node:any,reduced:boolean,se
  const room=b&&stage?(direction>0?stage.right-(b.x+b.width/2):(b.x+b.width/2)-stage.left)-b.height*.12:1000;
  const reactionScale=b?Math.min(1,Math.max(0,room)/(32+b.height*.21)):1;
  const soloRoom=stage?Math.max(0,direction>0?stage.right-a.right:a.left-stage.left):0;
- const travel=node.action==='mounted-charge'?Math.min(a.width*.28,soloRoom):Math.max(0,gap-a.height*.19);
+ // Use the sword hand at contact, rather than closing an arbitrary body-sized gap.
+ const pose=POSES[cue.actor],hand=armGeometry('right',pose.rightUpperArm||0,pose.rightForearm||0);
+ const reach=node.action.startsWith('sword-')?(hand.wx-120+Math.sin(hand.b+(pose.rightHand||0)*Math.PI/180)*116)*a.height/600:a.height*.19;
+ const travel=node.action==='mounted-charge'?Math.min(a.width*.28,soloRoom):Math.max(0,gap-reach-(b?.width||0)*.18);
  const frames=actionFrames(node.action,direction,travel,reactionScale);
- setResponses({[node.actor]:cue.actor,...(node.targetActor&&cue.target?{[node.targetActor]:cue.target}:{})});
+ const dummy=target?.dataset.impact==='anchored';
+ if(dummy&&node.action==='sword-strike')frames.target=[0,0,0,7,-2,0].map((angle,i)=>({transform:`rotate(${direction*angle}deg)`,transformOrigin:'50% 96%',offset:[0,.15,.34,.48,.72,1][i]}));
+ const reaction={[node.actor]:cue.actor,...(node.targetActor&&cue.target?{[node.targetActor]:cue.target}:{})};
+ const delayed=cue.target==='recoil';
+ setResponses(delayed?{[node.actor]:cue.actor}:reaction);
+ const impact=delayed?setTimeout(()=>{if(valid()&&!signal?.aborted)setResponses(reaction);},ACTION_DURATION*.34):undefined;
  const animations=[actor.animate?.(frames.actor,{duration:ACTION_DURATION,easing:'ease-in-out'}),target?.animate?.(frames.target,{duration:ACTION_DURATION,easing:'ease-in-out'})].filter(Boolean) as Animation[];
- try{await Promise.all(animations.map(a=>a.finished));}catch{/* Navigation cancels all stage animations. */}
+ const cancel=()=>{clearTimeout(impact);animations.forEach(a=>a.cancel());};signal?.addEventListener('abort',cancel,{once:true});
+ try{await Promise.all(animations.map(a=>a.finished));}catch{/* Navigation cancels this performance. */}finally{clearTimeout(impact);signal?.removeEventListener('abort',cancel);}
  if(valid())setResponses({});
 }

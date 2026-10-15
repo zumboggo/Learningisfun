@@ -1,7 +1,8 @@
 /** Option-B portrait geometry. Expression layers share the parent's finite motion controller. */
-type Props={face:string;hairStyle:string;skin:string;hair:string;skinBase:string;hairBase:string;id:string;emotion:string;blink:boolean;mouth:number;startled:boolean;laughing:boolean;firm:boolean;worried:boolean;reduced:boolean;tilt:number};
+type Props={gazeX?:number;gazeY?:number;face:string;hairStyle:string;skin:string;hair:string;skinBase:string;hairBase:string;id:string;emotion:string;blink:boolean;mouth:number;startled:boolean;laughing:boolean;firm:boolean;worried:boolean;reduced:boolean;tilt:number};
 const tone=(hex:string,t:number)=>'#'+[1,3,5].map(i=>Math.round(parseInt(hex.slice(i,i+2),16)*(1-Math.abs(t))+(t<0?0:255)*Math.abs(t)).toString(16).padStart(2,'0')).join('');
-export default function RefinedFace({face,hairStyle,skin,hair,skinBase,hairBase,id,emotion,blink,mouth,startled,laughing,firm,worried,reduced,tilt}:Props){
+export default function RefinedFace({gazeX=0,gazeY=0,face,hairStyle,skin,hair,skinBase,hairBase,id,emotion,blink,mouth,startled,laughing,firm,worried,reduced,tilt}:Props){
+ const gazeStyle={transform:`translate(${gazeX}px, ${gazeY}px)`,transition:reduced?'none':'transform 240ms ease-out'};
  const soft=face==='spirited',pony=hairStyle==='ponytail',warm=['happy','relieved'].includes(emotion),eager=['excited','proud'].includes(emotion),smile=warm||eager||laughing;
  const ink=tone(hairBase,-.28),shadow=tone(skinBase,-.25),light=tone(skinBase,.32);
  const outline=soft?'M 82 89 Q 118 62 157 88 L 155 123 Q 153 139 144 149 L 129 166 Q 120 174 111 168 L 96 154 Q 85 143 83 126 Z':'M 82 87 Q 120 63 158 88 L 155 121 L 149 136 L 145 148 L 129 168 Q 121 174 111 168 L 97 155 L 90 140 L 85 122 Z';
@@ -19,7 +20,7 @@ export default function RefinedFace({face,hairStyle,skin,hair,skinBase,hairBase,
  <path d="M 110 104 L 120 100 L 122 122 L 117 136 L 113 133 L 117 120 Z" fill={light} opacity=".48"/>
  <path d="M 122 119 L 120 136 L 129 135 L 125 131 Z" fill={shadow} opacity=".38"/>
  <path d="M 106 156 Q 119 162 134 155 L 126 166 L 115 167 Z" fill={light} opacity=".22"/>
- {warm&&<g fill="#c57968" opacity=".14"><ellipse cx="99" cy="136" rx="11" ry="5"/><ellipse cx="142" cy="136" rx="10" ry="5"/></g>}
+ {(warm||emotion==='embarrassed')&&<g data-blush={emotion} fill="#c57968" opacity={emotion==='embarrassed'?.34:.14}><ellipse cx="99" cy="136" rx="11" ry="5"/><ellipse cx="142" cy="136" rx="10" ry="5"/></g>}
  <path d="M 81 90 Q 120 73 158 87 L 151 106 L 144 94 L 129 109 L 132 94 L 113 111 L 116 94 L 97 109 L 100 92 L 85 113 Z" fill={shadow} opacity=".22"/>
  </g>
  <g data-feature="brows" fill="none" stroke={ink} strokeWidth={soft?2:2.8}>
@@ -28,7 +29,7 @@ export default function RefinedFace({face,hairStyle,skin,hair,skinBase,hairBase,
  {[102,138].map(x=><g key={x} data-feature="eye">
  {blink||laughing?<path d={`M ${x-9} 122 Q ${x} ${smile?115:127} ${x+9} 121`} fill="none" stroke={ink} strokeWidth="1.8"/>:<>
  <path d={eye(x)} fill="#f8eee1" stroke={ink} strokeWidth="1.15"/>
- <g clipPath={`url(#${id}-eye-${x})`}><ellipse cx={x+1} cy="121" rx={soft?4.5:4} ry={startled?6:5} fill="#71503a"/><ellipse cx={x+1} cy="121" rx="2.3" ry="3.8" fill={ink}/><circle cx={x-.5} cy="119" r="1.2" fill="#fff9ee"/><path d={`M ${x-10} 116 Q ${x} 111 ${x+10} 117`} fill="none" stroke={ink} strokeWidth="5" opacity=".25"/></g>
+ <g clipPath={`url(#${id}-eye-${x})`}><ellipse style={gazeStyle} data-gaze-pupil="true" cx={x+1} cy="121" rx={soft?4.5:4} ry={startled?6:5} fill="#71503a"/><ellipse style={gazeStyle} data-gaze-pupil="true" cx={x+1} cy="121" rx="2.3" ry="3.8" fill={ink}/><circle style={gazeStyle} data-gaze-pupil="true" cx={x-.5} cy="119" r="1.2" fill="#fff9ee"/><path d={`M ${x-10} 116 Q ${x} 111 ${x+10} 117`} fill="none" stroke={ink} strokeWidth="5" opacity=".25"/></g>
  <path d={`M ${x-10} ${firm?119:121} Q ${x} ${firm?117:warm?113:soft?111:113} ${x+10} 120`} fill="none" stroke={ink} strokeWidth={soft?2:1.8}/>
  </>}
  <path d={`M ${x-7} ${warm?129:132} Q ${x} ${warm?127:134} ${x+7} ${warm?129:131}`} fill="none" stroke={shadow} strokeWidth=".9" opacity={soft?.4:.7}/>
@@ -39,7 +40,7 @@ export default function RefinedFace({face,hairStyle,skin,hair,skinBase,hairBase,
  <path d={mouth?'M 106 146 Q 120 152 134 143 Q 133 161 120 162 Q 109 158 106 146 Z':'M 106 146 Q 120 151 134 143 Q 131 155 120 157 Q 110 155 106 146 Z'} fill="#795047"/>
  <path d="M 109 148 Q 121 152 131 146 L 129 150 Q 120 155 111 151 Z" fill="#fff2dc" stroke="none"/>
  <path d="M 113 160 Q 121 162 128 158" fill="none" stroke={light} strokeWidth="1.4"/>
- </>:startled&&!mouth?<ellipse cx="120" cy="150" rx="6" ry="8" fill="#795047"/>:mouth?<path d={mouth===1?'M 111 148 Q 120 144 129 147 Q 127 155 119 155 Q 113 154 111 148 Z':'M 115 145 Q 125 144 126 150 Q 124 156 117 153 Z'} fill="#795047"/>:<><path d={worried?'M 110 151 Q 120 146 130 151':firm?'M 108 149 Q 119 147 131 149':'M 109 148 Q 121 151 132 146'} fill="none"/><path d="M 115 153 Q 121 155 127 152" fill="none" stroke={light} strokeWidth="1.3"/></>}
+ </>:startled&&!mouth?<ellipse cx="120" cy="150" rx="6" ry="8" fill="#795047"/>:mouth?<path d={mouth===1?'M 111 148 Q 120 144 129 147 Q 127 155 119 155 Q 113 154 111 148 Z':'M 115 145 Q 125 144 126 150 Q 124 156 117 153 Z'} fill="#795047"/>:<><path d={emotion==='embarrassed'?'M 110 149 Q 120 152 130 148':emotion==='disappointed'?'M 110 152 Q 120 148 130 153':worried?'M 110 151 Q 120 146 130 151':firm?'M 108 149 Q 119 147 131 149':'M 109 148 Q 121 151 132 146'} fill="none"/><path d="M 115 153 Q 121 155 127 152" fill="none" stroke={light} strokeWidth="1.3"/></>}
  </g>
  {smile&&<path d="M 103 145 Q 101 149 105 153 M 136 141 Q 140 144 137 150" fill="none" stroke={shadow} strokeWidth=".9" opacity=".6"/>}
  <g data-feature="hair" className={reduced?'':'refined-hair'}>

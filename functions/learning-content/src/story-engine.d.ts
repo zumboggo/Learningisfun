@@ -1,5 +1,5 @@
 export interface StoryPackage {format:1|2;title:string;description:string;profile:string;script:string;assets:{backgrounds:Record<string,any>;characters:Record<string,any>;music?:any};quiz:{prompt:string;options:string[];answer:number;explanation:string}[];sources?:string[]}
-export interface StoryState {cues?:any[];cursor:number;variables:Record<string,number|boolean>;stage:{background:string|null;camera?:{shot:string;actor?:string};actors:Record<string,{expression:string;position:string;facing:number;rest?:string;prop?:string}>};history:{actor:string;text:string}[];events:any[];seed:number;ended:boolean}
+export interface StoryState {cues?:any[];cursor:number;variables:Record<string,number|boolean>;stage:{background:string|null;camera?:{shot:string;actor?:string};actors:Record<string,{expression:string;position:string;facing:number;rest?:string;prop?:string;gaze?:string}>};history:{actor:string;text:string}[];events:any[];seed:number;ended:boolean}
 export function compileStory(source:string,assets?:any):{errors:{line:number;message:string}[];story?:any};
 export function validatePackage(pack:StoryPackage):ReturnType<typeof compileStory>;
 export function initialStoryState(story:any,seed?:number):StoryState;

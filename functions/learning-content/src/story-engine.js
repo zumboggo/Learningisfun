@@ -41,6 +41,21 @@ export function compileStory(source,assets={}) {
    if(!PROPS.includes(m[2]))error(line,'Unknown prop '+m[2]);
    add({type:'prop',actor:m[1],prop:m[2]},line);continue;
   }
+  if(version===2&&(m=s.match(new RegExp(`^(express|look) (${id}) (${id})$`)))){
+   if(!assets.characters?.[m[2]])error(line,'Unknown actor');
+   if(m[1]==='express'&&!EMOTIONS.includes(m[3]))error(line,'Unknown emotion '+m[3]);
+   if(m[1]==='look'&&!['auto','front','away','down'].includes(m[3])&&(!assets.characters?.[m[3]]||m[2]===m[3]))error(line,'Look needs another character or auto/front/away/down');
+   add({type:m[1],actor:m[2],value:m[3]},line);continue;
+  }
+  // A finite performance accompanies the next readable beat; it adds no saved step.
+  if(version===2&&(m=s.match(new RegExp(`^perform (${id}) (${id})(?: (${id}))? repeat ([1-6])(?: (steady|tiring))?$`)))){
+   const action=ACTIONS[m[2]];
+   if(!action)error(line,'Unknown action '+m[2]);
+   if(action?.prop&&assets.characters?.[m[1]]?.rig?.preset!=='cartoon-v1')error(line,'Prop actions require a polished or hybrid cartoon-v1 rig');
+   if(!assets.characters?.[m[1]]||m[3]&&!assets.characters?.[m[3]])error(line,'Unknown action character');
+   if(action?.paired!==!!m[3]||m[1]===m[3])error(line,'Action needs its distinct paired target, or no target for a solo action');
+   add({type:'perform',actor:m[1],action:m[2],targetActor:m[3],repeat:+m[4],pace:m[5]||'steady'},line);continue;
+  }
   if(version===2&&(m=s.match(new RegExp(`^act (${id}) (${id})(?: (${id}))? "([^"\\n]+)"$`)))){
    const action=ACTIONS[m[2]];
    if(!action)error(line,'Unknown action '+m[2]);
@@ -73,11 +88,11 @@ export function compileStory(source,assets={}) {
  }
  const edges=i=>{const n=nodes[i];return n.type==='end'?[]:n.type==='choice'?n.options.map(o=>labels[o.target]):['if','chance'].includes(n.type)?[labels[n.target],labels[n.otherwise]]:n.type==='goto'?[labels[n.target]]:[i+1];};
  if(!errors.length){const reached=new Set(),active=new Set();const visit=i=>{if(i>=nodes.length){error(lines.length,'A path falls off the script without end');return;}if(active.has(i)){error(nodes[i].line,'Loops are not supported; reconnect branches farther ahead');return;}if(reached.has(i))return;reached.add(i);active.add(i);edges(i).forEach(visit);active.delete(i);};if(nodes.length)visit(0);else error(1,'Add a story');nodes.forEach((n,i)=>{if(!reached.has(i))error(n.line,'Unreachable content');});}
- if(!errors.length&&nodes.some(n=>['act','prop'].includes(n.type))){
+ if(!errors.length&&nodes.some(n=>['act','perform','prop','express','look'].includes(n.type))){
   const incoming=nodes.map(()=>[]);nodes.forEach((_,i)=>edges(i).forEach(j=>incoming[j].push(i)));
   const cache=new Map();
   const after=i=>{if(cache.has(i))return cache.get(i);const parents=incoming[i].map(after);let visible=parents.length?new Map([...parents[0]].filter(([a,pos])=>parents.every(p=>p.get(a)===pos))):new Map();const n=nodes[i];
-   if(['act','prop'].includes(n.type)){for(const a of [n.actor,n.targetActor].filter(Boolean))if(!visible.has(a))error(n.line,'Show '+a+' in a distinct position on every path before this action');}
+   if(['act','perform','prop','express','look'].includes(n.type)){for(const a of [n.actor,n.targetActor,n.type==='look'&&!['auto','front','away','down'].includes(n.value)?n.value:null].filter(Boolean))if(!visible.has(a))error(n.line,'Show '+a+' in a distinct position on every path before this action');}
    if(n.type==='ensemble')visible=new Map([...visible].filter(([a])=>n.actors.includes(a)));
    if(n.type==='scene')visible=new Map();
    if(n.type==='show'||n.type==='move'&&visible.has(n.actor)&&['left','center','right'].includes(n.action)){const position=n.position||n.action;for(const [a,p]of visible)if(p===position)visible.delete(a);visible.set(n.actor,position);}
@@ -89,12 +104,19 @@ export function compileStory(source,assets={}) {
 export function initialStoryState(story,seed=1){return {cursor:0,variables:Object.fromEntries(Object.entries(story.variables).map(([k,v])=>[k,v.initial])),stage:{background:null,actors:{},...(story.version===2?{camera:{shot:'auto'}}:{})},history:[],events:[],seed:seed>>>0,ended:false};}
 export function settleStory(story,state){const s=structuredClone(state);s.cues=[];let steps=0;while(!s.ended&&steps++<10000){const n=story.nodes[s.cursor];if(!n)throw Error('Invalid story position');if(['say','choice','act'].includes(n.type)){if(n.type==='act'){const a=s.stage.actors[n.actor],b=s.stage.actors[n.targetActor];if(!a||n.targetActor&&!b)throw Error('Action characters must be on stage');if(ACTIONS[n.action]?.prop)a.prop=ACTIONS[n.action].prop;if(b){const order={left:0,center:1,right:2};a.facing=order[a.position]<order[b.position]?1:-1;b.facing=-a.facing;}}if(story.version===2&&n.type==='say'&&s.stage.actors[n.actor]&&n.emotion)s.stage.actors[n.actor].expression=n.emotion;return s;}
  if(n.type==='end'){s.ended=true;return s;}
- if(['scene','show','move','effect','react','camera'].includes(n.type))s.cues.push(n);
+ if(['scene','show','move','effect','react','camera','perform'].includes(n.type))s.cues.push(n);
  if(n.type==='scene'){s.stage={background:n.asset,actors:{},...(story.version===2?{camera:{shot:'auto'}}:{})};}
  if(n.type==='show'){for(const [id,a] of Object.entries(s.stage.actors))if(id!==n.actor&&a.position===n.position){delete s.stage.actors[id];s.cues.push({type:'move',actor:id,action:'exit'});}s.stage.actors[n.actor]={expression:n.expression,position:n.position,facing:1};}
  if(n.type==='ensemble')s.stage.actors=Object.fromEntries(Object.entries(s.stage.actors).filter(([id])=>n.actors.includes(id)));
  if(n.type==='face'&&s.stage.actors[n.actor])s.stage.actors[n.actor].facing=n.direction;
  if(n.type==='camera')s.stage.camera={shot:n.shot,actor:n.actor};
+ if(n.type==='express'&&s.stage.actors[n.actor])s.stage.actors[n.actor].expression=n.value;
+ if(n.type==='look'&&s.stage.actors[n.actor])s.stage.actors[n.actor].gaze=n.value;
+ if(n.type==='perform'){
+  const a=s.stage.actors[n.actor],b=s.stage.actors[n.targetActor];
+  if(ACTIONS[n.action]?.prop)a.prop=ACTIONS[n.action].prop;
+  if(b){const order={left:0,center:1,right:2};a.facing=order[a.position]<order[b.position]?1:-1;b.facing=-a.facing;}
+ }
  if(n.type==='prop'&&s.stage.actors[n.actor])s.stage.actors[n.actor].prop=n.prop;
  if(n.type==='rest'&&s.stage.actors[n.actor])s.stage.actors[n.actor].rest=n.action;
  if(n.type==='move'){const a=s.stage.actors[n.actor];if(n.action==='exit')delete s.stage.actors[n.actor];else if(a){if(['left','center','right'].includes(n.action))a.position=n.action;if(n.action==='turn')a.facing*=-1;}}

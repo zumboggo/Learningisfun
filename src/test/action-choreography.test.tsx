@@ -32,13 +32,13 @@ it('restoring an action shows both characters and its caption without replaying 
  const old=HTMLElement.prototype.animate;HTMLElement.prototype.animate=animate;
  try{const {container}=render(<StoryPlayer pack={{...pack,script:script()}} initial={{steps:[null],quizzes:[],seed:1}}/>);expect(screen.getByText('The attack happens.')).toBeInTheDocument();expect(container.querySelectorAll('[data-actor]')).toHaveLength(2);expect(container.querySelector('[data-shot]')).toHaveAttribute('data-shot','wide');expect(animate).not.toHaveBeenCalled();expect(screen.getByRole('button',{name:'Continue →'})).toBeEnabled();}finally{HTMLElement.prototype.animate=old;vi.unstubAllGlobals();}
 });
-it('rapid clicks cannot skip an active action, and restart cancels both actors',async()=>{
+it('an active action remains skippable, and restart cancels both actors',async()=>{
  const old=HTMLElement.prototype.animate,oldGet=HTMLElement.prototype.getAnimations;
  const animations:{finished:Promise<void>;cancel:()=>void}[]=[];
  HTMLElement.prototype.animate=vi.fn(()=>{let finish!:()=>void;const a={finished:new Promise<void>(r=>{finish=r;}),cancel:vi.fn(()=>finish())};animations.push(a);return a as unknown as Animation;});
  HTMLElement.prototype.getAnimations=()=>animations as unknown as Animation[];
  try{const save=vi.fn();render(<StoryPlayer pack={{...pack,script:script()}} initial={{steps:[],quizzes:[],seed:1}} debug onProgress={save}/>);fireEvent.click(screen.getByRole('button',{name:'Accept'}));fireEvent.click(screen.getByRole('button',{name:'Next →'}));
- await waitFor(()=>expect(animations.length).toBe(2));const button=screen.getByRole('button',{name:'Action playing…'});expect(button).toBeDisabled();fireEvent.click(button);expect(save).toHaveBeenCalledTimes(1);
+ await waitFor(()=>expect(animations.length).toBe(2));const button=screen.getByRole('button',{name:'Continue →'});expect(button).toBeEnabled();expect(save).toHaveBeenCalledTimes(1);
  fireEvent.click(screen.getByRole('button',{name:'Restart'}));await act(async()=>{await Promise.resolve();});expect(animations.every(a=>(a.cancel as any).mock.calls.length)).toBe(true);expect(screen.getByText('Before.')).toBeInTheDocument();expect(save).toHaveBeenCalledTimes(1);
  }finally{cleanup();HTMLElement.prototype.animate=old;HTMLElement.prototype.getAnimations=oldGet;}
 });
