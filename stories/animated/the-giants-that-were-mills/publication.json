@@ -3,10 +3,33 @@
   "title": "The Giants That Were Mills",
   "episode": 5,
   "readingBoundary": "Don Quixote, Part I chapter 8: windmills through Sancho’s meal on the road",
-  "status": "unassigned-public-preview",
+  "status": "published-assigned",
   "bytes": 972821,
   "previewUrl": "https://zumboggo.github.io/Learningisfun/#/game/story-preview/the-giants-that-were-mills",
   "package": "public/stories/animated/the-giants-that-were-mills/episode.json",
   "zip": "public/stories/animated/the-giants-that-were-mills/episode.zip",
-  "assignments": []
+  "assignments": [
+    {
+      "classId": "09d7f0a7-4c29-462c-820f-e11ea914d375",
+      "className": "Red - Sect. 1",
+      "date": "2026-10-16",
+      "releaseAt": "2026-10-16T00:00:00+08:00",
+      "version": 1,
+      "versionId": "ef48ba933735d6d6e8e5fa596cbf6081",
+      "assignmentId": "b2f1b437cf79247a9bb18df0268e1174",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/b2f1b437cf79247a9bb18df0268e1174"
+    },
+    {
+      "classId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c",
+      "className": "Blue Sect. 2",
+      "date": "2026-10-16",
+      "releaseAt": "2026-10-16T00:00:00+08:00",
+      "version": 1,
+      "versionId": "ef48ba933735d6d6e8e5fa596cbf6081",
+      "assignmentId": "95c9c30d6e6fa0e0bd9714961b255181",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/95c9c30d6e6fa0e0bd9714961b255181"
+    }
+  ],
+  "version": 1,
+  "versionId": "ef48ba933735d6d6e8e5fa596cbf6081"
 }

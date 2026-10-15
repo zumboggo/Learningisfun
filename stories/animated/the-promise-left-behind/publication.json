@@ -3,10 +3,33 @@
   "title": "The Promise Left Behind",
   "episode": 3,
   "readingBoundary": "Don Quixote, Part I chapters 4–5",
-  "status": "unassigned-public-preview",
+  "status": "published-assigned",
   "bytes": 1073031,
   "previewUrl": "https://zumboggo.github.io/Learningisfun/#/game/story-preview/the-promise-left-behind",
   "package": "public/stories/animated/the-promise-left-behind/episode.json",
   "zip": "public/stories/animated/the-promise-left-behind/episode.zip",
-  "assignments": []
+  "assignments": [
+    {
+      "classId": "09d7f0a7-4c29-462c-820f-e11ea914d375",
+      "className": "Red - Sect. 1",
+      "date": "2026-10-16",
+      "releaseAt": "2026-10-16T00:00:00+08:00",
+      "version": 1,
+      "versionId": "98b3c2be9c19e9f87f986f34dc51c83e",
+      "assignmentId": "e4c61a9c42681f5a8770604a288a0bcb",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/e4c61a9c42681f5a8770604a288a0bcb"
+    },
+    {
+      "classId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c",
+      "className": "Blue Sect. 2",
+      "date": "2026-10-16",
+      "releaseAt": "2026-10-16T00:00:00+08:00",
+      "version": 1,
+      "versionId": "98b3c2be9c19e9f87f986f34dc51c83e",
+      "assignmentId": "98a67ac4e499f523aa18b0f538ddfda8",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/98a67ac4e499f523aa18b0f538ddfda8"
+    }
+  ],
+  "version": 1,
+  "versionId": "98b3c2be9c19e9f87f986f34dc51c83e"
 }

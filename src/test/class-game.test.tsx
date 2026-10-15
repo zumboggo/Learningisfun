@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import {afterEach,beforeEach,it,expect,vi} from 'vitest';
-import {render,screen,cleanup} from '@testing-library/react';
+import {render,screen,cleanup,fireEvent} from '@testing-library/react';
 import {MemoryRouter,Route,Routes} from 'react-router-dom';
 const auth=vi.hoisted(()=>({user:{$id:'student',role:'student'}}));
 vi.mock('@/contexts/AuthContext',()=>({useAuth:()=>auth}));
@@ -16,7 +16,7 @@ it('shows a member’s best completed score and excludes other accounts and prev
  await seed(STONE_CLASS_ID);
  const choices=['listen','needs','paid','bargain','investigate','balance','preserve','delegate','publish','council'];
  await stoneDb.attempts.bulkPut([extendAttempt(newAttempt('student',STONE_CLASS_ID,false),choices),newAttempt('student',STONE_CLASS_ID,false),extendAttempt(newAttempt('other',STONE_CLASS_ID,false),choices)]);
- open(STONE_CLASS_ID);expect(await screen.findByText(/Your highest score:/)).toBeInTheDocument();expect(screen.getByRole('link',{name:'Play / replay'})).toHaveAttribute('href',`/classes/${STONE_CLASS_ID}/teaching-stone`);
+ open(STONE_CLASS_ID);expect(await screen.findByText(/Your highest score:/)).toBeInTheDocument();fireEvent.click(screen.getByRole('button',{name:/The Teaching Stone/}));expect(screen.getByRole('link',{name:'Play / replay'})).toHaveAttribute('href',`/classes/${STONE_CLASS_ID}/teaching-stone`);
 });
 it('shows an honest empty library for other classes without leaking the Ethics episode',async()=>{
  await seed('world-section-one');open('world-section-one');
@@ -36,6 +36,6 @@ it('keeps teacher libraries specific to the chosen class and offers a route back
 it('lets the class teacher preview its episode without requiring student membership',async()=>{
  await seed(STONE_CLASS_ID);auth.user={$id:'teacher',role:'teacher'};open(STONE_CLASS_ID);
  expect(await screen.findByText('The Grain We Keep')).toBeInTheDocument();
- expect(screen.getByRole('link',{name:'Play teacher preview'})).toHaveAttribute('href',`/classes/${STONE_CLASS_ID}/game/preview/teaching-stone`);
+ fireEvent.click(screen.getByRole('button',{name:/The Teaching Stone/}));expect(screen.getByRole('link',{name:'Play teacher preview'})).toHaveAttribute('href',`/classes/${STONE_CLASS_ID}/game/preview/teaching-stone`);
  expect(screen.getByText(/excluded from rankings/)).toBeInTheDocument();
 });

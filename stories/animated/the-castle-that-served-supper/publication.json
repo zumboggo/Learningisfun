@@ -12,6 +12,8 @@
       "className": "Red - Sect. 1",
       "date": "2026-10-12",
       "releaseAt": "2026-10-09T00:00:00.000Z",
+      "version": 1,
+      "versionId": "b37ea9118aec318e9c4c6157cd866fa9",
       "assignmentId": "c20ce58b8d378f47862855751b888500",
       "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/c20ce58b8d378f47862855751b888500"
     },
@@ -20,6 +22,8 @@
       "className": "Blue Sect. 2",
       "date": "2026-10-12",
       "releaseAt": "2026-10-09T00:00:00.000Z",
+      "version": 1,
+      "versionId": "b37ea9118aec318e9c4c6157cd866fa9",
       "assignmentId": "0bbaa248bf23dc20e5091833476679fd",
       "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/0bbaa248bf23dc20e5091833476679fd"
     }

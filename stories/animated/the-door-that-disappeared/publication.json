@@ -3,10 +3,33 @@
   "title": "The Door That Disappeared",
   "episode": 4,
   "readingBoundary": "Don Quixote, Part I chapters 6–7",
-  "status": "unassigned-public-preview",
+  "status": "published-assigned",
   "bytes": 1740435,
   "previewUrl": "https://zumboggo.github.io/Learningisfun/#/game/story-preview/the-door-that-disappeared",
   "package": "public/stories/animated/the-door-that-disappeared/episode.json",
   "zip": "public/stories/animated/the-door-that-disappeared/episode.zip",
-  "assignments": []
+  "assignments": [
+    {
+      "classId": "09d7f0a7-4c29-462c-820f-e11ea914d375",
+      "className": "Red - Sect. 1",
+      "date": "2026-10-16",
+      "releaseAt": "2026-10-16T00:00:00+08:00",
+      "version": 1,
+      "versionId": "dba9c941dd3e81d6a6de77c3e037da8a",
+      "assignmentId": "cb14001530cb7b341897c1b55c008174",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/cb14001530cb7b341897c1b55c008174"
+    },
+    {
+      "classId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c",
+      "className": "Blue Sect. 2",
+      "date": "2026-10-16",
+      "releaseAt": "2026-10-16T00:00:00+08:00",
+      "version": 1,
+      "versionId": "dba9c941dd3e81d6a6de77c3e037da8a",
+      "assignmentId": "ab3d7f5c118890675b1b3607d6f59bcf",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/ab3d7f5c118890675b1b3607d6f59bcf"
+    }
+  ],
+  "version": 1,
+  "versionId": "dba9c941dd3e81d6a6de77c3e037da8a"
 }
