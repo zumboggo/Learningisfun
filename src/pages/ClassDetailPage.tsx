@@ -15,7 +15,7 @@ import { PresentationDownload } from '@/components/common/PresentationDownload';
 import { TextPurposeLabels, type TextPurpose } from '@/components/texts/TextPurpose';
 import { textSchedule, textAssignmentAvailable } from '@/services/text-schedule';
 import { ClassReadingDate } from '@/components/texts/ClassReadingDate';
-import { groupWeeklyVocabulary } from '@/services/weekly-vocabulary';
+import { useWeeklyVocabulary } from '@/hooks/useWeeklyVocabulary';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -931,12 +931,7 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
   const nativeEpisodes=useAnimatedLibrary(user?.$id||'')?.assignments.filter((a:any)=>a.classId===classId)||[];
   const textDiscussions = useWeeklyTextDiscussions(classId, user?.$id);
   const teacherClasses=useLiveQuery(()=>user?db.classes.where('teacherId').equals(user.$id).toArray():[],[user?.$id]);
-  const releasedCards = useLiveQuery(async () => {
-    const assignments = await db.deck_assignments.where('classId').equals(classId).toArray();
-    const deckIds = [...new Set(assignments.map(item => item.deckId))];
-    return deckIds.length ? db.flashcard_cards.where('deckId').anyOf(deckIds).toArray() : [];
-  }, [classId]);
-  const vocabulary = groupWeeklyVocabulary(releasedCards || []);
+  const { vocabulary, error: vocabularyError } = useWeeklyVocabulary(classId, user?.$id);
   const groups = new Map<string, WeeklyMaterial[]>();
   for (const material of materials) {
     const key = weekStart(material.date);
@@ -1013,6 +1008,7 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
   return <>
     <section>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">{isOwner&&<PowerPointUpload classId={classId}/>}</div><h2 className="mb-1 text-lg font-semibold">{isOwner ? 'Weekly class materials' : 'This week and earlier'}</h2>
+      {vocabularyError && <p role="alert" className="mb-2 text-sm text-amber-800">{vocabularyError}</p>}
       {!isOwner && <p className="mb-3 text-sm text-gray-500">Current work stays easy to reach. Previous weeks remain quietly archived below.</p>}
       {!weeks.length ? <Card><p className="text-sm text-gray-500">Notes, writing prompts, quizzes, discussions, texts, and links will appear here by week.</p></Card> : <div className="space-y-3">
         {visibleWeeks.map(([week, unsortedItems]) => {
