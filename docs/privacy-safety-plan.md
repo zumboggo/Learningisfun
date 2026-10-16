@@ -85,3 +85,11 @@ Learning is Fun should be designed so the app does not need a real student roste
 5. Add nickname setup page after first magic-link sign-in.
 6. Update reports and classroom views to show nickname instead of email or legal name.
 7. Add data retention controls per class.
+
+### Grade 9 advisory family contacts (2026–27)
+
+The one-off Family contact form is scoped to class `585406db-6bcf-4fc7-b42f-1f5e4bc8a540` (Gr. 9 Boys Advisory). It copies the 11 columns A–K from the Grade 9 parent-info workbook. `scripts/setup-family-contacts.mjs` provisions `advisory_family_contacts` with no client permissions and document security disabled. Only the existing authenticated `learning-content` function accesses that collection.
+
+The server requires active student membership for this exact class. Students can read and replace only their own deterministic record; supplied user IDs are ignored. Only the class owner with a teacher/admin account may list the table. Parents, substitutes, other teachers, other classes, and expired student memberships cannot access it. A teacher's student-mode preview loads no responses and cannot submit.
+
+Contact details are online-only and kept in component memory while the page is open. They are not added to IndexedDB, the sync queue, localStorage, class realtime subscriptions, public content, or AI requests. The Appwrite provider still hosts the data, as it does other app records. Account or mode changes unmount the response view; a successful student save clears the displayed form. The teacher explicitly opens/refreshes the table and copies rows to Excel. Export omits account IDs/timestamps and preserves phone numbers as text while escaping formula-like values. The legacy Sites form is a separate service and is not used by this workflow; no legacy responses are imported.

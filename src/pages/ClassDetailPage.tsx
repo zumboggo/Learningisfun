@@ -1,3 +1,4 @@
+import {FAMILY_CONTACT_CLASS_ID} from '@/services/family-contacts.service';
 import {CreateWritingPromptModal} from '@/components/discussions/CreateWritingPromptModal';
 import { ReadingParticipationExport } from '@/components/reports/ReadingParticipationExport';
 import { MarkdownPasteEditor } from '@/components/common/MarkdownPasteEditor';
@@ -394,6 +395,8 @@ export function ClassDetailPage() {
         ) : <div className="flex flex-wrap gap-2"><Button size="sm" variant="secondary" onClick={()=>setShowClassLinks(true)}>Class Links</Button><Button size="sm" variant="secondary" loading={refreshingMaterials} onClick={() => void refreshMaterials()}>↻ Refresh class</Button></div>}
         <Modal open={showClassLinks} onClose={()=>setShowClassLinks(false)} title="Class Links"><div className="space-y-2">{parseClassLinks(cls.linksJson).map(link=><a key={link.url+link.label} href={link.url} target="_blank" rel="noopener noreferrer" className="block rounded-xl border p-3 text-blue-700 underline">{link.label} ↗</a>)}{!parseClassLinks(cls.linksJson).length&&<p>No class links have been added yet.</p>}</div></Modal>
       </div>
+
+      {cls.$id === FAMILY_CONTACT_CLASS_ID && (isOwner || (user?.role === 'student' && (members || []).some(member => member.userId === user.$id && member.role === 'student'))) && <Link to={`/classes/${cls.$id}/family-contacts`} className="flex items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4 hover:bg-blue-100"><span><strong className="block text-blue-950">Family contact form</strong><span className="text-sm text-blue-800">{isOwner ? 'View private responses and copy rows for the Grade 9 spreadsheet.' : 'Copy the details from your physical card. Only you and your teacher can view your response.'}</span></span><span aria-hidden="true">→</span></Link>}
 
       {materialRefreshMessage && <p role="status" className={`rounded-lg px-3 py-2 text-sm ${materialRefreshFailed ? 'bg-amber-50 text-amber-800' : 'bg-green-50 text-green-800'}`}>{materialRefreshMessage}</p>}
 

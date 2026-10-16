@@ -20,6 +20,7 @@ import { originalPdfAction, authorizeTextMutation, readEditableParagraphs } from
 import { handleTqe } from './tqe.js';
 import { publicSharingAction } from './public-reading.js';
 import { readingDiscussionAction } from './reading-discussion.js';
+import { familyContactsAction } from './family-contacts.js';
 
 const studentCollections = new Set(['quiz_attempts', 'writing_submissions', 'peer_reviews', 'discussion_questions', 'discussion_answers', 'question_votes', 'text_annotations', 'text_discussion_posts', 'text_discussion_votes']);
 const substitutePostCollections = new Set(['discussion_questions', 'discussion_answers', 'text_annotations', 'text_discussion_posts']);
@@ -159,6 +160,11 @@ export default async ({ req, res, error }) => {
     const memberships = await db.listDocuments(databaseId, 'class_members', [Query.equal('userId', userId), Query.limit(500)]);
     const nowTime = Date.now();
     const memberClassIds = new Set(memberships.documents.filter(row => row.role !== 'substitute' || (row.expiresAt && new Date(row.expiresAt).getTime() > nowTime)).map(row => row.classId));
+    if (['readFamilyContacts','saveFamilyContacts'].includes(body.action)) {
+      const validMembers = new Set(memberships.documents.filter(row => row.role === 'student' && (!row.expiresAt || Date.parse(row.expiresAt) > nowTime)).map(row => row.classId));
+      try { return res.json(await familyContactsAction({body,profile,userId,memberClassIds:validMembers,db,databaseId})); }
+      catch (cause) { if ([400,403].includes(cause.code)) return res.json({error:cause.message},cause.code); throw cause; }
+    }
     if(['animatedLibrary','animatedSaveDraft','animatedReadDraft','animatedPublish','animatedAssign','animatedArchiveAssignment','animatedRead','animatedSaveAttempt'].includes(body.action)){const validMembers=new Set(memberships.documents.filter(r=>r.role==='student'&&(!r.expiresAt||Date.parse(r.expiresAt)>nowTime)).map(r=>r.classId));try{return res.json(await animatedEpisodeAction({body,profile,userId,memberClassIds:validMembers,db,databaseId,storage:new Storage(client)}));}catch(cause){if([400,403,404,409].includes(cause.code))return res.json({error:cause.message},cause.code);throw cause;}}
     if(body.action==='saveFlashcardBatch'){if(!['student','teacher','admin'].includes(profile.role))return res.json({error:'Practice saving requires a student or teacher account'},403);return res.json(await saveFlashcardBatch({body,userId,memberClassIds,db,databaseId}));}
     if(body.action==='readFlashcardDeck'){try{return res.json(await readFlashcardDeck({body,userId,memberClassIds,db,databaseId}));}catch(cause){if(cause.code===403)return res.json({error:cause.message},403);throw cause;}}
