@@ -1,0 +1,14 @@
+Greek Ethics: three-part reading sequence
+Created October 16, 2026 for Ethics and Leadership, Section 1.
+Part 1 due October 16; Part 2 due October 20; Part 3 due October 23 (Asia/Shanghai).
+
+The reading bodies are approximately 1,000–1,100 words excluding captions, headings, discussion prompts, and sources. Reading times are planning estimates.
+
+Central tensions:
+1. Civic trust versus critical inquiry; extension: distinguish authority from justification.
+2. Character formation versus political control; extension: distinguish expertise from a right to rule.
+3. Tranquility versus responsibility; extension: consider how public office changes obligations.
+
+The recurring prompts are an adaptation informed by Project Zero's Claim, Support, Question, not an official Project Zero instrument: https://pz.gse.harvard.edu/resources/claim-support-question
+
+Images: six separate calls using the built-in imagegen tool. Original PNGs retained in Codex generated_images; classroom JPEG copies in images/. All are imagined reconstructions or illustrations of literary stories, labeled accordingly. Prompt subjects: Socrates questioning a listener in the agora; citizens debating at the Pnyx; Gyges discovering a ring; Aristotle and students at the Lyceum; Diogenes asking Alexander to move out of his sunlight; friends sharing a simple Epicurean garden meal. Full prompt specifications recorded separately in image-prompts.json.
