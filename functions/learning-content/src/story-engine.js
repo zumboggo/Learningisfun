@@ -47,6 +47,17 @@ export function compileStory(source,assets={}) {
    if(m[1]==='look'&&!['auto','front','away','down'].includes(m[3])&&(!assets.characters?.[m[3]]||m[2]===m[3]))error(line,'Look needs another character or auto/front/away/down');
    add({type:m[1],actor:m[2],value:m[3]},line);continue;
   }
+  if(version===2&&(m=s.match(new RegExp(`^activity (${id}) (?:walk (left|right) (slow|steady|brisk)|train (${id}) (steady|tiring)|(pause|resume|stop))$`)))){
+   const actor=m[1],kind=m[2]?'walk':m[4]?'train':m[6];
+   if(!assets.characters?.[actor])error(line,'Unknown activity character');
+   if(['walk','train'].includes(kind)&&assets.characters?.[actor]?.rig?.preset!=='cartoon-v1')error(line,'Activities require a cartoon-v1 rig');
+   if(kind==='train'&&(!assets.characters?.[m[4]]||m[4]===actor||assets.characters[m[4]].impact!=='anchored'))error(line,'Training needs a distinct anchored practice target');
+   add({type:'activity',actor,kind,...(kind==='walk'?{direction:m[2],pace:m[3]}:kind==='train'?{targetActor:m[4],pace:m[5]}:{})},line);continue;
+  }
+  if(version===2&&(m=s.match(new RegExp(`^scroll (none|${id})$`)))){
+   if(m[1]!=='none'&&!assets.characters?.[m[1]])error(line,'Unknown scrolling actor');
+   add({type:'scroll',actor:m[1]==='none'?undefined:m[1]},line);continue;
+  }
   // A finite performance accompanies the next readable beat; it adds no saved step.
   if(version===2&&(m=s.match(new RegExp(`^perform (${id}) (${id})(?: (${id}))? repeat ([1-6])(?: (steady|tiring))?$`)))){
    const action=ACTIONS[m[2]];
@@ -101,39 +112,57 @@ export function compileStory(source,assets={}) {
  }
  const edges=i=>{const n=nodes[i];return n.type==='end'?[]:n.type==='choice'?n.options.map(o=>labels[o.target]):['if','chance'].includes(n.type)?[labels[n.target],labels[n.otherwise]]:n.type==='goto'?[labels[n.target]]:[i+1];};
  if(!errors.length){const reached=new Set(),active=new Set();const visit=i=>{if(i>=nodes.length){error(lines.length,'A path falls off the script without end');return;}if(active.has(i)){error(nodes[i].line,'Loops are not supported; reconnect branches farther ahead');return;}if(reached.has(i))return;reached.add(i);active.add(i);edges(i).forEach(visit);active.delete(i);};if(nodes.length)visit(0);else error(1,'Add a story');nodes.forEach((n,i)=>{if(!reached.has(i))error(n.line,'Unreachable content');});}
- if(!errors.length&&nodes.some(n=>(['act','perform','prop','express','look'].includes(n.type)||n.type==='camera'&&['two','action','listener'].includes(n.shot)))){
+ if(!errors.length&&nodes.some(n=>(['act','perform','prop','express','look','activity','scroll'].includes(n.type)||n.type==='camera'&&['two','action','listener'].includes(n.shot)))){
   const incoming=nodes.map(()=>[]);nodes.forEach((_,i)=>edges(i).forEach(j=>incoming[j].push(i)));
   const cache=new Map();
   const after=i=>{if(cache.has(i))return cache.get(i);const parents=incoming[i].map(after);let visible=parents.length?new Map([...parents[0]].filter(([a,pos])=>parents.every(p=>p.get(a)===pos))):new Map();const n=nodes[i];
-   if((['act','perform','prop','express','look'].includes(n.type)||n.type==='camera'&&['two','action','listener'].includes(n.shot))){for(const a of [n.actor,n.targetActor,n.otherActor,n.type==='look'&&!['auto','front','away','down'].includes(n.value)?n.value:null].filter(Boolean))if(!visible.has(a))error(n.line,'Show '+a+' in a distinct position on every path before this action');}
-   if(n.type==='ensemble')visible=new Map([...visible].filter(([a])=>n.actors.includes(a)));
-   if(n.type==='scene')visible=new Map();
-   if(n.type==='show'||n.type==='move'&&visible.has(n.actor)&&['left','center','right'].includes(n.action)){const position=n.position||n.action;for(const [a,p]of visible)if(p===position)visible.delete(a);visible.set(n.actor,position);}
+   if((['act','perform','prop','express','look','activity','scroll'].includes(n.type)||n.type==='camera'&&['two','action','listener'].includes(n.shot))){for(const a of [n.actor,n.targetActor,n.otherActor,n.type==='look'&&!['auto','front','away','down'].includes(n.value)?n.value:null].filter(Boolean))if(!visible.has(a))error(n.line,'Show '+a+' in a distinct position on every path before this action');}
+   if(n.type==='scroll'&&n.actor&&assets.backgrounds?.[visible.get('@background')]?.loop!=='mirror')error(n.line,'Scrolling requires the current background to declare loop: mirror');
+   if(n.type==='ensemble')visible=new Map([...visible].filter(([a])=>a==='@background'||n.actors.includes(a)));
+   if(n.type==='scene')visible=new Map([['@background',n.asset]]);
+   if(n.type==='show'||n.type==='move'&&visible.has(n.actor)&&['left','center','right'].includes(n.action)){const position=n.position||n.action;for(const [a,p]of visible)if(a!=='@background'&&p===position)visible.delete(a);visible.set(n.actor,position);}
    if(n.type==='move'&&n.action==='exit')visible.delete(n.actor);
    cache.set(i,visible);return visible;};nodes.forEach((_,i)=>after(i));
  }
  return {errors,story:errors.length?undefined:{version,nodes,labels,variables}};
 }
 export function initialStoryState(story,seed=1){return {cursor:0,variables:Object.fromEntries(Object.entries(story.variables).map(([k,v])=>[k,v.initial])),stage:{background:null,actors:{},...(story.version===2?{camera:{shot:'auto'}}:{})},history:[],events:[],seed:seed>>>0,ended:false};}
-export function settleStory(story,state){const s=structuredClone(state);s.cues=[];let steps=0;while(!s.ended&&steps++<10000){const n=story.nodes[s.cursor];if(!n)throw Error('Invalid story position');if(['say','choice','act'].includes(n.type)){if(n.type==='act'){const a=s.stage.actors[n.actor],b=s.stage.actors[n.targetActor];if(!a||n.targetActor&&!b)throw Error('Action characters must be on stage');if(ACTIONS[n.action]?.prop)a.prop=ACTIONS[n.action].prop;if(b){const order={left:0,center:1,right:2};a.facing=order[a.position]<order[b.position]?1:-1;b.facing=-a.facing;}}if(story.version===2&&n.type==='say'&&s.stage.actors[n.actor]&&n.emotion)s.stage.actors[n.actor].expression=n.emotion;return s;}
+export function settleStory(story,state){const s=structuredClone(state);s.cues=[];let steps=0;while(!s.ended&&steps++<10000){const n=story.nodes[s.cursor];if(!n)throw Error('Invalid story position');if(['say','choice','act'].includes(n.type)){if(n.type==='act'){const a=s.stage.actors[n.actor],b=s.stage.actors[n.targetActor];if(!a||n.targetActor&&!b)throw Error('Action characters must be on stage');if(ACTIONS[n.action]?.prop){a.prop=ACTIONS[n.action].prop;if(a.activity?.kind==='train'&&a.prop!=='sword')delete a.activity;}if(b){const order={left:0,center:1,right:2};a.facing=order[a.position]<order[b.position]?1:-1;b.facing=-a.facing;}}if(story.version===2&&n.type==='say'&&s.stage.actors[n.actor]&&n.emotion)s.stage.actors[n.actor].expression=n.emotion;return s;}
  if(n.type==='end'){s.ended=true;return s;}
  if(['scene','show','move','effect','react','camera','perform','sound'].includes(n.type))s.cues.push(n);
  if(n.type==='scene'){s.stage={background:n.asset,actors:{},...(story.version===2?{camera:{shot:'auto'}}:{})};}
+ if(n.type==='show'||n.type==='move'&&n.action==='exit'||n.type==='rest'||n.type==='prop'){for(const [id,a] of Object.entries(s.stage.actors))if(id===n.actor||a.activity?.targetActor===n.actor)delete a.activity;}
  if(n.type==='show'){for(const [id,a] of Object.entries(s.stage.actors))if(id!==n.actor&&a.position===n.position){delete s.stage.actors[id];s.cues.push({type:'move',actor:id,action:'exit'});}s.stage.actors[n.actor]={expression:n.expression,position:n.position,facing:1};}
  if(n.type==='ensemble')s.stage.actors=Object.fromEntries(Object.entries(s.stage.actors).filter(([id])=>n.actors.includes(id)));
  if(n.type==='face'&&s.stage.actors[n.actor])s.stage.actors[n.actor].facing=n.direction;
  if(n.type==='camera')s.stage.camera={shot:n.shot,actor:n.actor,...(n.otherActor?{otherActor:n.otherActor}:{}),...(n.duration!==undefined?{duration:n.duration}:{})};
+ if(n.type==='activity'){
+  const a=s.stage.actors[n.actor];
+  if(n.kind==='stop')delete a.activity;
+  else if(n.kind==='pause'||n.kind==='resume'){if(a.activity)a.activity.paused=n.kind==='pause';}
+  else{
+   // One activity owns each body: starting a new one replaces conflicting work.
+   const owners=[n.actor,n.targetActor].filter(Boolean);
+   for(const [id,other] of Object.entries(s.stage.actors))if(owners.includes(id)||owners.includes(other.activity?.targetActor))delete other.activity;
+   a.activity={kind:n.kind,pace:n.pace,...(n.targetActor?{targetActor:n.targetActor}:{}),...(n.direction?{direction:n.direction}:{}),paused:false};
+   a.rest='relaxed';
+   if(n.kind==='walk')a.facing=n.direction==='right'?1:-1;
+   else{a.prop='sword';const b=s.stage.actors[n.targetActor],order={left:0,center:1,right:2};a.facing=order[a.position]<order[b.position]?1:-1;b.facing=-a.facing;}
+  }
+ }
+ if(n.type==='scroll'){if(n.actor)s.stage.scroll=n.actor;else delete s.stage.scroll;}
  if(n.type==='ambience'||n.type==='environment')s.stage[n.type]=n.preset;
  if(n.type==='express'&&s.stage.actors[n.actor])s.stage.actors[n.actor].expression=n.value;
  if(n.type==='look'&&s.stage.actors[n.actor])s.stage.actors[n.actor].gaze=n.value;
  if(n.type==='perform'){
   const a=s.stage.actors[n.actor],b=s.stage.actors[n.targetActor];
-  if(ACTIONS[n.action]?.prop)a.prop=ACTIONS[n.action].prop;
+  if(ACTIONS[n.action]?.prop){a.prop=ACTIONS[n.action].prop;if(a.activity?.kind==='train'&&a.prop!=='sword')delete a.activity;}
   if(b){const order={left:0,center:1,right:2};a.facing=order[a.position]<order[b.position]?1:-1;b.facing=-a.facing;}
  }
  if(n.type==='prop'&&s.stage.actors[n.actor])s.stage.actors[n.actor].prop=n.prop;
  if(n.type==='rest'&&s.stage.actors[n.actor])s.stage.actors[n.actor].rest=n.action;
  if(n.type==='move'){const a=s.stage.actors[n.actor];if(n.action==='exit')delete s.stage.actors[n.actor];else if(a){if(['left','center','right'].includes(n.action))a.position=n.action;if(n.action==='turn')a.facing*=-1;}}
+ for(const a of Object.values(s.stage.actors))if(a.activity?.targetActor&&!s.stage.actors[a.activity.targetActor])delete a.activity;
  if(n.type==='goto'){s.cursor=story.labels[n.target];continue;}
  if(n.type==='if'){const a=s.variables[n.variable],b=n.value;const yes=n.op==='=='?a===b:n.op==='!='?a!==b:n.op==='>'?a>b:n.op==='<'?a<b:n.op==='>='?a>=b:a<=b;s.cursor=story.labels[yes?n.target:n.otherwise];continue;}
  if(n.type==='chance'){let x=s.seed;for(const c of n.id)x=Math.imul(x^c.charCodeAt(0),16777619)>>>0;const yes=x%100<n.percent;s.events.push({id:n.id,yes});s.cursor=story.labels[yes?n.target:n.otherwise];continue;}

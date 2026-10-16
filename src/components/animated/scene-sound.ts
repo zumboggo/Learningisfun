@@ -61,4 +61,4 @@ export class SceneSound {
  stopEffects(){for(const source of this.sources){try{source.stop();}catch{/* Already stopped. */}}this.sources.clear();}
  dispose(){this.disposed=true;this.stopEffects();this.stopAmbient();void this.context?.close().catch(()=>{});this.context=null;}
 }
-export function emitSound(root:HTMLElement,cue:string){root.dispatchEvent(new CustomEvent('story-sound',{detail:cue}));}
+export function emitSound(root:HTMLElement,cue:string){root.dispatchEvent(new CustomEvent('story-sound',{detail:cue,bubbles:true}));}

@@ -22,7 +22,7 @@ export async function performAction(root:HTMLElement,node:any,reduced:boolean,se
  const a=rect(actor),b=target?rect(target):undefined;const direction=b?(b.x<a.x?-1:1):(actor.querySelector<HTMLElement>('.story-facing')?.style.transform.includes('-1')?-1:1);
  // Close most of the gap, retaining room for the arm; never travel off the stage.
  const gap=b?Math.abs((b.x+b.width/2)-(a.x+a.width/2)):0;
- const stageElement=root.querySelector('.story-stage'),stage=stageElement?rect(stageElement):undefined;
+ const stageElement=(root.matches('.story-stage')?root:root.querySelector('.story-stage')),stage=stageElement?rect(stageElement):undefined;
  const room=b&&stage?(direction>0?stage.right-(b.x+b.width/2):(b.x+b.width/2)-stage.left)-b.height*.12:1000;
  const reactionScale=b?Math.min(1,Math.max(0,room)/(32+b.height*.21)):1;
  const soloRoom=stage?Math.max(0,direction>0?stage.right-a.right:a.left-stage.left):0;

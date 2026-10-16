@@ -1,13 +1,29 @@
+import ActivityRunner from './ActivityRunner';
 import {actorBounds,fitCamera,unionBoxes} from './camera-framing';
-import {useEffect,useLayoutEffect,useRef,useState,type CSSProperties} from 'react';
+import {useCallback,useEffect,useLayoutEffect,useRef,useState,type CSSProperties} from 'react';
 import type {StoryPackage,StoryState} from '../../../functions/learning-content/src/story-engine.js';
 import PuppetActor from './PuppetActor';
 import MountedActor from './MountedActor';
 import {armGeometry} from './character-geometry';
 import {ACTIONS,POSES} from '../../../functions/learning-content/src/acting-library.js';
 export default function StoryStage({pack,state,current,speaking,reduced,responses={}}:{pack:StoryPackage;state:StoryState;current:any;speaking:boolean;reduced:boolean;responses?:Record<string,string>}){
+ const [activityResponses,setActivityResponses]=useState<Record<string,Record<string,string>>>({});
+ const onActivityResponse=useCallback((actor:string,value:Record<string,string>)=>setActivityResponses(old=>({...old,[actor]:value})),[]);
+ const [paused,setPaused]=useState(false),[hidden,setHidden]=useState(()=>typeof document!=='undefined'&&document.hidden);
+ useEffect(()=>{const update=()=>setHidden(document.hidden);document.addEventListener('visibilitychange',update);return()=>document.removeEventListener('visibilitychange',update);},[]);
+ const suspended=paused||hidden||reduced||state.ended||current?.type==='choice';
+ const transient=[...(state.cues||[]).filter(n=>['react','perform'].includes(n.type)),...(current?.type==='act'?[current]:[])];
+ const blocked=new Set(transient.flatMap(n=>[n.actor,n.targetActor].filter(Boolean)));
+ const enabled=(id:string)=>!suspended&&!state.stage.actors[id]?.activity?.paused&&!blocked.has(id)&&!blocked.has(state.stage.actors[id]?.activity?.targetActor);
+ const activeEntries=Object.entries(state.stage.actors).filter(([,a])=>a.activity);
+ const continuous=Object.assign({},...Object.entries(activityResponses).filter(([id])=>enabled(id)&&state.stage.actors[id]?.activity?.kind==='train').map(([,r])=>r));
+ const allResponses={...continuous,...responses};
+ const training=activeEntries.find(([id,a])=>a.activity?.kind==='train'&&enabled(id));
+ const walker=state.stage.scroll?state.stage.actors[state.stage.scroll]:undefined;
+ const scrolling=walker?.activity?.kind==='walk'&&pack.assets.backgrounds[state.stage.background||'']?.loop==='mirror';
+ const scrollRunning=!!scrolling&&enabled(state.stage.scroll!);
  const modern=pack.format===2,actors=Object.entries(state.stage.actors),speaker=current?.type==='say'&&current.actor!=='I'?current.actor:undefined;
- const performance=current?.type==='act'?current:state.cues?.find(n=>n.type==='perform');
+ const performance=current?.type==='act'?current:state.cues?.find(n=>n.type==='perform')||(training?{actor:training[0],targetActor:training[1].activity?.targetActor,action:'sword-strike'}:undefined);
  const camera=state.stage.camera,requested=camera?.shot||'auto';
  const shot=performance?(requested==='action'?'action':'wide'):requested;
  const resolved=shot==='auto'?(speaker&&actors.length===1?'medium':'wide'):shot;
@@ -31,24 +47,27 @@ export default function StoryStage({pack,state,current,speaking,reduced,response
  // eslint-disable-next-line react-hooks/exhaustive-deps
  },[resolved,focus,camera?.otherActor,targetKey,modern,performance?.actor,performance?.targetActor]);
  const duration=reduced||performance?0:camera?.duration??.65;
- return <div ref={stageRef} className={`story-stage ${modern?'story-stage-living':''}`} data-shot={resolved} data-camera-scale={frame.scale.toFixed(3)} data-actions={/^(act|perform) /m.test(pack.script)||undefined} data-paired={actors.length===2&&/^(act|perform) /m.test(pack.script)||undefined}>
+ return <div ref={stageRef} className={`story-stage ${modern?'story-stage-living':''}`} data-shot={resolved} data-camera-scale={frame.scale.toFixed(3)} data-actions={/^(act|perform|activity) /m.test(pack.script)||undefined} data-paired={actors.length===2&&/^(act|perform) /m.test(pack.script)||undefined}>
   <div className="story-camera" style={{transform:`translate(${frame.x}px, ${frame.y}px) scale(${frame.scale})`,transformOrigin:'0 0',transitionDuration:`${duration}s`} as CSSProperties}>
-   <div ref={worldRef} className="story-world" style={{backgroundImage:state.stage.background?`url("${pack.assets.backgrounds[state.stage.background]?.src}")`:undefined}}>
+   <div ref={worldRef} className="story-world" style={{backgroundImage:!scrolling&&state.stage.background?`url("${pack.assets.backgrounds[state.stage.background]?.src}")`:undefined}}>
+    {scrolling&&<div className="story-travel-backdrop" data-scroll={scrollRunning?'running':'paused'} aria-hidden="true" style={{animationPlayState:scrollRunning?'running':'paused',animationDirection:walker.activity!.direction==='left'?'reverse':'normal',animationDuration:walker.activity!.pace==='slow'?'48s':walker.activity!.pace==='brisk'?'24s':'34s'}}>{[0,1,2,3].map(i=><div key={i} style={{left:`${i*100}%`,transform:i%2?'scaleX(-1)':undefined,backgroundImage:`url("${pack.assets.backgrounds[state.stage.background!].src}")`}}/>)}</div>}
+    {activeEntries.map(([id,a])=><ActivityRunner key={id} root={stageRef} actor={id} activity={a.activity!} enabled={enabled(id)} onResponse={onActivityResponse}/>)}
     {!reduced&&['dust','rain'].includes(state.stage.environment||'')&&<div className={`story-environment environment-${state.stage.environment}`} aria-hidden="true">{Array.from({length:12},(_,i)=><i key={i} style={{left:`${(i*37+11)%100}%`,top:`${(i*23)%100}%`,animationDelay:`-${i*.71}s`,animationDuration:`${state.stage.environment==='rain'?1.4+(i%3)*.3:12+(i%5)*2}s`}}/>)}</div>}
 
     {actors.map(([id,a])=>{const c=pack.assets.characters[id],asset=c.expressions[a.expression]||c.expressions.neutral;
      const target=a.gaze&&!['auto','away','down','front'].includes(a.gaze)?a.gaze:(performance?.actor===id?performance.targetActor:speaker&&speaker!==id?speaker:actors.find(([other])=>other!==id)?.[0]);
      const targetPosition=state.stage.actors[target||'']?.position;
      const direction=targetPosition?Math.sign(positions[targetPosition]-positions[a.position]):0;
-     const gazeX=a.gaze==='front'||a.gaze==='down'?0:(a.gaze==='away'?-(direction||1):direction)*a.facing*2.5;
+     const gazeX=a.activity?.kind==='walk'&&(!a.gaze||a.gaze==='auto')?2.5:a.gaze==='front'||a.gaze==='down'?0:(a.gaze==='away'?-(direction||1):direction)*a.facing*2.5;
      const gazeY=a.gaze==='down'||(!a.gaze&&a.expression==='embarrassed')?2:0;
      return <div data-actor={id} data-expression={a.expression} data-gaze={a.gaze||'auto'} data-impact={c.impact} style={{zIndex:performance?.actor===id?2:undefined}} key={id} className={`story-actor position-${a.position} ${c.rig?'has-rig':''} ${performance?.action==='mounted-charge'&&performance.actor===id?'is-mounted':''}`}>
-     <div className="story-facing" style={{transform:`scaleX(${a.facing})`}}>{performance?.action==='mounted-charge'&&performance.actor===id?<MountedActor character={c} emotion={a.expression} reduced={reduced} active={!!responses[id]} performanceKey={state.cursor}/>:c.rig?<PuppetActor gazeX={gazeX} gazeY={gazeY} character={c} actorId={id} performanceKey={state.cursor} emotion={a.expression} talking={speaking&&id===speaker} gesture={id===speaker?current.gesture:undefined} rest={a.rest} prop={a.prop} response={responses[id]||current?.beatResponses?.[id]||(reduced&&current?.type==='act'?(id===current.actor?ACTIONS[current.action]?.actor:id===current.targetActor?ACTIONS[current.action]?.target:undefined):undefined)} reduced={reduced}/>:<img src={asset?.src} alt={`${c.name} — ${a.expression}`} onError={e=>{e.currentTarget.style.opacity='0';}}/>}</div>
+     <div className="story-facing" style={{transform:`scaleX(${a.facing})`}}>{performance?.action==='mounted-charge'&&performance.actor===id?<MountedActor character={c} emotion={a.expression} reduced={reduced} active={!!responses[id]} performanceKey={state.cursor}/>:c.rig?<PuppetActor activity={a.activity} activityPaused={!enabled(id)} gazeX={gazeX} gazeY={gazeY} character={c} actorId={id} performanceKey={training&&(id===training[0]||id===training[1].activity?.targetActor)?0:state.cursor} emotion={a.expression} talking={speaking&&id===speaker} gesture={id===speaker?current.gesture:undefined} rest={a.rest} prop={a.prop} response={allResponses[id]||current?.beatResponses?.[id]||(reduced&&current?.type==='act'?(id===current.actor?ACTIONS[current.action]?.actor:id===current.targetActor?ACTIONS[current.action]?.target:undefined):undefined)} reduced={reduced}/>:<img src={asset?.src} alt={`${c.name} — ${a.expression}`} onError={e=>{e.currentTarget.style.opacity='0';}}/>}</div>
      {!modern&&<span>{c.name}</span>}
     </div>;})}
     {performance&&['shoot-arrow','magic-beam'].includes(performance.action)&&<Projectile key={`${state.cursor}-${!!responses[performance.actor]}`} state={state} current={performance} reduced={reduced} active={!!responses[performance.actor]}/>}
    </div>
   </div>
+  {activeEntries.length>0&&!state.ended&&<button className="story-motion-toggle" aria-pressed={paused} onClick={()=>setPaused(value=>!value)}>{paused?'Resume scene motion':'Pause scene motion'}</button>}
  </div>;
 }
 

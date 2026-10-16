@@ -39,3 +39,7 @@ Use `camera listener Hyun over 0.65` for an emotional reaction, `camera speaker 
 `ambience hall|wind|rain|none` and `environment dust|rain|none` persist until changed or the next scene. `sound swish|straw|thud|clang|step|chime` is a one-shot cue. Sword actions also time their swish/contact effects automatically; avoid adding duplicate impacts. Sound is synthesized locally. Hall effects include a quiet short reflection.
 
 Sound & atmosphere starts with ambience, effects, and captions off. Readers enable each explicitly and control volumes independently; Chunky Chinese also exposes Mandarin voice volume. Atmosphere ducks during speech. Navigation cancels pending effects, hidden pages stop sound, and leaving/completing an episode closes audio. Resume restores scenery without replaying transient sounds. Reduced motion removes environmental particles and action sequences but preserves explicitly authored sound cues.
+
+## Sustained activities
+
+See [scene activities](scene-activities.md) for optional walking, mirrored travel scenery, ongoing sword practice, recovery and interruption controls. These persist across ordinary dialogue; finite `perform` cues keep their original behavior.

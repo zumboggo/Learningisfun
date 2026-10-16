@@ -16,8 +16,8 @@ export const FACE_PATHS:Record<string,string>={
 export function heldPropPose(prop?:string){return prop==='lance'?'lance-hold':prop==='phone'?'phone-hold':prop==='sword'?'sword-hold':prop==='bow'?'bow-hold':'relaxed';}
 
 /** Two fixed-length leg segments solve toward a grounded ankle. */
-export function legGeometry(side:'left'|'right',drop:number,footOffset=0,bend=side==='left'?-1:1){
- const x=side==='left'?98:142,y=348+Math.max(0,drop),fx=x+footOffset,fy=566;
+export function legGeometry(side:'left'|'right',drop:number,footOffset=0,bend=side==='left'?-1:1,footLift=0){
+ const x=side==='left'?98:142,y=348+Math.max(0,drop),fx=x+footOffset,fy=566-Math.max(0,Math.min(30,footLift));
  const dx=fx-x,dy=fy-y,d=Math.max(.001,Math.min(218,Math.hypot(dx,dy))),half=d/2;
  const h=Math.sqrt(Math.max(0,109*109-half*half)),sign=bend<0?-1:1;
  const kx=x+dx/2+sign*dy/d*h,ky=y+dy/2-sign*dx/d*h;
