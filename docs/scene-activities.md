@@ -45,6 +45,12 @@ activity Hyun stop
 
 `activity Actor train Target steady|tiring` repeats sword practice across dialogue, automatically equipping the sword and facing the target. The actor needs a cartoon-v1 rig; the distinct, staged target must have `"impact":"anchored"`. `steady` has brief recovery after each stroke; `tiring` includes longer recovery after every three strokes. This is practice, not combat against an unwilling character. Timed effects use the reader's existing optional sound settings.
 
+## Eating as a comic beat
+
+`activity Actor eat steady|eager` gives a cartoon-v1 actor a bowl and spoon, replacing held equipment. A repeating scoop → bite → chew cycle continues beneath narration and another character's speech. `eager` is a quicker, apparently bottomless lunch; `steady` leaves more space between bites. The eater's own voiced speech pauses the hand automatically. Explicit pause/resume freezes and continues the cycle; stop removes the meal. Reduced motion keeps a static bowl-and-spoon pose.
+
+Use a few consecutive meal beats, then an interruption or change of attention. For example, start `activity Hyun eat eager`, pause for a surprising question, resume during the instructor's reply, and stop before a large gesture. Medium/two-person framing keeps utensils visible. Keep both hands on the meal during reactions; stop the activity when a free-hand gesture matters. This is a stylized loop, not a claim that the food supply literally never runs out.
+
 ## Interruptions and lifetime
 
 - `activity Actor pause|resume|stop` holds, restarts or removes activity state. Paused walking holds its phase; paused training cancels its stroke and resumes with a fresh stroke. Saved progress restores activity configuration, not exact animation phase.

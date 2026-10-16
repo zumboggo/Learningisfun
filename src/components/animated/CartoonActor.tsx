@@ -1,4 +1,4 @@
-import {useWalkClock,walkingPose} from './activity-motion';
+import {useWalkClock,walkingPose,eatingPose} from './activity-motion';
 import type {StoryActivity} from '../../../functions/learning-content/src/story-engine.js';
 import RefinedFace from './RefinedFace';
 import {armGeometry,legGeometry,FACE_PATHS,heldPropPose} from './character-geometry';
@@ -27,18 +27,20 @@ export default function CartoonActor({character,activity,activityPaused=false,em
  const acting=response||(!activity&&(rest==='arms-crossed'&&!gesture?'cross-arms':talking?(gesture||automatic.talk):expressive.includes(automatic.talk)?automatic.talk:''))||'';
  const grip=rider?POSES['mounted-charge']:POSES[heldPropPose(prop)]||{};
  const resting={...(POSES[rest||automatic.rest]||{}),...grip},action={...resting,...(POSES[acting]||{}),...((prop==='phone'||(prop==='lance'&&!['lance-threat','mounted-charge'].includes(acting)))?grip:{})};
- const [heldPose,setPose]=useState<Record<string,number>>(resting),[blink,setBlink]=useState(false),[mouth,setMouth]=useState(0);
+ const [heldPose,setPose]=useState<Record<string,number>>(resting),[blink,setBlink]=useState(false),[speechMouth,setMouth]=useState(0);
  const current=useRef(heldPose);
  const lastPerformance=useRef<{response?:string;emotion?:string;talking?:boolean;gesture?:string;performanceKey?:number}>({});
  const phase=[...actorId].reduce((a,c)=>a*31+c.charCodeAt(0),0)>>>0;
  useEffect(()=>{const previous=lastPerformance.current;lastPerformance.current={response,emotion,talking,gesture,performanceKey};const shouldPerform=!!acting&&(response?previous.response!==response||previous.performanceKey!==performanceKey:previous.emotion!==emotion||talking&&(!previous.talking||previous.gesture!==gesture));if(reduced){current.current=resting;setPose(acting?{...resting,...action}:resting);return;}let frame=0,start:number|undefined;const from={...current.current},perform=shouldPerform;const tick=(now:number)=>{start??=now;const elapsed=now-start,entry=smooth(elapsed/420),strength=perform?gestureEnvelope(elapsed):0;const next=Object.fromEntries(joints.map(k=>{const base=resting[k]||0;const delayed=perform?gestureEnvelope(Math.max(0,elapsed-(k==='head'?95:k==='torso'?55:k.endsWith('Hand')?90:0))):0;return [k,(from[k]||0)*(1-entry)+base*entry+((action[k]||0)-base)*(k.includes('Arm')?strength:delayed)];}));if(response==='shake-head')next.head=Math.sin(elapsed/150)*8*strength;if(response==='wave')next.rightHand=(next.rightHand||0)+Math.sin(elapsed/110)*12*strength;if(acting==='laugh'){next.torso-=Math.abs(Math.sin(elapsed/90))*5*strength;next.head-=Math.abs(Math.sin(elapsed/90))*4*strength;}if(acting==='rage'){const swing=Math.sin(elapsed/100)*18*strength;next.leftUpperArm+=swing;if(prop!=='phone'&&prop!=='lance')next.rightUpperArm-=swing;}if(acting==='excited')next.torso+=Math.sin(elapsed/100)*5*strength;current.current=next;setPose(next);if(elapsed<2200)frame=requestAnimationFrame(tick);};frame=requestAnimationFrame(tick);return()=>cancelAnimationFrame(frame);},[talking,gesture,response,rest,prop,emotion,reduced,performanceKey,activity?.kind]);
  useEffect(()=>{if(reduced){setBlink(false);return;}let timer:ReturnType<typeof setTimeout>,closed:ReturnType<typeof setTimeout>,cycle=0;const schedule=()=>{timer=setTimeout(()=>{setBlink(true);closed=setTimeout(()=>{setBlink(false);cycle++;schedule();},115);},4200+((phase+cycle*3)%7)*330);};schedule();return()=>{clearTimeout(timer);clearTimeout(closed);};},[phase,reduced]);
  useEffect(()=>{setMouth(0);if(!vocal||reduced)return;let timer:ReturnType<typeof setTimeout>,step=0;const shapes=[1,0,2,1,0,0,1,2,0],delays=[170,130,160,180,240,390,160,170,360];const tick=()=>{setMouth(shapes[step%shapes.length]);timer=setTimeout(tick,delays[step++%delays.length]);};timer=setTimeout(tick,180);return()=>clearTimeout(timer);},[vocal,reduced,performanceKey]);
- const walking=activity?.kind==='walk';
- const walkTime=useWalkClock(walking&&!activityPaused&&!reduced);
+ const walking=activity?.kind==='walk',eating=activity?.kind==='eat';
+ const walkTime=useWalkClock((walking||eating)&&!activityPaused&&!reduced&&!response&&!(eating&&vocal));
  // Reactions temporarily own the body. Speech only changes the face during work.
  const gait=walking&&!reduced&&!response?walkingPose(walkTime,activity.pace):null;
- const pose:Record<string,number>=gait?{...heldPose,...gait,...(prop&&prop!=='none'?{rightUpperArm:heldPose.rightUpperArm||0,rightForearm:heldPose.rightForearm||0}:{} )}:heldPose;
+ const meal=eating?eatingPose(reduced?0:walkTime,activity.pace):null;
+ const mouth=meal&&!vocal&&!response?meal.mouth:speechMouth;
+ const pose:Record<string,number>=meal?{...heldPose,...meal.pose}:gait?{...heldPose,...gait,...(prop&&prop!=='none'?{rightUpperArm:heldPose.rightUpperArm||0,rightForearm:heldPose.rightForearm||0}:{} )}:heldPose;
  const manga=character.rig.style==='manga';
  const appearance=character.rig.appearance||{},elder=appearance.age==='elder',adult=['adult','elder'].includes(appearance.age),hairstyle=appearance.hair||'layered',teacher=appearance.outfit==='teacher',glasses=appearance.glasses==='round',bearded=appearance.facialHair==='full';
  const eyeStyle=appearance.eyes||'default',keen=eyeStyle==='keen',gentle=eyeStyle==='gentle',narrow=eyeStyle==='narrow',tailored=['workshirt','cardigan','suit'].includes(appearance.outfit),suit=appearance.outfit==='suit',cardigan=appearance.outfit==='cardigan',longSleeves=suit||cardigan;
@@ -112,5 +114,8 @@ export default function CartoonActor({character,activity,activityPaused=false,em
  {finish&&<g strokeWidth=".7" opacity=".55"><path d="M 94 132 Q 102 135 109 132 M 131 132 Q 138 135 146 132" stroke="#b98771"/><path d="M 118 138 Q 120 139 123 137" stroke="#c18b74"/></g>}
  <path d="M 119 125 L 117 135 L 121 135" stroke="#bb8d72" strokeWidth="1.5"/>
  <g data-mouth={mouth}>{laughing?<path d="M 109 144 Q 120 150 131 144 Q 129 162 120 162 Q 111 162 109 144 Z" fill="#815250"/>:!mouth&&startled?<ellipse cx="120" cy="148" rx="7" ry="9" fill="#815250" strokeWidth="1"/>:mouth===1?<path d="M 112 147 Q 120 145 128 147 Q 120 153 112 147 Z" fill="#815250" strokeWidth="1"/>:mouth===2?<path d="M 114 146 Q 120 144 126 146 L 124 151 Q 120 153 116 151 Z" fill="#815250" strokeWidth="1"/>:<path d={smile?'M 111 146 Q 120 154 129 146':emotion==='embarrassed'?'M 113 149 Q 120 151 127 148':emotion==='disappointed'?'M 111 151 Q 120 147 129 152':worried?'M 113 150 Q 120 146 127 150':emotion==='confused'?'M 114 148 L 126 146':keen&&!firm?'M 110 147 Q 120 151 131 144':gentle&&!firm?'M 111 147 Q 120 151 129 146':narrow&&firm?'M 110 149 Q 120 146 130 149':narrow?'M 110 148 Q 120 146 130 148':'M 113 147 Q 120 149 127 147'} strokeWidth="1.7"/>}</g>
- </g></>}</g>{arm('left')}{arm('right')}</g></svg>;
+ </g></>}</g>{arm('left')}{arm('right')}{meal&&<g data-meal="rice" stroke={ink} strokeWidth="2" strokeLinejoin="round">
+ <g data-bowl="true"><path d="M 75 260 Q 78 285 106 286 Q 134 285 137 260 Z" fill="#b8794e"/><ellipse cx="106" cy="260" rx="31" ry="9" fill="#f4ead2"/>{[85,96,108,120].map((x,i)=><path key={x} d={`M ${x} ${257+i%2*4} l 6 1`} stroke="#d8ccaa" strokeWidth="2"/>)}<path d="M 84 276 Q 106 285 129 276" fill="none" stroke="#e4b17a"/></g>
+ <g data-spoon="true"><path d={`M ${meal.wx} ${meal.wy} L ${meal.tipX+5} ${meal.tipY+3}`} stroke="#aa8661" strokeWidth="5" strokeLinecap="round"/><ellipse cx={meal.tipX} cy={meal.tipY} rx="9" ry="4" fill="#d9b889"/>{meal.rice&&<ellipse cx={meal.tipX} cy={meal.tipY-2} rx="6" ry="3" fill="#fff4d6" stroke="none"/>}</g>
+ </g>}</g></svg>;
 }

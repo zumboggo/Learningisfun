@@ -1,4 +1,4 @@
-export interface StoryActivity {kind:'walk'|'train';pace:'slow'|'steady'|'brisk'|'tiring';direction?:'left'|'right';targetActor?:string;paused:boolean}
+export interface StoryActivity {kind:'walk'|'train'|'eat';pace:'slow'|'steady'|'brisk'|'tiring'|'eager';direction?:'left'|'right';targetActor?:string;paused:boolean}
 export interface StoryPackage {format:1|2;title:string;description:string;profile:string;script:string;assets:{backgrounds:Record<string,any>;characters:Record<string,any>;music?:any};quiz:{prompt:string;options:string[];answer:number;explanation:string}[];sources?:string[]}
 export interface StoryState {cues?:any[];cursor:number;variables:Record<string,number|boolean>;stage:{background:string|null;ambience?:string;environment?:string;scroll?:string;camera?:{shot:string;actor?:string;otherActor?:string;duration?:number};actors:Record<string,{expression:string;position:string;facing:number;rest?:string;prop?:string;gaze?:string;activity?:StoryActivity}>};history:{actor:string;text:string}[];events:any[];seed:number;ended:boolean}
 export function compileStory(source:string,assets?:any):{errors:{line:number;message:string}[];story?:any};

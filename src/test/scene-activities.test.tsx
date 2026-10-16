@@ -69,3 +69,17 @@ it('training does not restart on Continue and cancels both bodies when paused',a
  await act(async()=>{vi.advanceTimersByTime(10000);});expect(animations).toHaveLength(2);
  delete (Element.prototype as any).animate;vi.unstubAllGlobals();
 });
+it('eating clears equipment, replays across dialogue, and stops on explicit prop change',()=>{
+ const {story}=build('prop Lin sword\nactivity Lin eat eager\nI: Lunch.\nI: Still eating.\nactivity Lin pause\nI: A question.\nactivity Lin resume\nI: Another bite.\nprop Lin sword\nI: Done.');
+ const state=replayStory(story,[],1);expect(state.stage.actors.Lin).toMatchObject({prop:'none',activity:{kind:'eat',pace:'eager',paused:false}});
+ expect(replayStory(story,[null],1).stage.actors.Lin.activity?.kind).toBe('eat');expect(replayStory(story,[null,null],1).stage.actors.Lin.activity?.paused).toBe(true);
+ expect(replayStory(story,[null,null,null],1).stage.actors.Lin.activity?.paused).toBe(false);expect(replayStory(story,[null,null,null,null],1).stage.actors.Lin.activity).toBeUndefined();
+});
+it('the meal has attached utensils and holds its spoon while the eater speaks',()=>{
+ vi.useFakeTimers();const {story,pack}=build('activity Lin eat eager\nLin: Lunch.');const state=replayStory(story,[],1);const props={pack,state,current:story.nodes[state.cursor],reduced:false};
+ const {container,rerender}=render(<StoryStage {...props} speaking={false}/>);
+ act(()=>vi.advanceTimersByTime(800));const before=container.querySelector('[data-spoon]')!.innerHTML;
+ expect(container.querySelector('[data-bowl]')).toBeTruthy();rerender(<StoryStage {...props} speaking/>);
+ act(()=>vi.advanceTimersByTime(800));expect(container.querySelector('[data-spoon]')!.innerHTML).toBe(before);
+ rerender(<StoryStage {...props} speaking={false}/>);act(()=>vi.advanceTimersByTime(400));expect(container.querySelector('[data-spoon]')!.innerHTML).not.toBe(before);
+});

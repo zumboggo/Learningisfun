@@ -47,6 +47,10 @@ export function compileStory(source,assets={}) {
    if(m[1]==='look'&&!['auto','front','away','down'].includes(m[3])&&(!assets.characters?.[m[3]]||m[2]===m[3]))error(line,'Look needs another character or auto/front/away/down');
    add({type:m[1],actor:m[2],value:m[3]},line);continue;
   }
+  if(version===2&&(m=s.match(new RegExp(`^activity (${id}) eat (steady|eager)$`)))){
+   if(assets.characters?.[m[1]]?.rig?.preset!=='cartoon-v1')error(line,'Eating requires a cartoon-v1 rig');
+   add({type:'activity',actor:m[1],kind:'eat',pace:m[2]},line);continue;
+  }
   if(version===2&&(m=s.match(new RegExp(`^activity (${id}) (?:walk (left|right) (slow|steady|brisk)|train (${id}) (steady|tiring)|(pause|resume|stop))$`)))){
    const actor=m[1],kind=m[2]?'walk':m[4]?'train':m[6];
    if(!assets.characters?.[actor])error(line,'Unknown activity character');
@@ -127,7 +131,7 @@ export function compileStory(source,assets={}) {
  return {errors,story:errors.length?undefined:{version,nodes,labels,variables}};
 }
 export function initialStoryState(story,seed=1){return {cursor:0,variables:Object.fromEntries(Object.entries(story.variables).map(([k,v])=>[k,v.initial])),stage:{background:null,actors:{},...(story.version===2?{camera:{shot:'auto'}}:{})},history:[],events:[],seed:seed>>>0,ended:false};}
-export function settleStory(story,state){const s=structuredClone(state);s.cues=[];let steps=0;while(!s.ended&&steps++<10000){const n=story.nodes[s.cursor];if(!n)throw Error('Invalid story position');if(['say','choice','act'].includes(n.type)){if(n.type==='act'){const a=s.stage.actors[n.actor],b=s.stage.actors[n.targetActor];if(!a||n.targetActor&&!b)throw Error('Action characters must be on stage');if(ACTIONS[n.action]?.prop){a.prop=ACTIONS[n.action].prop;if(a.activity?.kind==='train'&&a.prop!=='sword')delete a.activity;}if(b){const order={left:0,center:1,right:2};a.facing=order[a.position]<order[b.position]?1:-1;b.facing=-a.facing;}}if(story.version===2&&n.type==='say'&&s.stage.actors[n.actor]&&n.emotion)s.stage.actors[n.actor].expression=n.emotion;return s;}
+export function settleStory(story,state){const s=structuredClone(state);s.cues=[];let steps=0;while(!s.ended&&steps++<10000){const n=story.nodes[s.cursor];if(!n)throw Error('Invalid story position');if(['say','choice','act'].includes(n.type)){if(n.type==='act'){const a=s.stage.actors[n.actor],b=s.stage.actors[n.targetActor];if(!a||n.targetActor&&!b)throw Error('Action characters must be on stage');if(ACTIONS[n.action]?.prop){a.prop=ACTIONS[n.action].prop;if(a.activity?.kind==='eat'||a.activity?.kind==='train'&&a.prop!=='sword')delete a.activity;}if(b){const order={left:0,center:1,right:2};a.facing=order[a.position]<order[b.position]?1:-1;b.facing=-a.facing;}}if(story.version===2&&n.type==='say'&&s.stage.actors[n.actor]&&n.emotion)s.stage.actors[n.actor].expression=n.emotion;return s;}
  if(n.type==='end'){s.ended=true;return s;}
  if(['scene','show','move','effect','react','camera','perform','sound'].includes(n.type))s.cues.push(n);
  if(n.type==='scene'){s.stage={background:n.asset,actors:{},...(story.version===2?{camera:{shot:'auto'}}:{})};}
@@ -147,6 +151,7 @@ export function settleStory(story,state){const s=structuredClone(state);s.cues=[
    a.activity={kind:n.kind,pace:n.pace,...(n.targetActor?{targetActor:n.targetActor}:{}),...(n.direction?{direction:n.direction}:{}),paused:false};
    a.rest='relaxed';
    if(n.kind==='walk')a.facing=n.direction==='right'?1:-1;
+   else if(n.kind==='eat')a.prop='none';
    else{a.prop='sword';const b=s.stage.actors[n.targetActor],order={left:0,center:1,right:2};a.facing=order[a.position]<order[b.position]?1:-1;b.facing=-a.facing;}
   }
  }
@@ -156,7 +161,7 @@ export function settleStory(story,state){const s=structuredClone(state);s.cues=[
  if(n.type==='look'&&s.stage.actors[n.actor])s.stage.actors[n.actor].gaze=n.value;
  if(n.type==='perform'){
   const a=s.stage.actors[n.actor],b=s.stage.actors[n.targetActor];
-  if(ACTIONS[n.action]?.prop){a.prop=ACTIONS[n.action].prop;if(a.activity?.kind==='train'&&a.prop!=='sword')delete a.activity;}
+  if(ACTIONS[n.action]?.prop){a.prop=ACTIONS[n.action].prop;if(a.activity?.kind==='eat'||a.activity?.kind==='train'&&a.prop!=='sword')delete a.activity;}
   if(b){const order={left:0,center:1,right:2};a.facing=order[a.position]<order[b.position]?1:-1;b.facing=-a.facing;}
  }
  if(n.type==='prop'&&s.stage.actors[n.actor])s.stage.actors[n.actor].prop=n.prop;

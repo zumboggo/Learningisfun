@@ -28,3 +28,18 @@ export async function trainContinuously(root:HTMLElement,actor:string,activity:S
   await activityWait(activity.pace==='tiring'?(strokes%3===0?1900:750):450,signal);
  }
 }
+
+/** Two rigid arm segments reach the spoon and bowl; the meal never changes scale. */
+function mealArm(side:'left'|'right',wx:number,wy:number){
+ const dx=wx-(side==='left'?76:164),dy=wy-213;
+ const f=(side==='left'?-1:1)*Math.acos(Math.max(-1,Math.min(1,(dx*dx+dy*dy-58*58-57*57)/(2*58*57))));
+ const a=Math.atan2(-dx,dy)-Math.atan2(57*Math.sin(f),58+57*Math.cos(f));
+ return {[side+'UpperArm']:a*180/Math.PI,[side+'Forearm']:f*180/Math.PI};
+}
+export function eatingPose(ms:number,pace:string){
+ const phase=(ms/(pace==='eager'?2400:3400))%1;
+ const smooth=(x:number)=>{x=Math.max(0,Math.min(1,x));return x*x*(3-2*x);};
+ const lift=phase<.15?0:phase<.4?smooth((phase-.15)/.25):phase<.53?1:1-smooth((phase-.53)/.25);
+ const wx=155-10*lift,wy=268-73*lift;
+ return {pose:{...mealArm('left',103,281),...mealArm('right',wx,wy),head:0,torso:0},wx,wy,tipX:128-8*lift,tipY:248-100*lift,mouth:phase>.38&&phase<.55?2:phase>.55&&phase<.85?(Math.floor(phase*28)%2):0,rice:phase<.48};
+}
