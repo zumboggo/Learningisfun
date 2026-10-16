@@ -1,0 +1,11 @@
+{
+  "class": "Ethics and Leadership · Section 1",
+  "classId": "e24ec8d9-21d7-4c32-a30e-08655c2f4e65",
+  "timezone": "Asia/Shanghai",
+  "verified": "Saved assignments reopened and dueDate fields verified in the UI; two illustrated figures per reading imported; Part 3 images inspected in published reader.",
+  "readings": [
+    {"part":1,"dueDate":"2026-10-16","bodyWords":983,"url":"https://zumboggo.github.io/Learningisfun/#/discussions/texts/6ad1aeb30006ffb09447/e24ec8d9-21d7-4c32-a30e-08655c2f4e65"},
+    {"part":2,"dueDate":"2026-10-20","bodyWords":940,"url":"https://zumboggo.github.io/Learningisfun/#/discussions/texts/6ad1af450000a7c70c7b/e24ec8d9-21d7-4c32-a30e-08655c2f4e65"},
+    {"part":3,"dueDate":"2026-10-23","bodyWords":1014,"url":"https://zumboggo.github.io/Learningisfun/#/discussions/texts/6ad1af780000fd2f619e/e24ec8d9-21d7-4c32-a30e-08655c2f4e65"}
+  ]
+}
