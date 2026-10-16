@@ -3,12 +3,13 @@ import {render,screen,fireEvent,cleanup} from '@testing-library/react';
 import {PlannerResourceTray} from '@/components/planner/PlannerResourceTray';
 import {routineNames,routineSlot} from '@/services/planner-routines';
 afterEach(cleanup);
-it('keeps Text Discussion, debate and Game Episode visible and other routines collapsed, draggable and placeable',()=>{
+it('keeps Text Discussion, Student Presentations and Episode visible and other routines collapsed, draggable and placeable',()=>{
  const place=vi.fn();
  render(<PlannerResourceTray resources={[]} week="2026-09-21" lessons={[]} onSelect={()=>{}} onAdd={()=>{}} onPlace={place} items={routineNames.map(name=>({...routineSlot(name),course:'WL'}))}/>);
  expect(screen.getByRole('button',{name:'Text Discussion'})).toBeVisible();
- expect(screen.getByRole('button',{name:'Pop-up Debate'})).toBeVisible();
- const game=screen.getByRole('button',{name:'Game Episode'});
+ expect(screen.getByRole('button',{name:'Student Presentations'})).toBeVisible();
+ expect(screen.getByText('Pop-up Debate',{exact:true}).closest('details')).not.toHaveAttribute('open');
+ const game=screen.getByRole('button',{name:'Episode'});
  expect(game).toBeVisible();
  expect(game.closest('details')).toBeNull();
  expect(game.closest('[draggable]')).toHaveAttribute('draggable','true');

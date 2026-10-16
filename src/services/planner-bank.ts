@@ -19,6 +19,13 @@ function signature(slot: LessonSlot) {
 export function prepareWeeklyBank(data: WeeklyPlanData): WeeklyPlanData {
   const next = mergePlannerQuizzes(data);
   next.weeklyResources ||= [];
+  // Keep legacy IDs and lesson completion while updating the reusable label.
+  for (const slot of [...next.weeklyResources, ...next.lessons.flatMap(lesson => [...(lesson.slots || []), ...(lesson.overflow || [])])]) {
+    if (slot.kind === 'activity' && /^game episode$/i.test(slot.title.trim())) {
+      slot.title = 'Episode';
+      slot.isRoutine = true;
+    }
+  }
   for (const lesson of next.lessons) for (const slot of [...(lesson.slots||[]),...(lesson.overflow||[])]) {
     if(isTextDiscussion(slot)){slot.title='Text Discussion';slot.isRoutine=true;}
   }

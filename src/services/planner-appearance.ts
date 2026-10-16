@@ -13,7 +13,7 @@ export function resourceCategory(slot:LessonSlot):'presentation'|'routine'|'text
   if(slot.isRoutine || slot.kind==='activity' && routineNames.some(name=>name===slot.title))return 'routine';
   return slot.kind==='presentation'?'presentation':'activity';
 }
-export const resourceTitle = (slot:LessonSlot) => isGameEpisode(slot) ? 'Game episode · '+slot.title : isQuiz(slot) ? (quizDateLabel(slot)?'Quiz '+quizDateLabel(slot):'Quiz') : isCopywork(slot) && /^(I do|We do|They do|Check)$/i.test(slot.title) ? 'Copywork' : slot.title;
+export const resourceTitle = (slot:LessonSlot) => isGameEpisode(slot) ? 'Episode · '+slot.title : isQuiz(slot) ? (quizDateLabel(slot)?'Quiz '+quizDateLabel(slot):'Quiz') : isCopywork(slot) && /^(I do|We do|They do|Check)$/i.test(slot.title) ? 'Copywork' : /^game episode$/i.test(slot.title.trim()) ? 'Episode' : slot.title;
 export function resourceColor(slot:LessonSlot) {
   if(isGameEpisode(slot))return 'border-orange-300 bg-orange-50 text-orange-950';
   if(isQuiz(slot))return 'border-rose-300 bg-rose-50 text-rose-950';

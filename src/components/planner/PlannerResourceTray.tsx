@@ -1,3 +1,4 @@
+import { plannerBankChoices } from '@/services/planner-bank-choices';
 import { isTitleOnly, isQuiz, resourceCategory, resourceTitle, resourceColor, resourcePriority } from '@/services/planner-appearance';
 import {PlannerTextBadges} from './PlannerTextBadges';
 import {isCopyworkPlaceholder,isPlannerTextLabel,textLabelDragType,type PlannerTextLabel} from '@/services/planner-text-labels';
@@ -12,6 +13,7 @@ export function PlannerResourceTray({resources,week,lessons,onSelect,onAdd,items
   onSelect:(slot:LessonSlot)=>void;onAdd:(kind:ResourceKind)=>void;
   onPreview?:(slot:LessonSlot)=>void;onUpload?:()=>void;courseLabel?:string;onAddRoutine?:()=>void;items?:WeeklyResource[];onEdit?:(id:string)=>void;onPlace?:(slot:LessonSlot)=>void;onDelete?:(id:string)=>void;
 }) {
+  ({items, resources} = plannerBankChoices(items, resources));
   const icon='inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border bg-white text-base text-slate-700 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-blue-600';
   const [category,setCategory]=useState<string>('all');
   const [weeklySearch,setWeeklySearch]=useState('');
@@ -27,7 +29,7 @@ export function PlannerResourceTray({resources,week,lessons,onSelect,onAdd,items
       if(isText&&isPlannerTextLabel(label)){e.preventDefault();e.stopPropagation();onTextLabel?.(slot,label);}
     }} onClick={()=>activeTextLabel&&isText?onTextLabel?.(slot,activeTextLabel):onPreview&&isText?onPreview(slot):onSelect(slot)} className={'block w-full rounded-lg border px-2 py-2 text-left text-xs '+resourceColor(slot)}><span className="font-medium"><PlannerTextBadges item={slot}/>{resourceTitle(slot)}</span><span className="block text-[10px] opacity-70">{resource.kind}{dates.length?` · Placed: ${dates.join(', ')}`:''}</span></button>;
   };
-  const primaryRoutine=(item:WeeklyResource)=>/^(Text Discussion|Pop[ -]?up Debate|Game Episode)$/i.test(item.title.trim());
+  const primaryRoutine=(item:WeeklyResource)=>/^(Text Discussion|Episode|Game Episode|Student Presentations)$/i.test(item.title.trim());
   const visibleItems=(kind:string)=>items.filter(item=>!isCopyworkPlaceholder(item)&&resourceCategory(item)===kind&&(resourceTitle(item)+' '+item.content).toLowerCase().includes(weeklySearch.trim().toLowerCase())).sort((a,b)=>Number(b.sourceWeek===week)-Number(a.sourceWeek===week)||resourcePriority(a)-resourcePriority(b));
   const renderItem=(item:WeeklyResource)=>{
     const kind=resourceCategory(item);
