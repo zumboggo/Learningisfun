@@ -1,8 +1,8 @@
 /** Closed, versioned vocabulary shared by parser, renderer, studio and authoring tools. */
-export const ACTING_VERSION=6;
+export const ACTING_VERSION=7;
 export const CHARACTER_OPTIONS={age:['teen','adult','elder'],hair:['layered','side-part','long','bob','cropped','tousled','bun','swept','ponytail'],glasses:['none','round'],outfit:['uniform','teacher','tunic','robe','workshirt','cardigan','suit'],face:['default','oval','round','angular','lean','broad','scrappy','spirited'],eyes:['default','keen','gentle','narrow'],facialHair:['none','full']};
 export const EMOTIONS=['neutral','happy','worried','sad','angry','surprised','curious','confused','skeptical','embarrassed','relieved','determined','shocked','laughing','excited','scared','frustrated','proud','pleading','disappointed'];
-export const PROPS=['none','phone','sword','bow','lance'];
+export const PROPS=['none','phone','sword','bow','lance','rubber-duck','pool-noodle'];
 export const RESTS=['arms-crossed','kneeling','crouched','sheltered','relaxed','attentive','guarded','downcast'];
 export const TALKS=['cross-arms','phone-talk','phone-shout','explain','reassure','question','insist','hesitant','celebrate','shock','laugh','rage','excited','scared','facepalm','proud','plead','disappointed'];
 export const RESPONSES=['wince','support','brace','cross-arms','lance-threat','kneel','crouch','duck','cover-head','phone-talk','phone-shout','sword-strike','draw-bow','cast-beam','nod','shake-head','shrug','point','wave','recoil','laugh','sigh','bow','cheer','reach','cower','stumble','strike','block','dodge','shock','rage','excited','scared','facepalm','proud','plead','disappointed'];

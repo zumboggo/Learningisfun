@@ -28,5 +28,11 @@
     "title": "The Second Ship",
     "package": "stories/animated/the-second-ship/episode.json",
     "zip": "stories/animated/the-second-ship/episode.zip"
+  },
+  {
+    "id": "comeback-or-else",
+    "title": "COMEBACK OR ELSE",
+    "package": "stories/animated/comeback-or-else/episode.json",
+    "zip": "stories/animated/comeback-or-else/episode.zip"
   }
 ]

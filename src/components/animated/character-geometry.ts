@@ -13,7 +13,7 @@ export const FACE_PATHS:Record<string,string>={
  angular:'M 82 88 Q 120 62 158 88 L 156 135 L 145 155 L 128 172 Q 120 177 112 172 L 95 155 L 84 135 Z',
 };
 
-export function heldPropPose(prop?:string){return prop==='lance'?'lance-hold':prop==='phone'?'phone-hold':prop==='sword'?'sword-hold':prop==='bow'?'bow-hold':'relaxed';}
+export function heldPropPose(prop?:string){return prop==='lance'?'lance-hold':['phone','rubber-duck'].includes(prop||'')?'phone-hold':['sword','pool-noodle'].includes(prop||'')?'sword-hold':prop==='bow'?'bow-hold':'relaxed';}
 
 /** Two fixed-length leg segments solve toward a grounded ankle. */
 export function legGeometry(side:'left'|'right',drop:number,footOffset=0,bend=side==='left'?-1:1,footLift=0){

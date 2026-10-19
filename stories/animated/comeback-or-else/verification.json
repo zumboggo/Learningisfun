@@ -1,0 +1,9 @@
+{
+ "checkedOn":"2026-10-20",
+ "routeChecks":193,
+ "choiceEdgesCovered":192,
+ "checks":["All seven preferences preserve their exact selected lyric through resume and final reconstruction","Every authored option reached in route coverage","Every route tested reaches seven memories and the ending with 22–29 decisions","All readable stage positions distinct","Both supportive finale callbacks reached","Rubber duck and pool noodle render without invalid coordinates","Memory haze remains under reduced motion and clears outside memories","ZIP round trip preserves script, media, keepsake and memory metadata","Knowledge-check scoring and retry threshold remain separate","Full npm test and production build passed","Desktop full mixed-answer playthrough and visual inspection of studio, duck and hazy memory","Immutable backend publication read back and compared with local package"],
+ "backendDeployment":"6ad5d491b02af1efbc21",
+ "limitations":["No generated speech or music; squeaks are written captions","First-person prop contact is mimed and narrated","Preview progress resets on leaving or reloading","Browser download event verification timed out; lyric-sheet reconstruction is tested","Phone visual check pending browser recovery; reduced-motion rendering tested in components"],
+ "assigned":false
+}

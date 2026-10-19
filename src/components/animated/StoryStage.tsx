@@ -67,6 +67,7 @@ export default function StoryStage({pack,state,current,speaking,reduced,response
     {performance&&['shoot-arrow','magic-beam'].includes(performance.action)&&<Projectile key={`${state.cursor}-${!!responses[performance.actor]}`} state={state} current={performance} reduced={reduced} active={!!responses[performance.actor]}/>}
    </div>
   </div>
+  {pack.assets.backgrounds[state.stage.background||'']?.vignette==='memory'&&<div className="story-memory-haze" aria-hidden="true"/>}
   {activeEntries.length>0&&!state.ended&&<button className="story-motion-toggle" aria-pressed={paused} onClick={()=>setPaused(value=>!value)}>{paused?'Resume scene motion':'Pause scene motion'}</button>}
  </div>;
 }

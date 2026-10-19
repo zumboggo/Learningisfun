@@ -84,3 +84,9 @@ The unassigned **Quixote · two-character action** rehearsal at `#/game/acting-d
 A package may include `simulationScore: {categories: [{variable, label, description}]}` to display a separate equal-weight total from up to four existing zero-based numeric story variables. Category scales come from their declared maximums. Metadata is presentation only; the shared engine continues to replay and validate variable updates. It never changes quiz points, server results or rankings. Invalid references suppress the scorecard. Existing packages without metadata retain their meters and behavior.
 
 The Second Ship demonstrates seven decisions and four categories. The closing card explicitly says the total measures success under the game's stated priorities, not objective moral goodness. Local previews offer a full reset and compare the previous completed route in memory; leaving or reloading clears comparisons. Account-backed attempts retain the host's existing replay/save behavior. No past package or attempt is rewritten.
+
+## Choice keepsakes and memory scenes
+
+Optional `keepsake: {title, revealAt, choices: [{id, label}]}` metadata displays selected option texts at and after a named label. The player reconstructs choices from the saved legal steps; it stores no extra story variables. Up to twenty listed choice IDs are supported. The downloadable text sheet follows the selected choices, and starting a fresh replay clears them. COMEBACK OR ELSE uses seven lyric preferences. This presentation does not change assessment.
+
+A background entry may opt into `vignette: "memory"` for a static white edge haze above the scene. It never covers dialogue or intercepts clicks, survives reduced motion, and disappears when the background changes. New `rubber-duck` and `pool-noodle` props use the shared cartoon-v1 hand/gesture system; explicit captions explain mimed first-person contact. Existing props, saved scripts and scores are unchanged.
