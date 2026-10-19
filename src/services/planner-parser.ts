@@ -1,6 +1,7 @@
 export interface PlannerDaySource { date:string; iso:string; daytype:string; I:string; W:string; Y:string; C:string; due:string[] }
 export interface PlannerBlockSource { code:string; title:string; label:string; unit:string; std:string; goal:string; diff:string; days:PlannerDaySource[]; presentationCandidates:string[]; textQueue:string[] }
-export interface PlannerWeekSource { key:string; header:string; startDate:string; calendar:string; blocks:PlannerBlockSource[] }
+export interface PlannerDeadline { date:string; time:string; classCode:string; title:string; url:string }
+export interface PlannerWeekSource { deadlines?:PlannerDeadline[]; key:string; header:string; startDate:string; calendar:string; blocks:PlannerBlockSource[] }
 export interface ParsedPlannerSource { weeks:PlannerWeekSource[]; warnings:string[] }
 
 const LABELS:Record<string,string>={'WL-B':'World Literature · Blue','WL-R':'World Literature · Red',AP:'AP English Language',ETH:'Ethics & Leadership'};
@@ -11,7 +12,7 @@ const unitNumber=(value:string)=>value.match(/Unit\s+[\d.]+/i)?.[0]||'';
 
 export function parsePlannerSource(source:string):ParsedPlannerSource {
   const lines=source.replace(/\r/g,'').split('\n'),warnings:string[]=[];
-  const presentations=parsePresentations(lines),queues=parseQueues(lines);
+  const presentations=parsePresentations(lines),queues=parseQueues(lines),deadlines=parseDeadlines(lines);
   const starts=lines.map((line,index)=>line.startsWith('[WEEK]')?index:-1).filter(index=>index>=0),weeks:PlannerWeekSource[]=[];
   for(let position=0;position<starts.length;position++){
     const start=starts[position],end=starts[position+1]??lines.length,segment=lines.slice(start,end),header=segment[0].slice(6).trim();
@@ -31,7 +32,7 @@ export function parsePlannerSource(source:string):ParsedPlannerSource {
       const activity=line.match(/^\s*([IWYC]):\s+(.*)$/);if(activity&&currentDay){let text=activity[2].trim();if(text.includes('‣ DUE:')){const parts=text.split('‣ DUE:');text=parts[0].trim();currentDay.due=parts[1].split('•').map(value=>value.trim()).filter(Boolean);}currentDay[activity[1] as 'I'|'W'|'Y'|'C']=text;if(activity[1]==='I')currentDay.daytype=text.includes('·')?text.split('·')[0].trim():'';}
     }
     for(const block of blocks)if(!block.textQueue.length)block.textQueue=queues.get(PRES_KEY[block.code])?.get(unitNumber(block.unit))||[];
-    if(blocks.length)weeks.push({key,header,startDate,calendar,blocks});
+    if(blocks.length)weeks.push({key,header,startDate,calendar,blocks,...(deadlines ? {deadlines:deadlines.filter(item=>item.date>=startDate && item.date<addDays(startDate,14))} : {})});
   }
   if(weeks.length===0)warnings.push('No [WEEK] sections were found.');
   return {weeks,warnings};
@@ -49,3 +50,20 @@ function parseQueues(lines:string[]):Map<string,Map<string,string[]>>{
 }
 
 export function plannerDiff(previous:ParsedPlannerSource|null,next:ParsedPlannerSource){const old=new Map(previous?.weeks.map(week=>[week.key,JSON.stringify(week)])||[]);return next.weeks.filter(week=>old.get(week.key)!==JSON.stringify(week)).map(week=>week.key);}
+
+export function addDays(date:string,days:number) {
+  const value=new Date(date+'T12:00:00Z');value.setUTCDate(value.getUTCDate()+days);return value.toISOString().slice(0,10);
+}
+/** Only the published non-quiz inventory supplies deadlines, including weekends and breaks. */
+function parseDeadlines(lines:string[]):PlannerDeadline[]|undefined {
+  const start=lines.findIndex(line=>/^§4\s/.test(line)),end=lines.findIndex((line,index)=>index>start&&/^§5\s/.test(line));
+  if(start<0 || !lines[start].includes('CURRENT CANVAS'))return undefined;
+  const result:PlannerDeadline[]=[];
+  for(let i=start+1;i<(end<0?lines.length:end);i++) {
+    const match=lines[i].match(/^\s*(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2})\s+(WL-B|WL-R|AP|ETH)\s+\d+(?:\.\d+)?\s+pts\s+(.+)$/);
+    if(!match || /\bweekly\s+quiz(?:zes)?\b/i.test(match[4]))continue;
+    const url=lines.slice(i+1,i+4).map(line=>line.trim()).find(line=>/^https:\/\/lifeplus\.instructure\.com\/courses\/\d+\/assignments\/\d+$/.test(line))||'';
+    if(!result.some(item=>url&&item.url===url))result.push({date:match[1],time:match[2],classCode:match[3],title:match[4].trim(),url});
+  }
+  return result.sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+}

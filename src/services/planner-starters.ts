@@ -12,6 +12,7 @@ export function preparePlannerStarters(data:WeeklyPlanData,source:PlannerWeekSou
    for(const item of next.weeklyResources||[])if(item.id.startsWith('starter:')&&item.kind==='text'&&item.sourceWeek&&!item.existingTextId)item.assignedReading=false;
  }
  next.plannerInteractionVersion=1;
+ if(source.startDate===data.week.startDate && source.deadlines)next.week={...next.week,deadlines:source.deadlines};
  const clean=(title:string)=>title.replace(/^COPY\s*·\s*/i,'').trim();
  const add=(course:string,title:string,kind:WeeklyResource['kind'],extra:Partial<WeeklyResource>={})=>{
   const id='starter:'+course+':'+kind+':'+encodeURIComponent(title);

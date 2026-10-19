@@ -51,3 +51,11 @@ it('upgrades saved episode routines without duplicating starters or changing pla
   expect(next.lessons[0].slots!.find(item => item.id === 'placed-episode')).toMatchObject({title:'Episode', status:'completed', planningItemId:old.id});
   expect(preparePlannerStarters(next)).toEqual(next);
 });
+
+it('shows AP unit texts directly in the first resource section', () => {
+  const resource={...blankResource(),id:'ap-reading',kind:'text' as const,title:'Released FRQ 2 passage',week:'2026-10-12'};
+  render(<PlannerResourceTray resources={[resource]} items={[]} lessons={[]} week="2026-10-19" onSelect={()=>{}} onAdd={()=>{}}/>);
+  const section=screen.getByRole('region',{name:'text resources'});
+  expect(section).toHaveTextContent('Released FRQ 2 passage');
+  expect(screen.getAllByRole('region')[0]).toBe(section);
+});
