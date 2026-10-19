@@ -27,3 +27,5 @@ All 853 Vitest tests passed, including editor migration/movement/CSV behavior an
 The cell editor has a top-right trash button. Return saves and closes; Shift + Return adds a newline. IME composition confirmation does not submit.
 
 New boards default to today’s date in the device’s locale; the title remains editable and existing boards are not renamed at midnight. Cloud backups wait for 60 seconds without content edits while local saves remain immediate. Save and Back up now flush immediately. Unchanged renders do not restart the timer or repeatedly upload the same content.
+
+The To Do toggle converts the main top-left notes area to one checkbox per line, preserving the existing 15px editor text size. Return adds a task; Backspace on an empty task removes it. Completion strikes through the full task, persists per board, survives switching back to plain notes, and appears in the A4 PDF.

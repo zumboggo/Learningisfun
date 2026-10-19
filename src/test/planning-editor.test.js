@@ -98,3 +98,29 @@ test('New creates an editable date title without changing an existing board', ()
   expect(JSON.parse(reopened.win.localStorage.getItem('learning-planning:alice')).boards).toHaveLength(2);
   dom.window.close(); reopened.dom.window.close();
 });
+
+test('To Do converts notes into persistent editable checklist lines and preserves notes when toggled off', () => {
+  const { dom, win } = open('alice');
+  const doc=win.document, notes=doc.querySelector('#notes-one'), toggle=doc.querySelector('#todo-toggle');
+  notes.value='Prepare handouts\nEmail parents';notes.dispatchEvent(new win.Event('input'));
+  toggle.click();
+  expect(notes.hidden).toBe(true);
+  expect(doc.querySelectorAll('.todo-row')).toHaveLength(2);
+  const check=doc.querySelector('.todo-row input');check.click();
+  expect(doc.querySelector('.todo-row textarea').classList.contains('completed')).toBe(true);
+  toggle.click();expect(notes.hidden).toBe(false);expect(notes.value).toBe('Prepare handouts\nEmail parents');
+  toggle.click();expect(doc.querySelector('.todo-row input').checked).toBe(true);
+  const fields=doc.querySelectorAll('.todo-row textarea');
+  fields[1].value='Email families';fields[1].dispatchEvent(new win.Event('input'));
+  fields[1].setSelectionRange(fields[1].value.length,fields[1].value.length);
+  fields[1].dispatchEvent(new win.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));
+  expect(doc.querySelectorAll('.todo-row')).toHaveLength(3);
+  const third=doc.querySelectorAll('.todo-row textarea')[2];
+  third.dispatchEvent(new win.KeyboardEvent('keydown',{key:'Backspace',bubbles:true,cancelable:true}));
+  const stored=win.localStorage.getItem('learning-planning:alice');
+  const reopened=open('alice',{'learning-planning:alice':stored});
+  expect(reopened.win.document.querySelector('#todo-toggle').checked).toBe(true);
+  expect(reopened.win.document.querySelector('.todo-row input').checked).toBe(true);
+  expect(reopened.win.document.querySelectorAll('.todo-row textarea')[1].value).toBe('Email families');
+  dom.window.close();reopened.dom.window.close();
+});

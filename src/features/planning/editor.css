@@ -16,3 +16,5 @@
 html,body{margin:0;min-height:100%;}main{padding-top:20px;}
 
 .editor-actions{display:flex;align-items:center;gap:8px}.delete-note{display:inline-flex;align-items:center;justify-content:center;padding:8px;color:#a23a3a}.delete-note:hover{background:#fff0f0;border-color:#d99c9c}
+
+.todo-toggle{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;font-size:14px}.main-notes{min-height:0;min-width:0;position:relative}.main-notes>textarea{display:block}.main-notes>[hidden]{display:none!important}#todo-list{height:100%;overflow:auto;border:1px solid #8796a2;border-radius:4px;padding:10px;background:white}.todo-row{display:flex;align-items:flex-start;gap:7px}.todo-row input[type=checkbox]{width:15px;height:15px;margin:3px 0 0;flex-shrink:0;accent-color:#326b56}.planning-sheet .todo-row textarea{border:0;border-radius:0;padding:0;min-height:21px;height:auto;overflow:hidden;font-size:15px;line-height:1.4}.todo-row textarea.completed{text-decoration:line-through}.todo-row textarea:focus{outline:1px solid #aec6d6;outline-offset:1px}@media print{#todo-list{overflow:hidden}.planning-sheet .todo-row textarea{font-size:9pt}}
