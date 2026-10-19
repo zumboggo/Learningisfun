@@ -34,6 +34,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     ? [
         { to: '/classes', label: 'Classes', icon: 'C' },
         { to: '/planner', label: 'Planning', icon: 'P' },
+        { to: '/brainstorming', label: 'Brainstorming', icon: 'B' },
         { to: '/discussions', label: 'Discussions', icon: 'Q' },
         { to: '/decks', label: 'Cards', icon: 'V' },
         { to: '/texts', label: 'Texts', icon: 'T' },
