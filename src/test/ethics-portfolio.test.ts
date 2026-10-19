@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import {beforeEach,describe,it,expect,vi} from 'vitest';
 vi.mock('@/services/learning-content.service',()=>({executeLearningContent:vi.fn()}));
 import {executeLearningContent} from '@/services/learning-content.service';
-import {decisionSource,newEntry,saveDraft,queueEntry,syncPortfolio,localEntries,portfolioDb,readPortfolio} from '@/services/ethics-portfolio.service';
+import {decisionSource,newEntry,saveDraft,queueEntry,syncPortfolio,localEntries,portfolioDb,readPortfolio,syncNotebookDrafts} from '@/services/ethics-portfolio.service';
 import {newAttempt,extendAttempt,STONE_CLASS_ID} from '@/services/stone.service';
 // @ts-expect-error Separately deployed backend module.
 import {cleanEntry,choiceContext,ethicsPortfolioAction} from '../../functions/learning-content/src/ethics-portfolio.js';
@@ -25,6 +25,36 @@ describe('account-scoped offline persistence',()=>{
 });
 function fakeDb(){const rows=new Map<string,any>();return {rows,getDocument:vi.fn(async(_db:string,col:string,id:string)=>{if(col==='classes')return {teacherId:'teacher'};const row=rows.get(id);if(!row)throw Object.assign(Error('missing'),{code:404});return row;}),createDocument:vi.fn(async(_db:string,_col:string,id:string,data:any,_permissions:any[])=>{if(rows.has(id))throw Object.assign(Error('duplicate'),{code:409});const row={...data,$id:id,$createdAt:new Date().toISOString()};rows.set(id,row);return row;}),listDocuments:vi.fn(async()=>({documents:[]}))};}
 describe('server authorization and concurrency',()=>{
- it('rejects nonmembers, other teachers, wrong classes and student stage changes',async()=>{const db=fakeDb(),base={db,databaseId:'main',body:{action:'readEthicsPortfolio',classId:STONE_CLASS_ID},userId:'outsider',profile:{role:'student'},memberClassIds:new Set()};await expect(ethicsPortfolioAction(base)).rejects.toThrow('membership');await expect(ethicsPortfolioAction({...base,profile:{role:'teacher'}})).rejects.toThrow('membership');await expect(ethicsPortfolioAction({...base,body:{...base.body,classId:'other'}})).rejects.toThrow('Ethics');await expect(ethicsPortfolioAction({...base,memberClassIds:new Set([STONE_CLASS_ID]),body:{...base.body,action:'setEthicsPortfolioStage',open:true}})).rejects.toThrow('teacher');});
+ it('rejects nonmembers, other teachers, wrong classes and student stage changes',async()=>{const db=fakeDb(),base={db,databaseId:'main',body:{action:'readEthicsPortfolio',classId:STONE_CLASS_ID},userId:'outsider',profile:{role:'student'},memberClassIds:new Set()};await expect(ethicsPortfolioAction(base)).rejects.toThrow('membership');await expect(ethicsPortfolioAction({...base,profile:{role:'teacher'}})).rejects.toThrow('membership');await expect(ethicsPortfolioAction({...base,body:{...base.body,classId:'other'}})).rejects.toThrow('membership');await expect(ethicsPortfolioAction({...base,memberClassIds:new Set([STONE_CLASS_ID]),body:{...base.body,action:'setEthicsPortfolioStage',open:true}})).rejects.toThrow('teacher');});
  it('uses authenticated ownership, creates immutable private revisions, and handles retries/conflicts',async()=>{const db=fakeDb(),entry={...draft(),revision:1,submitted:true,userId:'spoofed'},base={db,databaseId:'main',body:{action:'saveEthicsPortfolio',classId:STONE_CLASS_ID,entry},userId:'alice',profile:{role:'student'},memberClassIds:new Set([STONE_CLASS_ID])};await ethicsPortfolioAction(base);await ethicsPortfolioAction(base);expect(db.rows.size).toBe(1);expect([...db.rows.values()][0].userId).toBe('alice');expect(db.createDocument.mock.calls[0][4]).toEqual([]);await expect(ethicsPortfolioAction({...base,body:{...base.body,entry:{...entry,answers:['different','reason','judgment']}}})).rejects.toThrow('another device');await expect(ethicsPortfolioAction({...base,body:{...base.body,entry:{...entry,revision:3}}})).rejects.toThrow('earlier');});
+});
+
+it('accepts partial episode notebooks and permits revisiting all five answers without a teacher stage',()=>{
+ const source={kind:'episode-notes',format:'stone',episode:'teaching-stone',version:1,title:'The Grain We Keep'};
+ const initial=cleanEntry({id:'notes-one',source,answers:['A choice'],submitted:false},null,{open:false});
+ expect(initial.answers).toEqual(['A choice','','','','']);
+ const revised=cleanEntry({...initial,answers:['Changed','Care','Evidence','Yes','Elsewhere']},initial,{open:false});
+ expect(revised.answers[0]).toBe('Changed');
+ expect(()=>cleanEntry({...initial,source:{...source,episode:'another'}},initial,{})).toThrow('another episode');
+});
+it('rejects an episode notebook from an unrelated class or unreleased assignment',async()=>{
+ const db=fakeDb(),base={db,databaseId:'main',userId:'alice',profile:{role:'student'},memberClassIds:new Set(['other']),body:{action:'saveEthicsPortfolio',classId:'other',entry:{id:'notes-one',revision:1,source:{kind:'episode-notes',format:'stone',episode:'teaching-stone',version:1},answers:[]}}};
+ await expect(ethicsPortfolioAction(base)).rejects.toThrow('unavailable');
+ db.rows.set('assignment',{dataJson:JSON.stringify({type:'animated-assignment',classId:'other',id:'test',releaseAt:'2099-01-01'})});
+ await expect(ethicsPortfolioAction({...base,body:{...base.body,entry:{...base.body.entry,source:{kind:'episode-notes',format:'animated',episode:'test',version:1,assignmentId:'assignment'}}}})).rejects.toThrow('unavailable');
+});
+
+it('saves a partial notebook for the actual released Teaching Stone episode without stage setup',async()=>{
+ const db=fakeDb(),entry={id:'notes-stone',revision:1,source:{kind:'episode-notes',format:'stone',episode:'grain-we-keep',version:1,title:'The Grain We Keep'},answers:['I chose to share.']};
+ await ethicsPortfolioAction({db,databaseId:'main',body:{action:'saveEthicsPortfolio',classId:STONE_CLASS_ID,entry},userId:'alice',profile:{role:'student'},memberClassIds:new Set([STONE_CLASS_ID])});
+ expect(JSON.parse([...db.rows.values()][0].dataJson).answers).toEqual(['I chose to share.','','','','']);
+});
+
+it('recovers device-only episode answers from the class portfolio without uploading legacy drafts',async()=>{
+ const e={...draft(),source:{kind:'episode-notes' as const,format:'stone' as const,episode:'grain-we-keep',version:1,title:'The Grain We Keep'},answers:['Saved while offline','','','','']};
+ await saveDraft(e);await saveDraft(draft());call.mockResolvedValue({saved:true});
+ await syncNotebookDrafts('alice',STONE_CLASS_ID);
+ expect(call).toHaveBeenCalledTimes(1);
+ expect((await portfolioDb.entries.get(e.key))?.revision).toBe(1);
+ expect(await portfolioDb.outbox.count()).toBe(0);
 });

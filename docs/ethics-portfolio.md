@@ -1,13 +1,27 @@
-# Ethics weekly portfolio
+# Episode Principles Portfolio
 
-The Egypt ending now links to a private reflection outside the story iframe. Students choose one of their ten actual decisions, inspect its original context/options and encountered consequence, and answer three reasoning prompts. Alternatively, they can begin with a reading title, passage, and optional reading/discussion link. One entry is retained per episode attempt; replays remain separate.
+Every animated, journal, AP and Teaching Stone episode automatically includes a collapsed Principles Portfolio. It is available before completion and for earlier released episodes, with no separate teacher assignment or stage to open. Its five questions are:
 
-The Game links to Principles Portfolio. Students can reopen entries, start reading entries without playing, and export selected entries as text for synthesis. Teachers can read their own class's entries and open/close/reopen the post-discussion reconsideration stage with an optional deadline. This stage currently applies across the Ethics class, not separately to each reading. Submitted originals are immutable; reconsiderations are separate, versioned submissions. Neither affects game scores, completion, or rankings.
+1. What happened and what did you choose?
+2. What principle guided you?
+3. What supports or challenges that principle?
+4. Has your thinking changed, and why?
+5. How might you apply this principle elsewhere?
 
-Drafts autosave in account/class-scoped IndexedDB on this device. Explicit submissions enter an idempotent offline queue and synchronize through authenticated learning-content actions. Account entries load on entry or explicit refresh; there is no background full-class polling. Device conflicts retain local writing and report the conflict rather than overwrite another version; export the retained local copy before resolving it. Teacher playthrough writing is local-only preview work.
+A deterministic episode/format key scoped to the authenticated student and class keeps one continuing notebook across replays and versions. All five answers remain editable; partial answers are valid. Existing three-question portfolios and reconsiderations are retained separately and remain readable/exportable. Scores and completion are unchanged.
 
-Backend storage: `ethics_portfolio`, collection permissions empty, document security disabled; access only through the existing authenticated function, which enforces owning teacher or current student membership. Teacher first read provisions the private collection/attributes/indexes if missing. Each revision uses an immutable student/class/entry/revision ID. Students cannot read another student's entries, open the stage, rewrite a submitted original, or save a reconsideration outside the open stage/deadline. Reading links accept only HTTP(S). Scene context is derived server-side from the pinned Egypt source snapshot.
+The class page and episode library link to all saved answers. Students can read them together, continue writing, and export selected answers for their Principles Presentation. Teachers see their own class's answers. Teacher previews remain local and never create student records.
 
-Deploy learning-content before the frontend; open the owning teacher's portfolio to initialize storage and verify account access. The source snapshot `functions/learning-content/src/ethics-egypt-context.json` preserves version 1 context. New episode versions should add their own source mapping rather than reinterpret earlier entries. Canvas is unchanged.
+## Saving and call budget
 
-Verification: backend permission/revision/validation tests, offline queue/account isolation tests, component original/reconsideration and reading-draft tests, existing story checks, full tests, production build, and browser checks. Live deployment checks are reported separately; local preview persistence is not proof of remote student saving.
+Typing saves to IndexedDB immediately. Opening a notebook reads account entries once. A 60-second timer queues a snapshot only if answers changed, then synchronizes pending revisions. Unchanged notebooks make no save requests. Collapsing/navigating away, hiding the tab, reconnecting, or explicitly saving also attempts to flush. No full-class polling occurs. A save request is one function execution, not one database operation: authentication, access checks and revision checks also require reads.
+
+Closing a browser cannot guarantee network completion. Device drafts and the outbox survive reloads; reopening retries pending writes. Before unload warns while changes still need queueing. The status distinguishes device saves, account saves and failures, and export provides a fallback. Edits during an in-flight save retain their own dirty snapshot and new revision. Conflicts preserve local writing instead of silently overwriting another device; export before resolving a conflict.
+
+## Storage and authorization
+
+Existing private `ethics_portfolio` storage is reused. Student/class/entry/revision records are immutable and retries idempotent; the latest revision is shown. This preserves conflict detection, at the cost of retaining a revision per changed save. Class reads paginate historical revisions; watch storage and read volume before introducing a snapshot/compaction policy. Do not delete old student writing as part of this feature.
+
+The authenticated backend verifies current class membership or owning-teacher access. New episode notebook saves also validate the class's released episode/animated assignment. Legacy entries retain their original validation and submitted-response protection. Students cannot read another student's answers or save as a teacher. Titles/answers are rendered as plain text.
+
+Deploy `learning-content` before publishing the frontend. This update uses the existing collection and schema. Tests cover partial answers, access, offline retries, replay identity, typing during a save, unchanged-save suppression, and existing legacy behavior.

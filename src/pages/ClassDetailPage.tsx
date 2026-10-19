@@ -367,6 +367,7 @@ export function ClassDetailPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-5 p-4 sm:space-y-6 sm:p-6">
       <AssignedCopywork classId={cls.$id} />
+      <Link to={`/classes/${cls.$id}/principles`} className="block rounded-xl border border-teal-200 bg-teal-50 p-4 font-semibold text-teal-950">Principles Portfolio · Episode answers for your Principles Presentation →</Link>
       <Link to="/classes" className="inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-950"><span aria-hidden="true">←</span> All classes</Link>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>

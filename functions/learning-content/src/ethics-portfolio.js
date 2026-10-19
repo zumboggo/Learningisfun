@@ -1,3 +1,4 @@
+import {requireEpisode} from './episode-catalog.js';
 import {Query} from 'node-appwrite';
 import {createHash} from 'node:crypto';
 import egypt from './ethics-egypt-context.json' with {type:'json'};
@@ -16,7 +17,12 @@ export function cleanEntry(input,previous,settings){
  if(!input||!idOK(input.id))fail('Invalid entry.');
  const source=input.source;
  let cleanSource;
- if(source?.kind==='episode'){
+ if(source?.kind==='episode-notes'){
+  if(!idOK(source.episode)||!['animated','classic','stone'].includes(source.format)||!Number.isInteger(source.version)||source.version<1)fail('Invalid episode.');
+  cleanSource={kind:'episode-notes',episode:source.episode,format:source.format,version:source.version,title:short(source.title,255),...(source.assignmentId?{assignmentId:source.assignmentId}:{})};
+  if(previous&&JSON.stringify(previous.source)!==JSON.stringify(cleanSource))fail('This notebook belongs to another episode.',409);
+  return {id:input.id,source:cleanSource,answers:Array.from({length:5},(_,i)=>short(input.answers?.[i],6000)),submitted:false,submittedAt:null,reconsideration:'',reconsideredAt:null};
+ }else if(source?.kind==='episode'){
   if(source.episode!==EPISODE||source.version!==VERSION||!idOK(source.attemptId))fail('Unknown episode version.');
   cleanSource={kind:'episode',attemptId:source.attemptId,choices:source.choices,index:source.index,...choiceContext(source.choices,source.index)};
  }else if(source?.kind==='reading'){
@@ -39,13 +45,13 @@ export function cleanEntry(input,previous,settings){
 async function get(db,databaseId,id){try{return await db.getDocument(databaseId,PORTFOLIO_COLLECTION,id);}catch(e){if(e.code===404)return null;throw e;}}
 async function list(db,databaseId,queries){const out=[];let cursor;do{const p=await db.listDocuments(databaseId,PORTFOLIO_COLLECTION,[...queries,Query.limit(100),...(cursor?[Query.cursorAfter(cursor)]:[])]);out.push(...p.documents);cursor=p.documents.length===100?p.documents.at(-1).$id:null;}while(cursor);return out;}
 export async function ethicsPortfolioAction({body,userId,profile,memberClassIds,db,databaseId}){
- if(body.classId!==STONE_CLASS_ID)fail('This portfolio belongs to Ethics and Leadership.',403);
+ if(!idOK(body.classId))fail('Invalid class.',403);
  const cls=await db.getDocument(databaseId,'classes',body.classId);
  const teacher=cls.teacherId===userId&&['teacher','admin'].includes(profile.role);
  if(!teacher&&!(profile.role==='student'&&memberClassIds.has(body.classId)))fail('Class membership required.',403);
  const settingsId=hash(body.classId+':settings');
  let settingsRow;
- try{settingsRow=await get(db,databaseId,settingsId);}catch(e){throw e;}
+ try{settingsRow=body.entry?.source?.kind==='episode-notes'?null:await get(db,databaseId,settingsId);}catch(e){throw e;}
  const settings=settingsRow?JSON.parse(settingsRow.dataJson):{open:false,deadline:null};
  if(body.action==='setEthicsPortfolioStage'){
   if(!teacher)fail('Only the class teacher can open reconsideration.',403);
@@ -67,6 +73,16 @@ export async function ethicsPortfolioAction({body,userId,profile,memberClassIds,
  }
  if(body.action!=='saveEthicsPortfolio'||teacher)fail('Student portfolio saving required. Teacher previews stay on this device.',403);
  const input=body.entry,revision=input?.revision;
+ if(input?.source?.kind==='episode-notes'){
+  const s=input.source;
+  if(s.format==='animated'){
+   if(!idOK(s.assignmentId))fail('Invalid episode assignment.');
+   const row=await db.getDocument(databaseId,'episode_records',s.assignmentId),a=JSON.parse(row.dataJson);
+   if(a.type!=='animated-assignment'||a.classId!==body.classId||a.id!==s.episode||!Number.isFinite(Date.parse(a.releaseAt))||Date.parse(a.releaseAt)>Date.now())fail('Episode unavailable for this class.',403);
+  }else if(s.format==='classic')requireEpisode(body.classId,s.episode,s.version);
+  else if(s.format!=='stone'||body.classId!==STONE_CLASS_ID||s.episode!==EPISODE||s.version!==VERSION)fail('Episode unavailable for this class.',403);
+ }else if(body.classId!==STONE_CLASS_ID)fail('Legacy entries belong to Ethics and Leadership.',403);
+
  if(JSON.stringify(input||{}).length>50000)fail('Entry is too large.');
  if(!idOK(input?.id)||!Number.isInteger(revision)||revision<1||revision>10000)fail('Invalid entry revision.');
  const recordId=r=>hash(body.classId+':'+userId+':'+input.id+':'+r);
