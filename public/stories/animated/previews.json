@@ -22,5 +22,11 @@
     "title": "The Giants That Were Mills",
     "package": "stories/animated/the-giants-that-were-mills/episode.json",
     "zip": "stories/animated/the-giants-that-were-mills/episode.zip"
+  },
+  {
+    "id": "the-second-ship",
+    "title": "The Second Ship",
+    "package": "stories/animated/the-second-ship/episode.json",
+    "zip": "stories/animated/the-second-ship/episode.zip"
   }
 ]

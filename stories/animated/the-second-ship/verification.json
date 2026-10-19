@@ -1,0 +1,6 @@
+{
+ "checkedOn":"2026-10-19",
+ "routes":2187,
+ "checks":["Every route reaches seven choices and the historical ending","All category values remain bounded and totals equal their sum","Full replay and resume before the final decision reproduce state","ZIP round trip preserves metadata, script and assets","Knowledge-check thresholds stay separate from simulation","Full npm test passed","Production build and source freshness checks passed","Desktop and phone browser playthroughs","Replay reset to zero and comparison from 69 to 70 confirmed","100/100 knowledge check did not change the 75-point simulation total","Published immutable package read back and compared byte-content equivalent"],
+ "limitations":["Preview history and comparison last only while the page/player stays open","Reduced-motion rendering uses the existing shared player; no separate OS reduced-motion visual session was performed","Current week Canvas reading/vocabulary schedule was not live-verified; episode concepts are labelled accordingly","No class assignment or Canvas posting"]
+}

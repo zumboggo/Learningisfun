@@ -1,0 +1,19 @@
+{
+ "promise":"Help an Athenian messenger argue for reconsideration and carry it into action before an earlier order destroys families in Mytilene.",
+ "focus":"3b.3: compare responses to a need through relevant benefits and costs",
+ "historicalBoundary":"Thucydides 3.36–50 supplies the fixed reversal, second ship and further penalties. Local helpers, dialogue, policy recommendations and score deltas are teaching inventions.",
+ "decisions":[
+  {"id":"evidence","need":"A credible account under time pressure","options":["military evidence","families' testimony","compare and flag uncertainty"],"response":"Different information priorities and explicit opportunity cost","callback":"Lives and Trust totals shape the final assessment","rejoin":"anger"},
+  {"id":"anger","need":"A hearing among frightened citizens","options":["acknowledge then question","challenge collective punishment","emphasise firmness"],"response":"Damon stays, steps away, or interprets a promise of punishment","rejoin":"responsibility"},
+  {"id":"responsibility","need":"Determine who should bear a penalty","options":["individual inquiry","broad nonlethal penalties","broad pardon"],"response":"Thaleia and Niko expose limits in procedure, shared costs or accountability","rejoin":"argument"},
+  {"id":"argument","need":"Persuade without hiding the basis of protection","options":["justice","Athenian interests","both with explicit conflict"],"response":"Future-case challenge to each argument","rejoin":"security"},
+  {"id":"security","need":"Address future wartime risk","options":["oversight","route to surrender","grievance negotiations"],"response":"Short versus long-term security, accountability and resentment","rejoin":"coalition"},
+  {"id":"coalition","need":"Win urgent reversal without erasing later objections","options":["limited agreement with explicit dissent","stronger safeguard condition","silence about later penalties"],"response":"Different costs to agreement and accountability","rejoin":"vote"},
+  {"id":"ship","need":"Implement the revised order urgently","options":["crew endurance","message verification","reward and speed"],"response":"Distinct practical support and acknowledged remaining risk","rejoin":"crossing"}
+ ],
+ "callbacks":"Lives >=20 and Trust >=19 select different final dialogue; both evaluate accumulated recommendations, not a falsely remembered individual action.",
+ "scoring":"Each of four categories receives 1–4 points at each of seven choices. No chance or clamping changes scores. 28 per-category scale; 112 combined scale; equal weights. Maxima are not all jointly attainable. Scores are simulation estimates, not moral grades.",
+ "staging":"Two-person hillside exchanges, Damon's arrival and withdrawal, reader-paced mimed tablet and provision handoffs, brisk walk interrupted at the harbour, close reaction to the rescue, return to approved classroom cast.",
+ "assessment":"Four factual MCQs separate from simulation; five-part Decision Note and four-slide presentation instructions in teaching-guide.html.",
+ "publication":"New immutable unassigned teacher version and public preview catalog entry; preserve all earlier packages and attempts. No Canvas posting or class assignment."
+}
