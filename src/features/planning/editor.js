@@ -1,6 +1,7 @@
 'use strict';
 const $=s=>document.querySelector(s), KEY='brainstorming-board-v1', LIBRARY_KEY='learning-planning:'+window.PLANNING_USER;
-const blankBoard=()=>({title:'Untitled board',rowCount:8,columnCount:10,rows:Array(10).fill(''),cards:Array(100).fill(''),notes:['',''],footerNote:''});
+const todayTitle=()=>new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
+const blankBoard=()=>({title:todayTitle(),rowCount:8,columnCount:10,rows:Array(10).fill(''),cards:Array(100).fill(''),notes:['',''],footerNote:''});
 const validBoard=s=>s&&typeof s.title==='string'&&Array.isArray(s.rows)&&s.rows.every(x=>typeof x==='string')&&Array.isArray(s.cards)&&s.cards.every(x=>typeof x==='string')&&((s.rows.length===5&&s.cards.length===40)||(s.rows.length===10&&s.cards.length===100&&Number.isInteger(s.rowCount)&&s.rowCount>=1&&s.rowCount<=10&&Number.isInteger(s.columnCount)&&s.columnCount>=1&&s.columnCount<=10));
 function normalizeBoard(board){if(board.cards.length===100)return {...board,rowCount:8,columnCount:10,notes:Array.isArray(board.notes)?board.notes.slice(0,2):['',''],footerNote:board.footerNote||''};const next=blankBoard();next.title=board.title;board.rows.forEach((name,r)=>next.rows[r]=name);board.cards.forEach((text,i)=>next.cards[Math.floor(i/8)*10+i%8]=text);return next}
 const visibleSlots=()=>Array.from({length:state.rowCount},(_,r)=>Array.from({length:state.columnCount},(_,c)=>r*10+c)).flat();
@@ -9,7 +10,7 @@ const dimensionsText=()=>state.rowCount+(state.rowCount===1?' row × ':' rows ×
 const newId=()=>crypto.randomUUID();
 let library,currentId,state,active=0,dragged=null,draggedRow=null,timer;
 try{const saved=JSON.parse(localStorage.getItem(LIBRARY_KEY));if(saved&&Array.isArray(saved.boards)&&saved.boards.length&&saved.boards.every(b=>typeof b.id==='string'&&validBoard(b.data))){saved.boards.forEach(b=>b.data=normalizeBoard(b.data));library=saved;currentId=saved.boards.some(b=>b.id===saved.currentId)?saved.currentId:saved.boards[0].id;state=saved.boards.find(b=>b.id===currentId).data}}catch{}
-if(!library){state=blankBoard();state.title='Untitled planning';currentId=newId();library={currentId,boards:[{id:currentId,data:state}]}}
+if(!library){state=blankBoard();currentId=newId();library={currentId,boards:[{id:currentId,data:state}]}}
 // Preserve older ninth/tenth rows in a continuation board before fixing the template.
 function preserveOverflow(){for(const b of [...library.boards]){if(b.data.cards.slice(80).some(t=>t.trim())||b.data.rows.slice(8).some(t=>t.trim()&&!/^Row (9|10)$/.test(t))){const extra=blankBoard();extra.title=b.data.title+' — continued';extra.rows.splice(0,2,...b.data.rows.slice(8));extra.cards.splice(0,20,...b.data.cards.slice(80));library.boards.push({id:newId(),data:extra});b.data.rows.splice(8,2,'','');b.data.cards.fill('',80)}}}
 preserveOverflow();

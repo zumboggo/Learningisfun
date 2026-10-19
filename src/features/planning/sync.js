@@ -20,26 +20,41 @@
   let deviceId = localStorage.getItem(prefix + ':device');
   if (!deviceId) { deviceId = crypto.randomUUID(); localStorage.setItem(prefix + ':device', deviceId); }
   const status = $('#cloud-status');
-  let timer, busy = false, dirty = true;
+  const BACKUP_DELAY = 60000;
+  let timer, busy = false, dirty = true, observed, backedUp;
+  const content = () => JSON.stringify({ device: $('#device-name').value.trim() || 'My device', boards: library.boards });
   $('#device-name').value = localStorage.getItem(prefix + ':name') || 'My device';
-  function schedule() { dirty = true; clearTimeout(timer); timer = setTimeout(backup, 1500); }
+  function schedule() {
+    const current = content();
+    if (current === observed) return;
+    observed = current; dirty = current !== backedUp;
+    clearTimeout(timer);
+    if (dirty) {
+      status.textContent = navigator.onLine ? 'Saved locally · cloud backup after 1 minute idle' : 'Offline · saved on this device';
+      timer = setTimeout(backup, BACKUP_DELAY);
+    }
+  }
   async function backup() {
+    clearTimeout(timer);
     if (busy) return;
+    if (!dirty && content() === backedUp) return;
     if (!navigator.onLine) { status.textContent = 'Offline · saved on this device'; return; }
     busy = true; dirty = false; let success = false;
+    const snapshot = content();
     status.textContent = 'Backing up…';
     try {
       const payload = JSON.stringify({ version: 1, device: $('#device-name').value.trim() || 'My device', savedAt: new Date().toISOString(), library });
       if (new TextEncoder().encode(payload).length > 950000) throw new Error('Backup is too large. Use Back up boards to save a file.');
       await request('save', { deviceId, payload });
-      success = true; status.textContent = 'Private cloud backup saved';
+      success = true; backedUp = snapshot; dirty = content() !== backedUp;
+      status.textContent = dirty ? 'Saved locally · cloud backup pending' : 'Private cloud backup saved';
       $('#cloud-message').textContent = 'All boards on this device are backed up to your account.';
     } catch (error) {
       dirty = true; status.textContent = 'Saved locally · cloud backup needs attention';
       $('#cloud-message').textContent = error.message;
     } finally {
       busy = false;
-      if (success && dirty) timer = setTimeout(backup, 1500);
+      if (success && dirty) { clearTimeout(timer); timer = setTimeout(backup, BACKUP_DELAY); }
     }
   }
   async function listBackups() {
@@ -85,6 +100,7 @@
   $('#device-name').onchange = event => { localStorage.setItem(prefix + ':name', event.target.value); schedule(); };
   $('#cloud-open').onclick = () => { $('#cloud-dialog').showModal(); void listBackups(); };
   $('#cloud-save').onclick = backup;
+  $('#save-board').addEventListener('click', () => { void backup(); });
   $('#cloud-list').onclick = listBackups;
   window.addEventListener('online', () => { if (dirty) void backup(); });
   window.addEventListener('offline', () => { status.textContent = 'Offline · saved on this device'; });

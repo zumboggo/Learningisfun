@@ -79,3 +79,22 @@ test('trash clears only the selected note and persists the deletion', () => {
   expect(dom.window.document.querySelector('[data-slot="0"]').classList.contains('empty')).toBe(true);
   dom.window.close();
 });
+
+test('New creates an editable date title without changing an existing board', () => {
+  const { dom, win } = open('alice');
+  const title = win.document.querySelector('#title');
+  const today = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  title.value = 'Earlier planning';
+  title.dispatchEvent(new win.Event('input'));
+  win.document.querySelector('#new-board').click();
+  expect(title.value).toBe(today);
+  title.value = 'My lesson'; title.dispatchEvent(new win.Event('input'));
+  const saved = win.localStorage.getItem('learning-planning:alice');
+  const library = JSON.parse(saved);
+  expect(library.boards).toHaveLength(2);
+  expect(library.boards[0].data.title).toBe('Earlier planning');
+  const reopened = open('alice', { 'learning-planning:alice': saved });
+  expect(reopened.win.document.querySelector('#title').value).toBe('My lesson');
+  expect(JSON.parse(reopened.win.localStorage.getItem('learning-planning:alice')).boards).toHaveLength(2);
+  dom.window.close(); reopened.dom.window.close();
+});

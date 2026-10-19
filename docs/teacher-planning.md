@@ -25,3 +25,5 @@ The previous standalone Brainstorming site and its old database collection are n
 All 853 Vitest tests passed, including editor migration/movement/CSV behavior and backend tests for anonymous/student denial and cross-teacher isolation. TypeScript and the production PWA build passed. Live deployment status is recorded in the release conversation.
 
 The cell editor has a top-right trash button. Return saves and closes; Shift + Return adds a newline. IME composition confirmation does not submit.
+
+New boards default to today’s date in the device’s locale; the title remains editable and existing boards are not renamed at midnight. Cloud backups wait for 60 seconds without content edits while local saves remain immediate. Save and Back up now flush immediately. Unchanged renders do not restart the timer or repeatedly upload the same content.
