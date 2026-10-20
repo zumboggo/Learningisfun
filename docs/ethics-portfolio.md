@@ -1,6 +1,6 @@
 # Episode Principles Portfolio
 
-Every animated, journal, AP and Teaching Stone episode automatically includes a collapsed Principles Portfolio. It is available before completion and for earlier released episodes, with no separate teacher assignment or stage to open. Its five questions are:
+Every Ethics and Leadership episode, including animated episodes and the Teaching Stone, automatically includes a collapsed Principles Portfolio. It is available before completion and for earlier released episodes, with no separate teacher assignment or stage to open. Its five questions are:
 
 1. What happened and what did you choose?
 2. What principle guided you?
@@ -10,7 +10,7 @@ Every animated, journal, AP and Teaching Stone episode automatically includes a 
 
 A deterministic episode/format key scoped to the authenticated student and class keeps one continuing notebook across replays and versions. All five answers remain editable; partial answers are valid. Existing three-question portfolios and reconsiderations are retained separately and remain readable/exportable. Scores and completion are unchanged.
 
-The class page and episode library link to all saved answers. Students can read them together, continue writing, and export selected answers for their Principles Presentation. Teachers see their own class's answers. Teacher previews remain local and never create student records.
+Only the Ethics and Leadership class page and episode library link to saved answers. Other classes do not render or load the portfolio; direct routes and backend actions reject non-Ethics class IDs. Previously saved records are preserved. Students can read them together, continue writing, and export selected answers for their Principles Presentation. Teachers see their own class's answers. Teacher previews remain local and never create student records.
 
 ## Saving and call budget
 

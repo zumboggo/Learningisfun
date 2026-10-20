@@ -1,3 +1,4 @@
+import {STONE_CLASS_ID} from '@/services/stone.service';
 import {useLiveQuery} from 'dexie-react-hooks';
 import {useEffect,useState} from 'react';
 import {Link,useParams} from 'react-router-dom';
@@ -6,7 +7,7 @@ import {db} from '@/db/schema';
 import PortfolioEditor from '@/components/ethics/PortfolioEditor';
 import {EpisodeNotebook} from '@/components/ethics/EpisodePortfolio';
 import {exportEntries,localEntries,principleQuestions,readPortfolio,syncNotebookDrafts,type Entry} from '@/services/ethics-portfolio.service';
-export default function PrinciplesPortfolioPage(){const {user}=useAuth(),{classId=''}=useParams();return user?<Portfolio key={user.$id+classId} userId={user.$id} role={user.role} classId={classId}/>:null;}
+export default function PrinciplesPortfolioPage(){const {user}=useAuth(),{classId=''}=useParams();return classId!==STONE_CLASS_ID?<main className="p-6">The Principles Portfolio is available only for Ethics and Leadership. <Link className="underline" to={`/classes/${classId}`}>Return to class</Link></main>:user?<Portfolio key={user.$id+classId} userId={user.$id} role={user.role} classId={classId}/>:null;}
 function Portfolio({userId,role,classId}:{userId:string;role:string;classId:string}){
  const [entries,setEntries]=useState<Entry[]>([]),[editor,setEditor]=useState<Entry|null>(null),[teacher,setTeacher]=useState(false),[allowed,setAllowed]=useState(false),[status,setStatus]=useState('Checking access…'),[busy,setBusy]=useState(false),[selected,setSelected]=useState<string[]>([]);
  const deviceEntries=useLiveQuery(()=>localEntries(userId,classId),[userId,classId]);
@@ -16,7 +17,7 @@ function Portfolio({userId,role,classId}:{userId:string;role:string;classId:stri
  return <main className="mx-auto max-w-4xl space-y-5 p-4 sm:p-6">
   <Link className="text-teal-900 underline" to={`/classes/${classId}/game`}>← Class episodes</Link>
   <h1 className="text-3xl font-bold">Principles Portfolio</h1>
-  <p>Every episode has five questions ready for you. Open any episode, including an earlier one, and expand its Principles Portfolio to begin. Return to your answers as your thinking develops.</p>
+  <p>Every Ethics and Leadership episode has five questions ready for you. Open any episode, including an earlier one, and expand its Principles Portfolio to begin. Return to your answers as your thinking develops.</p>
   <p>For your Principles Presentation, look for a principle that appears in several episodes, a challenge to it, and a moment when your thinking changed. Select entries below to export your evidence.</p>
   <p role="status" className="text-sm">{status}</p>
   {allowed&&<>

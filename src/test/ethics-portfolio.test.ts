@@ -25,7 +25,7 @@ describe('account-scoped offline persistence',()=>{
 });
 function fakeDb(){const rows=new Map<string,any>();return {rows,getDocument:vi.fn(async(_db:string,col:string,id:string)=>{if(col==='classes')return {teacherId:'teacher'};const row=rows.get(id);if(!row)throw Object.assign(Error('missing'),{code:404});return row;}),createDocument:vi.fn(async(_db:string,_col:string,id:string,data:any,_permissions:any[])=>{if(rows.has(id))throw Object.assign(Error('duplicate'),{code:409});const row={...data,$id:id,$createdAt:new Date().toISOString()};rows.set(id,row);return row;}),listDocuments:vi.fn(async()=>({documents:[]}))};}
 describe('server authorization and concurrency',()=>{
- it('rejects nonmembers, other teachers, wrong classes and student stage changes',async()=>{const db=fakeDb(),base={db,databaseId:'main',body:{action:'readEthicsPortfolio',classId:STONE_CLASS_ID},userId:'outsider',profile:{role:'student'},memberClassIds:new Set()};await expect(ethicsPortfolioAction(base)).rejects.toThrow('membership');await expect(ethicsPortfolioAction({...base,profile:{role:'teacher'}})).rejects.toThrow('membership');await expect(ethicsPortfolioAction({...base,body:{...base.body,classId:'other'}})).rejects.toThrow('membership');await expect(ethicsPortfolioAction({...base,memberClassIds:new Set([STONE_CLASS_ID]),body:{...base.body,action:'setEthicsPortfolioStage',open:true}})).rejects.toThrow('teacher');});
+ it('rejects nonmembers, other teachers, wrong classes and student stage changes',async()=>{const db=fakeDb(),base={db,databaseId:'main',body:{action:'readEthicsPortfolio',classId:STONE_CLASS_ID},userId:'outsider',profile:{role:'student'},memberClassIds:new Set()};await expect(ethicsPortfolioAction(base)).rejects.toThrow('membership');await expect(ethicsPortfolioAction({...base,profile:{role:'teacher'}})).rejects.toThrow('membership');await expect(ethicsPortfolioAction({...base,body:{...base.body,classId:'other'}})).rejects.toThrow('Ethics and Leadership');await expect(ethicsPortfolioAction({...base,memberClassIds:new Set([STONE_CLASS_ID]),body:{...base.body,action:'setEthicsPortfolioStage',open:true}})).rejects.toThrow('teacher');});
  it('uses authenticated ownership, creates immutable private revisions, and handles retries/conflicts',async()=>{const db=fakeDb(),entry={...draft(),revision:1,submitted:true,userId:'spoofed'},base={db,databaseId:'main',body:{action:'saveEthicsPortfolio',classId:STONE_CLASS_ID,entry},userId:'alice',profile:{role:'student'},memberClassIds:new Set([STONE_CLASS_ID])};await ethicsPortfolioAction(base);await ethicsPortfolioAction(base);expect(db.rows.size).toBe(1);expect([...db.rows.values()][0].userId).toBe('alice');expect(db.createDocument.mock.calls[0][4]).toEqual([]);await expect(ethicsPortfolioAction({...base,body:{...base.body,entry:{...entry,answers:['different','reason','judgment']}}})).rejects.toThrow('another device');await expect(ethicsPortfolioAction({...base,body:{...base.body,entry:{...entry,revision:3}}})).rejects.toThrow('earlier');});
 });
 
@@ -39,9 +39,9 @@ it('accepts partial episode notebooks and permits revisiting all five answers wi
 });
 it('rejects an episode notebook from an unrelated class or unreleased assignment',async()=>{
  const db=fakeDb(),base={db,databaseId:'main',userId:'alice',profile:{role:'student'},memberClassIds:new Set(['other']),body:{action:'saveEthicsPortfolio',classId:'other',entry:{id:'notes-one',revision:1,source:{kind:'episode-notes',format:'stone',episode:'teaching-stone',version:1},answers:[]}}};
- await expect(ethicsPortfolioAction(base)).rejects.toThrow('unavailable');
- db.rows.set('assignment',{dataJson:JSON.stringify({type:'animated-assignment',classId:'other',id:'test',releaseAt:'2099-01-01'})});
- await expect(ethicsPortfolioAction({...base,body:{...base.body,entry:{...base.body.entry,source:{kind:'episode-notes',format:'animated',episode:'test',version:1,assignmentId:'assignment'}}}})).rejects.toThrow('unavailable');
+ await expect(ethicsPortfolioAction(base)).rejects.toThrow('Ethics and Leadership');
+ db.rows.set('assignment',{dataJson:JSON.stringify({type:'animated-assignment',classId:STONE_CLASS_ID,id:'test',releaseAt:'2099-01-01'})});
+ await expect(ethicsPortfolioAction({...base,memberClassIds:new Set([STONE_CLASS_ID]),body:{...base.body,classId:STONE_CLASS_ID,entry:{...base.body.entry,source:{kind:'episode-notes',format:'animated',episode:'test',version:1,assignmentId:'assignment'}}}})).rejects.toThrow('unavailable');
 });
 
 it('saves a partial notebook for the actual released Teaching Stone episode without stage setup',async()=>{
@@ -57,4 +57,12 @@ it('recovers device-only episode answers from the class portfolio without upload
  expect(call).toHaveBeenCalledTimes(1);
  expect((await portfolioDb.entries.get(e.key))?.revision).toBe(1);
  expect(await portfolioDb.outbox.count()).toBe(0);
+});
+
+it.each(['readEthicsPortfolio','saveEthicsPortfolio','setEthicsPortfolioStage'])('rejects %s outside Ethics even for class members and owners',async action=>{
+ const db=fakeDb();
+ for(const [userId,role] of [['alice','student'],['teacher','teacher']]){
+  await expect(ethicsPortfolioAction({db,databaseId:'main',body:{action,classId:'other'},userId,profile:{role},memberClassIds:new Set(['other'])})).rejects.toThrow('Ethics and Leadership');
+ }
+ expect(db.getDocument).not.toHaveBeenCalled();expect(db.createDocument).not.toHaveBeenCalled();
 });

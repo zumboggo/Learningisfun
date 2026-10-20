@@ -1,3 +1,4 @@
+import {STONE_CLASS_ID} from '@/services/stone.service';
 import {useEffect,useRef,useState} from 'react';
 import {Link} from 'react-router-dom';
 import {episodeNotesEntry,exportEntries,portfolioDb,principleQuestions,queueEntry,readPortfolio,saveDraft,syncPortfolio,type Entry,type EpisodeNotesSource} from '@/services/ethics-portfolio.service';
@@ -5,12 +6,16 @@ import {episodeNotesEntry,exportEntries,portfolioDb,principleQuestions,queueEntr
 type Props={userId:string;classId:string;source:EpisodeNotesSource;preview?:boolean};
 export default function EpisodePortfolio(props:Props){
  const [opened,setOpened]=useState(false);
+ if(props.classId!==STONE_CLASS_ID)return null;
  return <details className="my-4 rounded-xl border border-teal-200 bg-teal-50 p-4" onToggle={e=>setOpened(e.currentTarget.open)}>
   <summary className="cursor-pointer font-semibold text-teal-950">Principles Portfolio · Five questions about this episode</summary>
   {opened&&<EpisodeNotebook key={props.userId+props.classId+props.source.format+props.source.episode} {...props}/>}
  </details>;
 }
-export function EpisodeNotebook({userId,classId,source,preview=false}:{userId:string;classId:string;source:EpisodeNotesSource;preview?:boolean}){
+export function EpisodeNotebook(props:Props){
+ return props.classId===STONE_CLASS_ID?<EthicsNotebook {...props}/>:null;
+}
+function EthicsNotebook({userId,classId,source,preview=false}:{userId:string;classId:string;source:EpisodeNotesSource;preview?:boolean}){
  const [entry,setEntry]=useState<Entry|null>(null),[status,setStatus]=useState('Opening your saved answers…');
  const current=useRef<Entry|null>(null),chain=useRef(Promise.resolve()),flushRef=useRef<()=>Promise<void>>(async()=>{});
  useEffect(()=>{

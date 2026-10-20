@@ -45,7 +45,7 @@ export function cleanEntry(input,previous,settings){
 async function get(db,databaseId,id){try{return await db.getDocument(databaseId,PORTFOLIO_COLLECTION,id);}catch(e){if(e.code===404)return null;throw e;}}
 async function list(db,databaseId,queries){const out=[];let cursor;do{const p=await db.listDocuments(databaseId,PORTFOLIO_COLLECTION,[...queries,Query.limit(100),...(cursor?[Query.cursorAfter(cursor)]:[])]);out.push(...p.documents);cursor=p.documents.length===100?p.documents.at(-1).$id:null;}while(cursor);return out;}
 export async function ethicsPortfolioAction({body,userId,profile,memberClassIds,db,databaseId}){
- if(!idOK(body.classId))fail('Invalid class.',403);
+ if(body.classId!==STONE_CLASS_ID)fail('The Principles Portfolio is available only for Ethics and Leadership.',403);
  const cls=await db.getDocument(databaseId,'classes',body.classId);
  const teacher=cls.teacherId===userId&&['teacher','admin'].includes(profile.role);
  if(!teacher&&!(profile.role==='student'&&memberClassIds.has(body.classId)))fail('Class membership required.',403);
