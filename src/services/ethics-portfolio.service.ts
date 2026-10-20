@@ -3,7 +3,15 @@ import {executeLearningContent} from './learning-content.service';
 import egypt from '../../functions/learning-content/src/ethics-egypt-context.json';
 import type {StoneAttempt} from './stone.service';
 export type EpisodeNotesSource={kind:'episode-notes';episode:string;format:'animated'|'classic'|'stone';version:number;title:string;assignmentId?:string};
-export const principleQuestions=['What happened and what did you choose?','What principle guided you?','What supports or challenges that principle?','Has your thinking changed, and why?','How might you apply this principle elsewhere?'];
+export const secondShipQuestions=['What happened and what did you choose?','What principle guided you?','What supports or challenges that principle?','Has your thinking changed, and why?','How might you apply this principle elsewhere?'];
+export const principleQuestions=[
+ 'Choose: What should the person do? Why?',
+ 'Explain: Give your strongest reason and one specific detail from the episode.',
+ 'Consider another view: What is the strongest reason for a different choice?',
+ 'State your principle: What general principle would help you or others in this situation? How might you apply the principle in one other situation?',
+ 'Test your principle: What change to the situation might make you reconsider it? Explain why.'
+];
+export const questionsForEpisode=(source:EpisodeNotesSource)=>source.episode==='second-ship-ethics'?secondShipQuestions:principleQuestions;
 export type Source=EpisodeNotesSource|{kind:'reading';title:string;url:string;passage:string}|{kind:'episode';episode:string;version:number;attemptId:string;choices:string[];index:number;title?:string;passage?:string;label?:string;outcome?:string;options?:string[][];aside?:string};
 export interface Entry {id:string;source:Source;answers:string[];submitted:boolean;submittedAt?:string|null;reconsideration:string;reconsideredAt?:string|null;revision:number;updatedAt:string;userId:string;classId:string;key:string;dirty?:boolean;studentName?:string;preview?:boolean;}
 interface Pending {key:string;userId:string;classId:string;entry:Entry;}
@@ -18,7 +26,7 @@ export async function localEntries(userId:string,classId:string){return (await p
 export async function saveDraft(entry:Entry){
  await portfolioDb.transaction('rw',portfolioDb.entries,async()=>{
   const current=await portfolioDb.entries.get(entry.key);
-  if(current&&(current.revision!==entry.revision||(current.submitted&&(JSON.stringify(current.answers)!==JSON.stringify(entry.answers)||JSON.stringify(current.source)!==JSON.stringify(entry.source)))))throw Error('This entry changed in another tab. Export your visible writing before reopening.');
+  if(current&&(current.revision!==entry.revision||(current.submitted&&current.source.kind!=='episode-notes'&&(JSON.stringify(current.answers)!==JSON.stringify(entry.answers)||JSON.stringify(current.source)!==JSON.stringify(entry.source)))))throw Error('This entry changed in another tab. Export your visible writing before reopening.');
   await portfolioDb.entries.put({...entry,dirty:true,updatedAt:new Date().toISOString()});
  });
 }
@@ -35,7 +43,7 @@ export function syncPortfolio(userId:string,classId:string){const scope=entryKey
 }
 export async function readPortfolio(userId:string,classId:string){const data=await executeLearningContent<PortfolioData>({action:'readEthicsPortfolio',classId});if(!data.teacher){for(const e of data.entries){const key=entryKey(userId,classId,e.id),local=await portfolioDb.entries.get(key);const pending=await portfolioDb.outbox.where('[userId+classId]').equals([userId,classId]).filter(r=>r.entry.id===e.id).count();if(!pending&&!local?.dirty&&(!local||e.revision>local.revision))await portfolioDb.entries.put({...e,userId,classId,key});}}return data;}
 export const setPortfolioStage=(classId:string,open:boolean,deadline:string|null)=>executeLearningContent<{settings:PortfolioData['settings']}>({action:'setEthicsPortfolioStage',classId,open,deadline});
-export function exportEntries(entries:Entry[]){const text=entries.map(e=>{const s=e.source;return [`# ${s.title||'Episode decision'}`,`Source: ${s.kind==='episode-notes'?s.episode:s.kind==='reading'?s.url:`${s.episode} · version ${s.version} · life ${s.attemptId} · decision ${s.index+1}`}`,textOnly('passage' in s?s.passage||'':''),s.kind==='episode'?`Choice: ${s.label}\nOutcome: ${s.outcome}`:'',...e.answers.map((a,i)=>`## ${(s.kind==='episode-notes'?principleQuestions:['Idea or choice','Reasons and difficulty','Original judgment'])[i]}\n${a}`),...(s.kind==='episode-notes'?[]:[`Original submitted: ${e.submittedAt||'Draft'}`,`## Reconsideration\n${e.reconsideration||'Not yet added'}\n${e.reconsideredAt||''}`])].join('\n\n');}).join('\n\n---\n\n');const url=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='principles-portfolio.txt';a.click();URL.revokeObjectURL(url);}
+export function exportEntries(entries:Entry[]){const text=entries.map(e=>{const s=e.source;return [`# ${s.title||'Episode decision'}`,`Source: ${s.kind==='episode-notes'?s.episode:s.kind==='reading'?s.url:`${s.episode} · version ${s.version} · life ${s.attemptId} · decision ${s.index+1}`}`,textOnly('passage' in s?s.passage||'':''),s.kind==='episode'?`Choice: ${s.label}\nOutcome: ${s.outcome}`:'',...e.answers.map((a,i)=>`## ${(s.kind==='episode-notes'?questionsForEpisode(s):['Idea or choice','Reasons and difficulty','Original judgment'])[i]}\n${a}`),...(s.kind==='episode-notes'?[]:[`Original submitted: ${e.submittedAt||'Draft'}`,`## Reconsideration\n${e.reconsideration||'Not yet added'}\n${e.reconsideredAt||''}`])].join('\n\n');}).join('\n\n---\n\n');const url=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='principles-portfolio.txt';a.click();URL.revokeObjectURL(url);}
 
 // One notebook per episode, independent of replay and version.
 export async function episodeNotesEntry(userId:string,classId:string,source:EpisodeNotesSource,preview=false){

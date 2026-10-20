@@ -21,7 +21,7 @@ export function cleanEntry(input,previous,settings){
   if(!idOK(source.episode)||!['animated','classic','stone'].includes(source.format)||!Number.isInteger(source.version)||source.version<1)fail('Invalid episode.');
   cleanSource={kind:'episode-notes',episode:source.episode,format:source.format,version:source.version,title:short(source.title,255),...(source.assignmentId?{assignmentId:source.assignmentId}:{})};
   if(previous&&JSON.stringify(previous.source)!==JSON.stringify(cleanSource))fail('This notebook belongs to another episode.',409);
-  return {id:input.id,source:cleanSource,answers:Array.from({length:5},(_,i)=>short(input.answers?.[i],6000)),submitted:false,submittedAt:null,reconsideration:'',reconsideredAt:null};
+  return {id:input.id,source:cleanSource,answers:Array.from({length:5},(_,i)=>short(input.answers?.[i],6000)),submitted:!!input.submitted,submittedAt:input.submitted?(previous?.submittedAt||new Date().toISOString()):null,reconsideration:'',reconsideredAt:null};
  }else if(source?.kind==='episode'){
   if(source.episode!==EPISODE||source.version!==VERSION||!idOK(source.attemptId))fail('Unknown episode version.');
   cleanSource={kind:'episode',attemptId:source.attemptId,choices:source.choices,index:source.index,...choiceContext(source.choices,source.index)};

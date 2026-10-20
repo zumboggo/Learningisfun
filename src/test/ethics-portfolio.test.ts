@@ -66,3 +66,11 @@ it.each(['readEthicsPortfolio','saveEthicsPortfolio','setEthicsPortfolioStage'])
  }
  expect(db.getDocument).not.toHaveBeenCalled();expect(db.createDocument).not.toHaveBeenCalled();
 });
+
+it('persists notebook submission across devices and still permits later revisions',()=>{
+ const source={kind:'episode-notes',format:'stone',episode:'teaching-stone',version:1,title:'The Grain We Keep'};
+ const saved=cleanEntry({id:'notes-submit',source,answers:['A reason'],submitted:true},null,{open:false});
+ expect(saved.submitted).toBe(true);expect(saved.submittedAt).toBeTruthy();
+ const revised=cleanEntry({...saved,answers:['A stronger reason']},saved,{open:false});
+ expect(revised.answers[0]).toBe('A stronger reason');expect(revised.submittedAt).toBe(saved.submittedAt);
+});
