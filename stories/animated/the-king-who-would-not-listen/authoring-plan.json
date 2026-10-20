@@ -1,0 +1,18 @@
+{
+ "promise":"As Maia's visiting assistant, put truthful advice before a ruler without surrendering the right to challenge him.",
+ "focus":"2a.1: compare a character's stated beliefs with a specific action and explain the fit or contradiction.",
+ "circle":"classroom claim about wisdom; urgent complaint; Stone to palace; promising royal inquiry; scrutiny of expertise and censorship; Dion's exile; final advice and safe departure; principle tested in classroom.",
+ "historicalBoundary":"367–366 BCE stay compressed; Dion exiled and Plato eventually leaves; return in 361 and later Dion events in epilogue. Local harbour events, all dialogue and proposals fictional. Seventh Letter authorship disputed. Plato's own censorship and democratic criticism remain visible.",
+ "decisions":[
+  {"id":"petition","options":"exact/respectful/anonymous","response":"insult distracts/civility reveals prior neglect/anonymity prompts evidence demand","callback":"Petition 0–2 changes royal audience","rejoin":"wages"},
+  {"id":"lesson","options":"reasoned defence/hear workers/allow review","response":"accepts lesson/requests account/refuses transfer of authority","callback":"none","rejoin":"rumours"},
+  {"id":"speech","options":"temporary ban/restrict direct incitement/evidence and protection","response":"quiet with suppression risk/classification and appeal problem/immediate-harm risk","callback":"Speech 0–2 changes farewell challenge","rejoin":"philosopher"},
+  {"id":"hearing","options":"experts/assembly/mixed","response":"expert selection and challenge/majoritarian error/exclusions enforcement and delay","callback":"none","rejoin":"exile"},
+  {"id":"counsel","options":"stay/conditions/seek leave","response":"benefit versus legitimisation/meaningful threshold versus lost access/refusal versus abandoned influence","callback":"Counsel 0–2 changes farewell","rejoin":"seal"},
+  {"id":"limits","options":"education/law/shared authority","response":"succession/enforcement/collective error","callback":"Limits 0–2 chooses classroom counterexample","rejoin":"departure"},
+  {"id":"report","options":"gains/contradiction/uncertainty","response":"distinguish promise and outcome/precise critique of ruler and philosopher/uncertainty not evasion","callback":"none","rejoin":"callbacks"}
+ ],
+ "sceneActivities":[{"actor":"Theras","activity":"walk left brisk","purpose":"pacing under the rumour's pressure","start":"rumours","interrupt":"before Maia reads proposed order","stop":"before speech choice","background":"static palace; pacing in place, no travel claim","framing":"wide then two-person"}],
+ "presentationSuitability":"Students can choose a concrete adviser response, cite exile or the promised inquiry, articulate a transferable principle, and test it against a successor, captured court, or hostile majority. Three defensible broad institutional approaches are offered without a moral score.",
+ "assignment":"Ethics and Leadership app class e24ec8d9-21d7-4c32-a30e-08655c2f4e65, October 22 2026, release available now. No Canvas request. Standard five portfolio questions apply."
+}

@@ -1,0 +1,8 @@
+{
+ "checkedOn":"2026-10-20",
+ "routes":2187,
+ "choiceOptions":21,
+ "checks":["Every route has seven decisions and terminates","Historical exile and departure preserved on every route","Petition, speech, counsel and limits callbacks follow saved choices","Resume reproduces route state","Staged actors occupy distinct positions","ZIP import preserves complete package","Quiz awards 100 for four correct and 75 for three correct","New standard five portfolio prompts selected for this episode","Full suite passed: 170 Vitest files, 876 tests, plus backend suites","Production build passed","Full desktop route and 100-point quiz completed in browser","390px phone framing inspected with palace cast and actual dialogue","Scene motion pause verified and viewport restored"],
+ "limitations":["No generated speech or music","Historical dialogue and harbour scenarios are explicitly fictional","Seventh Letter authorship is disputed","OS-level reduced-motion mode was not separately toggled; shared reduced-motion component tests passed in the full suite"],
+ "assignmentDate":"2026-10-22"
+}

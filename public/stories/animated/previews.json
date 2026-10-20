@@ -34,5 +34,11 @@
     "title": "COMEBACK OR ELSE",
     "package": "stories/animated/comeback-or-else/episode.json",
     "zip": "stories/animated/comeback-or-else/episode.zip"
+  },
+  {
+    "id": "the-king-who-would-not-listen",
+    "title": "The King Who Would Not Listen",
+    "package": "stories/animated/the-king-who-would-not-listen/episode.json",
+    "zip": "stories/animated/the-king-who-would-not-listen/episode.zip"
   }
 ]
