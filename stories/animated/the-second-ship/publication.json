@@ -3,6 +3,17 @@
   "title": "The Second Ship",
   "version": 1,
   "versionId": "a1f40787728ee7698b894588a29ed591",
-  "assigned": false,
-  "previewUrl": "https://zumboggo.github.io/Learningisfun/#/game/story-preview/the-second-ship"
+  "assigned": true,
+  "previewUrl": "https://zumboggo.github.io/Learningisfun/#/game/story-preview/the-second-ship",
+  "assignments": [
+    {
+      "classId": "e24ec8d9-21d7-4c32-a30e-08655c2f4e65",
+      "className": "Section 1",
+      "date": "2026-10-20",
+      "releaseAt": "2026-10-16T00:00:00.000Z",
+      "assignmentId": "3b7614a8c9dde6d78ca801aeaaecef23",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/3b7614a8c9dde6d78ca801aeaaecef23"
+    }
+  ],
+  "studentAccessVerified": true
 }
