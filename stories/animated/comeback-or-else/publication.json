@@ -3,6 +3,17 @@
   "title": "COMEBACK OR ELSE",
   "version": 1,
   "versionId": "44f3ccc0420075f28d5720759973eb8b",
-  "assigned": false,
-  "previewUrl": "https://zumboggo.github.io/Learningisfun/#/game/story-preview/comeback-or-else"
+  "assigned": true,
+  "previewUrl": "https://zumboggo.github.io/Learningisfun/#/game/story-preview/comeback-or-else",
+  "assignments": [
+    {
+      "classId": "88421c66-9cda-4002-8e15-086312b7805e",
+      "className": "Section 1",
+      "date": "2026-10-20",
+      "releaseAt": "2026-10-16T00:00:00.000Z",
+      "assignmentId": "06dff442b8916a5ac8141e3508509a5d",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/06dff442b8916a5ac8141e3508509a5d"
+    }
+  ],
+  "studentAccessVerified": true
 }
