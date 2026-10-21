@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal, flushSync } from 'react-dom';
 import { Button } from '@/components/common/Button';
 import './present-questions.css';
+import { StudentPicker, type StudentPickerRoster } from './StudentPicker';
 
 /** Accept only question text so author details never enter the presentation. */
-export function PresentQuestions({ questions }: { questions: string[] }) {
+export function PresentQuestions({ questions, picker }: { questions: string[]; picker?: StudentPickerRoster }) {
   const [slides, setSlides] = useState<string[] | null>(null);
   const surface = useRef<HTMLDivElement>(null);
   return <>
@@ -13,11 +14,12 @@ export function PresentQuestions({ questions }: { questions: string[] }) {
       flushSync(() => setSlides([...questions]));
       void surface.current?.requestFullscreen?.().catch(() => { /* The full-window view also works without browser fullscreen. */ });
     }}>Present Questions</Button>
-    {slides && createPortal(<QuestionSlides questions={slides} surface={surface} onClose={() => setSlides(null)} />, document.body)}
+    {slides && createPortal(<QuestionSlides questions={slides} picker={picker} surface={surface} onClose={() => setSlides(null)} />, document.body)}
   </>;
 }
 
-function QuestionSlides({ questions, surface, onClose }: {
+function QuestionSlides({ questions, picker, surface, onClose }: {
+  picker?: StudentPickerRoster;
   questions: string[];
   surface: React.RefObject<HTMLDivElement | null>;
   onClose: () => void;
@@ -36,6 +38,8 @@ function QuestionSlides({ questions, surface, onClose }: {
     dialog?.focus();
     document.body.style.overflow = 'hidden';
     const key = (event: KeyboardEvent) => {
+      // Let Space activate focused controls, including the student picker.
+      if (event.key === ' ' && event.target instanceof Element && event.target.closest('button') && !event.target.closest('.question-presentation-slide')) return;
       if (['ArrowRight', 'ArrowLeft', ' ', 'Home', 'End', 'Escape'].includes(event.key)) {
         event.preventDefault();
         event.stopPropagation();
@@ -64,6 +68,7 @@ function QuestionSlides({ questions, surface, onClose }: {
   const text = questions[index];
   return <dialog ref={dialogRef} tabIndex={-1} className="question-presentation-dialog" aria-label="Question presentation" onCancel={event => { event.preventDefault(); onClose(); }}>
     <div ref={surface} className="question-presentation">
+    {picker && <StudentPicker key={picker.classId} {...picker} />}
     <button type="button" className="question-presentation-slide" onClick={next} aria-label="Next question">
       <span className={`question-presentation-text ${text.length > 500 ? 'question-presentation-long' : ''}`} aria-live="polite">{text}</span>
     </button>

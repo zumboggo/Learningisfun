@@ -9,7 +9,7 @@ vi.mock('@/contexts/AuthContext',()=>({useAuth:()=>({user:{$id:'teacher'}})}));
 vi.mock('@/services/reading-discussion.service',async original=>({...await original<typeof import('@/services/reading-discussion.service')>(),discussionCall:call}));
 const data:ReadingDiscussion={teacher:true,title:'A prompt',className:'Blue',canWrite:true,discussionMode:true,studentsCanView:true,participation:[],posts:[{id:'a',parentId:null,category:'question',content:'First submission',quotation:'',paragraph:null,label:'Response A',username:'Alice',teacher:false,mine:false,createdAt:'2026-10-15',hidden:false,locked:false,pinned:false,score:0,voted:false},{id:'b',parentId:'a',category:'question',content:'Helpful feedback',quotation:'',paragraph:null,label:'Reader B',username:'Bob',teacher:false,mine:false,createdAt:'2026-10-15',hidden:false,locked:false,pinned:false,score:0,voted:false}]};
 beforeEach(()=>{call.mockReset();call.mockResolvedValue({});});
-const show=(value=data)=>render(<MemoryRouter><WritingDiscussionPanel sessionId="writing" data={value} refresh={vi.fn(async()=>{})}/></MemoryRouter>);
+const show=(value=data)=>render(<MemoryRouter><WritingDiscussionPanel classId="class" sessionId="writing" data={value} refresh={vi.fn(async()=>{})}/></MemoryRouter>);
 it('links teacher settings to the writing target and uses submission assignment labels',async()=>{
  show();expect(screen.getByText('Assign submissions')).toBeInTheDocument();fireEvent.click(screen.getByLabelText('Students can see submissions'));await waitFor(()=>expect(call).toHaveBeenCalledWith('setWritingDiscussionSettings',{kind:'writing',sessionId:'writing'},{studentsCanView:false}));
 });
