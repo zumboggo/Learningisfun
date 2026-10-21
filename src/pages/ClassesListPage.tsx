@@ -7,13 +7,15 @@ import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { CopyButton } from '@/components/common/CopyButton';
 import { Modal } from '@/components/common/Modal';
-import { updateClassDetails } from '@/services/class.service';
+import { joinClass, updateClassDetails } from '@/services/class.service';
 import type { Class } from '@/types';
 
 export function ClassesListPage() {
   const { user, isTeacher } = useAuth();
   const [editing, setEditing] = useState<Class | null>(null);
   const [query, setQuery] = useState('');
+  const [joining, setJoining] = useState(false);
+  const [joinedMessage, setJoinedMessage] = useState('');
 
   const classes = useLiveQuery(async () => {
     if (!user) return [];
@@ -52,6 +54,7 @@ export function ClassesListPage() {
           <h1 className="text-3xl font-bold tracking-tight text-gray-950 sm:text-4xl">Classes</h1>
           <p className="mt-1 text-sm text-gray-500">{isTeacher ? 'Your home for this week’s teaching and class tools.' : 'Choose a class to see what is happening this week.'}</p>
         </div>
+        {user?.role === 'student' && <Button size="sm" className="shrink-0" onClick={() => { setJoinedMessage(''); setJoining(true); }}>New Class</Button>}
         {isTeacher && (
           <Link to="/classes/new">
             <Button className="shrink-0 rounded-xl bg-gray-950 px-4 py-2.5 text-white hover:bg-gray-800 active:bg-black" size="sm">
@@ -60,6 +63,8 @@ export function ClassesListPage() {
           </Link>
         )}
       </div>
+
+      {joinedMessage && <p role="status" className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-800">{joinedMessage}</p>}
 
       {classes && classes.length > 5 && (
         <label className="mb-4 block">
@@ -102,9 +107,10 @@ export function ClassesListPage() {
           <p className="text-gray-500">
             {classes?.length ? 'No classes match that search.' : isTeacher ? 'No classes yet. Create one!' : 'No classes joined yet'}
           </p>
-          {classes?.length ? <button type="button" onClick={() => setQuery('')} className="mt-4 inline-flex min-h-10 items-center rounded-lg bg-gray-950 px-4 text-sm font-semibold text-white hover:bg-gray-800">Clear search</button> : !isTeacher && <Link to="/dashboard" className="mt-4 inline-flex min-h-10 items-center rounded-lg bg-gray-950 px-4 text-sm font-semibold text-white hover:bg-gray-800">Join a class</Link>}
+          {classes?.length ? <button type="button" onClick={() => setQuery('')} className="mt-4 inline-flex min-h-10 items-center rounded-lg bg-gray-950 px-4 text-sm font-semibold text-white hover:bg-gray-800">Clear search</button> : user?.role === 'student' ? <Button className="mt-4" onClick={() => setJoining(true)}>Join a class</Button> : !isTeacher && <Link to="/dashboard" className="mt-4 inline-flex min-h-10 items-center rounded-lg bg-gray-950 px-4 text-sm font-semibold text-white hover:bg-gray-800">Join a class</Link>}
         </Card>
       )}
+      {joining && user?.role === 'student' && <JoinAnotherClassModal userId={user.$id} onClose={() => setJoining(false)} onJoined={cls => { setJoining(false); setQuery(''); setJoinedMessage(`Joined ${cls.courseName} · ${cls.name}.`); }} />}
       {editing && <EditClassModal cls={editing} onClose={() => setEditing(null)} />}
     </div>
   );
@@ -136,4 +142,33 @@ function EditClassModal({ cls, onClose }: { cls: Class; onClose: () => void }) {
     finally { setSaving(false); }
   };
   return <Modal open onClose={onClose} title="Edit class"><div className="space-y-4">{error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}<label className="block text-sm font-medium">Course name<input className="mt-1 w-full rounded-lg border px-3 py-2" value={courseName} onChange={event => setCourseName(event.target.value)} /></label><label className="block text-sm font-medium">Section<input className="mt-1 w-full rounded-lg border px-3 py-2" value={name} onChange={event => setName(event.target.value)} /></label><label className="block text-sm font-medium">Canvas course ID (optional)<input inputMode="numeric" maxLength={32} className="mt-1 w-full rounded-lg border px-3 py-2" value={canvasCourseId} onChange={event=>setCanvasCourseId(event.target.value)} /></label><Button className="w-full" loading={saving} disabled={!courseName.trim() || !name.trim()} onClick={() => void save()}>Save changes</Button></div></Modal>;
+}
+
+function JoinAnotherClassModal({ userId, onClose, onJoined }: { userId: string; onClose: () => void; onJoined: (cls: Class) => void }) {
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  return <Modal open title="New Class" onClose={() => { if (!busy) onClose(); }}>
+    <form className="space-y-4" onSubmit={async event => {
+      event.preventDefault();
+      if (busy || code.length !== 6) return;
+      setBusy(true); setError('');
+      try {
+        const cls = await joinClass(userId, code, 'student');
+        if (cls) onJoined(cls);
+        else setError('That join code did not match an active class. Check it with your teacher and try again.');
+      } catch { setError('Could not join the class. Check your connection and try again.'); }
+      finally { setBusy(false); }
+    }}>
+      <p className="text-sm text-gray-600">Enter the join code from your teacher to add another class.</p>
+      <label className="block text-sm font-medium text-gray-700">Join code
+        <input autoFocus required disabled={busy} value={code} onChange={event => { setCode(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6)); setError(''); }} maxLength={6} autoCapitalize="characters" autoCorrect="off" spellCheck={false} autoComplete="off" placeholder="ABC123" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-3 text-center font-mono text-2xl uppercase tracking-widest" />
+      </label>
+      {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="secondary" disabled={busy} onClick={onClose}>Cancel</Button>
+        <Button type="submit" loading={busy} disabled={code.length !== 6}>Join class</Button>
+      </div>
+    </form>
+  </Modal>;
 }

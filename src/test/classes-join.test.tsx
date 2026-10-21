@@ -1,0 +1,62 @@
+import 'fake-indexeddb/auto';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { db } from '@/db/schema';
+import type { Class } from '@/types';
+import { ClassesListPage } from '@/pages/ClassesListPage';
+const fixture = vi.hoisted(() => ({ role: 'student', join: vi.fn() }));
+vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: { $id:'student',role:fixture.role },isTeacher:fixture.role==='teacher' }) }));
+vi.mock('@/services/class.service', () => ({ joinClass:fixture.join,updateClassDetails:vi.fn() }));
+const first: Class = {$id:'first',name:'Blue',courseName:'Literature',schoolYear:'2026',teacherId:'teacher',joinCode:'AAA111',joinCodeActive:true,parentCode:'',parentCodeActive:false,linksJson:'[]',status:'active',createdAt:''};
+const second: Class = {...first,$id:'second',courseName:'Ethics',joinCode:'BBB222'};
+const mount = () => render(<MemoryRouter><ClassesListPage /></MemoryRouter>);
+beforeEach(async () => {
+  fixture.role='student';fixture.join.mockReset();
+  await db.classes.clear();await db.class_members.clear();
+  await db.classes.put(first);
+  await db.class_members.put({$id:'membership-first',classId:'first',userId:'student',role:'student',joinedAt:''});
+});
+afterEach(cleanup);
+it('adds a second class from the Classes page and keeps the original membership', async () => {
+  fixture.join.mockImplementation(async () => {
+    await db.classes.put(second);
+    await db.class_members.put({$id:'membership-second',classId:'second',userId:'student',role:'student',joinedAt:''});
+    return second;
+  });
+  mount();await screen.findByRole('heading',{name:'Literature'});
+  fireEvent.click(screen.getByRole('button',{name:'New Class'}));
+  expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
+  fireEvent.change(screen.getByRole('textbox',{name:'Join code'}),{target:{value:'bbb222'}});
+  fireEvent.click(screen.getByRole('button',{name:'Join class'}));
+  await screen.findByRole('heading',{name:'Ethics'});
+  expect(screen.getByRole('heading',{name:'Literature'})).toBeInTheDocument();
+  expect(screen.getByRole('status')).toHaveTextContent('Joined Ethics · Blue.');
+  expect(fixture.join).toHaveBeenCalledWith('student','BBB222','student');
+  expect(await db.class_members.where('userId').equals('student').count()).toBe(2);
+});
+it('keeps invalid codes in the dialog for correction and leaves existing classes intact',async()=>{
+  fixture.join.mockResolvedValueOnce(null).mockRejectedValueOnce(new Error('Offline'));
+  mount();await screen.findByRole('heading',{name:'Literature'});
+  fireEvent.click(screen.getByRole('button',{name:'New Class'}));
+  expect(screen.getByRole('button',{name:'Join class'})).toBeDisabled();
+  fireEvent.change(screen.getByRole('textbox',{name:'Join code'}),{target:{value:'BAD123'}});
+  fireEvent.click(screen.getByRole('button',{name:'Join class'}));
+  await screen.findByRole('alert');expect(screen.getByRole('alert')).toHaveTextContent('did not match an active class');
+  expect(await db.class_members.count()).toBe(1);
+  fireEvent.change(screen.getByRole('textbox',{name:'Join code'}),{target:{value:'BBB222'}});
+  fireEvent.click(screen.getByRole('button',{name:'Join class'}));
+  await waitFor(()=>expect(screen.getByRole('alert')).toHaveTextContent('Check your connection'));
+  fireEvent.click(screen.getByRole('button',{name:'Cancel'}));
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(screen.getByRole('heading',{name:'Literature'})).toBeInTheDocument();
+});
+it('offers the same join flow before the first class and preserves teacher class creation',async()=>{
+  await db.class_members.clear();
+  const view=mount();await screen.findByText('No classes joined yet');
+  fireEvent.click(screen.getByRole('button',{name:'Join a class'}));
+  expect(screen.getByRole('textbox',{name:'Join code'})).toBeInTheDocument();view.unmount();
+  fixture.role='teacher';mount();
+  expect(screen.getByRole('link',{name:/New\s*class/})).toHaveAttribute('href','/classes/new');
+  expect(screen.queryByRole('button',{name:'New Class'})).not.toBeInTheDocument();
+});
