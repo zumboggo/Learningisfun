@@ -1,6 +1,7 @@
+import './dialog-mock';
 import {executeLearningContent} from '@/services/learning-content.service';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import type { QuestionVoting } from '@/services/reading-discussion.service';
 import { ReadingDiscussionPage } from '@/pages/ReadingDiscussionPage';
@@ -14,7 +15,7 @@ beforeEach(()=>{fixture.teacher=false;fixture.canWrite=true;fixture.score=2;fixt
 const mount=()=>render(<MemoryRouter initialEntries={['/discussions/texts/text/blue']}><Routes><Route path="/discussions/texts/:textId/:classId" element={<ReadingDiscussionPage/>}/></Routes></MemoryRouter>);
 it('student sees peer questions immediately with upvotes and replies, but no teacher controls',async()=>{
   mount();await screen.findByRole('heading',{name:'Reading example',level:1});
-  expect(screen.queryByRole('button',{name:'Present'})).not.toBeInTheDocument();
+  expect(screen.getByRole('button',{name:'Present Questions'})).toBeInTheDocument();
 
   expect(screen.getByText('Why does the narrator change?')).toBeInTheDocument();
   expect(screen.getByRole('link',{name:'Read paragraph 3 ↗'})).toHaveAttribute('href','/texts/text?classId=blue&paragraph=3');
@@ -32,13 +33,13 @@ it('refresh updates vote totals without replacing the composer or losing typing'
 it('parent has read-only access and teacher has moderation/presentation controls',async()=>{
   fixture.canWrite=false;const {unmount}=mount();await screen.findByRole('heading',{name:'Reading example',level:1});
   expect(screen.queryByRole('textbox',{name:'Your question'})).not.toBeInTheDocument();unmount();
-  fixture.teacher=true;fixture.canWrite=true;mount();await screen.findByRole('button',{name:'Present'});
+  fixture.teacher=true;fixture.canWrite=true;mount();await screen.findByRole('button',{name:'Present Questions'});
   fireEvent.click(screen.getByText('Moderate ▾'));expect(screen.getByRole('button',{name:'hide'})).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button',{name:'Present'}));await waitFor(()=>expect(screen.queryByRole('textbox',{name:'Your question'})).not.toBeInTheDocument());expect(screen.getByRole('button',{name:'Exit presentation'})).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button',{name:'Present Questions'}));const slides=within(screen.getByRole('dialog'));expect(slides.getByText('Why does the narrator change?')).toBeInTheDocument();expect(slides.queryByText('Student name')).not.toBeInTheDocument();expect(slides.queryByText('Reader 123ABC')).not.toBeInTheDocument();expect(slides.queryByRole('textbox')).not.toBeInTheDocument();expect(slides.getByRole('button',{name:'Exit presentation'})).toBeInTheDocument();
 });
 
 it('teachers see usernames by default and can switch back to anonymous labels',async()=>{
- fixture.teacher=true;mount();await screen.findByRole('button',{name:'Present'});
+ fixture.teacher=true;mount();await screen.findByRole('button',{name:'Present Questions'});
 
  expect(screen.getByText('Student name')).toBeInTheDocument();
  fireEvent.click(screen.getByText('Teacher settings'));fireEvent.click(screen.getByRole('checkbox',{name:'Anonymous names in my view'}));

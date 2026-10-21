@@ -1,4 +1,5 @@
-import {fireEvent,render,screen,waitFor} from '@testing-library/react';
+import './dialog-mock';
+import {fireEvent,render,screen,waitFor,within} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
 import {expect,it,vi,beforeEach} from 'vitest';
 import {WritingDiscussionPanel} from '@/components/discussions/WritingDiscussionPanel';
@@ -18,3 +19,14 @@ it('presentation hides names and keeps replies collapsed, Escape exits without f
 it('reply editor omits text quotation controls',()=>{show();fireEvent.click(screen.getByRole('button',{name:'Reply'}));expect(screen.getByRole('textbox',{name:'Your reply'})).toBeInTheDocument();expect(screen.queryByRole('textbox',{name:'Quotation'})).not.toBeInTheDocument();});
 it('exports are anonymous by default and offer both formats',()=>{show();fireEvent.click(screen.getByRole('button',{name:'Export Responses'}));expect(screen.getByLabelText('Include replies')).not.toBeChecked();expect(screen.getByLabelText('Include student names')).not.toBeChecked();fireEvent.change(screen.getByLabelText('Format'),{target:{value:'csv'}});expect(screen.getByRole('button',{name:'Download CSV'})).toBeInTheDocument();});
 it('students cannot export or configure; hidden responses are not rendered',()=>{show({...data,teacher:false,studentsCanView:false,posts:[],canWrite:false});expect(screen.queryByRole('button',{name:'Export Responses'})).not.toBeInTheDocument();expect(screen.queryByLabelText('Discussion Mode')).not.toBeInTheDocument();expect(screen.getByText(/has not shared/)).toBeInTheDocument();});
+
+it('presents writing contributions one at a time without author labels or replies',()=>{
+ show({...data,posts:[...data.posts,{...data.posts[0],id:'hidden',content:'Hidden contribution',hidden:true},{...data.posts[0],id:'second',content:'Second submission'}]});
+ fireEvent.click(screen.getByRole('button',{name:'Present Questions'}));
+ const slide=within(screen.getByRole('dialog'));
+ expect(slide.getByText('First submission')).toBeInTheDocument();
+ expect(slide.queryByText(/Alice|Response A|Helpful feedback|Hidden contribution/)).not.toBeInTheDocument();
+ expect(slide.getByText('1 / 2')).toBeInTheDocument();
+ fireEvent.keyDown(document,{key:'ArrowRight'});
+ expect(slide.getByText('Second submission')).toBeInTheDocument();
+});

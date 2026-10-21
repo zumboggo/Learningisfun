@@ -1,0 +1,60 @@
+import './dialog-mock';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { afterEach, expect, it, vi } from 'vitest';
+import { PresentQuestions } from '@/components/discussions/PresentQuestions';
+
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
+it('shows one question, advances by click and keyboard, stops at the ends, and restores focus', () => {
+  render(<PresentQuestions questions={['Why stay?', 'What changes?', 'Who decides?']} />);
+  const trigger = screen.getByRole('button', { name: 'Present Questions' });
+  trigger.focus(); fireEvent.click(trigger);
+  const dialog = within(screen.getByRole('dialog', { name: 'Question presentation' }));
+  expect(dialog.getByText('Why stay?')).toBeInTheDocument();
+  expect(dialog.queryByText('What changes?')).not.toBeInTheDocument();
+  expect(dialog.getByRole('button', { name: 'Previous' })).toBeDisabled();
+  fireEvent.keyDown(document, { key: 'ArrowLeft' });
+  expect(dialog.getByText('1 / 3')).toBeInTheDocument();
+  fireEvent.keyDown(document, { key: 'ArrowRight' });
+  expect(dialog.getByText('What changes?')).toBeInTheDocument();
+  fireEvent.click(dialog.getByRole('button', { name: 'Next question' }));
+  expect(dialog.getByText('Who decides?')).toBeInTheDocument();
+  fireEvent.keyDown(document, { key: 'ArrowRight' });
+  expect(dialog.getByText('3 / 3')).toBeInTheDocument();
+  expect(dialog.getByRole('button', { name: 'Next' })).toBeDisabled();
+  fireEvent.keyDown(document, { key: 'ArrowLeft' });
+  expect(dialog.getByText('What changes?')).toBeInTheDocument();
+  fireEvent.keyDown(document, { key: 'Escape' });
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(trigger).toHaveFocus();
+  expect(document.body.style.overflow).toBe('');
+});
+it('holds the slide order through live updates and restarts on reopening', () => {
+  const { rerender } = render(<PresentQuestions questions={['First', 'Second']} />);
+  fireEvent.click(screen.getByText('Present Questions'));
+  rerender(<PresentQuestions questions={['Second', 'First', 'New']} />);
+  expect(screen.getByText('First')).toBeInTheDocument();
+  expect(screen.getByText('1 / 2')).toBeInTheDocument();
+  fireEvent.click(screen.getByText('Exit presentation'));
+  fireEvent.click(screen.getByText('Present Questions'));
+  expect(screen.getByText('Second')).toBeInTheDocument();
+  expect(screen.getByText('1 / 3')).toBeInTheDocument();
+});
+it('handles a rejected fullscreen request and exits when native fullscreen ends', async () => {
+  const fullscreen = vi.fn().mockRejectedValue(new Error('Unavailable'));
+  Object.defineProperty(HTMLElement.prototype, 'requestFullscreen', { configurable: true, value: fullscreen });
+  render(<PresentQuestions questions={['Only question']} />);
+  fireEvent.click(screen.getByText('Present Questions'));
+  await Promise.resolve();
+  expect(fullscreen).toHaveBeenCalled();
+  const dialog = screen.getByRole('dialog');
+  expect(within(dialog).getByRole('button', { name: 'Next' })).toBeDisabled();
+  Object.defineProperty(document, 'fullscreenElement', { configurable: true, value: dialog.querySelector('.question-presentation') });
+  fireEvent(document, new Event('fullscreenchange'));
+  Object.defineProperty(document, 'fullscreenElement', { configurable: true, value: null });
+  fireEvent(document, new Event('fullscreenchange'));
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+});
+it('disables presentation when there are no questions', () => {
+  render(<PresentQuestions questions={[]} />);
+  expect(screen.getByText('Present Questions')).toBeDisabled();
+});

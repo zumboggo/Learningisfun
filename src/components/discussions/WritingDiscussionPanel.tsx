@@ -1,3 +1,4 @@
+import { PresentQuestions } from '@/components/discussions/PresentQuestions';
 import {useEffect,useRef,useState} from 'react';
 import {useAuth} from '@/contexts/AuthContext';
 import {Button} from '@/components/common/Button';
@@ -41,6 +42,7 @@ export function WritingDiscussionPanel({sessionId,data,refresh}:{sessionId:strin
   <div className={present?'sticky top-0 z-10 flex flex-wrap gap-2 bg-white p-3 shadow-sm':'flex flex-wrap items-center gap-3'}>
    {present?<><Button variant="secondary" onClick={exit}>Exit presentation</Button><Button disabled={!roots.length||selected===0} onClick={()=>jump(selected-1)}>Previous</Button><Button disabled={!roots.length||selected>=roots.length-1} onClick={()=>jump(selected+1)}>Next</Button><span className="self-center">{roots.length?selected+1:0} / {roots.length}</span></>:<>
     <h2 className="mr-auto text-xl font-bold">Submissions</h2>
+    {(data.teacher||data.studentsCanView)&&<PresentQuestions questions={shown.filter(p=>!p.hidden).map(p=>p.content)} />}
     <Button variant="secondary" disabled={busy} onClick={()=>void refresh()}>Refresh responses</Button>
     {data.teacher&&<><Button variant="secondary" onClick={()=>setExporting(true)}>Export Responses</Button><Button onClick={()=>{setPresent(true);setSelected(0);void surface.current?.requestFullscreen?.().catch(()=>{});surface.current?.scrollTo?.(0,0);}}>Present</Button></>}
    </>}

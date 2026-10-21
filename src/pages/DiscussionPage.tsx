@@ -1,3 +1,4 @@
+import { PresentQuestions } from '@/components/discussions/PresentQuestions';
 import {executeLearningContent} from '@/services/learning-content.service';
 import { validOptionalSourceLink } from '@/utils/source-link';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
@@ -454,7 +455,7 @@ export function DiscussionPage() {
   }
 
   if (isParent) {
-    return <div className="p-4 max-w-2xl mx-auto space-y-4"><h1 className="text-2xl font-bold">{session.title}</h1><p className="text-sm text-gray-500">Parent read-only view</p>{sortedQuestions.map(question => <Card key={question.$id}><div className="flex justify-between gap-3"><p>{question.questionText}</p><b>{question.voteCount} votes</b></div><SourceLink title={question.sourceTitle} url={question.sourceUrl}/>{(answersByQuestion?.get(question.$id)||[]).map(answer=><div key={answer.$id} className="mt-2 border-l-2 pl-3 text-sm"><p>{answer.answerText}</p><SourceLink title={answer.sourceTitle} url={answer.sourceUrl}/></div>)}</Card>)}</div>;
+    return <div className="p-4 max-w-2xl mx-auto space-y-4"><h1 className="text-2xl font-bold">{session.title}</h1><p className="text-sm text-gray-500">Parent read-only view</p><PresentQuestions questions={sortedQuestions.filter(q => q.moderationStatus === 'visible').map(q => q.questionText)} />{sortedQuestions.map(question => <Card key={question.$id}><div className="flex justify-between gap-3"><p>{question.questionText}</p><b>{question.voteCount} votes</b></div><SourceLink title={question.sourceTitle} url={question.sourceUrl}/>{(answersByQuestion?.get(question.$id)||[]).map(answer=><div key={answer.$id} className="mt-2 border-l-2 pl-3 text-sm"><p>{answer.answerText}</p><SourceLink title={answer.sourceTitle} url={answer.sourceUrl}/></div>)}</Card>)}</div>;
   }
 
   return (
@@ -597,7 +598,7 @@ export function DiscussionPage() {
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-lg font-semibold">Questions <span className="text-sm font-normal text-gray-500">({sortedQuestions.length} total, sorted by votes)</span></h2>
-          {isTeacher && <CopyButton text={formatQuestionsForClipboard(sortedQuestions)} label="Copy Questions" copiedLabel="Questions copied" />}
+          <div className="flex flex-wrap gap-2"><PresentQuestions questions={sortedQuestions.filter(q => q.moderationStatus === 'visible').map(q => q.questionText)} />{isTeacher && <CopyButton text={formatQuestionsForClipboard(sortedQuestions)} label="Copy Questions" copiedLabel="Questions copied" />}</div>
         </div>
 
         {sortedQuestions.length > 0 ? (

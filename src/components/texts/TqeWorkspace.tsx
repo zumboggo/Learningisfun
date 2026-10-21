@@ -1,3 +1,4 @@
+import { PresentQuestions } from '@/components/discussions/PresentQuestions';
 import { useCallback, useEffect, useState } from 'react';
 import { executeLearningContent } from '@/services/learning-content.service';
 import { syncTextFromServer } from '@/services/text.service';
@@ -42,7 +43,7 @@ export function TqeWorkspace({thoughtOnly=false,textId,classId,userId,teacher,an
   const candidates=tab==='questions'?roots.filter(a=>a.tqeType==='question'):tab==='bring'?roots.filter(a=>bring.some(r=>r.annotationId===a.$id)):roots;
   const pending=annotations.some(a=>a.authorId===userId&&a.syncStatus!=='synced');
   return <section className={presenting?'fixed inset-0 z-50 overflow-auto bg-white p-8':'rounded-2xl border bg-white p-4 space-y-4'}>
-    <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold">TQE · Class workspace</h2><div className="flex gap-2"><Button size="sm" variant="secondary" loading={busy} onClick={()=>void refresh()}>Refresh TQE</Button>{teacher&&<Button size="sm" variant="secondary" onClick={()=>{setPresenting(!presenting);setTab('board');}}>{presenting?'Exit presentation':'Present board'}</Button>}</div></div>
+    <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold">TQE · Class workspace</h2><PresentQuestions questions={roots.filter(a=>a.tqeType==='question').map(a=>a.content)} /><div className="flex gap-2"><Button size="sm" variant="secondary" loading={busy} onClick={()=>void refresh()}>Refresh TQE</Button>{teacher&&<Button size="sm" variant="secondary" onClick={()=>{setPresenting(!presenting);setTab('board');}}>{presenting?'Exit presentation':'Present board'}</Button>}</div></div>
     {error&&<p role="alert" className="rounded bg-red-50 p-3 text-sm text-red-700">{error}</p>}
     {!teacher&&pending&&<p className="text-sm text-amber-800">Your notes are saved on this device and waiting to sync. Refresh TQE after syncing to unlock the class workspace.</p>}
     <div className="my-3 flex flex-wrap gap-2">{(teacher?['prepare','questions','bring','roster',...(!thoughtOnly?['groups']:[]),'board']:['prepare',...(!thoughtOnly?['groups','board']:[])]).map(value=><button type="button" key={value} aria-pressed={tab===value} className={`rounded-full px-3 py-2 text-sm capitalize ${tab===value?'bg-slate-900 text-white':'bg-slate-100'}`} onClick={()=>setTab(value)}>{value==='prepare'?'My reading':value==='roster'?'Participation':value}</button>)}</div>
