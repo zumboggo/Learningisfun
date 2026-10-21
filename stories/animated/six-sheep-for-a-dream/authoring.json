@@ -1,0 +1,81 @@
+{
+  "promise": "Help Santiago weigh a stranger’s offer while caring about the life his dream will cost him.",
+  "choiceMap": [
+    [
+      "entry-question",
+      "trust / risk",
+      "one question written",
+      "entry",
+      "closing question"
+    ],
+    [
+      "life",
+      "care / travel",
+      "sheep relationship / family choice",
+      "care",
+      "lame sheep"
+    ],
+    [
+      "evidence-question",
+      "proof / price",
+      "private knowledge challenge / real payment",
+      "evidence or cost",
+      "departure"
+    ],
+    [
+      "reading-sign",
+      "limit / meaning",
+      "knowledge is not a map / wealth distinction",
+      "evidence",
+      "departure"
+    ],
+    [
+      "fort-question",
+      "responsibility / regret",
+      "new caretaker / cost of staying",
+      "care or cost",
+      "sheep and farewell"
+    ],
+    [
+      "stones",
+      "own / count",
+      "decide yourself / courage versus directions",
+      "cost",
+      "farewell"
+    ]
+  ],
+  "sceneChanges": [
+    "Question and concrete helper role",
+    "What Santiago already values",
+    "Stranger’s costly offer",
+    "Extraordinary knowledge makes dismissal harder",
+    "Approval threatens private ambition",
+    "Decision after the fort dilemma",
+    "Actual payment and limited guidance",
+    "Responsibility complicates the quest",
+    "Departure and unresolved entry question"
+  ],
+  "sceneActivities": [
+    {
+      "actor": "Santiago",
+      "activity": "walk right slow",
+      "purpose": "Physical indecision on fort terrace",
+      "start": "After arrival at fort",
+      "stop": "Before naming individual sheep and close reaction",
+      "scenery": "Static fort, no scrolling; theatrical pacing"
+    }
+  ],
+  "imageTool": "built-in imagegen",
+  "images": [
+    {
+      "asset": "plaza-v1.webp",
+      "source": "exec-12a68910-533a-4c6d-a73f-f1b4012a4223.png",
+      "prompt": "Use case: illustration-story. Create a single 16:9 visual novel background: a quiet old Andalusian town square in Tarifa, Spain, for an adaptation of The Alchemist. Whitewashed low buildings, warm terracotta roofs, a small bakery shop opening with no lettering at the far left, a simple stone bench at the far right, sunlit sandy pale ground, distant blue sky. No people or animals. Eye level, broad empty central foreground for two standing animated characters; all furniture near edges or in background. Clean dark slate outlines, flat muted creams and teal blue, restrained two-tone cel shadows, simplified manga-inspired geometric scenery. Not photorealistic or painterly. No text, symbols, logos, framing, or watermark. Period-neutral old town, no modern vehicles or electrical equipment. Wide landscape composition."
+    },
+    {
+      "asset": "fort-v1.webp",
+      "source": "exec-93faaad0-44ba-4715-be84-b2cc5739d62c.png",
+      "prompt": "Use case illustration-story. Single wide 16:9 visual novel background, from the top of an old stone fort in Tarifa, Spain overlooking the Strait of Gibraltar, a small old sailing vessel in the harbour far below and the faint blue coast of Africa across the water. Open stone terrace in foreground for animated characters, low parapet only at back edge. No people, no animals, no lettering. Clean dark slate outlines, flat muted warm stone creams and teal sea, restrained two-tone cel shadows, simplified manga-inspired geometric scenery matching a classroom graphic novel, not painterly or photorealistic. Eye-level, ample central foreground, sunny afternoon, coherent geography rather than fantasy mountains, no modern ships or equipment. No text, watermark, borders, logos."
+    }
+  ]
+}

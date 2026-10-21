@@ -1,0 +1,31 @@
+{
+  "id": "six-sheep-for-a-dream",
+  "title": "Six Sheep for a Dream",
+  "status": "published-assigned",
+  "version": 1,
+  "versionId": "37039b4c554aef618d8cf01cc2671ce2",
+  "bytes": 1308344,
+  "activeMembershipsVerified": true,
+  "liveTeacherReadVerified": true,
+  "studentRelease": "Friday 2026-10-23 08:00 Asia/Shanghai",
+  "studioUrl": "https://zumboggo.github.io/Learningisfun/#/game/create?draft=six-sheep-for-a-dream",
+  "previewUrl": "https://zumboggo.github.io/Learningisfun/#/game/story-preview/six-sheep-for-a-dream",
+  "assignments": [
+    {
+      "classId": "09d7f0a7-4c29-462c-820f-e11ea914d375",
+      "className": "Red - Sect. 1",
+      "date": "2026-10-26",
+      "releaseAt": "2026-10-23T00:00:00.000Z",
+      "assignmentId": "6af574b3601f95d0dcfb91ce7cb51ba5",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/6af574b3601f95d0dcfb91ce7cb51ba5"
+    },
+    {
+      "classId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c",
+      "className": "Blue Sect. 2",
+      "date": "2026-10-26",
+      "releaseAt": "2026-10-23T00:00:00.000Z",
+      "assignmentId": "85f46e89c6b79e11a2dea9552aba83bc",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/85f46e89c6b79e11a2dea9552aba83bc"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {createCharacter} from '../../../functions/learning-content/src/character-builder.js';
+import {validatePackage} from '../../../functions/learning-content/src/story-engine.js';
+import {packageBytes} from '../../../functions/learning-content/src/animated-episodes.js';
+const root=new URL('../../../',import.meta.url),read=p=>readFile(new URL(p,root));
+const prior=JSON.parse(await read('public/stories/animated/the-door-that-disappeared/episode.json'));
+const recipes=JSON.parse(await readFile(new URL('characters.json',import.meta.url),'utf8'));
+const backgrounds=Object.fromEntries(['classroom','journal','passage','road'].map(id=>[id,prior.assets.backgrounds[id]]));
+for(const id of ['plaza','fort'])backgrounds[id]={src:'data:image/webp;base64,'+(await read(`public/stories/animated/six-sheep-for-a-dream/assets/${id}-v1.webp`)).toString('base64')};
+const pack={format:2,title:'Six Sheep for a Dream',description:'Enter the opening of The Alchemist. Help Santiago question a mysterious offer, weigh the life he loves, and face the cost of beginning. Six conversational choices, remembered replies, and four return-door questions. About 12–15 minutes including the quiz. Stops before his arrival in Africa.',profile:'world-literature',script:await readFile(new URL('episode.story',import.meta.url),'utf8'),assets:{backgrounds,characters:{Hepting:prior.assets.characters.Hepting,...Object.fromEntries(recipes.map(r=>[r.id,createCharacter(r)]))}},quiz:JSON.parse(await readFile(new URL('quiz.json',import.meta.url),'utf8')),sources:JSON.parse(await readFile(new URL('sources.json',import.meta.url),'utf8'))};
+const {errors}=validatePackage(pack);if(errors.length)throw Error(JSON.stringify(errors));
+const bytes=packageBytes(pack);if(bytes>5000000)throw Error('Episode exceeds 5 MB');
+const destination=new URL('public/stories/animated/six-sheep-for-a-dream/episode.json',root),serialized=JSON.stringify(pack,null,2)+'\n';
+if(process.argv.includes('--check')){if(await readFile(destination,'utf8')!==serialized)throw Error('Six Sheep episode is stale');}else await writeFile(destination,serialized);
+console.log(`Six Sheep validates: ${bytes} bytes.`);

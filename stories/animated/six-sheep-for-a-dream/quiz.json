@@ -1,0 +1,46 @@
+[
+  {
+    "prompt": "What does Santiago give Melchizedek before leaving Spain?",
+    "options": [
+      "A tenth of treasure he has already found",
+      "All his sheep as a gift",
+      "Six sheep, a tenth of his flock",
+      "The two stones he received from his father"
+    ],
+    "answer": 2,
+    "explanation": "Santiago brings six sheep to Melchizedek. His friend buys the rest. The dream interpreter asks instead for a tenth of the future treasure."
+  },
+  {
+    "prompt": "What does Melchizedek mean by a Personal Legend?",
+    "options": [
+      "A story someone invents to impress strangers",
+      "The calling or deep ambition someone wants to fulfill",
+      "A reputation for being richer than others",
+      "A prediction that removes the need for decisions"
+    ],
+    "answer": 1,
+    "explanation": "Melchizedek presents a Personal Legend as the calling a person deeply wants to fulfill. Pursuing it still involves choices and costs."
+  },
+  {
+    "prompt": "Why does the writing in the sand change Santiago’s response to the stranger?",
+    "options": [
+      "It gives him the exact location where he should dig",
+      "It proves that traveling will be safe",
+      "It shows that the stranger has already paid for his journey",
+      "It reveals private knowledge, giving him reason to take the stranger seriously"
+    ],
+    "answer": 3,
+    "explanation": "Melchizedek knows names and secrets Santiago has not shared. That is remarkable evidence about the stranger, but it is not an exact treasure map or a guarantee of safety."
+  },
+  {
+    "prompt": "What tension does the story of the spoon and oil help Santiago understand?",
+    "options": [
+      "Enjoying the wider world while remaining attentive to responsibilities",
+      "Choosing wealth instead of friendship",
+      "Ignoring ordinary work whenever an omen appears",
+      "Following a guide so that he never has to decide"
+    ],
+    "answer": 0,
+    "explanation": "The boy first misses the palace by watching only the oil, then spills the oil by watching only the palace. Santiago connects this to enjoying travel without forgetting the sheep."
+  }
+]

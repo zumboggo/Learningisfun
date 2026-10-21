@@ -40,5 +40,11 @@
     "title": "The King Who Would Not Listen",
     "package": "stories/animated/the-king-who-would-not-listen/episode.json",
     "zip": "stories/animated/the-king-who-would-not-listen/episode.zip"
+  },
+  {
+    "id": "six-sheep-for-a-dream",
+    "title": "Six Sheep for a Dream",
+    "package": "stories/animated/six-sheep-for-a-dream/episode.json",
+    "zip": "stories/animated/six-sheep-for-a-dream/episode.zip"
   }
 ]

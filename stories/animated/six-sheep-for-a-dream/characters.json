@@ -1,0 +1,45 @@
+[
+  {
+    "id": "Santiago",
+    "name": "Santiago",
+    "version": 1,
+    "palette": {
+      "skin": "#d6a780",
+      "hair": "#50392d",
+      "shirt": "#bd9463",
+      "trim": "#5d6851"
+    },
+    "appearance": {
+      "age": "teen",
+      "hair": "tousled",
+      "face": "spirited",
+      "eyes": "keen",
+      "glasses": "none",
+      "facialHair": "none",
+      "outfit": "tunic"
+    },
+    "provenance": "Fictional stylized Santiago from Paulo Coelho, The Alchemist. New polished SVG rig; generic shepherd clothing, not a documentary reconstruction or personal likeness."
+  },
+  {
+    "id": "Melchizedek",
+    "name": "Melchizedek",
+    "version": 1,
+    "palette": {
+      "skin": "#bf9677",
+      "hair": "#d0c9b9",
+      "shirt": "#536878",
+      "trim": "#c7a25e",
+      "beard": "#d0c9b9"
+    },
+    "appearance": {
+      "age": "elder",
+      "hair": "swept",
+      "face": "lean",
+      "eyes": "gentle",
+      "glasses": "none",
+      "facialHair": "full",
+      "outfit": "robe"
+    },
+    "provenance": "Fictional stylized king of Salem from The Alchemist. New polished SVG rig; robe represents the cloaked traveler, with breastplate described in text. Not a historical reconstruction or personal likeness."
+  }
+]
