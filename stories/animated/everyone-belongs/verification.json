@@ -1,0 +1,34 @@
+{
+  "routes": 2187,
+  "decisionsPerRoute": 7,
+  "allReplayResumeChecksPassed": true,
+  "ranges": {
+    "Friendship": [
+      1,
+      18
+    ],
+    "Inclusion": [
+      0,
+      19
+    ],
+    "Film": [
+      0,
+      20
+    ]
+  },
+  "outcomes": [
+    "polished_full",
+    "friends_cool",
+    "jordan_warm",
+    "behind_no",
+    "friends_warm",
+    "jordan_cool",
+    "combined_confused",
+    "combined_ready",
+    "behind_yes",
+    "polished_short",
+    "promise_paid",
+    "combined_rushed"
+  ],
+  "bytes": 726395
+}
