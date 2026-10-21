@@ -145,3 +145,31 @@ test('note completion is reversible, survives reload and follows card and row mo
   expect(JSON.parse(win.localStorage.getItem('learning-planning:alice')).boards[0].data.cardDone[21]).toBe(false);
   dom.window.close();reopened.dom.window.close();
 });
+
+test('Refresh archives full completed text, keeps unfinished positions, and is idempotent across reload', () => {
+  const dom=evaluate('alice', "state.cards[0]='Completed note with more than eight words that must all survive';state.cardDone[0]=true;state.cards[7]='Keep in cell eight';state.notes=['Done task\\nPending task\\nAnother done task','Keep other notes'];state.todoMode=true;state.todoChecked=[true,false,true];render();");
+  const win=dom.window,doc=win.document;
+  doc.querySelector('#refresh-planner').click();
+  const load=()=>JSON.parse(win.localStorage.getItem('learning-planning:alice')).boards[0].data;
+  expect(load().archive).toHaveLength(3);
+  expect(load().cards[0]).toBe('');expect(load().cardDone[0]).toBe(false);
+  expect(load().cards[7]).toBe('Keep in cell eight');
+  expect(load().notes).toEqual(['Pending task','Keep other notes']);
+  doc.querySelector('#refresh-planner').click();expect(load().archive).toHaveLength(3);
+  const reopened=open('alice',{'learning-planning:alice':win.localStorage.getItem('learning-planning:alice')});
+  reopened.win.document.querySelector('#archive-dialog').showModal=()=>{};
+  reopened.win.document.querySelector('#open-archive').click();
+  expect(reopened.win.document.querySelectorAll('.archive-item')).toHaveLength(3);
+  expect(reopened.win.document.querySelector('#archive-list').textContent).toContain('Completed note with more than eight words that must all survive');
+  dom.window.close();reopened.dom.window.close();
+});
+
+test('Refresh rolls back when local persistence fails', () => {
+  const dom=evaluate('alice', "state.cards[0]='Keep safe';state.cardDone[0]=true;save();window.currentState=()=>state;");
+  dom.window.Storage.prototype.setItem=()=>{throw new Error('Quota exceeded');};
+  dom.window.document.querySelector('#refresh-planner').click();
+  expect(dom.window.currentState().cards[0]).toBe('Keep safe');
+  expect(dom.window.currentState().cardDone[0]).toBe(true);
+  expect(dom.window.currentState().archive).toHaveLength(0);
+  dom.window.close();
+});

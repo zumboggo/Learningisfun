@@ -31,3 +31,5 @@ New boards default to today’s date in the device’s locale; the title remains
 The To Do toggle converts the main top-left notes area to one checkbox per line, preserving the existing 15px editor text size. Return adds a task; Backspace on an empty task removes it. Completion strikes through the full task, persists per board, survives switching back to plain notes, and appears in the A4 PDF.
 
 The slash button beside the cell editor’s trash button toggles “dealt with.” Completed notes display strikethrough on the main board and in PDF exports. The flag persists in backups and follows notes through swaps and row reordering; deleting the note clears it.
+
+Refresh planner archives completed cells and checked items in the active To Do checklist on the current board, retaining unfinished cell positions and other notes. Archive shows full text across saved boards with original board title, location and time. Archives live inside each board and are included in local/JSON/cloud backups; deleting a board also deletes its archive, as stated in the confirmation. Refresh rolls back on local storage failure and repeated refreshes do not duplicate items.
