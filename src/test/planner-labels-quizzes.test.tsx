@@ -81,12 +81,12 @@ it('supports label selection by click and replaces standalone Copywork with the 
  fireEvent.click(bank.getByRole('button',{name:'Essay'}));
  expect(bank.getByRole('button',{name:'Essay'}).closest('[draggable]')).toHaveClass('bg-blue-800');
 });
-it('keeps the three preparation checks independent and preserves manual tasks',()=>{
+it('keeps preparation checks independent and preserves manual tasks',()=>{
  let latest:WeeklyPlanData;
  function Harness(){const[data,setData]=useState(()=>{const plan=fixture();plan.preparation.push({id:'manual',label:'Print handout',kind:'handout',status:'ready'});return normalizePlan(plan);});latest=data;return <PlannerPreparation data={data} units={[]} onChange={setData}/>;}
  render(<Harness/>);
  const todo=within(screen.getByRole('region',{name:'Weekly to-do'}));
- expect(todo.getAllByRole('checkbox')).toHaveLength(4);
+ expect(todo.getAllByRole('checkbox')).toHaveLength(5);
  fireEvent.click(todo.getByLabelText('Vocab Presentations'));
  fireEvent.click(todo.getByLabelText('Choose Assigned Readings and Copywork'));
  expect(todo.getByLabelText('Upload Lesson Plans')).not.toBeChecked();

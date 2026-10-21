@@ -33,7 +33,7 @@ describe('simplified weekly planner', () => {
     data.preparation.push({ id: 'quiz-results-WL-B', label: 'Update Quiz results in Canvas', kind: 'quiz', status: 'todo' }, { id: 'add-cards-WL-B', label: 'Add flashcards', kind: 'other', status: 'ready' }, { id: 'manual', label: 'Print handout', kind: 'handout', status: 'ready' });
     data.preparation[0].status = 'ready';
     const next = normalizePlan(data);
-    expect(next.preparation).toHaveLength(4);
+    expect(next.preparation).toHaveLength(7);
     expect(next.preparation[0].status).toBe('ready');
     expect(next.preparation.find(task => task.id === 'manual')?.status).toBe('ready');
     expect(normalizePlan(next)).toEqual(next);
@@ -53,6 +53,19 @@ describe('simplified weekly planner', () => {
     expect(screen.getByLabelText('Choose Assigned Readings and Copywork')).not.toBeChecked();
     fireEvent.click(screen.getByLabelText('Upload Lesson Plans'));
     expect(screen.getByLabelText('Upload Lesson Plans')).toBeChecked();
+  });
+  it('shows copywork creation only when due and saves the new preparation checks independently', () => {
+    function Harness() { const [data,setData]=useState(()=>{const plan=fixture();plan.week.deadlines=[{date:'2026-09-13',time:'23:59',classCode:'WL-R',title:'Copywork Analysis',url:''},{date:'2026-09-09',time:'23:59',classCode:'AP',title:'Copywork Analysis',url:''}];return normalizePlan(plan);});return <PlannerPreparation data={data} units={[]} onChange={setData}/>; }
+    render(<Harness/>);
+    const todo=within(screen.getByRole('region',{name:'Weekly to-do'}));
+    fireEvent.click(todo.getByLabelText('Create Copywork Text · World Lit'));
+    fireEvent.click(todo.getByLabelText('Create Episode · Ethics'));
+    expect(todo.getByLabelText('Create Copywork Text · World Lit')).toBeChecked();
+    expect(todo.getByLabelText('Create Episode · Ethics')).toBeChecked();
+    expect(todo.getByLabelText('Create Copywork Text · AP Lang')).not.toBeChecked();
+    expect(todo.getByLabelText('Create Episode · World Lit')).not.toBeChecked();
+    expect(todo.getByLabelText('Create Episode · AP Lang')).not.toBeChecked();
+    expect(todo.queryByLabelText('Create Copywork Text · Ethics')).not.toBeInTheDocument();
   });
   it('merges old World Lit preparation checks without losing completion', () => {
     const plan = fixture();

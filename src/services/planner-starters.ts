@@ -7,12 +7,13 @@ import {prepareWeeklyBank,type WeeklyResource} from './planner-bank';
 
 /** Seed weekly defaults once and add reusable bank choices. */
 export function preparePlannerStarters(data:WeeklyPlanData,source:PlannerWeekSource=data.week){
- const next=prepareWeeklyBank(addWeeklyLessonDefaults(normalizePlan(data)));
+ const current=source.startDate===data.week.startDate&&source.deadlines!==undefined
+   ? {...data,week:{...data.week,deadlines:source.deadlines}} : data;
+ const next=prepareWeeklyBank(addWeeklyLessonDefaults(normalizePlan(current)));
  if(data.plannerInteractionVersion!==1) {
    for(const item of next.weeklyResources||[])if(item.id.startsWith('starter:')&&item.kind==='text'&&item.sourceWeek&&!item.existingTextId)item.assignedReading=false;
  }
  next.plannerInteractionVersion=1;
- if(source.startDate===data.week.startDate && source.deadlines)next.week={...next.week,deadlines:source.deadlines};
  const clean=(title:string)=>title.replace(/^COPY\s*·\s*/i,'').trim();
  const add=(course:string,title:string,kind:WeeklyResource['kind'],extra:Partial<WeeklyResource>={})=>{
   const id='starter:'+course+':'+kind+':'+encodeURIComponent(title);
