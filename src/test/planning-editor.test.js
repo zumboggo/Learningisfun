@@ -124,3 +124,24 @@ test('To Do converts notes into persistent editable checklist lines and preserve
   expect(reopened.win.document.querySelectorAll('.todo-row textarea')[1].value).toBe('Email families');
   dom.window.close();reopened.dom.window.close();
 });
+
+test('note completion is reversible, survives reload and follows card and row moves', () => {
+  const dom=evaluate('alice', "state.cards[0]='Finished idea';state.cards[1]='Pending idea';render();window.moveTest=()=>{swapCards(0,1);moveRow(0,2)};");
+  const win=dom.window,doc=win.document,dialog=doc.querySelector('#editor');
+  dialog.showModal=()=>{};dialog.close=()=>dialog.dispatchEvent(new win.Event('close'));
+  doc.querySelector('[data-slot="0"]').click();
+  const toggle=doc.querySelector('#complete-note');
+  toggle.click();
+  expect(toggle.getAttribute('aria-pressed')).toBe('true');
+  expect(doc.querySelector('[data-slot="0"]').classList.contains('dealt-with')).toBe(true);
+  toggle.click();expect(doc.querySelector('[data-slot="0"]').classList.contains('dealt-with')).toBe(false);
+  toggle.click();win.moveTest();
+  expect(doc.querySelector('[data-slot="21"]').classList.contains('dealt-with')).toBe(true);
+  expect(doc.querySelector('[data-slot="20"]').classList.contains('dealt-with')).toBe(false);
+  const saved=win.localStorage.getItem('learning-planning:alice');
+  const reopened=open('alice',{'learning-planning:alice':saved});
+  expect(reopened.win.document.querySelector('[data-slot="21"]').classList.contains('dealt-with')).toBe(true);
+  doc.querySelector('[data-slot="21"]').click();doc.querySelector('#delete-note').click();
+  expect(JSON.parse(win.localStorage.getItem('learning-planning:alice')).boards[0].data.cardDone[21]).toBe(false);
+  dom.window.close();reopened.dom.window.close();
+});
