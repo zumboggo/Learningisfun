@@ -47,7 +47,7 @@ export default function StoryStage({pack,state,current,speaking,reduced,response
  // eslint-disable-next-line react-hooks/exhaustive-deps
  },[resolved,focus,camera?.otherActor,targetKey,modern,performance?.actor,performance?.targetActor]);
  const duration=reduced||performance?0:camera?.duration??.65;
- return <div ref={stageRef} className={`story-stage ${modern?'story-stage-living':''}`} data-shot={resolved} data-camera-scale={frame.scale.toFixed(3)} data-actions={/^(act|perform|activity) /m.test(pack.script)||undefined} data-paired={actors.length===2&&/^(act|perform) /m.test(pack.script)||undefined}>
+ return <><div ref={stageRef} className={`story-stage ${modern?'story-stage-living':''}`} data-idle-paused={paused||hidden||reduced||state.ended||undefined} data-shot={resolved} data-camera-scale={frame.scale.toFixed(3)} data-actions={/^(act|perform|activity) /m.test(pack.script)||undefined} data-paired={actors.length===2&&/^(act|perform) /m.test(pack.script)||undefined}>
   <div className="story-camera" style={{transform:`translate(${frame.x}px, ${frame.y}px) scale(${frame.scale})`,transformOrigin:'0 0',transitionDuration:`${duration}s`} as CSSProperties}>
    <div ref={worldRef} className="story-world" style={{backgroundImage:!scrolling&&state.stage.background?`url("${pack.assets.backgrounds[state.stage.background]?.src}")`:undefined}}>
     {scrolling&&<div className="story-travel-backdrop" data-scroll={scrollRunning?'running':'paused'} aria-hidden="true" style={{animationPlayState:scrollRunning?'running':'paused',animationDirection:walker.activity!.direction==='left'?'reverse':'normal',animationDuration:walker.activity!.pace==='slow'?'48s':walker.activity!.pace==='brisk'?'24s':'34s'}}>{[0,1,2,3].map(i=><div key={i} style={{left:`${i*100}%`,transform:i%2?'scaleX(-1)':undefined,backgroundImage:`url("${pack.assets.backgrounds[state.stage.background!].src}")`}}/>)}</div>}
@@ -60,16 +60,21 @@ export default function StoryStage({pack,state,current,speaking,reduced,response
      const direction=targetPosition?Math.sign(positions[targetPosition]-positions[a.position]):0;
      const gazeX=a.activity?.kind==='walk'&&(!a.gaze||a.gaze==='auto')?2.5:a.gaze==='front'||a.gaze==='down'?0:(a.gaze==='away'?-(direction||1):direction)*a.facing*2.5;
      const gazeY=a.gaze==='down'||(!a.gaze&&a.expression==='embarrassed')?2:0;
+     // Keep contact actions and activities in their authored geometry.
+     const occupied=!!a.activity||!!a.prop&&a.prop!=='none'||!!a.rest||blocked.has(id)||!!allResponses[id];
+     const turn=occupied?0:Math.max(-1,Math.min(1,gazeX/2.5));
+     const listening=!!speaker&&speaker!==id&&!occupied&&a.gaze!=='front'&&a.gaze!=='away'&&a.gaze!=='down';
      return <div data-actor={id} data-expression={a.expression} data-gaze={a.gaze||'auto'} data-impact={c.impact} style={{zIndex:performance?.actor===id?2:undefined}} key={id} className={`story-actor position-${a.position} ${c.rig?'has-rig':''} ${performance?.action==='mounted-charge'&&performance.actor===id?'is-mounted':''}`}>
-     <div className="story-facing" style={{transform:`scaleX(${a.facing})`}}>{performance?.action==='mounted-charge'&&performance.actor===id?<MountedActor character={c} emotion={a.expression} reduced={reduced} active={!!responses[id]} performanceKey={state.cursor}/>:c.rig?<PuppetActor activity={a.activity} activityPaused={!enabled(id)} gazeX={gazeX} gazeY={gazeY} character={c} actorId={id} performanceKey={training&&(id===training[0]||id===training[1].activity?.targetActor)?0:state.cursor} emotion={a.expression} talking={speaking&&id===speaker} gesture={id===speaker?current.gesture:undefined} rest={a.rest} prop={a.prop} response={allResponses[id]||current?.beatResponses?.[id]||(reduced&&current?.type==='act'?(id===current.actor?ACTIONS[current.action]?.actor:id===current.targetActor?ACTIONS[current.action]?.target:undefined):undefined)} reduced={reduced}/>:<img src={asset?.src} alt={`${c.name} — ${a.expression}`} onError={e=>{e.currentTarget.style.opacity='0';}}/>}</div>
+     <div className="story-facing" style={{transform:`scaleX(${a.facing})`}}>{performance?.action==='mounted-charge'&&performance.actor===id?<MountedActor character={c} emotion={a.expression} reduced={reduced} active={!!responses[id]} performanceKey={state.cursor}/>:c.rig?<PuppetActor turn={turn} listening={listening} idlePaused={paused||hidden||state.ended} activity={a.activity} activityPaused={!enabled(id)} gazeX={gazeX} gazeY={gazeY} character={c} actorId={id} performanceKey={training&&(id===training[0]||id===training[1].activity?.targetActor)?0:state.cursor} emotion={a.expression} talking={speaking&&id===speaker} gesture={id===speaker?current.gesture:undefined} rest={a.rest} prop={a.prop} response={allResponses[id]||current?.beatResponses?.[id]||(reduced&&current?.type==='act'?(id===current.actor?ACTIONS[current.action]?.actor:id===current.targetActor?ACTIONS[current.action]?.target:undefined):undefined)} reduced={reduced}/>:<img src={asset?.src} alt={`${c.name} — ${a.expression}`} onError={e=>{e.currentTarget.style.opacity='0';}}/>}</div>
      {!modern&&<span>{c.name}</span>}
     </div>;})}
     {performance&&['shoot-arrow','magic-beam'].includes(performance.action)&&<Projectile key={`${state.cursor}-${!!responses[performance.actor]}`} state={state} current={performance} reduced={reduced} active={!!responses[performance.actor]}/>}
    </div>
   </div>
   {pack.assets.backgrounds[state.stage.background||'']?.vignette==='memory'&&<div className="story-memory-haze" aria-hidden="true"/>}
-  {activeEntries.length>0&&!state.ended&&<button className="story-motion-toggle" aria-pressed={paused} onClick={()=>setPaused(value=>!value)}>{paused?'Resume scene motion':'Pause scene motion'}</button>}
- </div>;
+ </div>
+  {actors.some(([id])=>!!pack.assets.characters[id].rig)&&!state.ended&&<button className="story-motion-toggle" aria-pressed={paused} onClick={()=>setPaused(value=>!value)}>{paused?'Resume scene motion':'Pause scene motion'}</button>}
+ </>;
 }
 
 function Projectile({state,current,reduced,active}:{state:StoryState;current:any;reduced:boolean;active:boolean}){

@@ -43,3 +43,13 @@ Sound & atmosphere starts with ambience, effects, and captions off. Readers enab
 ## Sustained activities
 
 See [scene activities](scene-activities.md) for optional walking, mirrored travel scenery, ongoing sword practice, recovery and interruption controls. These persist across ordinary dialogue; finite `perform` cues keep their original behavior.
+
+## Conversation presence
+
+The shared cartoon-v1 renderer (including hybrid heads) now uses a shallow three-quarter turn toward the gaze target. The head settles before the torso; facial features shift and the far eye narrows. This is stylized 2D perspective, not a full profile or rear view. Explicit `look Actor front` returns to camera; `look Actor Other` and `look Actor away` direct the turn. Stage positions and mirrored facing determine the direction. No new script command or saved state is needed.
+
+When another character has a dialogue beat, silent actors use quiet attentive, warm or guarded listening according to their own expression, including with audio off. Explicit rest, props, activities and contact actions take priority; automatic turning is suppressed for those poses to preserve alignment. An authored `react` still controls meaningful listener responses. Neutral solo narration adds no invented reaction.
+
+Breathing moves the upper body gently with a stable, distinct phase per actor. It does not restart each sentence. The scene-motion toggle is available for conversation scenes and pauses idle breathing/blinking; hidden tabs and ended scenes suspend idle motion too. Reduced motion preserves the static orientation and expression without breathing or turn transitions. Existing legacy image rigs retain their existing orientation; new turning is provided by cartoon-v1.
+
+Verify both SVG and hybrid cast on phones and desktop, including both stage sides, front-facing thoughts, speech changes, props, replay, scene pause and reduced motion. Keep authoring reactions sparse and motivated by the text.

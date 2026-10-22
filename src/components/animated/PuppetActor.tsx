@@ -4,10 +4,10 @@ import {useEffect,useState,type CSSProperties,type ReactNode} from 'react';
 import {AUTO_ACTING,POSES} from '../../../functions/learning-content/src/acting-library.js';
 
 /** The teen-v1 rig: image slots on shared articulated joints, with an independent face. */
-function LegacyPuppetActor({character,emotion='neutral',talking=false,gesture,rest,response,reduced=false,actorId='actor'}:{character:any;emotion?:string;talking?:boolean;gesture?:string;rest?:string;prop?:string;response?:string;reduced?:boolean;actorId?:string;performanceKey?:number;gazeX?:number;gazeY?:number;activity?:StoryActivity;activityPaused?:boolean}){
+function LegacyPuppetActor({character,emotion='neutral',talking=false,gesture,rest,response,reduced=false,idlePaused=false,actorId='actor'}:{character:any;emotion?:string;talking?:boolean;gesture?:string;rest?:string;prop?:string;response?:string;reduced?:boolean;actorId?:string;performanceKey?:number;gazeX?:number;gazeY?:number;activity?:StoryActivity;activityPaused?:boolean;turn?:number;listening?:boolean;idlePaused?:boolean}){
  const [blink,setBlink]=useState(false),[mouth,setMouth]=useState(false);
  const phase=[...actorId].reduce((a,c)=>a+c.charCodeAt(0),0)%7;
- useEffect(()=>{if(reduced){setBlink(false);return;}let timer:ReturnType<typeof setTimeout>,closed:ReturnType<typeof setTimeout>;let alive=true;const schedule=()=>{timer=setTimeout(()=>{if(!alive)return;setBlink(true);closed=setTimeout(()=>{setBlink(false);schedule();},130);},3400+phase*370);};schedule();return()=>{alive=false;clearTimeout(timer);clearTimeout(closed);};},[phase,reduced]);
+ useEffect(()=>{if(reduced||idlePaused){setBlink(false);return;}let timer:ReturnType<typeof setTimeout>,closed:ReturnType<typeof setTimeout>;let alive=true;const schedule=()=>{timer=setTimeout(()=>{if(!alive)return;setBlink(true);closed=setTimeout(()=>{setBlink(false);schedule();},130);},3400+phase*370);};schedule();return()=>{alive=false;clearTimeout(timer);clearTimeout(closed);};},[phase,reduced,idlePaused]);
  useEffect(()=>{setMouth(false);if(!talking||reduced)return;let count=0;const timer=setInterval(()=>{count++;setMouth(count%5!==0&&count%2===1);},145);return()=>clearInterval(timer);},[talking,reduced]);
  const automatic=AUTO_ACTING[emotion]||AUTO_ACTING.neutral;
  const pose=POSES[response|| (talking?(gesture||automatic.talk):(rest||automatic.rest))]||POSES.relaxed;
