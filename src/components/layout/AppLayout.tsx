@@ -49,8 +49,8 @@ export function AppLayout({ children }: AppLayoutProps) {
   const navItems = isTeacher
     ? [
         { to: '/classes', label: 'Classes', icon: 'C' },
-        { to: '/planner', label: 'Planning', icon: 'P' },
-        { to: '/brainstorming', label: 'Brainstorming', icon: 'B' },
+        { to: '/brainstorming', label: 'Planner', icon: 'P' },
+        { to: '/planner', label: 'Weekly', icon: 'W' },
         { to: '/discussions', label: 'Discussions', icon: 'Q' },
         { to: '/decks', label: 'Cards', icon: 'V' },
         { to: '/texts', label: 'Texts', icon: 'T' },
