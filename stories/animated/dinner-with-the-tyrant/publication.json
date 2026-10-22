@@ -1,0 +1,25 @@
+{
+  "id": "dinner-with-the-tyrant",
+  "title": "Dinner with the Tyrant",
+  "status": "published-assigned",
+  "version": 1,
+  "versionId": "fd1850375c8d27e591daed8cc15804df",
+  "bytes": 696838,
+  "activeMembershipsVerified": true,
+  "liveTeacherReadVerified": true,
+  "publishedBytesVerified": true,
+  "studentAccess": "Scheduled; hidden until release. No student attempts created.",
+  "studioUrl": "https://zumboggo.github.io/Learningisfun/#/game/create?draft=dinner-with-the-tyrant",
+  "previewUrl": "https://zumboggo.github.io/Learningisfun/#/game/story-preview/dinner-with-the-tyrant",
+  "assignments": [
+    {
+      "classId": "e24ec8d9-21d7-4c32-a30e-08655c2f4e65",
+      "className": "Section 1",
+      "courseName": "Ethics and Leadership",
+      "date": "2026-11-06",
+      "releaseAt": "2026-10-30T00:00:00.000Z",
+      "assignmentId": "ce3215628a5eee18c44ce5f10667baf2",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/ce3215628a5eee18c44ce5f10667baf2"
+    }
+  ]
+}
