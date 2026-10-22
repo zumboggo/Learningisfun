@@ -1,3 +1,4 @@
+import {taxiWording} from './magical-taxi';
 export interface TextPatch {original:string;text:string}
 export interface TextField {key:string;original:string;text:string;node:Text}
 export type TextPatches=Record<string,TextPatch>;
@@ -19,7 +20,7 @@ export function connectEpisodeText(doc:Document,getPatches:()=>TextPatches,onFie
    while(el&&el!==passage&&el!==doc.body){path.push(el.tagName+':'+Array.from(el.parentElement?.children||[]).indexOf(el));el=el.parentElement;}
    const scope=passage?.getAttribute('data-passage')||passage?.id||'page';
    const key=hash(scope+'|'+path.reverse().join('/')+'|'+Array.from(parent.childNodes).indexOf(node)+'|'+state.original);
-   const patch=getPatches()[key];const text=patch?.original===state.original?patch.text:state.original;
+   const patch=getPatches()[key];const text=taxiWording(patch?.original===state.original?patch.text:state.original);
    if(node.data!==text)node.data=text;
    state.applied=text;originals.set(node,state);
    // Hidden passages still receive saved changes, but cannot be selected in the editor.

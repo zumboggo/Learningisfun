@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "approved": "2026-10-23",
+  "model": "bytedance/seedance-2.5",
+  "style": "Cinematic anime with realistic materials; generic unbranded magical taxi.",
+  "character": "Mr. Hepting: short brown hair, full beard, blue plastic aviator glasses, navy short-sleeved polo.",
+  "clips": [
+    {
+      "id": "arrival",
+      "file": "arrival-v1.mp4",
+      "durationSeconds": 10,
+      "width": 1280,
+      "height": 720,
+      "audio": true,
+      "bytes": 3117416,
+      "sha256": "ef61cba1762768004d19b64153dab35e8e92eeb002f8a644489853acbde5bd43",
+      "predictionId": "e88923czn9rmt0d1cjmbw9smmw",
+      "prompt": "PRODUCTION BRIEF: Exactly 10 seconds, 16:9 cinematic anime with hyper-realistic materials and warm afternoon lighting. [Image1] is the approved visual reference for the classroom, two characters, generic taxi and blue-violet vortex. It is a design reference, NOT the opening frame. Maintain these identities, clothing and car design throughout. Teacher Mr. Hepting: friendly mature bearded man, short brown hair with modestly full hairline, large blue plastic aviator eyeglasses with clear lenses, DARK NAVY SHORT-SLEEVED POLO, khaki trousers. Driver: charismatic stocky Chinese man, broad smiling face, slick short black hair, black sunglasses, black suit, white shirt. Generic white sedan with orange trim and TAXI roof sign, no commercial logos.\nCONTINUOUS ACTION, no montage, stable medium-wide camera facing classroom front: 0.0-1.0s begin with teacher standing smiling at right, no car or driver outside it yet; circular blue-violet vortex opens in left classroom wall. 1.0-4.0s the taxi nose emerges from vortex and whole car drives smoothly through into classroom, gently parks in front of teacher. Car wheels roll on floor; no crash, no broken wall or furniture. 4.0-6.0s driver opens driver door and steps out wearing sunglasses, smiles toward teacher. 6.0-8.0s teacher smiles, nods and asks in warm natural adult male English voice, exactly: \"Ready to go?\" 8.0-10.0s driver responds energetically in a distinct deeper cheerful adult male English voice, exactly: \"Let's go!\" His mouth visibly speaks his line. Teacher does not speak driver's line. Hold their happy greeting at end. Never duplicate people or car. Preserve classroom proportions and car geometry.\nAUDIO: synchronized dialogue with clear lip movement, gentle swirling magical arrival whoosh, car engine and quiet braking, subtle door opening and footsteps. Dialogue clearly above effects. No music, narrator, subtitles, captions or extra spoken words. Magical joyful cinematic arrival, safe undamaged classroom."
+    },
+    {
+      "id": "departure",
+      "file": "departure-v1.mp4",
+      "durationSeconds": 10,
+      "width": 1280,
+      "height": 720,
+      "audio": true,
+      "bytes": 3330494,
+      "sha256": "fdf995503f5d6e0ef59cabe0bea8bfcd99a46ce14d3f9026ddbb599757c5c385",
+      "predictionId": "4gcxn2n1mhrmr0d1cjm8486vng",
+      "prompt": "PRODUCTION BRIEF: Exactly 10 seconds, widescreen 16:9, one continuous cinematic anime shot with hyper-real materials, same warm late-afternoon light. [Image1] is the school location and matching undisturbed opening/ending composition. Preserve its recognizable white school wings, middle taller building with narrow RED VERTICAL STRIPE, window rows, soccer field, goal, and trees. [Image2] supplies the exact generic white-and-orange TAXI sedan and blue-violet vortex design, NOT its initial car position. Use a wide camera from field looking at middle school building; mild smooth pan may follow the car but settle back to original wide field composition by end. No jump cuts.\n0.0-2.0s: Establish field and building briefly, then the sedan flies magically outward THROUGH A FOURTH-FLOOR CLASSROOM WINDOW/WALL in the MIDDLE BUILDING immediately adjacent to the narrow RED STRIPE. Count fourth floor from ground floor as floor one: second row from top in this five-floor middle building. A brief luminous shimmer lets car pass cleanly through facade; wall and window remain completely intact, no glass or debris. Car MUST originate at this precise fourth-floor location, not on grass, not already in sky. Driver inside at wheel, doors closed. Teacher passenger if visible wears navy short-sleeved polo, beard and blue aviators.\n2.0-6.0s: Taxi flies fully clear of building over soccer field and executes ONE BIG SMOOTH SWEEPING ARC, banking gently across open air, turning its nose toward the upper-right sky. Show coherent moving whole car and curving flight trajectory, never teleport. A separate luminous blue-violet circular vortex opens in clear sky above field at upper right toward end of turn.\n6.0-8.2s: Taxi lines up facing the vortex, engine audibly REVS UP rising in pitch, then car accelerates forcefully and SHOOTS NOSE-FIRST INTO vortex, disappearing completely through it. Natural motion blur on acceleration. Portal large enough to accept car.\n8.2-9.0s: vortex rapidly contracts to a tiny point and vanishes completely with soft magical pop; all sparkles and glow disappear.\n9.0-10.0s: hold the original ordinary school field and intact buildings in stillness, car and vortex entirely absent. Quiet breeze and distant birds only, as if nothing happened.\nAUDIO: start soft campus breeze, car engine emerging, rising engine rev during arc, emphatic acceleration roar, fast air whoosh and magical portal suction, soft closing pop, then abrupt peaceful quiet with gentle breeze. No music, voices, narration, subtitles or text. Keep windows and school undamaged. No logo on vehicle except generic TAXI roof sign, no extra cars, no people on field. Complete all action within ten seconds."
+    }
+  ]
+}

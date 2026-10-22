@@ -90,3 +90,11 @@ The Second Ship demonstrates seven decisions and four categories. The closing ca
 Optional `keepsake: {title, revealAt, choices: [{id, label}]}` metadata displays selected option texts at and after a named label. The player reconstructs choices from the saved legal steps; it stores no extra story variables. Up to twenty listed choice IDs are supported. The downloadable text sheet follows the selected choices, and starting a fresh replay clears them. COMEBACK OR ELSE uses seven lyric preferences. This presentation does not change assessment.
 
 A background entry may opt into `vignette: "memory"` for a static white edge haze above the scene. It never covers dialogue or intercepts clicks, survives reduced motion, and disappears when the background changes. New `rubber-duck` and `pool-noodle` props use the shared cartoon-v1 hand/gesture system; explicit captions explain mimed first-person contact. Existing props, saved scripts and scores are unchanged.
+
+## Shared magical-taxi cutscenes
+
+Taxi episodes use the approved 10-second arrival and departure videos by default. See [the authoring workflow](create-episode-skill/references/magical-didi.md). New scripts place `label taxi_arrival` and `label taxi_departure` immediately before their respective narration beats. StoryPlayer shows the shared movie at that beat; completion or skip records one ordinary legal advance. Existing Last Chair and COMEBACK OR ELSE scripts are recognised automatically, including account-backed packages and previews. Other journeys are unchanged.
+
+The four archived Own English versions show both clips as a boarding introduction on a fresh attempt. Continuing a saved attempt bypasses that introduction. Their original released files, saved choices, teacher text-patch keys and scoring remain intact; the host displays generic taxi wording.
+
+Media lives at `public/stories/shared/magical-taxi/` with versioned MP4s, posters, captions and provenance, outside the immutable package limit. Videos load only after Play with sound or Play silently; native controls, textual descriptions, captions, skip and an error fallback keep the story playable. Hiding or leaving pauses playback. Movies are not service-worker precached. No backend schema or publication migration is needed.

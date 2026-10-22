@@ -1,0 +1,10 @@
+.taxi-cutscene{width:100%;max-width:1000px;margin:auto;padding:16px;color:#e9f1e9;background:#102c32;border-radius:14px;overflow:auto}
+.taxi-cutscene-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.taxi-cutscene-heading h2{font-size:1.3rem;font-weight:650}.taxi-cutscene-heading span{white-space:nowrap;font-size:.85rem;color:#b6cecb}
+.taxi-cutscene video{display:block;width:100%;max-height:60dvh;aspect-ratio:16/9;background:#081a20;object-fit:contain}
+.taxi-cutscene p{margin:12px 0;line-height:1.5;font-size:.95rem}
+.taxi-cutscene-actions{display:flex;flex-wrap:wrap;gap:10px}
+.taxi-cutscene button{min-height:44px;padding:10px 16px;border:1px solid #8da6a4;border-radius:8px;background:#e6c77a;color:#132d35;font:inherit;cursor:pointer}
+.taxi-cutscene .taxi-cutscene-skip{margin-top:12px;background:transparent;color:#e9f1e9}
+.story-cinema .taxi-cutscene{flex:1;min-height:0}.story-cinema.taxi-playing{overflow:auto}
+@media(max-width:600px){.taxi-cutscene{padding:12px}.taxi-cutscene-heading h2{font-size:1.1rem}.taxi-cutscene p{font-size:.85rem}.taxi-cutscene video{max-height:45dvh}}
