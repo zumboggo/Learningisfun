@@ -1,6 +1,6 @@
 import {GameDisplay} from '@/components/GameDisplay';
 import {isGamePlayerRoute} from '@/services/game-display';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSyncStatus } from '@/hooks/useSyncStatus';
@@ -17,6 +17,22 @@ export function AppLayout({ children }: AppLayoutProps) {
   const location = useLocation();
   const syncState = useSyncStatus(user?.$id);
   const online = useOnlineStatus();
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    try {
+      return localStorage.getItem('teacher-sidebar-collapsed') !== 'true';
+    } catch {
+      return true;
+    }
+  });
+  const toggleSidebar = () => {
+    const nextOpen = !sidebarOpen;
+    setSidebarOpen(nextOpen);
+    try {
+      localStorage.setItem('teacher-sidebar-collapsed', String(!nextOpen));
+    } catch {
+      // Keep the toggle usable when browser storage is unavailable.
+    }
+  };
   const isArticleRoute = /^\/texts\/[^/]+(?:\/present)?$/.test(location.pathname) || location.pathname.startsWith('/discussions/texts/');
   const isStudyRoute = /\/decks\/[^/]+\/review$/.test(location.pathname);
 
@@ -110,11 +126,28 @@ export function AppLayout({ children }: AppLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col md:pl-56">
-      <header data-app-chrome className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
-        <Link to="/classes" className="text-lg font-bold text-blue-700">
-          Learning is Fun
-        </Link>
+    <div className={`min-h-screen bg-gray-50 flex flex-col ${sidebarOpen ? 'md:pl-56' : ''}`}>
+      <header data-app-chrome className="min-h-16 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+            aria-expanded={sidebarOpen}
+            aria-controls="teacher-sidebar"
+            title={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+            className="hidden md:inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-5 w-5" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="16" rx="2" />
+              <path d="M9 4v16" />
+              <path d={sidebarOpen ? 'm15 9-3 3 3 3' : 'm13 9 3 3-3 3'} />
+            </svg>
+          </button>
+          <Link to="/classes" className="text-lg font-bold text-blue-700">
+            Learning is Fun
+          </Link>
+        </div>
         <div className="flex items-center gap-3">
           {isActualTeacher && (
             <button
@@ -167,7 +200,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         </div>
       </nav>
 
-      <nav data-app-chrome className="hidden md:flex fixed left-0 top-14 bottom-0 w-56 bg-white border-r border-gray-200 flex-col z-20">
+      <nav id="teacher-sidebar" aria-label="Teacher sidebar" data-app-chrome className={`${sidebarOpen ? 'hidden md:flex' : 'hidden'} fixed left-0 top-16 bottom-0 w-56 bg-white border-r border-gray-200 flex-col z-20`}>
         <div className="flex-1 py-4">
           {navItems.map(item => (
             <Link
