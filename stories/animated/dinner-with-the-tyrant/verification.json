@@ -1,0 +1,12 @@
+{
+  "routes": 2187,
+  "choiceOptions": 21,
+  "decisionsPerRoute": 7,
+  "minRouteWords": 1551,
+  "maxRouteWords": 1634,
+  "bytes": 696838,
+  "contrastingResumeRoutes": 3,
+  "quiz": "100/75/0 scoring verified",
+  "sourceBoundary": "Anecdote/paraphrase and invented banquet distinguished; no canonical result changed",
+  "visualReview": "See QA record in qa.txt for manual checks and limits"
+}

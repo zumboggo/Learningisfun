@@ -1,0 +1,23 @@
+Dinner with the Tyrant — 2026-10-22
+
+Source and teaching review
+- Ancient vegetable exchange attributed to Diogenes Laërtius 2.68, not asserted as verified history. Surrounding day, supporting cast, fee, petition, gifts and outcomes explicitly fictional.
+- Cyrenaic tradition distinguished from Epicureanism and from Aristippus the Younger's later systematic hedonism. Cynicism distinguished from modern distrust; imposed poverty not treated as a virtue.
+- 1b.1 focus supported by both positions and a focused opposing-view prompt. No teacher-preferred moral answer, narrative score or vocabulary-quiz change.
+- Existing five-slide, whole-class, real-story presentation task takes priority over the older skill template. Companion guide links back to the live directions and preserves the current 3/3/2/2 rubric.
+
+Automated checks
+- 2,187 complete routes, all 21 options, seven choices per route. Every speaking actor present on reachable routes. Every route includes food and receipt payoff, an unchanged fee and the tomorrow test.
+- Three contrasting saved-progress replay routes. Quiz 100/75/0 and archive ZIP round trip verified.
+- Existing 45 backend episode tests; 17 player/scene tests including reduced-motion behaviour; production build and complete repository test suite run before deployment.
+
+Browser checks on compiled production player
+- One full conditional-engagement route, all seven choices, ending and knowledge-check failure (50), explanations, retry and success (100).
+- Contrasting refusal route from invitation branch to ending, including outside meal, silence, refused purse, registry and a Cynic judgment. Debug jump bypasses earlier staging only in author preview; legal routes are checked separately.
+- Default desktop viewport and 390 x 844 phone viewport: new cast, three-person gift scene, readable prose and choice controls. No horizontal clipping in the phone view.
+- Scene-motion pause used while continuing the story; shared renderer reduced-motion tests passed. OS-level reduced-motion preference not changed.
+- Meal activity start, pause and stop verified structurally and in the visual preview. No audio; static dialogue remains intelligible without motion.
+
+Scope and access
+- New immutable package and new native app class/date assignment only. Existing episodes and student attempts preserved. No Canvas assignment or grades changed.
+- Scheduled release Friday 2026-10-30 08:00 Asia/Shanghai; teaching/due date Friday 2026-11-06. Future student play access cannot be demonstrated before release; teacher read and published package bytes verified by the publication script.

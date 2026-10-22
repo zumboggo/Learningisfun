@@ -48,6 +48,12 @@
     "zip": "stories/animated/six-sheep-for-a-dream/episode.zip"
   },
   {
+    "id": "dinner-with-the-tyrant",
+    "title": "Dinner with the Tyrant",
+    "package": "stories/animated/dinner-with-the-tyrant/episode.json",
+    "zip": "stories/animated/dinner-with-the-tyrant/episode.zip"
+  },
+  {
     "id": "everyone-belongs",
     "title": "Everyone Belongs (Please Press Record)",
     "package": "stories/animated/everyone-belongs/episode.json",
