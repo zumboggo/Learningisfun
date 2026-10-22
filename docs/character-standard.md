@@ -66,3 +66,10 @@ Codex uses the identical recipe/schema:
 Run `npm run character:create -- recipe.json character.json`, then place that object at `assets.characters.Jordan`. The command refuses to overwrite an existing output. To make a character available in the built-in selector, add the recipe to `stories/characters/cast.json` and run `npm run characters:build`; the catalog is generated automatically. No new React component or animation code is needed for supported appearances. School uniforms apply to CDIS students. Tunic and robe modules use plain cloth, a belt/neckline trim and sandals, with no school crest. They are generic stylised costume bases: choose colours and source-grounded details for the place, era and social role; do not describe them as accurate reconstructions. New face shapes preserve the same eye/mouth/joint anchors. Historical clothing uses shirt as its cloth colour and trim as its accent colour.
 
 Every class uses the same renderer, recipe parser, acting vocabulary, camera controls, package format and preview. Only the story, travel premise, learning content and relevant clothing change. Jordan is available in the library but is not part of the current Last Chair script.
+
+
+## Shared material finish
+
+Polished and hybrid characters share palette-derived cloth, skin, trouser, shoe and beard gradients, quiet fabric creases and a soft grounding shadow. Illustrated head assets retain their approved artwork. Flat legacy packs retain their original finish. No extra bitmaps or character schema fields are needed.
+
+Material detail stays inside the existing head, torso, sleeve and hand transforms. Arm lighting uses a nonzero user-space gradient derived from the current elbow/wrist geometry, so a straight vertical arm remains visible and a gesture carries its shading with it. Keep cloth details away from facial anchors and leave the conversation yaw, eye compression, planted feet and motion controller unchanged. Use **Game → Cast → Facing** to inspect either three-quarter turn in full-figure view.

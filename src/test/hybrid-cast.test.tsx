@@ -37,3 +37,29 @@ it('rejects remote heads, invalid placement and unsupported finishes',()=>{
  const original=cast[0].rig;
  for(const rig of [{...original,finish:'watercolour'},{...original,head:undefined},{...original,head:{...original.head,src:'https://example.com/head.webp'}},{...original,head:{...original.head,frame:[0,0,0,100]}},{...original,head:{...original.head,frame:[0,0,100,Infinity]}},{...original,head:{...original.head,onclick:'alert(1)'}}])expect(validateRig(rig)).not.toBeNull();
 });
+
+
+it('keeps material fills valid on straight and gesturing limbs and isolated between actors',()=>{
+ for(const response of [undefined,'wave','recoil','celebrate','explain','reassure']){
+  const {container,rerender,unmount}=render(<><CartoonActor character={cast[0]} turn={1} reduced response={response}/><CartoonActor character={cast[1]} turn={-1} reduced response={response}/></>);
+  const ids=[...container.querySelectorAll('[id]')].map(n=>n.id);
+  expect(new Set(ids).size).toBe(ids.length);
+  for(const gradient of container.querySelectorAll('linearGradient[id$="-limb-skin"]')){
+   expect(gradient).toHaveAttribute('gradientUnits','userSpaceOnUse');
+   expect(Number(gradient.getAttribute('x2'))-Number(gradient.getAttribute('x1'))).toBeGreaterThanOrEqual(20);
+  }
+  expect(container.querySelectorAll('linearGradient[id$="-limb-skin"]')).toHaveLength(4);
+  for(const node of container.querySelectorAll('[fill],[stroke]'))for(const attr of ['fill','stroke']){
+   const ref=node.getAttribute(attr)?.match(/^url\(#(.+)\)$/)?.[1];
+   if(ref)expect(ids).toContain(ref);
+  }
+  expect(container.innerHTML).not.toMatch(/NaN|Infinity/);
+  if(!response){
+   expect([...container.querySelectorAll('.cartoon-actor')].map(n=>n.getAttribute('data-turn'))).toEqual(['1','-1']);
+   expect(container.querySelector('[data-fabric-detail]')?.closest('.conversation-torso')).not.toBeNull();
+   expect(container.querySelector('[data-mouth]')?.closest('.conversation-head')).not.toBeNull();
+  }
+  rerender(<CartoonActor character={cast[0]} turn={-1} reduced response={response}/>);
+  expect(container.querySelectorAll('[data-arm]')).toHaveLength(2);unmount();
+ }
+});
