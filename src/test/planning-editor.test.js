@@ -151,7 +151,7 @@ test('Refresh archives full completed text, keeps unfinished positions, and is i
   expect(load().archive).toHaveLength(3);
   expect(load().cards[0]).toBe('');expect(load().cardDone[0]).toBe(false);
   expect(load().cards[7]).toBe('Keep in cell eight');
-  expect(load().notes).toEqual(['Pending task','Keep other notes']);
+  expect(load().notes).toEqual(['Pending task\nKeep other notes','']);
   doc.querySelector('#refresh-planner').click();expect(load().archive).toHaveLength(3);
   const reopened=open('alice',{'learning-planning:alice':win.localStorage.getItem('learning-planning:alice')});
   reopened.win.document.querySelector('#archive-dialog').showModal=()=>{};
@@ -169,4 +169,26 @@ test('Refresh rolls back when local persistence fails', () => {
   expect(dom.window.currentState().cardDone[0]).toBe(true);
   expect(dom.window.currentState().archive).toHaveLength(0);
   dom.window.close();
+});
+
+
+test('combines saved notes into the tall checklist once without changing completed tasks', () => {
+  const data = { title: 'Existing planner', rowCount: 8, columnCount: 10,
+    rows: Array(10).fill(''), cards: Array(100).fill(''),
+    notes: ['Finished task\nPending task', 'Old notes\nAnother note'], todoChecked: [true, false, true] };
+  const key = 'learning-planning:alice';
+  const saved = { [key]: JSON.stringify({ currentId: 'old', boards: [{ id: 'old', data }] }) };
+  const first = open('alice', saved);
+  const doc = first.win.document;
+  expect(doc.querySelector('#notes-two')).toBeNull();
+  expect(doc.querySelector('#todo-list').getAttribute('aria-label')).toBe('To-Do');
+  expect([...doc.querySelectorAll('.todo-row textarea')].map(input => input.value))
+    .toEqual(['Finished task', 'Pending task', 'Old notes', 'Another note']);
+  expect([...doc.querySelectorAll('.todo-row input')].map(input => input.checked))
+    .toEqual([true, false, false, false]);
+  const stored = first.win.localStorage.getItem(key);
+  const reopened = open('alice', { [key]: stored });
+  expect(reopened.win.document.querySelectorAll('.todo-row')).toHaveLength(4);
+  expect(JSON.parse(stored).boards[0].data.notes[1]).toBe('');
+  first.dom.window.close(); reopened.dom.window.close();
 });

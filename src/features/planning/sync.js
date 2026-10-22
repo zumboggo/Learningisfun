@@ -78,6 +78,7 @@
             library.boards.push({ id: newId(), data }); count++;
           }
           preserveOverflow();
+          library.boards.forEach(board => mergeAdditionalNotes(board.data));
           if (!save()) { library = original; state = library.boards.find(b => b.id === currentId).data; toast('Restore could not be saved. Free device space and retry.'); return; }
           refreshBoards(); toast('Restored ' + count + ' boards. Existing boards kept.');
         };
