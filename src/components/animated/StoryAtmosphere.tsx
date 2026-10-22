@@ -1,6 +1,6 @@
-import {useEffect,useRef,useState,type RefObject} from 'react';
+import {useEffect,useRef,useState,type RefObject,type ReactNode} from 'react';
 import {SceneSound,SOUND_LABELS,type SoundSettings} from './scene-sound';
-export default function StoryAtmosphere({root,preset='none',ducked=false,voiceVolume,onVoiceVolume}:{root:RefObject<HTMLElement|null>;preset?:string;ducked?:boolean;voiceVolume?:number;onVoiceVolume?:(value:number)=>void}){
+export default function StoryAtmosphere({root,preset='none',ducked=false,voiceVolume,onVoiceVolume,compact=false,children}:{root:RefObject<HTMLElement|null>;preset?:string;ducked?:boolean;voiceVolume?:number;onVoiceVolume?:(value:number)=>void;compact?:boolean;children?:ReactNode}){
  const engine=useRef<SceneSound|null>(null),captionTimer=useRef<ReturnType<typeof setTimeout>|undefined>(undefined);
  const [settings,setSettings]=useState<SoundSettings>({ambience:false,effects:false,ambienceVolume:.3,effectsVolume:.45});
  const [captions,setCaptions]=useState(false),[caption,setCaption]=useState(''),[hidden,setHidden]=useState(()=>document.hidden),[error,setError]=useState('');
@@ -15,8 +15,8 @@ export default function StoryAtmosphere({root,preset='none',ducked=false,voiceVo
  },[root]);
  useEffect(()=>{engine.current?.configure(settings,preset,ducked,hidden);},[settings,preset,ducked,hidden]);
  const change=(next:SoundSettings)=>{setSettings(next);engine.current?.configure(next,preset,ducked,hidden);if(next.ambience||next.effects)void engine.current?.activate().then(()=>setError('')).catch(()=>{setSettings(s=>({...s,ambience:false,effects:false}));setError('Sound unavailable. The story still works without it.');});};
- return <div className="story-atmosphere" data-sound-ducked={ducked}>
-  <details><summary>Sound &amp; atmosphere</summary>
+ return <div className={`story-atmosphere ${compact?'cinema-sound':''}`} data-sound-ducked={ducked}>
+  <details onKeyDown={e=>{if(e.key==='Escape'){e.currentTarget.open=false;e.currentTarget.querySelector('summary')?.focus();}}}><summary>{compact?<>Sound <small>{settings.ambience||settings.effects?'on':'off'}</small></>:'Sound & atmosphere'}</summary><div className="story-sound-settings">
    {onVoiceVolume&&<label>Voice volume<input aria-label="Voice volume" type="range" min="0" max="1" step=".05" value={voiceVolume} onChange={e=>onVoiceVolume(Number(e.target.value))}/></label>}
    <label><input type="checkbox" checked={settings.ambience} onChange={e=>change({...settings,ambience:e.target.checked})}/>Ambience</label>
    <label>Ambience volume<input aria-label="Ambience volume" type="range" min="0" max="1" step=".05" value={settings.ambienceVolume} onChange={e=>change({...settings,ambienceVolume:Number(e.target.value)})}/></label>
@@ -24,7 +24,8 @@ export default function StoryAtmosphere({root,preset='none',ducked=false,voiceVo
    <label>Effects volume<input aria-label="Effects volume" type="range" min="0" max="1" step=".05" value={settings.effectsVolume} onChange={e=>change({...settings,effectsVolume:Number(e.target.value)})}/></label>
    <label><input type="checkbox" checked={captions} onChange={e=>{setCaptions(e.target.checked);setCaption('');}}/>Sound captions</label>
    {error&&<p role="status">{error}</p>}
-  </details>
+   {children}
+  </div></details>
   {captions&&<p className="story-sound-caption" role="status">{caption?`[${caption}]`:'\u00a0'}</p>}
  </div>;
 }

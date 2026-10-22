@@ -6,10 +6,11 @@ import PuppetActor from './PuppetActor';
 import MountedActor from './MountedActor';
 import {armGeometry} from './character-geometry';
 import {ACTIONS,POSES} from '../../../functions/learning-content/src/acting-library.js';
-export default function StoryStage({pack,state,current,speaking,reduced,responses={}}:{pack:StoryPackage;state:StoryState;current:any;speaking:boolean;reduced:boolean;responses?:Record<string,string>}){
+export default function StoryStage({pack,state,current,speaking,reduced,responses={},motionPaused,onMotionPause,hideMotionControl=false}:{pack:StoryPackage;state:StoryState;current:any;speaking:boolean;reduced:boolean;responses?:Record<string,string>;motionPaused?:boolean;onMotionPause?:(paused:boolean)=>void;hideMotionControl?:boolean}){
  const [activityResponses,setActivityResponses]=useState<Record<string,Record<string,string>>>({});
  const onActivityResponse=useCallback((actor:string,value:Record<string,string>)=>setActivityResponses(old=>({...old,[actor]:value})),[]);
- const [paused,setPaused]=useState(false),[hidden,setHidden]=useState(()=>typeof document!=='undefined'&&document.hidden);
+ const [localPaused,setLocalPaused]=useState(false),[hidden,setHidden]=useState(()=>typeof document!=='undefined'&&document.hidden);
+ const paused=motionPaused??localPaused,setPaused=onMotionPause??setLocalPaused;
  useEffect(()=>{const update=()=>setHidden(document.hidden);document.addEventListener('visibilitychange',update);return()=>document.removeEventListener('visibilitychange',update);},[]);
  const suspended=paused||hidden||reduced||state.ended||current?.type==='choice';
  const transient=[...(state.cues||[]).filter(n=>['react','perform'].includes(n.type)),...(current?.type==='act'?[current]:[])];
@@ -46,7 +47,7 @@ export default function StoryStage({pack,state,current,speaking,reduced,response
  // Measure stable SVG geometry and stage layout, not animated screen rectangles.
  // eslint-disable-next-line react-hooks/exhaustive-deps
  },[resolved,focus,camera?.otherActor,targetKey,modern,performance?.actor,performance?.targetActor]);
- const duration=reduced||performance?0:camera?.duration??.65;
+ const duration=reduced||paused||performance?0:camera?.duration??.65;
  return <><div ref={stageRef} className={`story-stage ${modern?'story-stage-living':''}`} data-idle-paused={paused||hidden||reduced||state.ended||undefined} data-shot={resolved} data-camera-scale={frame.scale.toFixed(3)} data-actions={/^(act|perform|activity) /m.test(pack.script)||undefined} data-paired={actors.length===2&&/^(act|perform) /m.test(pack.script)||undefined}>
   <div className="story-camera" style={{transform:`translate(${frame.x}px, ${frame.y}px) scale(${frame.scale})`,transformOrigin:'0 0',transitionDuration:`${duration}s`} as CSSProperties}>
    <div ref={worldRef} className="story-world" style={{backgroundImage:!scrolling&&state.stage.background?`url("${pack.assets.backgrounds[state.stage.background]?.src}")`:undefined}}>
@@ -73,7 +74,7 @@ export default function StoryStage({pack,state,current,speaking,reduced,response
   </div>
   {pack.assets.backgrounds[state.stage.background||'']?.vignette==='memory'&&<div className="story-memory-haze" aria-hidden="true"/>}
  </div>
-  {actors.some(([id])=>!!pack.assets.characters[id].rig)&&!state.ended&&<button className="story-motion-toggle" aria-pressed={paused} onClick={()=>setPaused(value=>!value)}>{paused?'Resume scene motion':'Pause scene motion'}</button>}
+  {!hideMotionControl&&actors.some(([id])=>!!pack.assets.characters[id].rig)&&!state.ended&&<button className="story-motion-toggle" aria-pressed={paused} onClick={()=>setPaused(!paused)}>{paused?'Resume scene motion':'Pause scene motion'}</button>}
  </>;
 }
 

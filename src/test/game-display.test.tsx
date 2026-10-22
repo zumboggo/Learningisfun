@@ -4,6 +4,7 @@ import {MemoryRouter} from 'react-router-dom';
 import {GameDisplay} from '@/components/GameDisplay';
 import {GameLaunchLink} from '@/components/GameLaunchLink';
 import {gameDisplayKey,saveGameDisplay,isGamePlayerRoute} from '@/services/game-display';
+import {GameFullscreenButton} from '@/components/GameFullscreenButton';
 vi.mock('@/contexts/AuthContext',()=>({useAuth:()=>({user:{$id:'u',role:'student'}})}));
 let full:Element|null;
 let enter:ReturnType<typeof vi.fn>,exit:ReturnType<typeof vi.fn>;
@@ -23,3 +24,12 @@ it('falls back to filling the window when native fullscreen is denied and Escape
  enter.mockRejectedValue(new Error('unsupported'));render(<MemoryRouter><GameDisplay userId="u"><p>Story</p></GameDisplay></MemoryRouter>);await act(async()=>fireEvent.click(screen.getByRole('button',{name:'Full screen'})));expect(screen.getByRole('status')).toHaveTextContent('fills this window');fireEvent.keyDown(document,{key:'Escape'});expect(screen.getByRole('region')).toHaveClass('game-display-windowed');
 });
 it('recognizes both players but not libraries or unrelated class materials',()=>{expect(isGamePlayerRoute('/classes/a/episodes/b')).toBe(true);expect(isGamePlayerRoute('/classes/a/game/preview/teaching-stone')).toBe(true);expect(isGamePlayerRoute('/classes/a/teaching-stone')).toBe(true);expect(isGamePlayerRoute('/classes/a/game')).toBe(false);expect(isGamePlayerRoute('/classes/a')).toBe(false);});
+it('cinema fills the browser with the existing cast regardless of the old window preference, and restores app access on exit',async()=>{
+ saveGameDisplay('u',false);const chrome=document.createElement('nav');chrome.setAttribute('data-app-chrome','');document.body.append(chrome);
+ const view=render(<MemoryRouter><GameDisplay cinema userId="u"><GameFullscreenButton/><input aria-label="Place" defaultValue="unchanged"/></GameDisplay></MemoryRouter>);
+ expect(screen.getByRole('region',{name:'Game player'})).toHaveClass('game-display-cinema');expect(chrome.inert).toBe(true);
+ await act(async()=>fireEvent.click(screen.getByRole('button',{name:'Full screen'})));
+ await act(async()=>fireEvent.click(screen.getByRole('button',{name:'Exit full screen'})));
+ expect(screen.getByLabelText('Place')).toHaveValue('unchanged');expect(screen.getByRole('region')).toHaveClass('game-display-cinema');
+ view.unmount();expect(chrome.inert).not.toBe(true);chrome.remove();
+});

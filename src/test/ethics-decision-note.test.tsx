@@ -38,8 +38,7 @@ afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
 
 async function expandNotebook(){
- const summary=await screen.findByText('Principles Portfolio · Five questions about this episode');
- fireEvent.click(summary);
+ fireEvent.click(await screen.findByRole('button',{name:'Notebook'}));
  return await screen.findByRole('region',{name:'Episode principles answers'});
 }
 it.each([false,true])('offers five editable questions after either saved story route (%s)',async last=>{
@@ -60,7 +59,7 @@ it('opens and collapses the notebook before completion without resetting story p
  open([null],[]);await screen.findByRole('button',{name:'Next →'});
  const before=api.saveStoryCache.mock.lastCall?.[1].current;
  const notebook=await expandNotebook();expect(await within(notebook).findAllByRole('textbox')).toHaveLength(5);
- fireEvent.click(screen.getByText('Principles Portfolio · Five questions about this episode'));
+ fireEvent.click(screen.getByRole('button',{name:'Close Notebook'}));
  expect(screen.getByRole('button',{name:'Next →'})).toBeInTheDocument();
  expect(api.saveStoryCache.mock.lastCall?.[1].current).toEqual(before);
  expect(api.animatedCall).toHaveBeenCalledTimes(1);
