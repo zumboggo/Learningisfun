@@ -25,7 +25,7 @@ export function validatePayload(payload) {
 export async function handlePlanning({ db, userId, body, profileDatabase = 'main' }) {
   if (!userId) throw error('Sign in to access planning', 401);
   const profile = await db.getDocument(profileDatabase, 'users', userId);
-  if (!['teacher', 'admin'].includes(profile.role)) throw error('Teacher account required', 403);
+  if (!['student', 'teacher', 'admin'].includes(profile.role)) throw error('Student or teacher account required', 403);
   if (body.action === 'list') {
     const documents = []; let cursor;
     do {

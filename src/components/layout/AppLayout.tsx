@@ -53,6 +53,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         { to: '/decks', label: 'Cards', icon: 'cards' },
         { to: '/texts', label: 'Texts', icon: 'read' },
         { to: '/game', label: 'The Game', icon: 'game' },
+        { to: '/brainstorming', label: 'Planner', icon: 'write' },
       ];
 
   if (!isTeacher) {

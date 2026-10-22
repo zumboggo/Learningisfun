@@ -1,3 +1,4 @@
+import { Navigate } from 'react-router-dom';
 import { useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { functions } from '@/lib/appwrite';
@@ -12,14 +13,15 @@ export function PlanningPage() {
   const { user, isTeacher } = useAuth();
   const frame = useRef<HTMLIFrameElement>(null);
   const userId = user?.$id;
+  const canPlan = !!user && ['student', 'teacher', 'admin'].includes(user.role);
   const document = useMemo(() => {
-    if (!userId || !isTeacher) return '';
+    if (!userId || !canPlan) return '';
     const script = `window.PLANNING_USER=${JSON.stringify(userId)};window.PLANNING_ORIGIN=${JSON.stringify(window.location.origin)};\n${editor}\n${sync}`.replace(/<\/script/gi, '<\\/script');
-    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Planning</title><style>${styles}</style></head><body>${markup}<script>${script}</script></body></html>`;
-  }, [userId, isTeacher]);
+    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Planning</title><style>${styles}</style></head><body>${isTeacher ? markup : markup.replace(' brainstorming', ' planner')}<script>${script}</script></body></html>`;
+  }, [userId, canPlan, isTeacher]);
 
   useEffect(() => {
-    if (!userId || !isTeacher) return;
+    if (!userId || !canPlan) return;
     let active = true;
     const receive = async (event: MessageEvent) => {
       if (event.origin !== window.location.origin || event.source !== frame.current?.contentWindow) return;
@@ -43,9 +45,9 @@ export function PlanningPage() {
     };
     window.addEventListener('message', receive);
     return () => { active = false; window.removeEventListener('message', receive); };
-  }, [userId, isTeacher]);
+  }, [userId, canPlan]);
 
-  if (!userId || !isTeacher) return null;
+  if (!userId || !canPlan) return <Navigate to="/dashboard" replace />;
   return <iframe key={userId} ref={frame} srcDoc={document} title="Private planning boards"
     allow="clipboard-write" className="w-full border-0" style={{ height: 'calc(100dvh - 130px)', minHeight: 540 }} />;
 }

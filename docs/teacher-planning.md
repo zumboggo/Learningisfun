@@ -1,12 +1,12 @@
 # Teacher Planning integration
 
-The Brainstorming tab opens the editor at `#/brainstorming`, beside the existing Planning tools. It is available to teachers and administrators through the existing login. The editor retains its A4 template, row/card dragging, named boards, CSV import/export, spreadsheet clipboard copy, PDF download and JSON backup/restore. Existing Brainstorming JSON exports can be restored without replacing current boards.
+The Brainstorming tab opens the editor at `#/brainstorming`, beside the existing Planning tools. It is available to students, teachers and administrators through the existing login. Students open it using the last tab in their floating navigation, labeled **Planner**. The editor retains its A4 template, row/card dragging, named boards, CSV import/export, spreadsheet clipboard copy, PDF download and JSON backup/restore. Existing Brainstorming JSON exports can be restored without replacing current boards.
 
 The React host embeds the editor with `srcDoc` to isolate its stylesheet and preserve the print layout. There is no separately hosted editor or login. Requests from that specific frame are forwarded using Learning is Fun's existing Appwrite SDK session. Navigating away, signing out or switching accounts destroys the frame and its bridge; responses for an unmounted account are discarded.
 
 Local libraries and device identifiers are scoped by account ID. The existing PWA caches the bundled editor for offline use. Local browser data is unencrypted, like the rest of the app's offline storage: device/browser access should be limited to trusted users.
 
-The dedicated `teacher-planning` Appwrite function checks the authenticated request's user ID and existing teacher/admin profile. It never trusts a client-supplied owner or document ID. It uses a new `brainstorming/teacher_libraries` collection with no collection-wide permissions, document security enabled, and owner-only read permissions. All writes go through the function. The function uses a dynamically scoped Appwrite key; no API key is bundled into the frontend.
+The dedicated `teacher-planning` Appwrite function checks the authenticated request's user ID and existing student/teacher/admin profile. It never trusts a client-supplied owner or document ID. It uses a new `brainstorming/teacher_libraries` collection with no collection-wide permissions, document security enabled, and owner-only read permissions. All writes go through the function. The function uses a dynamically scoped Appwrite key; no API key is bundled into the frontend.
 
 Cloud backups are separate for each account/device. Changes automatically save locally and back up online. “Saved devices” lets a teacher restore another device's boards additively, or delete an older device backup. This deliberately retains the original snapshot workflow rather than silently overwriting work across devices.
 
