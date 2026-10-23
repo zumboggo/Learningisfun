@@ -39,6 +39,30 @@ describe('simplified weekly planner', () => {
     expect(normalizePlan(next)).toEqual(next);
     expect(next.lessons).toEqual(data.lessons);
   });
+  it('keeps reordered priorities after normalization and moves focus to the next unfinished task', () => {
+    let latest: WeeklyPlanData;
+    function Harness() { const [data, setData] = useState(fixture); latest = data; return <PlannerPreparation data={normalizePlan(data)} units={[]} onChange={setData}/>; }
+    render(<Harness/>);
+    const original = latest!.preparation.map(task => task.id);
+    const label = 'Upload Lesson Plans';
+    fireEvent.keyDown(screen.getByRole('button', {name: `Reorder ${label}`}), {key: 'ArrowUp'});
+    expect(latest!.preparation.at(-2)?.label).toBe(label);
+    while (latest!.preparation[0].label !== label) fireEvent.click(screen.getByRole('button', {name: `Move ${label} up`}));
+    expect(normalizePlan(JSON.parse(JSON.stringify(latest!))).preparation.map(task => task.id)).toEqual(latest!.preparation.map(task => task.id));
+    expect([...latest!.preparation.map(task => task.id)].sort()).toEqual([...original].sort());
+    const todo = within(screen.getByRole('region', {name:'Weekly to-do'}));
+    expect(todo.getByText(label)).toHaveClass('italic');
+    expect(todo.getByText(latest!.preparation[1].label)).toHaveClass('italic');
+    expect(todo.getByText(latest!.preparation[2].label)).not.toHaveClass('italic');
+    expect(todo.getByRole('button', {name:`Move ${label} up`})).toBeDisabled();
+    fireEvent.click(todo.getByLabelText(label));
+    expect(todo.getByLabelText(label)).toBeChecked();
+    expect(todo.getByText(label)).not.toHaveClass('italic');
+    expect(todo.getByText(latest!.preparation[2].label)).toHaveClass('italic');
+    fireEvent.click(todo.getByRole('button', {name:`Move ${label} down`}));
+    expect(latest!.preparation[1].label).toBe(label);
+    expect(latest!.preparation[1].status).toBe('ready');
+  });
   it('toggles cancelled lessons independently and saves presentation checks', () => {
     function Harness() { const [data, setData] = useState(fixture); return <PlannerPreparation data={data} units={[]} onChange={setData}/>; }
     render(<Harness/>);

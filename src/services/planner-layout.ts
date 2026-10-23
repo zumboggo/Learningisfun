@@ -37,6 +37,9 @@ export function normalizePlan(value: WeeklyPlanData): WeeklyPlanData {
     ...courseTasks,
     {id:'prepare-upload-lesson-plans',label:'Upload Lesson Plans',kind:'other' as const,status:'todo' as const},
   ];
+  const savedOrder = new Map(data.preparation.map((task, index) => [task.id, index]));
   data.preparation=[...defaults.map(task=>({...task,...data.preparation.find(item=>item.id===task.id),label:task.label})),...data.preparation.filter(task=>!defaults.some(item=>item.id===task.id)&&!/^prepare-(?:copywork-text|episode)-(?:WL|AP|ETH)$/.test(task.id))];
+  // Keep the teacher’s priorities across reloads; append newly introduced tasks.
+  data.preparation.sort((a,b) => (savedOrder.get(a.id) ?? Infinity) - (savedOrder.get(b.id) ?? Infinity));
   return data;
 }

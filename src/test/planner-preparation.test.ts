@@ -36,3 +36,14 @@ it('supports legacy lesson dues and uses current source deadlines before generat
  expect(preparePlannerStarters(next,source)).toEqual(next);
  expect(preparePlannerStarters(next,{...source,deadlines:[]}).preparation.some(t=>t.id.startsWith('prepare-copywork-text-'))).toBe(false);
 });
+
+it('retains a manual priority order while adding missing defaults exactly once',()=>{
+ const plan=fixture([]);
+ plan.preparation.reverse();
+ plan.preparation.unshift({id:'manual-priority',label:'Call parent',kind:'other',status:'todo'});
+ const removed=plan.preparation.splice(2,1)[0];
+ const next=normalizePlan(plan);
+ expect(next.preparation.slice(0,-1)).toEqual(plan.preparation);
+ expect(next.preparation.at(-1)?.id).toBe(removed.id);
+ expect(normalizePlan(next)).toEqual(next);
+});
