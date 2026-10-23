@@ -1,0 +1,1182 @@
+{
+  "schema": {
+    "info": {
+      "title": "Cog",
+      "version": "0.1.0"
+    },
+    "paths": {
+      "/": {
+        "get": {
+          "summary": "Root",
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {}
+                }
+              },
+              "description": "Successful Response"
+            }
+          },
+          "operationId": "root__get"
+        }
+      },
+      "/predictions": {
+        "post": {
+          "summary": "Predict",
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "title": "PredictionResponse",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "title": "Id"
+                      },
+                      "logs": {
+                        "type": "string",
+                        "title": "Logs"
+                      },
+                      "error": {
+                        "type": "string",
+                        "title": "Error"
+                      },
+                      "input": {
+                        "type": "object",
+                        "title": "Input",
+                        "required": [
+                          "prompt"
+                        ],
+                        "properties": {
+                          "mode": {
+                            "enum": [
+                              "quality",
+                              "speed",
+                              "cost"
+                            ],
+                            "type": "string",
+                            "title": "mode",
+                            "description": "Generation mode: quality, speed, or cost.",
+                            "default": "speed",
+                            "x-order": 1
+                          },
+                          "seed": {
+                            "type": "integer",
+                            "title": "Seed",
+                            "x-order": 8,
+                            "nullable": true,
+                            "description": "Random seed for reproducible generation."
+                          },
+                          "image": {
+                            "type": "string",
+                            "title": "Image",
+                            "format": "uri",
+                            "x-order": 3,
+                            "nullable": true,
+                            "description": "First-frame reference image."
+                          },
+                          "prompt": {
+                            "type": "string",
+                            "title": "Prompt",
+                            "x-order": 0,
+                            "description": "Text prompt for video generation."
+                          },
+                          "duration": {
+                            "type": "integer",
+                            "title": "Duration",
+                            "default": 5,
+                            "maximum": 15,
+                            "minimum": 5,
+                            "x-order": 5,
+                            "description": "Video duration in seconds."
+                          },
+                          "resolution": {
+                            "enum": [
+                              "480p",
+                              "768p",
+                              "1080p",
+                              "2k",
+                              "4k"
+                            ],
+                            "type": "string",
+                            "title": "resolution",
+                            "description": "Video resolution. 1080p, 2k and 4k generate at 768p and upscale it (24 fps kept).",
+                            "default": "768p",
+                            "x-order": 6
+                          },
+                          "aspect_ratio": {
+                            "enum": [
+                              "16:9",
+                              "9:16",
+                              "4:3",
+                              "3:4",
+                              "3:2",
+                              "2:3",
+                              "1:1"
+                            ],
+                            "type": "string",
+                            "title": "aspect_ratio",
+                            "description": "Aspect ratio; reference images determine the canvas when provided.",
+                            "default": "16:9",
+                            "x-order": 7
+                          },
+                          "last_frame_image": {
+                            "type": "string",
+                            "title": "Last Frame Image",
+                            "format": "uri",
+                            "x-order": 4,
+                            "nullable": true,
+                            "description": "Last-frame reference image."
+                          },
+                          "prompt_upsampler": {
+                            "enum": [
+                              "off",
+                              "turbo",
+                              "max"
+                            ],
+                            "type": "string",
+                            "title": "prompt_upsampler",
+                            "description": "Expand your prompt before video generation.",
+                            "default": "turbo",
+                            "x-order": 2
+                          },
+                          "enable_safety_filter": {
+                            "type": "boolean",
+                            "title": "Enable Safety Filter",
+                            "default": false,
+                            "x-order": 9,
+                            "description": "Check the inputs against the content policy. When off, only the always-on categories (sexual content involving minors, self-harm intent or instructions) are still blocked."
+                          }
+                        }
+                      },
+                      "output": {
+                        "type": "string",
+                        "title": "Output",
+                        "format": "uri"
+                      },
+                      "status": {
+                        "type": "string",
+                        "title": "Status"
+                      },
+                      "metrics": {
+                        "type": "object",
+                        "title": "Metrics"
+                      },
+                      "version": {
+                        "type": "string",
+                        "title": "Version"
+                      },
+                      "created_at": {
+                        "type": "string",
+                        "title": "Created At",
+                        "format": "date-time"
+                      },
+                      "started_at": {
+                        "type": "string",
+                        "title": "Started At",
+                        "format": "date-time"
+                      },
+                      "completed_at": {
+                        "type": "string",
+                        "title": "Completed At",
+                        "format": "date-time"
+                      }
+                    }
+                  }
+                }
+              },
+              "description": "Successful Response"
+            },
+            "422": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "title": "HTTPValidationError",
+                    "properties": {
+                      "detail": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "title": "ValidationError",
+                          "required": [
+                            "loc",
+                            "msg",
+                            "type"
+                          ],
+                          "properties": {
+                            "loc": {
+                              "type": "array",
+                              "items": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "integer"
+                                  }
+                                ]
+                              },
+                              "title": "Location"
+                            },
+                            "msg": {
+                              "type": "string",
+                              "title": "Message"
+                            },
+                            "type": {
+                              "type": "string",
+                              "title": "Error Type"
+                            }
+                          }
+                        },
+                        "title": "Detail"
+                      }
+                    }
+                  }
+                }
+              },
+              "description": "Validation Error"
+            }
+          },
+          "description": "Run a single prediction on the model",
+          "operationId": "predict_predictions_post",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "PredictionRequest",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "title": "Id"
+                    },
+                    "input": {
+                      "type": "object",
+                      "title": "Input",
+                      "required": [
+                        "prompt"
+                      ],
+                      "properties": {
+                        "mode": {
+                          "enum": [
+                            "quality",
+                            "speed",
+                            "cost"
+                          ],
+                          "type": "string",
+                          "title": "mode",
+                          "description": "Generation mode: quality, speed, or cost.",
+                          "default": "speed",
+                          "x-order": 1
+                        },
+                        "seed": {
+                          "type": "integer",
+                          "title": "Seed",
+                          "x-order": 8,
+                          "nullable": true,
+                          "description": "Random seed for reproducible generation."
+                        },
+                        "image": {
+                          "type": "string",
+                          "title": "Image",
+                          "format": "uri",
+                          "x-order": 3,
+                          "nullable": true,
+                          "description": "First-frame reference image."
+                        },
+                        "prompt": {
+                          "type": "string",
+                          "title": "Prompt",
+                          "x-order": 0,
+                          "description": "Text prompt for video generation."
+                        },
+                        "duration": {
+                          "type": "integer",
+                          "title": "Duration",
+                          "default": 5,
+                          "maximum": 15,
+                          "minimum": 5,
+                          "x-order": 5,
+                          "description": "Video duration in seconds."
+                        },
+                        "resolution": {
+                          "enum": [
+                            "480p",
+                            "768p",
+                            "1080p",
+                            "2k",
+                            "4k"
+                          ],
+                          "type": "string",
+                          "title": "resolution",
+                          "description": "Video resolution. 1080p, 2k and 4k generate at 768p and upscale it (24 fps kept).",
+                          "default": "768p",
+                          "x-order": 6
+                        },
+                        "aspect_ratio": {
+                          "enum": [
+                            "16:9",
+                            "9:16",
+                            "4:3",
+                            "3:4",
+                            "3:2",
+                            "2:3",
+                            "1:1"
+                          ],
+                          "type": "string",
+                          "title": "aspect_ratio",
+                          "description": "Aspect ratio; reference images determine the canvas when provided.",
+                          "default": "16:9",
+                          "x-order": 7
+                        },
+                        "last_frame_image": {
+                          "type": "string",
+                          "title": "Last Frame Image",
+                          "format": "uri",
+                          "x-order": 4,
+                          "nullable": true,
+                          "description": "Last-frame reference image."
+                        },
+                        "prompt_upsampler": {
+                          "enum": [
+                            "off",
+                            "turbo",
+                            "max"
+                          ],
+                          "type": "string",
+                          "title": "prompt_upsampler",
+                          "description": "Expand your prompt before video generation.",
+                          "default": "turbo",
+                          "x-order": 2
+                        },
+                        "enable_safety_filter": {
+                          "type": "boolean",
+                          "title": "Enable Safety Filter",
+                          "default": false,
+                          "x-order": 9,
+                          "description": "Check the inputs against the content policy. When off, only the always-on categories (sexual content involving minors, self-harm intent or instructions) are still blocked."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/health-check": {
+        "get": {
+          "summary": "Healthcheck",
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {}
+                }
+              },
+              "description": "Successful Response"
+            }
+          },
+          "operationId": "healthcheck_health_check_get"
+        }
+      },
+      "/predictions/{prediction_id}/cancel": {
+        "post": {
+          "summary": "Cancel",
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {}
+                }
+              },
+              "description": "Successful Response"
+            },
+            "422": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "title": "HTTPValidationError",
+                    "properties": {
+                      "detail": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "title": "ValidationError",
+                          "required": [
+                            "loc",
+                            "msg",
+                            "type"
+                          ],
+                          "properties": {
+                            "loc": {
+                              "type": "array",
+                              "items": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "integer"
+                                  }
+                                ]
+                              },
+                              "title": "Location"
+                            },
+                            "msg": {
+                              "type": "string",
+                              "title": "Message"
+                            },
+                            "type": {
+                              "type": "string",
+                              "title": "Error Type"
+                            }
+                          }
+                        },
+                        "title": "Detail"
+                      }
+                    }
+                  }
+                }
+              },
+              "description": "Validation Error"
+            }
+          },
+          "parameters": [
+            {
+              "in": "path",
+              "name": "prediction_id",
+              "schema": {
+                "type": "string",
+                "title": "Prediction Id"
+              },
+              "required": true
+            }
+          ],
+          "operationId": "cancel_predictions__prediction_id__cancel_post"
+        }
+      }
+    },
+    "openapi": "3.0.2",
+    "components": {
+      "schemas": {
+        "mode": {
+          "enum": [
+            "quality",
+            "speed",
+            "cost"
+          ],
+          "type": "string",
+          "title": "mode",
+          "description": "An enumeration."
+        },
+        "Input": {
+          "type": "object",
+          "title": "Input",
+          "required": [
+            "prompt"
+          ],
+          "properties": {
+            "mode": {
+              "enum": [
+                "quality",
+                "speed",
+                "cost"
+              ],
+              "type": "string",
+              "title": "mode",
+              "description": "Generation mode: quality, speed, or cost.",
+              "default": "speed",
+              "x-order": 1
+            },
+            "seed": {
+              "type": "integer",
+              "title": "Seed",
+              "x-order": 8,
+              "nullable": true,
+              "description": "Random seed for reproducible generation."
+            },
+            "image": {
+              "type": "string",
+              "title": "Image",
+              "format": "uri",
+              "x-order": 3,
+              "nullable": true,
+              "description": "First-frame reference image."
+            },
+            "prompt": {
+              "type": "string",
+              "title": "Prompt",
+              "x-order": 0,
+              "description": "Text prompt for video generation."
+            },
+            "duration": {
+              "type": "integer",
+              "title": "Duration",
+              "default": 5,
+              "maximum": 15,
+              "minimum": 5,
+              "x-order": 5,
+              "description": "Video duration in seconds."
+            },
+            "resolution": {
+              "enum": [
+                "480p",
+                "768p",
+                "1080p",
+                "2k",
+                "4k"
+              ],
+              "type": "string",
+              "title": "resolution",
+              "description": "Video resolution. 1080p, 2k and 4k generate at 768p and upscale it (24 fps kept).",
+              "default": "768p",
+              "x-order": 6
+            },
+            "aspect_ratio": {
+              "enum": [
+                "16:9",
+                "9:16",
+                "4:3",
+                "3:4",
+                "3:2",
+                "2:3",
+                "1:1"
+              ],
+              "type": "string",
+              "title": "aspect_ratio",
+              "description": "Aspect ratio; reference images determine the canvas when provided.",
+              "default": "16:9",
+              "x-order": 7
+            },
+            "last_frame_image": {
+              "type": "string",
+              "title": "Last Frame Image",
+              "format": "uri",
+              "x-order": 4,
+              "nullable": true,
+              "description": "Last-frame reference image."
+            },
+            "prompt_upsampler": {
+              "enum": [
+                "off",
+                "turbo",
+                "max"
+              ],
+              "type": "string",
+              "title": "prompt_upsampler",
+              "description": "Expand your prompt before video generation.",
+              "default": "turbo",
+              "x-order": 2
+            },
+            "enable_safety_filter": {
+              "type": "boolean",
+              "title": "Enable Safety Filter",
+              "default": false,
+              "x-order": 9,
+              "description": "Check the inputs against the content policy. When off, only the always-on categories (sexual content involving minors, self-harm intent or instructions) are still blocked."
+            }
+          }
+        },
+        "Output": {
+          "type": "string",
+          "title": "Output",
+          "format": "uri"
+        },
+        "Status": {
+          "enum": [
+            "starting",
+            "processing",
+            "succeeded",
+            "canceled",
+            "failed"
+          ],
+          "type": "string",
+          "title": "Status",
+          "description": "An enumeration."
+        },
+        "resolution": {
+          "enum": [
+            "480p",
+            "768p",
+            "1080p",
+            "2k",
+            "4k"
+          ],
+          "type": "string",
+          "title": "resolution",
+          "description": "An enumeration."
+        },
+        "aspect_ratio": {
+          "enum": [
+            "16:9",
+            "9:16",
+            "4:3",
+            "3:4",
+            "3:2",
+            "2:3",
+            "1:1"
+          ],
+          "type": "string",
+          "title": "aspect_ratio",
+          "description": "An enumeration."
+        },
+        "ValidationError": {
+          "type": "object",
+          "title": "ValidationError",
+          "required": [
+            "loc",
+            "msg",
+            "type"
+          ],
+          "properties": {
+            "loc": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
+              },
+              "title": "Location"
+            },
+            "msg": {
+              "type": "string",
+              "title": "Message"
+            },
+            "type": {
+              "type": "string",
+              "title": "Error Type"
+            }
+          }
+        },
+        "prompt_upsampler": {
+          "enum": [
+            "off",
+            "turbo",
+            "max"
+          ],
+          "type": "string",
+          "title": "prompt_upsampler",
+          "description": "An enumeration."
+        },
+        "PredictionRequest": {
+          "type": "object",
+          "title": "PredictionRequest",
+          "properties": {
+            "id": {
+              "type": "string",
+              "title": "Id"
+            },
+            "input": {
+              "type": "object",
+              "title": "Input",
+              "required": [
+                "prompt"
+              ],
+              "properties": {
+                "mode": {
+                  "enum": [
+                    "quality",
+                    "speed",
+                    "cost"
+                  ],
+                  "type": "string",
+                  "title": "mode",
+                  "description": "Generation mode: quality, speed, or cost.",
+                  "default": "speed",
+                  "x-order": 1
+                },
+                "seed": {
+                  "type": "integer",
+                  "title": "Seed",
+                  "x-order": 8,
+                  "nullable": true,
+                  "description": "Random seed for reproducible generation."
+                },
+                "image": {
+                  "type": "string",
+                  "title": "Image",
+                  "format": "uri",
+                  "x-order": 3,
+                  "nullable": true,
+                  "description": "First-frame reference image."
+                },
+                "prompt": {
+                  "type": "string",
+                  "title": "Prompt",
+                  "x-order": 0,
+                  "description": "Text prompt for video generation."
+                },
+                "duration": {
+                  "type": "integer",
+                  "title": "Duration",
+                  "default": 5,
+                  "maximum": 15,
+                  "minimum": 5,
+                  "x-order": 5,
+                  "description": "Video duration in seconds."
+                },
+                "resolution": {
+                  "enum": [
+                    "480p",
+                    "768p",
+                    "1080p",
+                    "2k",
+                    "4k"
+                  ],
+                  "type": "string",
+                  "title": "resolution",
+                  "description": "Video resolution. 1080p, 2k and 4k generate at 768p and upscale it (24 fps kept).",
+                  "default": "768p",
+                  "x-order": 6
+                },
+                "aspect_ratio": {
+                  "enum": [
+                    "16:9",
+                    "9:16",
+                    "4:3",
+                    "3:4",
+                    "3:2",
+                    "2:3",
+                    "1:1"
+                  ],
+                  "type": "string",
+                  "title": "aspect_ratio",
+                  "description": "Aspect ratio; reference images determine the canvas when provided.",
+                  "default": "16:9",
+                  "x-order": 7
+                },
+                "last_frame_image": {
+                  "type": "string",
+                  "title": "Last Frame Image",
+                  "format": "uri",
+                  "x-order": 4,
+                  "nullable": true,
+                  "description": "Last-frame reference image."
+                },
+                "prompt_upsampler": {
+                  "enum": [
+                    "off",
+                    "turbo",
+                    "max"
+                  ],
+                  "type": "string",
+                  "title": "prompt_upsampler",
+                  "description": "Expand your prompt before video generation.",
+                  "default": "turbo",
+                  "x-order": 2
+                },
+                "enable_safety_filter": {
+                  "type": "boolean",
+                  "title": "Enable Safety Filter",
+                  "default": false,
+                  "x-order": 9,
+                  "description": "Check the inputs against the content policy. When off, only the always-on categories (sexual content involving minors, self-harm intent or instructions) are still blocked."
+                }
+              }
+            }
+          }
+        },
+        "PredictionResponse": {
+          "type": "object",
+          "title": "PredictionResponse",
+          "properties": {
+            "id": {
+              "type": "string",
+              "title": "Id"
+            },
+            "logs": {
+              "type": "string",
+              "title": "Logs"
+            },
+            "error": {
+              "type": "string",
+              "title": "Error"
+            },
+            "input": {
+              "type": "object",
+              "title": "Input",
+              "required": [
+                "prompt"
+              ],
+              "properties": {
+                "mode": {
+                  "enum": [
+                    "quality",
+                    "speed",
+                    "cost"
+                  ],
+                  "type": "string",
+                  "title": "mode",
+                  "description": "Generation mode: quality, speed, or cost.",
+                  "default": "speed",
+                  "x-order": 1
+                },
+                "seed": {
+                  "type": "integer",
+                  "title": "Seed",
+                  "x-order": 8,
+                  "nullable": true,
+                  "description": "Random seed for reproducible generation."
+                },
+                "image": {
+                  "type": "string",
+                  "title": "Image",
+                  "format": "uri",
+                  "x-order": 3,
+                  "nullable": true,
+                  "description": "First-frame reference image."
+                },
+                "prompt": {
+                  "type": "string",
+                  "title": "Prompt",
+                  "x-order": 0,
+                  "description": "Text prompt for video generation."
+                },
+                "duration": {
+                  "type": "integer",
+                  "title": "Duration",
+                  "default": 5,
+                  "maximum": 15,
+                  "minimum": 5,
+                  "x-order": 5,
+                  "description": "Video duration in seconds."
+                },
+                "resolution": {
+                  "enum": [
+                    "480p",
+                    "768p",
+                    "1080p",
+                    "2k",
+                    "4k"
+                  ],
+                  "type": "string",
+                  "title": "resolution",
+                  "description": "Video resolution. 1080p, 2k and 4k generate at 768p and upscale it (24 fps kept).",
+                  "default": "768p",
+                  "x-order": 6
+                },
+                "aspect_ratio": {
+                  "enum": [
+                    "16:9",
+                    "9:16",
+                    "4:3",
+                    "3:4",
+                    "3:2",
+                    "2:3",
+                    "1:1"
+                  ],
+                  "type": "string",
+                  "title": "aspect_ratio",
+                  "description": "Aspect ratio; reference images determine the canvas when provided.",
+                  "default": "16:9",
+                  "x-order": 7
+                },
+                "last_frame_image": {
+                  "type": "string",
+                  "title": "Last Frame Image",
+                  "format": "uri",
+                  "x-order": 4,
+                  "nullable": true,
+                  "description": "Last-frame reference image."
+                },
+                "prompt_upsampler": {
+                  "enum": [
+                    "off",
+                    "turbo",
+                    "max"
+                  ],
+                  "type": "string",
+                  "title": "prompt_upsampler",
+                  "description": "Expand your prompt before video generation.",
+                  "default": "turbo",
+                  "x-order": 2
+                },
+                "enable_safety_filter": {
+                  "type": "boolean",
+                  "title": "Enable Safety Filter",
+                  "default": false,
+                  "x-order": 9,
+                  "description": "Check the inputs against the content policy. When off, only the always-on categories (sexual content involving minors, self-harm intent or instructions) are still blocked."
+                }
+              }
+            },
+            "output": {
+              "type": "string",
+              "title": "Output",
+              "format": "uri"
+            },
+            "status": {
+              "type": "string",
+              "title": "Status"
+            },
+            "metrics": {
+              "type": "object",
+              "title": "Metrics"
+            },
+            "version": {
+              "type": "string",
+              "title": "Version"
+            },
+            "created_at": {
+              "type": "string",
+              "title": "Created At",
+              "format": "date-time"
+            },
+            "started_at": {
+              "type": "string",
+              "title": "Started At",
+              "format": "date-time"
+            },
+            "completed_at": {
+              "type": "string",
+              "title": "Completed At",
+              "format": "date-time"
+            }
+          }
+        },
+        "HTTPValidationError": {
+          "type": "object",
+          "title": "HTTPValidationError",
+          "properties": {
+            "detail": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "title": "ValidationError",
+                "required": [
+                  "loc",
+                  "msg",
+                  "type"
+                ],
+                "properties": {
+                  "loc": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    },
+                    "title": "Location"
+                  },
+                  "msg": {
+                    "type": "string",
+                    "title": "Message"
+                  },
+                  "type": {
+                    "type": "string",
+                    "title": "Error Type"
+                  }
+                }
+              },
+              "title": "Detail"
+            }
+          }
+        }
+      }
+    }
+  },
+  "billing": {
+    "current_description": null,
+    "current_tiers": [
+      {
+        "criteria": [
+          {
+            "description": "cost",
+            "subtype": "string",
+            "title": "model variant",
+            "type": "equals",
+            "value": "cost"
+          },
+          {
+            "description": "480p",
+            "subtype": "string",
+            "title": "target resolution",
+            "type": "equals",
+            "value": "480p"
+          }
+        ],
+        "description": "480p resolution, cost mode",
+        "prices": [
+          {
+            "description": "or 100 seconds for $1",
+            "metric": "video_output_duration_seconds",
+            "metric_display": "second of output video",
+            "price": "$0.01",
+            "title": "per second of output video",
+            "type": "per-unit"
+          }
+        ],
+        "title": "480p cost"
+      },
+      {
+        "criteria": [
+          {
+            "description": "cost",
+            "subtype": "string",
+            "title": "model variant",
+            "type": "equals",
+            "value": "cost"
+          },
+          {
+            "description": "768p",
+            "subtype": "string",
+            "title": "target resolution",
+            "type": "equals",
+            "value": "768p"
+          }
+        ],
+        "description": "768p resolution, cost mode",
+        "prices": [
+          {
+            "description": "or 40 seconds for $1",
+            "metric": "video_output_duration_seconds",
+            "metric_display": "second of output video",
+            "price": "$0.025",
+            "title": "per second of output video",
+            "type": "per-unit"
+          }
+        ],
+        "title": "768p cost"
+      },
+      {
+        "criteria": [
+          {
+            "description": "speed",
+            "subtype": "string",
+            "title": "model variant",
+            "type": "equals",
+            "value": "speed"
+          },
+          {
+            "description": "480p",
+            "subtype": "string",
+            "title": "target resolution",
+            "type": "equals",
+            "value": "480p"
+          }
+        ],
+        "description": "480p resolution, speed mode",
+        "prices": [
+          {
+            "description": "or 50 seconds for $1",
+            "metric": "video_output_duration_seconds",
+            "metric_display": "second of output video",
+            "price": "$0.02",
+            "title": "per second of output video",
+            "type": "per-unit"
+          }
+        ],
+        "title": "480p speed"
+      },
+      {
+        "criteria": [
+          {
+            "description": "quality",
+            "subtype": "string",
+            "title": "model variant",
+            "type": "equals",
+            "value": "quality"
+          },
+          {
+            "description": "480p",
+            "subtype": "string",
+            "title": "target resolution",
+            "type": "equals",
+            "value": "480p"
+          }
+        ],
+        "description": "480p resolution, quality mode",
+        "prices": [
+          {
+            "description": "or 25 seconds for $1",
+            "metric": "video_output_duration_seconds",
+            "metric_display": "second of output video",
+            "price": "$0.04",
+            "title": "per second of output video",
+            "type": "per-unit"
+          }
+        ],
+        "title": "480p quality"
+      },
+      {
+        "criteria": [
+          {
+            "description": "speed",
+            "subtype": "string",
+            "title": "model variant",
+            "type": "equals",
+            "value": "speed"
+          },
+          {
+            "description": "768p",
+            "subtype": "string",
+            "title": "target resolution",
+            "type": "equals",
+            "value": "768p"
+          }
+        ],
+        "description": "768p resolution, speed mode",
+        "prices": [
+          {
+            "description": "or around 28 seconds for $1",
+            "metric": "video_output_duration_seconds",
+            "metric_display": "second of output video",
+            "price": "$0.035",
+            "title": "per second of output video",
+            "type": "per-unit"
+          }
+        ],
+        "title": "768p speed"
+      },
+      {
+        "criteria": [
+          {
+            "description": "quality",
+            "subtype": "string",
+            "title": "model variant",
+            "type": "equals",
+            "value": "quality"
+          },
+          {
+            "description": "768p",
+            "subtype": "string",
+            "title": "target resolution",
+            "type": "equals",
+            "value": "768p"
+          }
+        ],
+        "description": "768p resolution, quality mode",
+        "prices": [
+          {
+            "description": "or around 13 seconds for $1",
+            "metric": "video_output_duration_seconds",
+            "metric_display": "second of output video",
+            "price": "$0.075",
+            "title": "per second of output video",
+            "type": "per-unit"
+          }
+        ],
+        "title": "768p quality"
+      }
+    ]
+  },
+  "output_usd_per_second": "0.01",
+  "single_image_budget_usd": "0"
+}

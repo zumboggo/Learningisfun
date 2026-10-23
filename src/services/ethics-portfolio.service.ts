@@ -11,7 +11,8 @@ export const principleQuestions=[
  'State your principle: What general principle would help you or others in this situation? How might you apply the principle in one other situation?',
  'Test your principle: What change to the situation might make you reconsider it? Explain why.'
 ];
-export const questionsForEpisode=(source:EpisodeNotesSource)=>source.episode==='second-ship-ethics'?secondShipQuestions:principleQuestions;
+export const courageQuestions=principleQuestions.map((question,index)=>index===2?'Explain the other side: How might someone guided by Aristotle choose differently from someone mainly seeking public honour? Explain the strongest alternative reason and evaluate it.':question);
+export const questionsForEpisode=(source:EpisodeNotesSource)=>source.episode==='second-ship-ethics'?secondShipQuestions:source.episode==='courage-without-applause'?courageQuestions:principleQuestions;
 export type Source=EpisodeNotesSource|{kind:'reading';title:string;url:string;passage:string}|{kind:'episode';episode:string;version:number;attemptId:string;choices:string[];index:number;title?:string;passage?:string;label?:string;outcome?:string;options?:string[][];aside?:string};
 export interface Entry {id:string;source:Source;answers:string[];submitted:boolean;submittedAt?:string|null;reconsideration:string;reconsideredAt?:string|null;revision:number;updatedAt:string;userId:string;classId:string;key:string;dirty?:boolean;studentName?:string;preview?:boolean;}
 interface Pending {key:string;userId:string;classId:string;entry:Entry;}

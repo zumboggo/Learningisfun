@@ -10,5 +10,5 @@ export function selectedStoryLines(pack:StoryPackage,story:any,progress:StoryPro
 export default function StoryKeepsake({pack,story,progress}:{pack:StoryPackage;story:any;progress:StoryProgress}){
  const lines=selectedStoryLines(pack,story,progress);if(!lines.length)return null;
  const title=pack.keepsake!.title;
- return <section className="story-keepsake" aria-label={title}><h2>{title}</h2><p>Your seven favourites, in performance order. Taste was never marked right or wrong.</p><ol>{lines.map(line=><li key={line.id}>{line.text}<small>{line.label}</small></li>)}</ol><button onClick={()=>downloadBlob(new Blob([title+'\n\n'+lines.map(l=>l.text+'\n'+l.label).join('\n\n')],{type:'text/plain;charset=utf-8'}),'my-comeback-lyrics.txt')}>Save my lyric sheet</button></section>;
+ return <section className="story-keepsake" aria-label={title}><h2>{title}</h2><p>{pack.keepsake?.description||'Your seven favourites, in performance order. Taste was never marked right or wrong.'}</p><ol>{lines.map(line=><li key={line.id}>{line.text}<small>{line.label}</small></li>)}</ol><button onClick={()=>downloadBlob(new Blob([title+'\n\n'+lines.map(l=>l.text+'\n'+l.label).join('\n\n')],{type:'text/plain;charset=utf-8'}),pack.keepsake?.filename||'my-comeback-lyrics.txt')}>{pack.keepsake?.downloadLabel||'Save my lyric sheet'}</button></section>;
 }

@@ -1,0 +1,27 @@
+{
+  "title": "Aristotle teaching",
+  "line": "What kind of person are you practising becoming?",
+  "attribution": "Authored dialogue inspired by Nicomachean Ethics II; not an authentic quotation.",
+  "model": "prunaai/p-video-2-pro",
+  "settings": {
+    "duration": 6,
+    "resolution": "480p",
+    "mode": "cost",
+    "prompt_upsampler": "off",
+    "native_audio": true
+  },
+  "price_verified_usd_per_second": 0.01,
+  "paid_generations": 2,
+  "total_usd": 0.12,
+  "first_prediction": "013t1dt8ysrmr0d1d3b8en6vzm",
+  "replacement_prediction": "ns4xmw83y5rmw0d1d6z861a7qc",
+  "replacement_approved": true,
+  "finishing": "Removed initial unwanted utterance by starting at 2.2s. Extended final reaction, then encoded a 3-second exact first-frame hold. Final duration approximately 9s. No replacement speech. At 7.4s, cut to the matching closed-mouth listening still for the final silent reaction.",
+  "source_art": "Built-in image generation, 2026-10-23",
+  "checks": {
+    "speech": "Exact words verified by local ASR (practicing/practising spelling equivalent)",
+    "silent_hold_seconds": 3,
+    "audio_present": true,
+    "delivery_sha256": "e0be91a89d37bdd11af49e49b907e12b3d95e6a1c75632de978429af2cfccb77"
+  }
+}

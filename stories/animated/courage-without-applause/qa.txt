@@ -1,0 +1,14 @@
+Courage Without Applause — release verification, 2026-10-24 (Asia/Shanghai)
+
+Scope: new Ethics and Leadership episode for Thursday, October 29. No Canvas posting.
+Primary focus: 1b.1. Six choices, four bounded variables, separate outcome score and public reputation.
+
+Automated: all 729 routes, six decisions each, all endings resolve rescue and safe student return. Countdown 6–0, score/outcome agreement, full replay and resume verified. ZIP roundtrip preserves metadata/assets. Four quiz answers give 100; shared quiz tests retain 75 threshold. Production build, type checks and relevant 32 tests passed before release; final commands recorded in conversation.
+
+Browser: production preview at 1280x720 and 390x844. Acceptance, full context text, crawl controls, media skip, both taxi interludes and all six choices inspected. Generated opening played and automatically entered classroom. Phone choices fit; longer end cards scroll. Full cooperative route: 100/100, Honour 4/20, quiz 100. Full reputation-focused replay: 37/100, Honour 20/20, comparison 100→37. Six-decision recap and separate quiz appear correctly. Saved resume checked automatically. No real student attempts created.
+
+Opening: requested authored line, “What kind of person are you practising becoming?” It is not attributed as a historical quotation. First generated output expired during the interrupted turn ($0.06). David explicitly approved one $0.06 retry. Total $0.12, no further paid retries. Current price/schema saved in video-pricing.json. Native source retained. Trimmed unwanted initial speech offline; exact remaining line verified by local ASR; UK/US practising/practicing spelling only. Three-second exact first-frame hold, audible speech, approx nine-second total. Final silent reaction uses matching closed-mouth still. Original generated motion varies slightly from the static puppet design; no claim of a historical likeness.
+
+Historical boundary: invented rescue in broad fourth-century-BCE Greek setting. Aristotle’s ideas are source-grounded paraphrases of Nicomachean Ethics II. No imaginary event is presented as documented history; provenance and attribution are outside the immersive story.
+
+Planning/callbacks: public/private/visible first response changes safety/trust/honour; Bion exchange changes access and dignity; missed crack tests accountability; role assignment calls back to trust; final preparation shifts capacities; rescue alternatives produce concrete costs. Honour at 12 brings extra helpers and lowers crossing preparation threshold, so reputation has an instrumental benefit. Fixed turns avoid penalising slower readers.

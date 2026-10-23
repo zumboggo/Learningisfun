@@ -11,9 +11,9 @@ export default function StoryInterlude({media,onContinue,disabled=false,reduced=
  const still=staticText||reduced;
  return <section className={`story-interlude interlude-${media.kind}`} aria-label={media.title}>
   {media.kind==='video'?<>
-   <div className="interlude-film"><video ref={video} controls playsInline preload="none" poster={media.poster} aria-label="King’s archival quotation with illustrated reconstruction" onEnded={finish} onError={()=>setError('The opening is unavailable. The quotation is below; you can continue.')}><track kind="captions" src={media.captions} srcLang="en" label="English captions" default/></video><span className="interlude-credit">Illustrated reconstruction · authentic later reading</span></div>
+   <div className="interlude-film"><video ref={video} controls playsInline preload="none" poster={media.poster} aria-label={media.ariaLabel||media.title} onEnded={finish} onError={()=>setError('The opening is unavailable. The quotation is below; you can continue.')}><track kind="captions" src={media.captions} srcLang="en" label="English captions" default/></video>{(media.credit??'Illustrated reconstruction · authentic later reading')&&<span className="interlude-credit">{media.credit??'Illustrated reconstruction · authentic later reading'}</span>}</div>
    <h2>{media.title}</h2><p className="interlude-description">{media.description}</p><a href={media.source} target="_blank" rel="noreferrer">{media.sourceLabel}</a>
-   {!started&&<div className="interlude-actions"><button disabled={disabled} onClick={()=>play(false)}>Play opening with King’s voice</button><button disabled={disabled} onClick={()=>play(true)}>Play silently</button></div>}
+   {!started&&<div className="interlude-actions"><button disabled={disabled} onClick={()=>play(false)}>{media.playLabel||'Play opening with King’s voice'}</button><button disabled={disabled} onClick={()=>play(true)}>Play silently</button></div>}
    {error&&<p role="status">{error}</p>}
    <button disabled={disabled} onClick={finish}>Continue without opening →</button>
   </>:<>
@@ -24,7 +24,7 @@ export default function StoryInterlude({media,onContinue,disabled=false,reduced=
    </div>
    <div className="interlude-actions">
     {!still&&!finished&&<button aria-pressed={paused} onClick={()=>setPaused(v=>!v)}>{paused?'Resume scrolling':'Pause scrolling'}</button>}
-    {!reduced&&<button onClick={()=>{setStaticText(v=>!v);setFinished(false);}}>{still?'Watch scrolling introduction':'Read as still text'}</button>}
+    {!reduced&&<button onClick={()=>{setStaticText(v=>!v);setFinished(false);}}>{still?'Watch scrolling introduction':(media.fullTextLabel||'Read as still text')}</button>}
     <button disabled={disabled} onClick={finish}>Continue to the story →</button>
    </div>
   </>}

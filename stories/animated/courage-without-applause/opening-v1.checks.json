@@ -1,0 +1,22 @@
+{
+  "source": "/private/tmp/aristotle-teaser/aristotle-clean.mp4",
+  "output": "/Users/david.hepting/Documents/ChatGPT/Learning is Fun/implementation/public/stories/shared/aristotle-courage/opening-v1.mp4",
+  "dimensions": [
+    854,
+    480
+  ],
+  "fps": 24,
+  "hold_seconds": 3.0,
+  "motion_seconds": 5.958333333333333,
+  "reaction_hold_seconds": 0.0,
+  "total_seconds": 8.958333333333334,
+  "decoded_audio_seconds": 8.96,
+  "audio_non_silent": true,
+  "audio_starts_after_hold": true,
+  "hold_mean_pixel_difference": 0.005896272443403591,
+  "sha256": "e0be91a89d37bdd11af49e49b907e12b3d95e6a1c75632de978429af2cfccb77",
+  "expected_dialogue": "What kind of person are you practising becoming?",
+  "speech_check": "pass; ASR uses the equivalent US spelling practicing",
+  "review": "Exact speech verified locally; still, motion and closed-mouth final reaction visually reviewed. Audio unchanged by final reaction edit.",
+  "transcription": "What kind of person are you practicing becoming?"
+}
