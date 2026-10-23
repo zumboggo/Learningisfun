@@ -24,3 +24,8 @@ html,body{margin:0;min-height:100%;}main{padding-top:20px;}
 #refresh-planner{min-height:46px;padding:12px 20px;font-size:15px;font-weight:600}.actions{flex-wrap:wrap}#archive-count{display:inline-block;margin-left:4px;font-size:12px}#archive-dialog{width:min(720px,94vw);max-height:85vh;overflow:auto}#archive-dialog h2{margin:0}#archive-dialog>p{line-height:1.5;color:#526d81}.archive-item{border-top:1px solid #d8e3eb;padding:16px 0}.archive-item h3{margin:0;font-size:16px}.archive-meta{color:#526d81;font-size:12px;margin:5px 0 10px}.archive-text{white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px;line-height:1.5}
 
 .todo-heading{font-size:15px;font-weight:700;line-height:1.4;margin:0 0 10px;color:#253b4b}
+
+.todo-grip{flex-shrink:0;width:18px;min-height:21px;padding:0;border:0;background:transparent;color:#8796a2;cursor:grab;touch-action:none;user-select:none;line-height:21px}
+.todo-grip:active{cursor:grabbing}.todo-grip:focus-visible{outline:2px solid #326b56;outline-offset:1px}
+.todo-row textarea.priority{font-style:italic}.todo-row.todo-dragging{opacity:.45}.todo-row.todo-over{box-shadow:0 -2px 0 #326b56;background:#f0f6f2}
+@media print{.todo-grip{display:none}}

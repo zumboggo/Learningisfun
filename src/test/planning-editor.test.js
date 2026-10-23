@@ -192,3 +192,39 @@ test('combines saved notes into the tall checklist once without changing complet
   expect(JSON.parse(stored).boards[0].data.notes[1]).toBe('');
   first.dom.window.close(); reopened.dom.window.close();
 });
+
+test('drags Planner tasks with their completion checks and saves the new order across reopening', () => {
+  const dom=evaluate('alice', "state.notes=['First task\\nCompleted task\\nLater task\\nLast task',''];state.todoChecked=[false,true,false,false];renderTodos();save();");
+  const doc=dom.window.document;
+  const rows=()=>[...doc.querySelectorAll('.todo-row')];
+  expect(doc.querySelectorAll('.todo-row button')).toHaveLength(4);
+  expect(rows().map(row=>row.querySelector('textarea').classList.contains('priority'))).toEqual([true,false,true,false]);
+  const grip=rows()[3].querySelector('.todo-grip');
+  grip.setPointerCapture=()=>{};
+  doc.elementFromPoint=()=>rows()[0];
+  const pointer=(type,y)=>grip.dispatchEvent(new dom.window.MouseEvent(type,{bubbles:true,cancelable:true,button:0,clientX:10,clientY:y}));
+  pointer('pointerdown',100);pointer('pointermove',10);pointer('pointerup',10);
+  expect(rows().map(row=>row.querySelector('textarea').value)).toEqual(['Last task','First task','Completed task','Later task']);
+  expect(rows().map(row=>row.querySelector('input').checked)).toEqual([false,false,true,false]);
+  const key='learning-planning:alice';
+  const reopened=open('alice',{[key]:dom.window.localStorage.getItem(key)});
+  expect([...reopened.win.document.querySelectorAll('.todo-row textarea')].map(input=>input.value)).toEqual(['Last task','First task','Completed task','Later task']);
+  expect([...reopened.win.document.querySelectorAll('.todo-row input')].map(input=>input.checked)).toEqual([false,false,true,false]);
+  rows()[0].querySelector('input').click();
+  expect(rows().map(row=>row.querySelector('textarea').classList.contains('priority'))).toEqual([false,true,false,true]);
+  dom.window.close();reopened.dom.window.close();
+});
+
+test('task handles support keyboard reordering and cancelled drags leave tasks intact',()=>{
+  const dom=evaluate('alice', "state.notes=['First\\nSecond\\nThird',''];state.todoChecked=[false,true,false];renderTodos();save();");
+  const doc=dom.window.document;
+  let grip=doc.querySelector('[data-todo="1"] .todo-grip');
+  grip.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'ArrowUp',bubbles:true,cancelable:true}));
+  expect([...doc.querySelectorAll('.todo-row textarea')].map(input=>input.value)).toEqual(['Second','First','Third']);
+  expect(doc.activeElement).toBe(doc.querySelector('[data-todo="0"] .todo-grip'));
+  grip=doc.activeElement;grip.setPointerCapture=()=>{};
+  doc.elementFromPoint=()=>doc.querySelector('[data-todo="2"]');
+  for(const [type,y] of [['pointerdown',10],['pointermove',100],['pointercancel',100],['pointerup',100]])grip.dispatchEvent(new dom.window.MouseEvent(type,{button:0,clientX:10,clientY:y}));
+  expect([...doc.querySelectorAll('.todo-row textarea')].map(input=>input.value)).toEqual(['Second','First','Third']);
+  dom.window.close();
+});

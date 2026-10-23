@@ -81,6 +81,49 @@ function mergeAdditionalNotes(board){
     board.notes=[first?first+'\n'+extra:extra,''];
   }
 }
+function updateTodoPriorities(){
+  let remaining=2;
+  document.querySelectorAll('.todo-row').forEach(row=>{
+    const input=row.querySelector('textarea'),check=row.querySelector('input[type=checkbox]');
+    const priority=!!input.value.trim()&&!check.checked&&remaining>0;
+    input.classList.toggle('priority',priority);if(priority)remaining--;
+  });
+}
+function moveTodo(from,to){
+  const lines=(state.notes[0]||'').split('\n');
+  if(from===to||from<0||to<0||from>=lines.length||to>=lines.length)return;
+  const checks=lines.map((_,i)=>state.todoChecked[i]===true);
+  const [text]=lines.splice(from,1),[checked]=checks.splice(from,1);
+  lines.splice(to,0,text);checks.splice(to,0,checked);
+  state.notes[0]=lines.join('\n');state.todoChecked=checks;
+  renderTodos();save();
+  $('#todo-list').querySelector(`[data-todo="${to}"] .todo-grip`).focus();
+}
+function setupTodoDrag(row,grip,index){
+  let origin=null,target=index;
+  const clear=()=>{origin=null;document.querySelectorAll('.todo-row').forEach(item=>item.classList.remove('todo-dragging','todo-over'))};
+  grip.onpointerdown=e=>{
+    if(e.button!==0)return;
+    origin={x:e.clientX,y:e.clientY};target=index;
+    grip.setPointerCapture(e.pointerId);e.preventDefault();
+  };
+  grip.onpointermove=e=>{
+    if(!origin||Math.hypot(e.clientX-origin.x,e.clientY-origin.y)<6)return;
+    row.classList.add('todo-dragging');
+    const list=$('#todo-list'),bounds=list.getBoundingClientRect();
+    if(e.clientY<bounds.top+28)list.scrollTop-=12;
+    else if(e.clientY>bounds.bottom-28)list.scrollTop+=12;
+    const destination=document.elementFromPoint(e.clientX,e.clientY)?.closest('.todo-row');
+    document.querySelectorAll('.todo-row').forEach(item=>item.classList.remove('todo-over'));
+    if(destination&&list.contains(destination)){target=Number(destination.dataset.todo);destination.classList.add('todo-over')}
+  };
+  grip.onpointerup=()=>{if(!origin)return;const to=target;clear();moveTodo(index,to)};
+  grip.onpointercancel=clear;grip.onlostpointercapture=clear;
+  grip.onkeydown=e=>{
+    if(e.key!=='ArrowUp'&&e.key!=='ArrowDown')return;
+    e.preventDefault();moveTodo(index,index+(e.key==='ArrowUp'?-1:1));
+  };
+}
 function renderTodos(focusIndex){
   mergeAdditionalNotes(state);
   const list=$('#todo-list');list.replaceChildren();
@@ -88,18 +131,21 @@ function renderTodos(focusIndex){
   const lines=(state.notes[0]||'').split('\n');
   state.todoChecked=lines.map((_,i)=>state.todoChecked?.[i]===true);
   lines.forEach((text,index)=>{
-    const row=document.createElement('div');row.className='todo-row';
+    const row=document.createElement('div');row.className='todo-row';row.dataset.todo=index;
+    const grip=document.createElement('button');grip.type='button';grip.className='todo-grip';grip.textContent='⠿';
+    grip.setAttribute('aria-label','Reorder task '+(index+1));grip.title='Drag to reorder; or use the up and down arrow keys';
+    setupTodoDrag(row,grip,index);
     const check=document.createElement('input');check.type='checkbox';check.checked=state.todoChecked[index]===true;
     check.setAttribute('aria-label','Complete task '+(index+1));
     const input=document.createElement('textarea');input.rows=1;input.value=text;input.placeholder='To do…';input.setAttribute('aria-label','Task '+(index+1));
     input.classList.toggle('completed',check.checked);
     const resize=()=>{input.style.height='auto';input.style.height=Math.max(21,input.scrollHeight)+'px'};
-    check.onchange=()=>{state.todoChecked[index]=check.checked;input.classList.toggle('completed',check.checked);save()};
+    check.onchange=()=>{state.todoChecked[index]=check.checked;input.classList.toggle('completed',check.checked);updateTodoPriorities();save()};
     input.oninput=()=>{
       const current=state.notes[0].split('\n'),parts=input.value.split('\n');
       current.splice(index,1,...parts);state.notes[0]=current.join('\n');
       if(parts.length>1)state.todoChecked.splice(index,1,...parts.map((_,i)=>i===0&&check.checked));
-      save();if(parts.length>1)renderTodos(index+parts.length-1);else resize();
+      save();if(parts.length>1)renderTodos(index+parts.length-1);else {resize();updateTodoPriorities();}
     };
     input.onkeydown=e=>{
       if(e.isComposing||e.keyCode===229)return;
@@ -113,9 +159,10 @@ function renderTodos(focusIndex){
         e.preventDefault();const current=state.notes[0].split('\n');current.splice(index,1);state.notes[0]=current.join('\n');state.todoChecked.splice(index,1);save();renderTodos(Math.max(0,index-1));
       }
     };
-    row.append(check,input);list.append(row);resize();
+    row.append(grip,check,input);list.append(row);resize();
     if(index===focusIndex){input.focus();input.setSelectionRange(input.value.length,input.value.length)}
   });
+  updateTodoPriorities();
 }
 window.addEventListener('resize',()=>{document.querySelectorAll('.todo-row textarea').forEach(input=>{input.style.height='auto';input.style.height=Math.max(21,input.scrollHeight)+'px'})});
 
