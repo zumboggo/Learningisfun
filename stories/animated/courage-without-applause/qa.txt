@@ -3,7 +3,7 @@ Courage Without Applause — release verification, 2026-10-24 (Asia/Shanghai)
 Scope: new Ethics and Leadership episode for Thursday, October 29. No Canvas posting.
 Primary focus: 1b.1. Six choices, four bounded variables, separate outcome score and public reputation.
 
-Automated: all 729 routes, six decisions each, all endings resolve rescue and safe student return. Countdown 6–0, score/outcome agreement, full replay and resume verified. ZIP roundtrip preserves metadata/assets. Four quiz answers give 100; shared quiz tests retain 75 threshold. Production build, type checks and relevant 32 tests passed before release; final commands recorded in conversation.
+Automated: all 729 routes, six decisions each, all endings resolve rescue and safe student return. Countdown 6–0, score/outcome agreement, full replay and resume verified. ZIP roundtrip preserves metadata/assets. Four quiz answers give 100; shared quiz tests retain 75 threshold. Production build, type checks and relevant 33 tests passed before release; final commands recorded in conversation.
 
 Browser: production preview at 1280x720 and 390x844. Acceptance, full context text, crawl controls, media skip, both taxi interludes and all six choices inspected. Generated opening played and automatically entered classroom. Phone choices fit; longer end cards scroll. Full cooperative route: 100/100, Honour 4/20, quiz 100. Full reputation-focused replay: 37/100, Honour 20/20, comparison 100→37. Six-decision recap and separate quiz appear correctly. Saved resume checked automatically. No real student attempts created.
 

@@ -1,0 +1,25 @@
+{
+  "id": "courage-without-applause",
+  "title": "Courage Without Applause",
+  "status": "published-assigned",
+  "version": 1,
+  "versionId": "3924439a22d4a4654b0ac2d31ccc51f1",
+  "bytes": 838404,
+  "activeMembershipsVerified": true,
+  "liveTeacherReadVerified": true,
+  "publishedBytesVerified": true,
+  "studentAccess": "Released for the class; no student attempts created.",
+  "studioUrl": "https://zumboggo.github.io/Learningisfun/#/game/create?draft=courage-without-applause",
+  "previewUrl": "https://zumboggo.github.io/Learningisfun/#/game/story-preview/courage-without-applause",
+  "assignments": [
+    {
+      "classId": "e24ec8d9-21d7-4c32-a30e-08655c2f4e65",
+      "className": "Section 1",
+      "courseName": "Ethics and Leadership",
+      "date": "2026-10-29",
+      "releaseAt": "2026-10-23T00:00:00.000Z",
+      "assignmentId": "99fb99ca62d626f0d78366a602d10043",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/99fb99ca62d626f0d78366a602d10043"
+    }
+  ]
+}
