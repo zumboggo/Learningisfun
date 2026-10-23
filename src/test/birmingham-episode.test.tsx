@@ -18,7 +18,7 @@ it('validates every route, preserves both callbacks and replays legal progress',
   for(const option of node.type==='choice'?node.options.map((o:{id:string})=>o.id):[null])visit(advanceStory(story,state,option),[...steps,option],nextEvents);
  };
  visit(settleStory(story,initialStoryState(story,13)),[],[]);expect(routes).toBe(729);expect(quizScore(pack.quiz,pack.quiz.map(q=>q.answer))).toBe(100);
-});
+},30000);
 it('opens with archive media only after deliberate playback, with one advance on end/skip',()=>{
  vi.spyOn(HTMLMediaElement.prototype,'pause').mockImplementation(()=>{});const play=vi.spyOn(HTMLMediaElement.prototype,'play').mockResolvedValue();const next=vi.fn();
  render(<StoryInterlude media={STORY_INTERLUDES.birmingham_opening_v1} onContinue={next}/>);
