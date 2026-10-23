@@ -68,3 +68,47 @@ it('requests a separate saved replay without overwriting the completed route',()
  fireEvent.click(screen.getByRole('button',{name:'Replay episode'}));
  expect(replay).toHaveBeenCalledOnce();expect(save).not.toHaveBeenCalled();
 });
+
+for(const cinema of [false,true])it(`steps backward through choices and the ending in ${cinema?'cinema':'embedded'} players`,async()=>{
+ render(<StoryPlayer cinema={cinema} pack={pack} initial={{steps:[null,'listen',null],quizzes:[],seed:19}}/>);
+ fireEvent.keyDown(document,{key:'ArrowLeft'});
+ expect(screen.getByText('Here is another view.')).toBeInTheDocument();
+ fireEvent.keyDown(document,{key:'ArrowLeft',repeat:true});
+ fireEvent.keyDown(document,{key:'ArrowLeft',altKey:true});
+ expect(screen.getByText('Here is another view.')).toBeInTheDocument();
+ fireEvent.keyDown(document,{key:'ArrowLeft'});
+ expect(screen.getByRole('button',{name:'Ask for evidence.'})).toBeInTheDocument();
+ fireEvent.keyDown(document,{key:'ArrowRight'});
+ expect(screen.getByRole('button',{name:'Ask for evidence.'})).toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'Ask for evidence.'}));
+ await screen.findByText('Here is the evidence.');
+ fireEvent.keyDown(document,{key:'ArrowLeft'});
+ fireEvent.keyDown(document,{key:'ArrowLeft'});
+ expect(screen.getByText('We need a reason.')).toBeInTheDocument();
+ fireEvent.keyDown(document,{key:'ArrowLeft'});
+ expect(screen.getByText('We need a reason.')).toBeInTheDocument();
+ fireEvent.keyDown(document,{key:'ArrowRight'});
+ await screen.findByRole('button',{name:'Ask for evidence.'});
+});
+it('does not rewind from the notebook or while editing its text',()=>{
+ const save=vi.fn();render(<StoryPlayer cinema pack={pack} initial={{steps:[null,'listen'],quizzes:[],seed:19}} onProgress={save} notebook={<textarea aria-label="Notes"/>}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Notebook'}));
+ fireEvent.keyDown(document,{key:'ArrowLeft'});
+ fireEvent.keyDown(screen.getByLabelText('Notes'),{key:'ArrowLeft'});
+ expect(save).not.toHaveBeenCalled();
+});
+
+it('reviews an assigned route without overwriting submitted choices or quiz scores',async()=>{
+ const save=vi.fn();render(<StoryPlayer cinema pack={pack} initial={{steps:[null,'listen',null],quizzes:[[0,0,0,0]],seed:19}} onProgress={save}/>);
+ fireEvent.keyDown(document,{key:'ArrowLeft'});
+ expect(screen.getByText('Here is another view.')).toBeInTheDocument();
+ fireEvent.keyDown(document,{key:'ArrowLeft'});
+ expect(screen.getByRole('button',{name:'Ask for evidence.'})).toBeDisabled();
+ expect(screen.getByRole('button',{name:'Listen to the other view.'})).toBeEnabled();
+ fireEvent.keyDown(document,{key:'1'});expect(save).not.toHaveBeenCalled();
+ fireEvent.keyDown(document,{key:'ArrowRight'});
+ expect(screen.getByText('Here is another view.')).toBeInTheDocument();
+ fireEvent.keyDown(document,{key:'ArrowRight'});
+ expect(screen.getByRole('button',{name:'Check answers'})).toBeInTheDocument();
+ expect(save).not.toHaveBeenCalled();
+});

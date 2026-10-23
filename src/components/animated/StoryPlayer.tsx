@@ -6,7 +6,7 @@ import StoryKeepsake from './StoryKeepsake';
 import SimulationScorecard,{simulationResult,type SimulationResult} from './SimulationScorecard';
 import StoryAtmosphere from './StoryAtmosphere';
 import {useEffect,useMemo,useRef,useState,type ReactNode} from 'react';
-import {advanceStory,initialStoryState,settleStory,validatePackage,quizScore,type StoryPackage,type StoryState} from '../../../functions/learning-content/src/story-engine.js';
+import {advanceStory,replayStory,initialStoryState,settleStory,validatePackage,quizScore,type StoryPackage,type StoryState} from '../../../functions/learning-content/src/story-engine.js';
 import './story-player.css';
 import StoryStage from './StoryStage';
 import {playSceneMotion} from './scene-motion';
@@ -19,6 +19,7 @@ export default function StoryPlayer({pack,initial,onProgress,onReplay,debug=fals
  const compiled=useMemo(()=>validatePackage(pack),[pack]);const story=compiled.story;
  const [accepted,setAccepted]=useState(!!initial?.steps.length),[progress,setProgress]=useState<StoryProgress>(initial||{steps:[],quizzes:[],seed:1});
  const [state,setState]=useState<StoryState>(()=>{if(!story)return null as any;let s=settleStory(story,initialStoryState(story,initial?.seed||1));for(const step of initial?.steps||[])s=advanceStory(story,s,step);return s;});
+ const [viewStep,setViewStep]=useState(initial?.steps.length||0);
  const [answers,setAnswers]=useState<number[]>([-1,-1,-1,-1]),[showHistory,setShowHistory]=useState(false),[busy,setBusy]=useState(false),[music,setMusic]=useState(false),[jump,setJump]=useState('');
  const [reduced,setReduced]=useState(!!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches),[speaking,setSpeaking]=useState(false),[responses,setResponses]=useState<Record<string,string>>({});
  const [panel,setPanel]=useState<'History'|'Notebook'|'Episode menu'|null>(null),[motionPaused,setMotionPaused]=useState(false);
@@ -43,13 +44,26 @@ export default function StoryPlayer({pack,initial,onProgress,onReplay,debug=fals
  const save=(p:StoryProgress)=>{setProgress(p);onProgress?.(p);};
  const cancel=()=>{generation.current++;motion.current?.abort();clearTimeout(timer.current);root.current?.getAnimations?.({subtree:true}).forEach(a=>a.cancel());setResponses({});lock.current=false;setBusy(false);};
  const replay=()=>{if(onReplay){onReplay();return;}if(onProgress)return;setPreviousSimulation(simulation);cancel();setState(settleStory(story,initialStoryState(story,progress.seed)));setProgress({steps:[],quizzes:[],seed:progress.seed});setAnswers([-1,-1,-1,-1]);setShowHistory(false);setPanel(null);root.current?.scrollIntoView?.({block:'start',behavior:'instant'});};
+ const back=()=>{
+  const position=onProgress?viewStep:progress.steps.length;
+  if(!story||!position)return;
+  cancel();setSpeaking(false);setAnswers([-1,-1,-1,-1]);
+  const p={...progress,steps:progress.steps.slice(0,position-1)};
+  setState(replayStory(story,p.steps,p.seed));setViewStep(position-1);
+  if(!onProgress)save(p);
+ };
  const history=<>{state.history.map((h,i)=>h.choice?<section className="story-history-choice" key={i} aria-label="Decision"><p><strong>{taxiWording(h.choice.prompt)}</strong></p><p><strong>What do I do?</strong></p><ol>{h.choice.options.map(o=><li key={o.id} className={o.id===h.choice!.selected?'story-history-picked':undefined}>{taxiWording(o.text)}{o.id===h.choice!.selected&&<strong className="story-history-badge"> ✓ You chose</strong>}</li>)}</ol></section>:<p className="cinema-history-line" key={i}><strong>{h.actor==='I'?'I':displayPack.assets.characters[h.actor]?.name}</strong>{taxiWording(h.text)}</p>)}</>;
  const animate=async(el:HTMLElement|null,frames:Keyframe[],duration=420)=>{if(reduced||motionPaused||!el?.animate)return;const animation=el.animate(frames,{duration,easing:'ease-in-out'});try{await animation.finished;}catch{/* Navigation cancels effects. */}};
- const advance=async(option:string|null)=>{if(lock.current||state.ended)return;motion.current?.abort();setResponses({});lock.current=true;setBusy(true);setSpeaking(false);const token=++generation.current;
+ const reviewing=!!onProgress&&viewStep<progress.steps.length;
+ const advance=async(option:string|null)=>{if(lock.current||state.ended)return;
+  if(reviewing){
+   if(option!==progress.steps[viewStep])return;
+   cancel();setViewStep(viewStep+1);setState(replayStory(story,progress.steps.slice(0,viewStep+1),progress.seed));return;
+  }motion.current?.abort();setResponses({});lock.current=true;setBusy(true);setSpeaking(false);const token=++generation.current;
   const next=advanceStory(story,state,option);
   // Keep departing actors mounted until their exit is complete.
   for(const id of Object.keys(state.stage.actors)){if(!next.stage.actors[id])await animate(root.current?.querySelector(`[data-actor="${id}"]`)||null,[{opacity:1,transform:'translateX(0)'},{opacity:0,transform:'translateX(65px)'}]);if(token!==generation.current)return;}
-  setState(next);save({...progress,steps:[...progress.steps,option]});
+  setState(next);setViewStep(progress.steps.length+1);save({...progress,steps:[...progress.steps,option]});
   await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()));
   if(token!==generation.current)return;
   const controller=new AbortController();motion.current=controller;
@@ -59,9 +73,14 @@ export default function StoryPlayer({pack,initial,onProgress,onReplay,debug=fals
  };
  // Follow the current legal beat and panel state without retaining a stale callback.
  useEffect(()=>{
-  if(!cinema||!accepted||panel||state?.ended||current?.type!=='choice')return;
+  if(!accepted||panel)return;
   const choose=(event:KeyboardEvent)=>{const target=event.target instanceof Element?event.target:null;
-   if(event.repeat||event.ctrlKey||event.metaKey||event.altKey||target?.closest('input,textarea,select,[contenteditable="true"],dialog,details')||root.current?.querySelector('.cinema-sound details[open]'))return;
+   if(event.defaultPrevented||event.repeat||event.ctrlKey||event.metaKey||event.altKey||target?.closest('input,textarea,select,[contenteditable="true"],dialog,details')||root.current?.querySelector('.cinema-sound details[open]'))return;
+   if(event.key==='ArrowLeft'){event.preventDefault();back();return;}
+   if(state?.ended)return;
+   if(event.key==='ArrowRight'&&reviewing){event.preventDefault();void advance(progress.steps[viewStep]);return;}
+   if(event.key==='ArrowRight'&&!taxiClip&&!interlude&&['say','act'].includes(current?.type)){event.preventDefault();void advance(null);return;}
+   if(!cinema||current?.type!=='choice')return;
    const option=current.options[Number(event.key)-1];
    if(!/^[1-6]$/.test(event.key)||!option)return;
    event.preventDefault();void advance(option.id);
@@ -96,7 +115,7 @@ export default function StoryPlayer({pack,initial,onProgress,onReplay,debug=fals
   {simulation&&state.ended&&<SimulationScorecard result={simulation} previous={previousSimulation} complete={state.ended}/>}
   {simulation&&!state.ended&&<div className="story-meters" aria-label="Simulation score so far"><strong>Decision total: {simulation.total}/{simulation.maximum}</strong>{simulation.categories.map(c=><span key={c.variable}>{c.label}: {c.value}/{c.maximum}</span>)}</div>}
   {!simulation&&<div className="story-meters">{Object.entries(story.variables).filter(([,v]:any)=>v.visible).map(([k])=><span key={k}>{k}: {String(state.variables[k])}</span>)}</div>}
-  <section className={`story-dialogue ${current?.type==='choice'?'story-choice-dialogue':''}`} aria-live="polite">{cinema&&choiceContext&&<p className="cinema-choice-context"><strong>{choiceContext.actor==='I'?'My story':displayPack.assets.characters[choiceContext.actor]?.name}</strong><span>{taxiWording(choiceContext.text)}</span></p>}{!state.ended&&current.type==='say'&&<><strong>{current.beat?'On the scene':current.actor==='I'?'My story':displayPack.assets.characters[current.actor].name}</strong><p>{taxiWording(current.text)}</p><button data-next disabled={busy} onClick={()=>advance(null)}>{current.beat?'Continue →':'Next →'}</button></>}{!state.ended&&current.type==='act'&&<><strong>On the scene</strong><p>{taxiWording(current.text)}</p><button data-next disabled={busy} onClick={()=>advance(null)}>{busy?'Action playing…':'Continue →'}</button></>}{!state.ended&&current.type==='choice'&&<><h2>What do I do?</h2><div className="story-options" style={{gridTemplateColumns:cinema?`repeat(${current.options.length===4?2:Math.min(current.options.length,3)}, minmax(0, 1fr))`:undefined}}>{current.options.map((o:any,i:number)=><button key={o.id} data-choice={o.id} disabled={busy} onClick={()=>advance(o.id)}>{cinema&&<kbd aria-hidden="true">{i+1}</kbd>}<span>{o.text}</span></button>)}</div></>}
+  <section className={`story-dialogue ${current?.type==='choice'?'story-choice-dialogue':''}`} aria-live="polite">{cinema&&choiceContext&&<p className="cinema-choice-context"><strong>{choiceContext.actor==='I'?'My story':displayPack.assets.characters[choiceContext.actor]?.name}</strong><span>{taxiWording(choiceContext.text)}</span></p>}{!state.ended&&current.type==='say'&&<><strong>{current.beat?'On the scene':current.actor==='I'?'My story':displayPack.assets.characters[current.actor].name}</strong><p>{taxiWording(current.text)}</p><button data-next disabled={busy} onClick={()=>advance(null)}>{current.beat?'Continue →':'Next →'}</button></>}{!state.ended&&current.type==='act'&&<><strong>On the scene</strong><p>{taxiWording(current.text)}</p><button data-next disabled={busy} onClick={()=>advance(null)}>{busy?'Action playing…':'Continue →'}</button></>}{!state.ended&&current.type==='choice'&&<><h2>What do I do?</h2>{reviewing&&<p>Reviewing your recorded choice. Press → or select it to continue.</p>}<div className="story-options" style={{gridTemplateColumns:cinema?`repeat(${current.options.length===4?2:Math.min(current.options.length,3)}, minmax(0, 1fr))`:undefined}}>{current.options.map((o:any,i:number)=><button key={o.id} data-choice={o.id} disabled={busy||(reviewing&&o.id!==progress.steps[viewStep])} onClick={()=>advance(o.id)}>{cinema&&<kbd aria-hidden="true">{i+1}</kbd>}<span>{o.text}</span></button>)}</div></>}
   {state.ended&&<>{(onReplay||!onProgress)&&<button onClick={replay}>Replay episode</button>}<h2>{passed?'Home again':'Four questions before we return'}</h2>{score!==null&&<p role="status">{score}/100 · {passed?'Complete. Your story choices are separate from this knowledge score.':'Review the explanations, then try again.'}</p>}{!passed&&pack.quiz.map((q,i)=><fieldset key={i}><legend>{i+1}. {q.prompt}</legend>{q.options.map((o,j)=><label key={j}><input type="radio" name={'question-'+i} checked={answers[i]===j} onChange={()=>setAnswers(answers.map((v,k)=>k===i?j:v))}/>{o}</label>)}{score!==null&&<p>{q.explanation}</p>}</fieldset>)}{!passed&&<button disabled={answers.includes(-1)} onClick={()=>{if(lock.current)return;lock.current=true;save({...progress,quizzes:[...progress.quizzes,answers.slice()]});setAnswers([-1,-1,-1,-1]);timer.current=setTimeout(()=>{lock.current=false;},300);}}>Check answers</button>}</>}
   </section>{state.ended&&endContent}</div>{!cinema&&<footer><button onClick={()=>setShowHistory(!showHistory)}>Recall the conversation</button>{musicControl}</footer>}
   {!cinema&&showHistory&&<aside aria-label="Conversation history">{history}</aside>}

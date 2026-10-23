@@ -53,3 +53,7 @@ When another character has a dialogue beat, silent actors use quiet attentive, w
 Breathing moves the upper body gently with a stable, distinct phase per actor. It does not restart each sentence. The scene-motion toggle is available for conversation scenes and pauses idle breathing/blinking; hidden tabs and ended scenes suspend idle motion too. Reduced motion preserves the static orientation and expression without breathing or turn transitions. Existing legacy image rigs retain their existing orientation; new turning is provided by cartoon-v1.
 
 Verify both SVG and hybrid cast on phones and desktop, including both stage sides, front-facing thoughts, speech changes, props, replay, scene pause and reduced motion. Keep authoring reactions sparse and motivated by the text.
+
+## Reader navigation
+
+The episode player handles Left Arrow to return one displayed story beat and Right Arrow to continue. Returning rebuilds the scene from the saved route with its original seed. Public and unsaved previews can choose a different route after going back. Assigned attempts review their recorded route without rewriting submitted choices or quiz scores; Right Arrow retraces the recorded choice and normal saving resumes at the furthest reached beat. Left Arrow at the first beat does nothing; typing, settings and open player panels keep their own keyboard controls. This behavior belongs to the player, so existing and future episode packages need no special script commands.
