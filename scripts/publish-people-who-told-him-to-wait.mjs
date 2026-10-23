@@ -2,7 +2,7 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {Client,Databases,Users,Functions,Storage,Query} from 'node-appwrite';
 import {validatePackage} from '../functions/learning-content/src/story-engine.js';
 import {packageBytes} from '../functions/learning-content/src/animated-episodes.js';
-const id='the-people-who-told-him-to-wait',date='2026-10-30',releaseAt='2026-10-23T00:00:00.000Z';
+const id='the-people-who-told-him-to-wait',date='2026-10-27',releaseAt='2026-10-23T00:00:00.000Z';
 const admin=new Client().setEndpoint(process.env.APPWRITE_ENDPOINT).setProject(process.env.APPWRITE_PROJECT_ID).setKey(process.env.APPWRITE_API_KEY);
 const db=new Databases(admin),users=new Users(admin),databaseId=process.env.APPWRITE_DATABASE_ID||'main';
 const cls=await db.getDocument({databaseId,collectionId:'classes',documentId:'88421c66-9cda-4002-8e15-086312b7805e'});
@@ -25,7 +25,7 @@ if(draft){draft=await call({action:'animatedReadDraft',id});if(JSON.stringify(dr
 else draft=await call({action:'animatedSaveDraft',id,revision:0,pack});
 const version=await call({action:'animatedPublish',id,revision:draft.revision});
 if(weekly.length>1||weekly.some(a=>a.versionId!==version.versionId))throw Error('Conflicting weekly assignment');
-await call({action:'animatedAssign',versionId:version.versionId,classId:cls.$id,date,releaseAt});
+await call({action:'animatedAssign',versionId:version.versionId,classId:cls.$id,date,releaseAt,assignmentId:weekly[0]?.assignmentId});
 const library=await call({action:'animatedLibrary'}),assignments=library.assignments.filter(a=>a.id===id&&a.classId===cls.$id&&a.date===date);
 if(assignments.length!==1)throw Error('Expected one assignment');const a=assignments[0];
 if(a.versionId!==version.versionId||Date.parse(a.releaseAt)!==Date.parse(releaseAt))throw Error('Version/release mismatch');
