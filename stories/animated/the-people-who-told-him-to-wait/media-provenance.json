@@ -1,0 +1,33 @@
+{
+  "title": "The People Who Told Him to Wait",
+  "checked": "2026-10-23",
+  "picture": {
+    "tool": "Built-in imagegen",
+    "original": "stories/animated/the-people-who-told-him-to-wait/king-writing-source.png",
+    "prompt": "Use case: historical-scene. Asset type: widescreen opening illustration for an educational animated episode, 16:9. Create a respectful, cinematic illustrated reconstruction of Martin Luther King Jr., age 34, writing his Letter from Birmingham Jail in April 1963. Recognizable accurate likeness, short black hair and mustache, plain dark work shirt and trousers rather than a suit or striped prison costume. Seated on a simple jail bunk, slightly hunched, pencil in right hand writing on a small paper pad supported on his knee, scraps of newspaper beside him. Quiet bare concrete cell, bars softly out of focus, restrained daylight from a high window. Three-quarter medium-wide view, his face and writing hand clearly visible. Mouth closed, focused and tired but resolute. Polished hand-painted cinematic animation illustration, textured light, sober blue-gray and warm paper tones, natural proportions, no caricature. Leave safe margins for phone cropping and an unobtrusive caption added later. No written text, logos, watermark, other people, microphone, modern objects, or claim to be a historical photograph. This is a clearly disclosed imaginative reconstruction; the actual archival voice will be played separately, not lip-synced."
+  },
+  "audio": {
+    "performer": "Martin Luther King Jr.",
+    "source": "https://okra.stanford.edu/media/audio/630416001.mp3",
+    "excerptStartSeconds": 767.9,
+    "excerptDurationSeconds": 5.45,
+    "words": "Justice too long delayed is justice denied.",
+    "transcriptionCheck": "Local base.en recognition verified the complete exact phrase; listening review completed.",
+    "rights": "Copyright retained by respective holders. Brief attributed quotation used for critical educational analysis; not licensed for general redistribution. No claim of public-domain status.",
+    "context": "Later reading of the letter, not recorded in the jail."
+  },
+  "video": {
+    "file": "opening-v1.mp4",
+    "stillSeconds": 3,
+    "motionSeconds": 6,
+    "totalSeconds": 9,
+    "motion": "Locally rendered restrained camera push over a still illustration; no synthetic actor performance.",
+    "paidVideoGenerationUSD": 0,
+    "generatedVideoNotSubmitted": "Current Replicate page did not establish a maximum price within $0.15 for exact settings."
+  },
+  "crawl": {
+    "position": "After the outbound taxi departure clip, before the reading-room scene.",
+    "style": "Original gold perspective crawl over stars; no Star Wars music or logo.",
+    "accessibility": "Pause, still-text mode, reduced-motion static text, manual continue, hidden-tab pause."
+  }
+}

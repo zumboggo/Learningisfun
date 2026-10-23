@@ -58,5 +58,12 @@
     "title": "Everyone Belongs (Please Press Record)",
     "package": "stories/animated/everyone-belongs/episode.json",
     "zip": "stories/animated/everyone-belongs/episode.zip"
+  },
+  {
+    "id": "the-people-who-told-him-to-wait",
+    "title": "The People Who Told Him to Wait",
+    "profile": "ap-language",
+    "package": "stories/animated/the-people-who-told-him-to-wait/episode.json",
+    "zip": "stories/animated/the-people-who-told-him-to-wait/episode.zip"
   }
 ]

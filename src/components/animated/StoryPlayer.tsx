@@ -1,3 +1,5 @@
+import StoryInterlude from './StoryInterlude';
+import {storyInterludeCursors} from '@/services/story-interludes';
 import TaxiCutscene from './TaxiCutscene';
 import {taxiCutsceneCursors,taxiWording} from '@/services/magical-taxi';
 import StoryKeepsake from './StoryKeepsake';
@@ -34,8 +36,10 @@ export default function StoryPlayer({pack,initial,onProgress,onReplay,debug=fals
  const simulation=story?simulationResult(pack,story,state):null;
  const current=story?.nodes[state?.cursor],score=progress.quizzes.length?quizScore(pack.quiz,progress.quizzes.at(-1)!):null,passed=score!==null&&score>=75;
  const taxiCursors=useMemo(()=>taxiCutsceneCursors(story),[story]);
+ const interludeCursors=useMemo(()=>storyInterludeCursors(story),[story]);
+ const interlude=accepted&&!state?.ended?interludeCursors[state?.cursor]:undefined;
  const taxiClip=accepted&&!state?.ended?taxiCursors[state?.cursor]:undefined;
- useEffect(()=>{if(taxiClip){motion.current?.abort();setResponses({});audio.current?.pause();setMusic(false);}},[taxiClip]);
+ useEffect(()=>{if(taxiClip||interlude){motion.current?.abort();setResponses({});audio.current?.pause();setMusic(false);}},[taxiClip,interlude]);
  const save=(p:StoryProgress)=>{setProgress(p);onProgress?.(p);};
  const cancel=()=>{generation.current++;motion.current?.abort();clearTimeout(timer.current);root.current?.getAnimations?.({subtree:true}).forEach(a=>a.cancel());setResponses({});lock.current=false;setBusy(false);};
  const replay=()=>{if(onReplay){onReplay();return;}if(onProgress)return;setPreviousSimulation(simulation);cancel();setState(settleStory(story,initialStoryState(story,progress.seed)));setProgress({steps:[],quizzes:[],seed:progress.seed});setAnswers([-1,-1,-1,-1]);setShowHistory(false);setPanel(null);root.current?.scrollIntoView?.({block:'start',behavior:'instant'});};
@@ -72,13 +76,14 @@ export default function StoryPlayer({pack,initial,onProgress,onReplay,debug=fals
   <div className="cinema-title"><h1>{pack.title}</h1>{status&&<span role="status" title={status}>{status}</span>}</div>
   <nav aria-label="Story controls">
    {notebook&&<button onClick={()=>setPanel('Notebook')}>Notebook</button>}
-   {accepted&&!taxiClip&&<><button aria-label="Recall the conversation" onClick={()=>setPanel('History')}>History</button><button aria-label={motionPaused?'Resume scene motion':'Pause scene motion'} aria-pressed={motionPaused} onClick={()=>setMotionPaused(value=>!value)}>Motion <small>{motionPaused?'paused':'on'}</small></button><StoryAtmosphere compact root={root} preset={state.ended?'none':state.stage.ambience} ducked={speaking}>{musicControl}</StoryAtmosphere></>}
+   {accepted&&!taxiClip&&!interlude&&<><button aria-label="Recall the conversation" onClick={()=>setPanel('History')}>History</button><button aria-label={motionPaused?'Resume scene motion':'Pause scene motion'} aria-pressed={motionPaused} onClick={()=>setMotionPaused(value=>!value)}>Motion <small>{motionPaused?'paused':'on'}</small></button><StoryAtmosphere compact root={root} preset={state.ended?'none':state.stage.ambience} ducked={speaking}>{musicControl}</StoryAtmosphere></>}
    {(tools||debug)&&<button onClick={()=>setPanel('Episode menu')} aria-label="Episode menu" title="Episode menu">•••</button>}
    <GameFullscreenButton/>
   </nav>
  </header>;
  const drawer=cinema&&panel&&<StoryPanel title={panel} onClose={()=>setPanel(null)}>{panel==='Notebook'?notebook:panel==='History'?<><p className="cinema-panel-hint">Your conversation so far.</p>{state.history.length?history:<p>The conversation will appear here as you play.</p>}</>:<>{status&&<p role="status">{status}</p>}{tools}{previewControls}</>}</StoryPanel>;
  if(!accepted)return <div className={cinema?'animated-story story-cinema cinema-intro':''}>{toolbar}<section className="story-disclaimer"><p className="cinema-intro-kicker">An interactive story</p><h2>{pack.title}</h2><p>All characters are imaginative recreations of real or fictional people and may not represent their actual views or ideas. Only labelled source excerpts are authentic quotations.</p><button onClick={()=>setAccepted(true)}>Accept</button></section>{drawer}</div>;
+ if(interlude)return <div className={`animated-story ${cinema?'story-cinema':''}`}>{toolbar}<StoryInterlude key={state.cursor} media={interlude} reduced={reduced} disabled={busy} onContinue={()=>void advance(null)}/>{drawer}</div>;
  if(taxiClip)return <div className={`animated-story taxi-playing ${cinema?'story-cinema':''}`}>{toolbar}<TaxiCutscene key={state.cursor} clip={taxiClip} disabled={busy} onContinue={()=>void advance(null)}/>{drawer}</div>;
  const lastLine=state.history.at(-1),choiceContext=current.type==='choice'&&lastLine&&lastLine.text.length<=220?lastLine:null;
  return <div className={`animated-story ${pack.format===2?'story-modern':''} ${cinema?'story-cinema':''} ${state.ended?'story-ended':''}`} ref={el=>{root.current=el;if(el)animationRoot.current=el;}}>

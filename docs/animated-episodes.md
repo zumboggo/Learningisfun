@@ -98,3 +98,9 @@ Taxi episodes use the approved 10-second arrival and departure videos by default
 The four archived Own English versions show both clips as a boarding introduction on a fresh attempt. Continuing a saved attempt bypasses that introduction. Their original released files, saved choices, teacher text-patch keys and scoring remain intact; the host displays generic taxi wording.
 
 Media lives at `public/stories/shared/magical-taxi/` with versioned MP4s, posters, captions and provenance, outside the immutable package limit. Videos load only after Play with sound or Play silently; native controls, textual descriptions, captions, skip and an error fallback keep the story playable. Hiding or leaving pauses playback. Movies are not service-worker precached. No backend schema or publication migration is needed.
+
+## Labelled educational interludes
+
+`src/services/story-interludes.ts` maps opt-in labels to reviewed external media or a text crawl. Each consumes its next narration beat through one ordinary null advance, so backend replay and saved attempts remain unchanged. The Birmingham episode uses `birmingham_opening_v1` before the classroom and `birmingham_context_v1` immediately after `taxi_departure`. Its archival quotation is King's later reading over a disclosed generated illustration, not cell footage or synthetic speech. Media and provenance live in `public/stories/shared/birmingham-letter/`, outside the package.
+
+Playback requires an explicit click, has captions/skip/error fallback, pauses on hiding, and continues when the video ends. The perspective crawl has pause and still-text controls, becomes static for reduced motion, and waits for Continue. Future interludes require a reviewed registry entry; packages cannot supply arbitrary remote media. Reusing a label deliberately reuses its versioned presentation.

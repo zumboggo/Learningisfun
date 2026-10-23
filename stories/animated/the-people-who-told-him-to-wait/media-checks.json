@@ -1,0 +1,19 @@
+{
+  "dimensions": [
+    854,
+    480
+  ],
+  "fps": 24,
+  "hold_seconds": 3.0,
+  "motion_seconds": 6.0,
+  "reaction_hold_seconds": 0.0,
+  "total_seconds": 9.0,
+  "decoded_audio_seconds": 9.00275,
+  "audio_non_silent": true,
+  "audio_starts_after_hold": true,
+  "hold_mean_pixel_difference": 0.0010782591725214676,
+  "sha256": "b0559e5c31d623da2cac1d402c7b07dcacbfe3181670d66fd71135ea8944ca8f",
+  "expected_dialogue": "Justice too long delayed is justice denied.",
+  "speech_check": "pass: cached local base.en recognized exact quotation",
+  "review": "Opening listened to; actual browser playback advanced to the classroom. Desktop 1470px, narrow 659px and phone iframe 390px inspected; crawl pause/static mode and next-scene continuity checked."
+}
