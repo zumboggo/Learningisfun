@@ -184,3 +184,5 @@
  .cinema-panel-content{padding:16px}.cinema-panel header{padding:10px 16px}
  .story-cinema.cinema-intro .story-disclaimer{overflow:auto;padding:24px}.story-cinema.cinema-intro .story-disclaimer h2{font-size:29px}
 }
+
+.story-history-choice{margin:16px 0;padding:16px;border:2px solid #56766b;border-radius:12px;background:#f4f7f1;color:#183d35}.story-history-choice ol{list-style:decimal;padding-left:24px}.story-history-choice li{padding:10px;margin:6px 0;border:1px solid #c2cec6;border-radius:8px}.story-history-choice .story-history-picked{background:#d6eddf;border:2px solid #276346;color:#153e2c}.story-history-badge{display:inline;font-weight:800}

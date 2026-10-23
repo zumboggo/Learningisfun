@@ -46,3 +46,25 @@ it('pauses scene motion from the toolbar and keeps keyboard selection separate f
  fireEvent.keyDown(document,{key:'1',ctrlKey:true});expect(save).not.toHaveBeenCalled();
  fireEvent.click(screen.getByRole('button',{name:'Ask for evidence.'}));await waitFor(()=>expect(save).toHaveBeenCalledOnce());
 });
+it('rebuilds all four options and the selected answer from an older saved route',()=>{
+ const four={...pack,script:pack.script.replace('label evidence','option defer "Wait until tomorrow." -> other\noption refuse "Refuse the request." -> other\nlabel evidence')};
+ render(<StoryPlayer cinema pack={four} initial={{steps:[null,'listen'],quizzes:[],seed:19}}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Recall the conversation'}));
+ const decision=screen.getByRole('region',{name:'Decision'});
+ expect(decision.querySelector('p strong')).toHaveTextContent('We need a reason.');
+ expect(decision.querySelectorAll('li')).toHaveLength(4);
+ expect(decision.querySelector('.story-history-picked')).toHaveTextContent('Listen to the other view.');
+ expect(decision.querySelectorAll('.story-history-badge')).toHaveLength(1);
+});
+it('replays a public episode from the beginning and clears its quiz and history',()=>{
+ render(<StoryPlayer cinema pack={pack} initial={{steps:[null,'listen',null],quizzes:[[0,0,0,0]],seed:19}}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Replay episode'}));
+ expect(screen.getByText('We need a reason.')).toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'Recall the conversation'}));
+ expect(screen.getByText('The conversation will appear here as you play.')).toBeInTheDocument();
+});
+it('requests a separate saved replay without overwriting the completed route',()=>{
+ const save=vi.fn(),replay=vi.fn();render(<StoryPlayer cinema pack={pack} initial={{steps:[null,'listen',null],quizzes:[],seed:19}} onProgress={save} onReplay={replay}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Replay episode'}));
+ expect(replay).toHaveBeenCalledOnce();expect(save).not.toHaveBeenCalled();
+});
