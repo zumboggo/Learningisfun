@@ -17,6 +17,61 @@
     "context": "Later reading of the letter, not recorded in the jail."
   },
   "video": {
+    "file": "opening-v2.mp4",
+    "stillSeconds": 3,
+    "motionSeconds": 6,
+    "totalSeconds": 9,
+    "model": "prunaai/p-video-2-pro",
+    "settings": {
+      "resolution": "480p",
+      "duration": 6,
+      "mode": "cost",
+      "prompt_upsampler": "off",
+      "aspect_ratio": "16:9",
+      "seed": 42301
+    },
+    "prompt": "Animate this illustrated historical reconstruction in one continuous six-second shot. Preserve Martin Luther King Jr\u2019s face, clothing, jail cell, paper and pen exactly. He pauses writing, lifts his gaze slightly, and silently mouths one short sentence with natural restrained lip and jaw movement for the first five seconds, then closes his mouth. Subtle breathing, one blink, small natural writing-hand movement; stable camera. The intended mouth rhythm is: Justice too long delayed, is justice denied. This is silent visual acting for an authentic archival recording added later. AUDIO: quiet room tone only. No generated speech, voice, narration, music, subtitles, text, cuts or additional people. Respectful restrained expression, preserve image style and hand anatomy.",
+    "predictionId": "vx9kj94671rmt0d1cz98wt0df8",
+    "motion": "Generated restrained writing, gaze and mouth movements; authentic archival soundtrack replaces all generated audio. Approximate mouth synchronization.",
+    "maximumGenerationUSD": 0.06,
+    "paidPredictions": 1,
+    "pricingVerified": "2026-10-23: live Replicate billing cost/480p $0.01/output second; reference image $0; prompt upsampler off.",
+    "metrics": {
+      "billing": {
+        "fps": 24,
+        "mode": "cost",
+        "model_variant": "cost",
+        "resolution_target": "480p",
+        "turbo": true,
+        "video_output_duration_seconds": 6
+      },
+      "fps": 24,
+      "inference_provider": "modal",
+      "metadata": {
+        "execution_time": {
+          "model_execution_time": 4.781,
+          "prompt_upsampler_execution_time": 0,
+          "total_execution_time": 7.529
+        }
+      },
+      "mode": "cost",
+      "model_variant": "cost",
+      "predict_time": 8.753813826,
+      "prompt_upsampler": "off",
+      "prompt_upsampler_fallback": false,
+      "resolution_target": "480p",
+      "total_time": 8.793252165,
+      "turbo": true,
+      "video_output_count": 1,
+      "video_output_duration_seconds": 6
+    }
+  },
+  "crawl": {
+    "position": "After the outbound taxi departure clip, before the reading-room scene.",
+    "style": "Original gold perspective crawl over stars; no Star Wars music or logo.",
+    "accessibility": "Pause, still-text mode, reduced-motion static text, manual continue, hidden-tab pause."
+  },
+  "previousVideo": {
     "file": "opening-v1.mp4",
     "stillSeconds": 3,
     "motionSeconds": 6,
@@ -24,10 +79,5 @@
     "motion": "Locally rendered restrained camera push over a still illustration; no synthetic actor performance.",
     "paidVideoGenerationUSD": 0,
     "generatedVideoNotSubmitted": "Current Replicate page did not establish a maximum price within $0.15 for exact settings."
-  },
-  "crawl": {
-    "position": "After the outbound taxi departure clip, before the reading-room scene.",
-    "style": "Original gold perspective crawl over stars; no Star Wars music or logo.",
-    "accessibility": "Pause, still-text mode, reduced-motion static text, manual continue, hidden-tab pause."
   }
 }

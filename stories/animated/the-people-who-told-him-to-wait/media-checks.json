@@ -1,19 +1,23 @@
 {
+  "source": "/private/tmp/birmingham-motion-v2/archive-overlay.mp4",
+  "output": "/Users/david.hepting/Documents/ChatGPT/Learning is Fun/implementation/public/stories/shared/birmingham-letter/opening-v2.mp4",
   "dimensions": [
     854,
     480
   ],
   "fps": 24,
   "hold_seconds": 3.0,
-  "motion_seconds": 6.0,
+  "motion_seconds": 5.958333333333333,
   "reaction_hold_seconds": 0.0,
-  "total_seconds": 9.0,
-  "decoded_audio_seconds": 9.00275,
+  "total_seconds": 8.958333333333334,
+  "decoded_audio_seconds": 8.96,
   "audio_non_silent": true,
   "audio_starts_after_hold": true,
-  "hold_mean_pixel_difference": 0.0010782591725214676,
-  "sha256": "b0559e5c31d623da2cac1d402c7b07dcacbfe3181670d66fd71135ea8944ca8f",
+  "hold_mean_pixel_difference": 0.00783323575331772,
+  "sha256": "d8152ccfb65e3454bb081625a85e40e41a47f6b90fbd8725ad4614bbd8d40af1",
   "expected_dialogue": "Justice too long delayed is justice denied.",
-  "speech_check": "pass: cached local base.en recognized exact quotation",
-  "review": "Opening listened to; actual browser playback advanced to the classroom. Desktop 1470px, narrow 659px and phone iframe 390px inspected; crawl pause/static mode and next-scene continuity checked."
+  "speech_check": "pass",
+  "review": "One visual/listening review remains; automated checks do not prove natural acting or lip sync.",
+  "transcription": "Justice too long delayed is justice denied.",
+  "visualReview": "Six sampled frames confirm mouth, gaze and writing-hand motion with stable identity and cell composition; approximate lip timing accepted."
 }

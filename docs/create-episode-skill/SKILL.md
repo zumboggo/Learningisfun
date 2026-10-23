@@ -63,3 +63,7 @@ Deliver playable link or unassigned package, class/date if assigned, size and va
 ## Legacy maintenance
 
 Released Twine episodes retain their original saves, scoring and writing. Read references/legacy only when maintaining those versions; the archived requirements never override the new Story 2 workflow. Do not migrate the back catalogue during routine authoring.
+
+## Shared video model
+
+For every generated episode clip, use the same Replicate model as Chinese episodes: `prunaai/p-video-2-pro`, normally 480p, six seconds, `mode="cost"`, `prompt_upsampler="off"`. Do not substitute another model unless David explicitly requests it. Verify the live input schema and billing configuration in a separate read-only check before submission; record the maximum charge and enforce the $0.15 total per requested clip including retries. Unknown or over-cap pricing blocks submission. With authentic archival audio, request silent mouth movement, replace the generated soundtrack offline, and label the visuals as a reconstruction.
