@@ -27,6 +27,9 @@ Generated from `functions/learning-content/src/acting-library.js`. Use Story 2 f
 
 ## Resting poses
 
+- `seated` — Remain on a stool with bent knees and grounded feet while the upper body speaks. Polished cartoon rigs only.
+- `reclining` — Rest on a daybed with the head raised. Reserve adjacent space and frame the rest area separately.
+- `lying` — Lie horizontally on a daybed with a supported head. Use a cut for entering an upper bunk; return to relaxed to stand.
 - `arms-crossed` — Keep both arms firmly folded across the chest, including while speaking. Pair with angry emotion for a sustained angry stance.
 - `kneeling` — Remain on one knee until the resting pose changes.
 - `crouched` — Remain low with bent knees.

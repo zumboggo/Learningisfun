@@ -9,7 +9,7 @@
 .story-stage-living[data-paired=true][data-shot=wide] .position-left{left:14%}
 .story-stage-living[data-paired=true][data-shot=wide] .position-right{left:46%}
 .story-stage[data-actions=true] .story-actor{transform-origin:50% 98%}
-@media(max-width:600px){.story-stage-living[data-paired=true][data-shot=wide] .position-left{left:0}.story-stage-living[data-paired=true][data-shot=wide] .position-right{left:60%}}
+@media(max-width:600px){.story-stage-living[data-paired=true][data-shot=wide] .position-left{left:0}.story-stage-living[data-paired=true][data-shot=wide] .position-right{left:61%}}
 
 /* Finite projectiles share the action duration; reduced motion keeps one static cue. */
 .story-projectile{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
@@ -186,3 +186,12 @@
 }
 
 .story-history-choice{margin:16px 0;padding:16px;border:2px solid #56766b;border-radius:12px;background:#f4f7f1;color:#183d35}.story-history-choice ol{list-style:decimal;padding-left:24px}.story-history-choice li{padding:10px;margin:6px 0;border:1px solid #c2cec6;border-radius:8px}.story-history-choice .story-history-picked{background:#d6eddf;border:2px solid #276346;color:#153e2c}.story-history-badge{display:inline;font-weight:800}
+
+/* Five separate marks; opt-in so existing three-person scenes retain framing. */
+.story-stage-living[data-ensemble=true] .story-actor{width:18%;height:70%;bottom:2%;left:41%}
+.story-stage-living[data-ensemble=true] .position-far-left{left:1%}
+.story-stage-living[data-ensemble=true] .position-left{left:21%}
+.story-stage-living[data-ensemble=true] .position-right{left:61%}
+.story-stage-living[data-ensemble=true] .position-far-right{left:81%}
+/* A daybed occupies extra width; place it at an edge, facing into the room. */
+.story-stage-living .story-actor[data-rest=lying],.story-stage-living .story-actor[data-rest=reclining]{z-index:1}

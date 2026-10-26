@@ -57,6 +57,7 @@ export default function CartoonActor({character,activity,activityPaused=false,em
  const trousers=finish?`url(#${gradientId}-trousers)`:historical?skin:trouserBase;
  const shoes=historical?skin:finish?`url(#${gradientId}-shoes)`:shoeBase;
  const handSkin=finish?`url(#${gradientId}-hand-skin)`:skin;
+ const seated=rest==='seated',recumbent=rest==='lying'||rest==='reclining';
  const drop=Math.max(0,pose.bodyDrop||0),low=drop>.01,hem=robe?541-drop:Math.min(414,548-drop);
  const bowHand=armGeometry('left',pose.leftUpperArm||0,pose.leftForearm||0);
  const arm=(side:'left'|'right')=>{const {x,y,wx,wy,a,b,path:d}=armGeometry(side,pose[side+'UpperArm']||0,pose[side+'Forearm']||0);const open=!!acting;const fist=acting==='cross-arms'||acting==='rage'||acting==='insist'||((side==='right'||prop==='bow')&&!!prop&&prop!=='none');return <g data-arm={side} style={{transform:`scaleX(${(side==='left')===(yaw>0)?1-Math.abs(yaw)*.12:1})`,transformOrigin:`${side==='left'?73:167}px 204px`,transition:reduced?'none':'transform 460ms ease-out'}}><path d={d} fill="none" stroke={ink} strokeWidth="21" strokeLinecap="round"/><path d={d} fill="none" stroke={longSleeves?shirt:finish?`url(#${gradientId}-${side}-limb-skin)`:skin} strokeWidth="17" strokeLinecap="round"/>{finish&&<path data-limb-light="true" d={d} transform="translate(-3 0)" fill="none" stroke={shade(longSleeves?shirtBase:skinBase,.38)} opacity=".25" strokeWidth="3" strokeLinecap="round"/>}<g transform={`translate(${x} ${y}) rotate(${a*180/Math.PI})`}><path d="M -13 -14 Q -11 -23 1 -22 Q 13 -20 14 -13 L 13 20 Q 0 25 -13 20 Z" fill={shirt} stroke={ink} strokeWidth="2"/><path d="M -12 17 Q 0 21 12 17" fill="none" stroke={tailored?shade(shirtBase,.18):historical?(palette.trim||'#b19a63'):'#f9e8dc'} strokeWidth="2"/></g>{longSleeves&&<path d={`M ${wx+Math.cos(b)*7} ${wy+Math.sin(b)*7-5} L ${wx-Math.cos(b)*7} ${wy-Math.sin(b)*7-5}`} stroke={palette.trim||'#e8e1cf'} strokeWidth="4"/>}<g data-prop={side==='right'?prop:undefined} transform={`translate(${wx} ${wy}) rotate(${b*180/Math.PI+(pose[side+'Hand']||0)})`} fill="none" stroke={ink} strokeWidth="2" strokeLinejoin="round">
@@ -85,7 +86,10 @@ export default function CartoonActor({character,activity,activityPaused=false,em
  <radialGradient id={`${gradientId}-ground`}><stop stopColor="#233b42" stopOpacity=".3"/><stop offset="1" stopColor="#233b42" stopOpacity="0"/></radialGradient>
  <linearGradient id={`${gradientId}-beard`} x1="0" y1="0" x2=".8" y2="1"><stop stopColor={shade(palette.beard||hairBase,.12)}/><stop offset=".48" stopColor={palette.beard||hairBase}/><stop offset="1" stopColor={shade(palette.beard||hairBase,-.35)}/></linearGradient>
  </defs>}
- {!rider&&<ellipse cx="120" cy="582" rx="48" ry={finish?8:5} fill={finish?`url(#${gradientId}-ground)`:'#233b42'} opacity={finish?1:.13}/>}
+ {seated&&<g data-furniture="stool" stroke="#352d29" strokeWidth="4"><path d="M 76 464 L 66 580 M 162 464 L 175 580 M 68 554 H 171"/><rect x="62" y="449" width="116" height="18" rx="7" fill="#8d6648"/></g>}
+ {recumbent&&<g data-furniture="daybed" stroke="#352d29" strokeWidth="4"><path d="M -125 535 V 580 M 405 535 V 580"/><rect x="-140" y="516" width="560" height="26" rx="9" fill="#8d6648"/><rect x="-135" y="502" width="550" height="20" rx="10" fill="#c4b395"/><ellipse cx="370" cy="493" rx="44" ry="15" fill="#e7d8b5"/></g>}
+ <g data-rest-body={rest} transform={recumbent?`translate(0 ${rest==='lying'?112:90}) rotate(${rest==='lying'?90:72} 120 348)`:undefined}>
+ {!rider&&!recumbent&&<ellipse cx="120" cy="582" rx="48" ry={finish?8:5} fill={finish?`url(#${gradientId}-ground)`:'#233b42'} opacity={finish?1:.13}/>}
  {!rider&&(low?<g data-lowered-body={acting||rest} stroke={ink} strokeWidth="2.5" strokeLinejoin="round">
  {(['left','right'] as const).map(side=>{const g=legGeometry(side,drop,pose[side+'FootX']||0,gait?1:action[side+'Bend']??(side==='left'?-1:1),pose[side+'FootLift']||0);return <g key={side} data-leg={side}>
  <path d={g.path} fill="none" stroke={ink} strokeWidth="31" strokeLinecap="round"/>
@@ -140,5 +144,5 @@ export default function CartoonActor({character,activity,activityPaused=false,em
  </g></>}</g></g>{arm('left')}{arm('right')}{meal&&<g data-meal="rice" stroke={ink} strokeWidth="2" strokeLinejoin="round">
  <g data-bowl="true"><path d="M 75 260 Q 78 285 106 286 Q 134 285 137 260 Z" fill="#b8794e"/><ellipse cx="106" cy="260" rx="31" ry="9" fill="#f4ead2"/>{[85,96,108,120].map((x,i)=><path key={x} d={`M ${x} ${257+i%2*4} l 6 1`} stroke="#d8ccaa" strokeWidth="2"/>)}<path d="M 84 276 Q 106 285 129 276" fill="none" stroke="#e4b17a"/></g>
  <g data-spoon="true"><path d={`M ${meal.wx} ${meal.wy} L ${meal.tipX+5} ${meal.tipY+3}`} stroke="#aa8661" strokeWidth="5" strokeLinecap="round"/><ellipse cx={meal.tipX} cy={meal.tipY} rx="9" ry="4" fill="#d9b889"/>{meal.rice&&<ellipse cx={meal.tipX} cy={meal.tipY-2} rx="6" ry="3" fill="#fff4d6" stroke="none"/>}</g>
- </g>}</g></g></g></svg>;
+ </g>}</g></g></g></g></svg>;
 }

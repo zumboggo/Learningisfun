@@ -18,6 +18,8 @@ export function actorBounds(el:HTMLElement,shot:string,bodyDrop=0):Box{
  const h=el.offsetHeight,w=el.offsetWidth;
  if(!view?.height||!view.width)return shot==='action'?{x:el.offsetLeft+w*.15,y:el.offsetTop,width:w*.7,height:h*.72}:{x:el.offsetLeft,y:el.offsetTop,width:w,height:h};
  const unit=Math.min(w/view.width,h/view.height),x=el.offsetLeft+(w-view.width*unit)/2,y=el.offsetTop+(h-view.height*unit)/2;
+ const recumbent=el.dataset.rest==='lying'||el.dataset.rest==='reclining';
+ if(recumbent){const face=['close','listener','speaker'].includes(shot);const mirrored=el.querySelector<HTMLElement>('.story-facing')?.style.transform.includes('-1');const bx=face?(mirrored?-210:285):-145;return {x:x+bx*unit,y:y+(face?315:280)*unit,width:(face?210:570)*unit,height:(face?235:310)*unit};}
  if(shot==='close'||shot==='listener'||shot==='speaker'){
   let head={x:55,y:30,width:130,height:170};
   try{const b=el.querySelector<SVGGraphicsElement>('[data-emotion-face]')?.getBBox();if(b&&b.width>0&&b.height>0)head=b;}catch{/* Legacy/hidden SVG: stable head fallback. */}

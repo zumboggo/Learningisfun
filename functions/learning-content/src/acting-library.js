@@ -1,9 +1,9 @@
 /** Closed, versioned vocabulary shared by parser, renderer, studio and authoring tools. */
-export const ACTING_VERSION=7;
+export const ACTING_VERSION=8;
 export const CHARACTER_OPTIONS={age:['teen','adult','elder'],hair:['layered','side-part','long','bob','cropped','tousled','bun','swept','ponytail'],glasses:['none','round'],outfit:['uniform','teacher','tunic','robe','workshirt','cardigan','suit'],face:['default','oval','round','angular','lean','broad','scrappy','spirited','kevin'],eyes:['default','keen','gentle','narrow'],facialHair:['none','full']};
 export const EMOTIONS=['neutral','happy','worried','sad','angry','surprised','curious','confused','skeptical','embarrassed','relieved','determined','shocked','laughing','excited','scared','frustrated','proud','pleading','disappointed'];
 export const PROPS=['none','phone','sword','bow','lance','rubber-duck','pool-noodle'];
-export const RESTS=['arms-crossed','kneeling','crouched','sheltered','relaxed','attentive','guarded','downcast'];
+export const RESTS=['seated','reclining','lying','arms-crossed','kneeling','crouched','sheltered','relaxed','attentive','guarded','downcast'];
 export const TALKS=['cross-arms','phone-talk','phone-shout','explain','reassure','question','insist','hesitant','celebrate','shock','laugh','rage','excited','scared','facepalm','proud','plead','disappointed'];
 export const RESPONSES=['wince','support','brace','cross-arms','lance-threat','kneel','crouch','duck','cover-head','phone-talk','phone-shout','sword-strike','draw-bow','cast-beam','nod','shake-head','shrug','point','wave','recoil','laugh','sigh','bow','cheer','reach','cower','stumble','strike','block','dodge','shock','rage','excited','scared','facepalm','proud','plead','disappointed'];
 /** Explicit outcomes: choreography never rolls a result or changes the literary plot. */
@@ -37,7 +37,7 @@ export const ACTIONS={
  stumble:{paired:false,actor:'stumble',description:'Lose balance, catch it, and return upright.'},
 };
 export const ACTION_DURATION=2200;
-export const MOVES=['enter','exit','left','center','right','turn','nod','shake','bounce','recoil'];
+export const MOVES=['enter','exit','far-left','left','center','right','far-right','turn','nod','shake','bounce','recoil'];
 export const EFFECTS=['fade','closeup','shake','magic'];
 export const CAMERAS=['auto','wide','medium','close','two','action','speaker','listener'];
 export const RIG_PARTS=['torso','pelvis','head','leftUpperArm','leftForearm','leftHand','rightUpperArm','rightForearm','rightHand','leftThigh','leftShin','rightThigh','rightShin'];
@@ -59,6 +59,9 @@ const crouched={bodyDrop:80,leftFootX:18,rightFootX:-18,leftBend:-1,rightBend:1,
 const sheltered={...crouched,bodyDrop:95,torso:12,head:18,leftUpperArm:-160,leftForearm:-20,rightUpperArm:160,rightForearm:20};
 const crossed={head:7,torso:3,leftUpperArm:-40,leftForearm:-85,leftHand:15,rightUpperArm:40,rightForearm:90,rightHand:-15};
 export const POSES={
+ seated:{bodyDrop:105,leftFootX:25,rightFootX:40,leftBend:1,rightBend:1,leftForearm:-35,rightForearm:35},
+ reclining:{head:6,leftForearm:-35,rightForearm:35},
+ lying:{leftForearm:-20,rightForearm:20},
  'mounted-charge':{torso:9,head:-4,rightUpperArm:-75,rightForearm:-15,rightHand:180,leftUpperArm:-10,leftForearm:-70},
  wince:{torso:14,head:13,leftUpperArm:12,leftForearm:-90,rightUpperArm:5,rightForearm:-30},
  support:{torso:8,head:5,rightUpperArm:-55,rightForearm:-25,leftForearm:25},
@@ -111,6 +114,9 @@ export const POSES={
  sigh:{head:9,torso:3,leftUpperArm:5,rightUpperArm:-5},
 };
 export const ACTING_DESCRIPTIONS={
+ seated:'Remain on a stool with bent knees and grounded feet while the upper body speaks. Polished cartoon rigs only.',
+ reclining:'Rest on a daybed with the head raised. Reserve adjacent space and frame the rest area separately.',
+ lying:'Lie horizontally on a daybed with a supported head. Use a cut for entering an upper bunk; return to relaxed to stand.',
  support:'Extend an arm to offer support.',brace:'Lean forward and brace with bent arms.',
  'arms-crossed':'Keep both arms firmly folded across the chest, including while speaking. Pair with angry emotion for a sustained angry stance.',
  kneeling:'Remain on one knee until the resting pose changes.',crouched:'Remain low with bent knees.',sheltered:'Stay crouched with hands shielding the head.',

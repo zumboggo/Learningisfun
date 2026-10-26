@@ -96,7 +96,7 @@ export function compileStory(source,assets={}) {
 
   if(version===2&&(m=s.match(new RegExp(`^(rest|react) (${id}) (${id})$`)))){if(!assets.characters?.[m[2]])error(line,'Unknown actor');if(!(m[1]==='rest'?RESTS:RESPONSES).includes(m[3]))error(line,'Unknown '+m[1]+' cue '+m[3]);add({type:m[1],actor:m[2],action:m[3]},line);continue;}
   if(version===2&&(m=s.match(new RegExp(String.raw`^(${id}) \[(${id})(?:, *(${id}))?\]: (.+)$`)))){if(!assets.characters?.[m[1]])error(line,'Unknown speaker');if(!EMOTIONS.includes(m[2]))error(line,'Unknown emotion '+m[2]);if(m[3]&&!TALKS.includes(m[3]))error(line,'Unknown talking animation '+m[3]);add({type:'say',actor:m[1],emotion:m[2],gesture:m[3],text:m[4]},line);continue;}
-  if((m=s.match(new RegExp(`^show (${id})(?: (${id}))?(?: (left|center|right))?$`)))){if(!assets.characters?.[m[1]])error(line,'Unknown character '+m[1]);else if(m[2]&&(version===2?!EMOTIONS.includes(m[2]):!assets.characters[m[1]].expressions?.[m[2]]))error(line,'Unknown expression '+m[2]);add({type:'show',actor:m[1],expression:m[2]||'neutral',position:m[3]||'center'},line);continue;}
+  if((m=s.match(new RegExp(`^show (${id})(?: (${id}))?(?: (far-left|left|center|right|far-right))?$`)))){if(!assets.characters?.[m[1]])error(line,'Unknown character '+m[1]);else if(m[2]&&(version===2?!EMOTIONS.includes(m[2]):!assets.characters[m[1]].expressions?.[m[2]]))error(line,'Unknown expression '+m[2]);add({type:'show',actor:m[1],expression:m[2]||'neutral',position:m[3]||'center'},line);continue;}
   if((m=s.match(new RegExp(`^move (${id}) (${MOVES.join('|')})$`)))){if(!assets.characters?.[m[1]])error(line,'Unknown character');add({type:'move',actor:m[1],action:m[2]},line);continue;}
   if((m=s.match(new RegExp(`^effect (${EFFECTS.join('|')})$`)))){add({type:'effect',action:m[1]},line);continue;}
   if((m=s.match(new RegExp(`^choice (${id})$`)))){choice=add({type:'choice',id:m[1],options:[]},line);continue;}
@@ -124,14 +124,14 @@ export function compileStory(source,assets={}) {
    if(n.type==='scroll'&&n.actor&&assets.backgrounds?.[visible.get('@background')]?.loop!=='mirror')error(n.line,'Scrolling requires the current background to declare loop: mirror');
    if(n.type==='ensemble')visible=new Map([...visible].filter(([a])=>a==='@background'||n.actors.includes(a)));
    if(n.type==='scene')visible=new Map([['@background',n.asset]]);
-   if(n.type==='show'||n.type==='move'&&visible.has(n.actor)&&['left','center','right'].includes(n.action)){const position=n.position||n.action;for(const [a,p]of visible)if(a!=='@background'&&p===position)visible.delete(a);visible.set(n.actor,position);}
+   if(n.type==='show'||n.type==='move'&&visible.has(n.actor)&&['far-left','left','center','right','far-right'].includes(n.action)){const position=n.position||n.action;for(const [a,p]of visible)if(a!=='@background'&&p===position)visible.delete(a);visible.set(n.actor,position);}
    if(n.type==='move'&&n.action==='exit')visible.delete(n.actor);
    cache.set(i,visible);return visible;};nodes.forEach((_,i)=>after(i));
  }
  return {errors,story:errors.length?undefined:{version,nodes,labels,variables}};
 }
 export function initialStoryState(story,seed=1){return {cursor:0,variables:Object.fromEntries(Object.entries(story.variables).map(([k,v])=>[k,v.initial])),stage:{background:null,actors:{},...(story.version===2?{camera:{shot:'auto'}}:{})},history:[],events:[],seed:seed>>>0,ended:false};}
-export function settleStory(story,state){const s=structuredClone(state);s.cues=[];let steps=0;while(!s.ended&&steps++<10000){const n=story.nodes[s.cursor];if(!n)throw Error('Invalid story position');if(['say','choice','act'].includes(n.type)){if(n.type==='act'){const a=s.stage.actors[n.actor],b=s.stage.actors[n.targetActor];if(!a||n.targetActor&&!b)throw Error('Action characters must be on stage');if(ACTIONS[n.action]?.prop){a.prop=ACTIONS[n.action].prop;if(a.activity?.kind==='eat'||a.activity?.kind==='train'&&a.prop!=='sword')delete a.activity;}if(b){const order={left:0,center:1,right:2};a.facing=order[a.position]<order[b.position]?1:-1;b.facing=-a.facing;}}if(story.version===2&&n.type==='say'&&s.stage.actors[n.actor]&&n.emotion)s.stage.actors[n.actor].expression=n.emotion;return s;}
+export function settleStory(story,state){const s=structuredClone(state);s.cues=[];let steps=0;while(!s.ended&&steps++<10000){const n=story.nodes[s.cursor];if(!n)throw Error('Invalid story position');if(['say','choice','act'].includes(n.type)){if(n.type==='act'){const a=s.stage.actors[n.actor],b=s.stage.actors[n.targetActor];if(!a||n.targetActor&&!b)throw Error('Action characters must be on stage');if(ACTIONS[n.action]?.prop){a.prop=ACTIONS[n.action].prop;if(a.activity?.kind==='eat'||a.activity?.kind==='train'&&a.prop!=='sword')delete a.activity;}if(b){const order={'far-left':0,left:1,center:2,right:3,'far-right':4};a.facing=order[a.position]<order[b.position]?1:-1;b.facing=-a.facing;}}if(story.version===2&&n.type==='say'&&s.stage.actors[n.actor]&&n.emotion)s.stage.actors[n.actor].expression=n.emotion;return s;}
  if(n.type==='end'){s.ended=true;return s;}
  if(['scene','show','move','effect','react','camera','perform','sound'].includes(n.type))s.cues.push(n);
  if(n.type==='scene'){s.stage={background:n.asset,actors:{},...(story.version===2?{camera:{shot:'auto'}}:{})};}
@@ -152,7 +152,7 @@ export function settleStory(story,state){const s=structuredClone(state);s.cues=[
    a.rest='relaxed';
    if(n.kind==='walk')a.facing=n.direction==='right'?1:-1;
    else if(n.kind==='eat')a.prop='none';
-   else{a.prop='sword';const b=s.stage.actors[n.targetActor],order={left:0,center:1,right:2};a.facing=order[a.position]<order[b.position]?1:-1;b.facing=-a.facing;}
+   else{a.prop='sword';const b=s.stage.actors[n.targetActor],order={'far-left':0,left:1,center:2,right:3,'far-right':4};a.facing=order[a.position]<order[b.position]?1:-1;b.facing=-a.facing;}
   }
  }
  if(n.type==='scroll'){if(n.actor)s.stage.scroll=n.actor;else delete s.stage.scroll;}
@@ -162,11 +162,11 @@ export function settleStory(story,state){const s=structuredClone(state);s.cues=[
  if(n.type==='perform'){
   const a=s.stage.actors[n.actor],b=s.stage.actors[n.targetActor];
   if(ACTIONS[n.action]?.prop){a.prop=ACTIONS[n.action].prop;if(a.activity?.kind==='eat'||a.activity?.kind==='train'&&a.prop!=='sword')delete a.activity;}
-  if(b){const order={left:0,center:1,right:2};a.facing=order[a.position]<order[b.position]?1:-1;b.facing=-a.facing;}
+  if(b){const order={'far-left':0,left:1,center:2,right:3,'far-right':4};a.facing=order[a.position]<order[b.position]?1:-1;b.facing=-a.facing;}
  }
  if(n.type==='prop'&&s.stage.actors[n.actor])s.stage.actors[n.actor].prop=n.prop;
  if(n.type==='rest'&&s.stage.actors[n.actor])s.stage.actors[n.actor].rest=n.action;
- if(n.type==='move'){const a=s.stage.actors[n.actor];if(n.action==='exit')delete s.stage.actors[n.actor];else if(a){if(['left','center','right'].includes(n.action))a.position=n.action;if(n.action==='turn')a.facing*=-1;}}
+ if(n.type==='move'){const a=s.stage.actors[n.actor];if(n.action==='exit')delete s.stage.actors[n.actor];else if(a){if(['far-left','left','center','right','far-right'].includes(n.action))a.position=n.action;if(n.action==='turn')a.facing*=-1;}}
  for(const a of Object.values(s.stage.actors))if(a.activity?.targetActor&&!s.stage.actors[a.activity.targetActor])delete a.activity;
  if(n.type==='goto'){s.cursor=story.labels[n.target];continue;}
  if(n.type==='if'){const a=s.variables[n.variable],b=n.value;const yes=n.op==='=='?a===b:n.op==='!='?a!==b:n.op==='>'?a>b:n.op==='<'?a<b:n.op==='>='?a>=b:a<=b;s.cursor=story.labels[yes?n.target:n.otherwise];continue;}

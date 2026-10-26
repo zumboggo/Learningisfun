@@ -29,7 +29,7 @@ export default function StoryStage({pack,state,current,speaking,reduced,response
  const shot=performance?(requested==='action'?'action':'wide'):requested;
  const resolved=shot==='auto'?(speaker&&actors.length===1?'medium':'wide'):shot;
  const focus=camera?.actor||speaker||actors[0]?.[0];
- const positions:Record<string,number>={left:24,center:50,right:76};
+ const positions:Record<string,number>={'far-left':10,left:30,center:50,right:70,'far-right':90};
  const stageRef=useRef<HTMLDivElement>(null),worldRef=useRef<HTMLDivElement>(null);
  const [frame,setFrame]=useState({scale:1,x:0,y:0});
  const targetKey=actors.map(([id,a])=>`${id}:${a.position}:${a.rest}`).join('|');
@@ -48,7 +48,7 @@ export default function StoryStage({pack,state,current,speaking,reduced,response
  // eslint-disable-next-line react-hooks/exhaustive-deps
  },[resolved,focus,camera?.otherActor,targetKey,modern,performance?.actor,performance?.targetActor]);
  const duration=reduced||paused||performance?0:camera?.duration??.65;
- return <><div ref={stageRef} className={`story-stage ${modern?'story-stage-living':''}`} data-idle-paused={paused||hidden||reduced||state.ended||undefined} data-shot={resolved} data-camera-scale={frame.scale.toFixed(3)} data-actions={/^(act|perform|activity) /m.test(pack.script)||undefined} data-paired={actors.length===2&&/^(act|perform) /m.test(pack.script)||undefined}>
+ return <><div ref={stageRef} className={`story-stage ${modern?'story-stage-living':''}`} data-ensemble={actors.some(([,a])=>a.position==='far-left'||a.position==='far-right')||undefined} data-idle-paused={paused||hidden||reduced||state.ended||undefined} data-shot={resolved} data-camera-scale={frame.scale.toFixed(3)} data-actions={/^(act|perform|activity) /m.test(pack.script)||undefined} data-paired={actors.length===2&&/^(act|perform) /m.test(pack.script)||undefined}>
   <div className="story-camera" style={{transform:`translate(${frame.x}px, ${frame.y}px) scale(${frame.scale})`,transformOrigin:'0 0',transitionDuration:`${duration}s`} as CSSProperties}>
    <div ref={worldRef} className="story-world" style={{backgroundImage:!scrolling&&state.stage.background?`url("${pack.assets.backgrounds[state.stage.background]?.src}")`:undefined}}>
     {scrolling&&<div className="story-travel-backdrop" data-scroll={scrollRunning?'running':'paused'} aria-hidden="true" style={{animationPlayState:scrollRunning?'running':'paused',animationDirection:walker.activity!.direction==='left'?'reverse':'normal',animationDuration:walker.activity!.pace==='slow'?'48s':walker.activity!.pace==='brisk'?'24s':'34s'}}>{[0,1,2,3].map(i=><div key={i} style={{left:`${i*100}%`,transform:i%2?'scaleX(-1)':undefined,backgroundImage:`url("${pack.assets.backgrounds[state.stage.background!].src}")`}}/>)}</div>}
@@ -65,7 +65,7 @@ export default function StoryStage({pack,state,current,speaking,reduced,response
      const occupied=!!a.activity||!!a.prop&&a.prop!=='none'||!!a.rest||blocked.has(id)||!!allResponses[id];
      const turn=occupied?0:Math.max(-1,Math.min(1,gazeX/2.5));
      const listening=!!speaker&&speaker!==id&&!occupied&&a.gaze!=='front'&&a.gaze!=='away'&&a.gaze!=='down';
-     return <div data-actor={id} data-expression={a.expression} data-gaze={a.gaze||'auto'} data-impact={c.impact} style={{zIndex:performance?.actor===id?2:undefined}} key={id} className={`story-actor position-${a.position} ${c.rig?'has-rig':''} ${performance?.action==='mounted-charge'&&performance.actor===id?'is-mounted':''}`}>
+     return <div data-actor={id} data-rest={a.rest} data-expression={a.expression} data-gaze={a.gaze||'auto'} data-impact={c.impact} style={{zIndex:performance?.actor===id?2:undefined}} key={id} className={`story-actor position-${a.position} ${c.rig?'has-rig':''} ${performance?.action==='mounted-charge'&&performance.actor===id?'is-mounted':''}`}>
      <div className="story-facing" style={{transform:`scaleX(${a.facing})`}}>{performance?.action==='mounted-charge'&&performance.actor===id?<MountedActor character={c} emotion={a.expression} reduced={reduced} active={!!responses[id]} performanceKey={state.cursor}/>:c.rig?<PuppetActor turn={turn} listening={listening} idlePaused={paused||hidden||state.ended} activity={a.activity} activityPaused={!enabled(id)} gazeX={gazeX} gazeY={gazeY} character={c} actorId={id} performanceKey={training&&(id===training[0]||id===training[1].activity?.targetActor)?0:state.cursor} emotion={a.expression} talking={speaking&&id===speaker} gesture={id===speaker?current.gesture:undefined} rest={a.rest} prop={a.prop} response={allResponses[id]||current?.beatResponses?.[id]||(reduced&&current?.type==='act'?(id===current.actor?ACTIONS[current.action]?.actor:id===current.targetActor?ACTIONS[current.action]?.target:undefined):undefined)} reduced={reduced}/>:<img src={asset?.src} alt={`${c.name} — ${a.expression}`} onError={e=>{e.currentTarget.style.opacity='0';}}/>}</div>
      {!modern&&<span>{c.name}</span>}
     </div>;})}
