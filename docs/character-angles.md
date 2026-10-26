@@ -43,3 +43,9 @@ The current cast library contains the new assets. Existing released builders exp
 ## Review
 
 Open `#/game/acting-angles` for two-character comparisons, cast swapping, all twelve cues, both directions, framing, pause and reduced motion. Open `#/game/cast` for all cast members; the character builder also previews every angle before adding a recipe. Inspect expressions, hair, glasses, beard, hand alignment and foot contact on phone and desktop. Run orientation/replay, rig-budget, ZIP round-trip and interruption checks before publishing. Synchronize shared files to Chunky Chinese with `game:sync`, then run `game:parity`; retain its approved local character overlays.
+
+## Host-owned vector identities (2026-10-27)
+
+`CartoonActor.angleDesigns` accepts typed `VectorAngleDesign` data for each non-front view: distinct face, hair, ear and shadow paths, eye/mouth anchors, iris and highlight colors. The canonical `AngleFace` owns expressions, gaze, mouth animation and mirroring; hosts supply artwork data, not another renderer. Valid embedded illustrated views take precedence. The approved front renderer stays unchanged. Chunky Chinese uses this extension through its sync overlays for Weed Option A and young Kvothe (`chinese-angle-designs-v2.ts`). Jonathan remains the ordinary adult/robe vector recipe. Props and contact keep front geometry.
+
+Explicit reactions now retain their motion clock when speech starts or pauses. Ordinary dialogue cursor changes no longer cancel a running talking gesture. Intentional reaction changes still blend from the current pose.

@@ -1,7 +1,7 @@
 import {useWalkClock,walkingPose,eatingPose} from './activity-motion';
 import type {StoryActivity} from '../../../functions/learning-content/src/story-engine.js';
 import {characterAngle,shoulderOffset,type CharacterOrientation} from './character-angles';
-import AngleFace from './AngleFace';
+import AngleFace,{type VectorAngleDesign} from './AngleFace';
 import {ACTING_PROFILES,performanceDuration,performancePose} from './acting-motion';
 import KevinFace from './KevinFace';
 import RefinedFace from './RefinedFace';
@@ -9,13 +9,13 @@ import {armGeometry,legGeometry,FACE_PATHS,heldPropPose} from './character-geome
 import {useEffect,useId,useRef,useState} from 'react';
 import {AUTO_ACTING,POSES} from '../../../functions/learning-content/src/acting-library.js';
 
-type Props={orientation?:CharacterOrientation;actingStyle?:'classic'|'polished';turn?:number;listening?:boolean;idlePaused?:boolean;activity?:StoryActivity;activityPaused?:boolean;gazeX?:number;gazeY?:number;character:any;emotion?:string;talking?:boolean;gesture?:string;rest?:string;prop?:string;response?:string;reduced?:boolean;actorId?:string;performanceKey?:number;experiment?:'current'|'polished'|'hybrid';headImage?:string;portrait?:boolean;rider?:boolean};
+type Props={angleDesigns?:Partial<Record<'three-quarter'|'profile',VectorAngleDesign>>;orientation?:CharacterOrientation;actingStyle?:'classic'|'polished';turn?:number;listening?:boolean;idlePaused?:boolean;activity?:StoryActivity;activityPaused?:boolean;gazeX?:number;gazeY?:number;character:any;emotion?:string;talking?:boolean;gesture?:string;rest?:string;prop?:string;response?:string;reduced?:boolean;actorId?:string;performanceKey?:number;experiment?:'current'|'polished'|'hybrid';headImage?:string;portrait?:boolean;rider?:boolean};
 export function shade(hex:string,amount:number){const target=amount<0?0:255;return '#'+[1,3,5].map(i=>Math.round(parseInt(hex.slice(i,i+2),16)*(1-Math.abs(amount))+target*Math.abs(amount)).toString(16).padStart(2,'0')).join('');}
 const joints=['bodyDrop','leftFootX','rightFootX','head','torso','leftUpperArm','leftForearm','rightUpperArm','rightForearm','leftHand','rightHand'];
 const smooth=(t:number)=>{t=Math.max(0,Math.min(1,t));return t*t*(3-2*t);};
 /** One finite gesture: preparation, emphasis, hold, then a quiet return. */
 export function gestureEnvelope(ms:number){if(ms<180)return -.08*smooth(ms/180);if(ms<650)return -.08+1.08*smooth((ms-180)/470);if(ms<1150)return 1;if(ms<1900)return 1-smooth((ms-1150)/750);return 0;}
-export default function CartoonActor({character,orientation='auto',actingStyle='polished',activity,activityPaused=false,emotion='neutral',talking=false,gesture,rest,prop,response,reduced=false,actorId='Lin',performanceKey=0,turn=0,listening=false,idlePaused=false,gazeX=0,gazeY=0,experiment,headImage,portrait=false,rider=false}:Props){
+export default function CartoonActor({character,angleDesigns,orientation='auto',actingStyle='polished',activity,activityPaused=false,emotion='neutral',talking=false,gesture,rest,prop,response,reduced=false,actorId='Lin',performanceKey=0,turn=0,listening=false,idlePaused=false,gazeX=0,gazeY=0,experiment,headImage,portrait=false,rider=false}:Props){
  const occupied=!!rider||!!activity||!!prop&&prop!=='none'||!!response&&!ACTING_PROFILES[response]||['seated','lying','reclining','kneeling','crouched','sheltered'].includes(rest||'');
  const view=characterAngle(character.rig,orientation,turn,occupied);
  const yaw=view.angle==='front'?(orientation==='auto'&&!occupied?Math.max(-1,Math.min(1,turn)):0):view.direction;
@@ -42,6 +42,8 @@ export default function CartoonActor({character,orientation='auto',actingStyle='
  const current=useRef(heldPose);
  const pausedRef=useRef(idlePaused);pausedRef.current=idlePaused;
  const lastPerformance=useRef<{response?:string;emotion?:string;talking?:boolean;gesture?:string;performanceKey?:number}>({});
+ // Audio changes and ordinary text cursors do not restart an explicit reaction.
+ const motionTalking=response?false:talking,responseKey=response?performanceKey:0;
  const phase=[...actorId].reduce((a,c)=>a*31+c.charCodeAt(0),0)>>>0;
  useEffect(()=>{
  const previous=lastPerformance.current;lastPerformance.current={response,emotion,talking,gesture,performanceKey};
@@ -62,7 +64,7 @@ export default function CartoonActor({character,orientation='auto',actingStyle='
   if(elapsed<(shouldPerform?performanceDuration(acting)*1.06:420))frame=requestAnimationFrame(tick);
  };
  frame=requestAnimationFrame(tick);return()=>cancelAnimationFrame(frame);
- },[talking,gesture,response,rest,prop,emotion,reduced,performanceKey,activity?.kind,listeningState,actingStyle]);
+ },[motionTalking,gesture,response,rest,prop,emotion,reduced,responseKey,activity?.kind,listeningState,actingStyle]);
 
  useEffect(()=>{if(reduced||idlePaused){setBlink(false);return;}let timer:ReturnType<typeof setTimeout>,closed:ReturnType<typeof setTimeout>,cycle=0;const schedule=()=>{timer=setTimeout(()=>{setBlink(true);closed=setTimeout(()=>{setBlink(false);cycle++;schedule();},115);},4200+((phase+cycle*3)%7)*330);};schedule();return()=>{clearTimeout(timer);clearTimeout(closed);};},[phase,reduced,idlePaused]);
  useEffect(()=>{setMouth(0);if(!vocal||reduced||idlePaused)return;let timer:ReturnType<typeof setTimeout>,step=0;const shapes=[1,0,2,1,0,0,1,2,0],delays=[170,130,160,180,240,390,160,170,360];const tick=()=>{setMouth(shapes[step%shapes.length]);timer=setTimeout(tick,delays[step++%delays.length]);};timer=setTimeout(tick,180);return()=>clearTimeout(timer);},[vocal,reduced,performanceKey,idlePaused]);
@@ -144,7 +146,7 @@ export default function CartoonActor({character,orientation='auto',actingStyle='
  <path d="M 86 239 L 96 249 M 153 241 L 145 250 M 91 278 L 99 283 M 147 307 L 138 316 M 108 341 L 116 343" stroke={shade(shirtBase,-.42)} strokeWidth="1.4" opacity=".4"/>
  </g>}
  <g className="conversation-head" style={turnStyle(0,0,280)}><g ref={faceRef} data-emotion-face={emotion} transform={`rotate(${tilt*.6} 120 176)`}>
- {view.angle!=='front'?<AngleFace character={character} angle={view.angle} direction={view.direction} emotion={emotion} blink={blink} mouth={mouth} gazeX={gazeX} gazeY={gazeY}/>:<>{kevin?<KevinFace skin={skinBase} hair={hairBase} emotion={emotion} blink={blink} mouth={mouth} startled={startled} firm={firm} worried={worried} gazeX={gazeX} gazeY={gazeY}/>:refined?<RefinedFace turn={yaw} gazeX={gazeX} gazeY={gazeY} face={appearance.face} hairStyle={hairstyle} skin={skin} hair={hair} skinBase={skinBase} hairBase={hairBase} id={gradientId} emotion={emotion} blink={blink} mouth={mouth} startled={startled} laughing={laughing} firm={firm} worried={worried} reduced={reduced} tilt={tilt}/>:<>{illustrated?<image href={headSource} x={headFrame[0]} y={headFrame[1]} width={headFrame[2]} height={headFrame[3]} preserveAspectRatio="none" onError={()=>setFailedHead(headSource)} data-illustrated-head="true"/>:<>{hairstyle==='bun'&&<g fill={hair} stroke={ink} strokeWidth="2"><ellipse cx="158" cy="146" rx="19" ry="23"/><path d="M 149 128 Q 171 132 166 151 M 147 137 Q 163 141 158 162" fill="none" stroke={shade(hairBase,-.25)}/></g>}{hairstyle==='long'&&<path d="M 87 74 Q 55 102 66 175 Q 64 195 55 208 Q 92 210 98 169 L 151 169 Q 160 192 175 197 Q 163 159 168 118 Q 167 69 138 61 Z" fill={hair} stroke={ink} strokeWidth="2.5"/>}
+ {view.angle!=='front'?<AngleFace design={angleDesigns?.[view.angle]} character={character} angle={view.angle} direction={view.direction} emotion={emotion} blink={blink} mouth={mouth} gazeX={gazeX} gazeY={gazeY}/>:<>{kevin?<KevinFace skin={skinBase} hair={hairBase} emotion={emotion} blink={blink} mouth={mouth} startled={startled} firm={firm} worried={worried} gazeX={gazeX} gazeY={gazeY}/>:refined?<RefinedFace turn={yaw} gazeX={gazeX} gazeY={gazeY} face={appearance.face} hairStyle={hairstyle} skin={skin} hair={hair} skinBase={skinBase} hairBase={hairBase} id={gradientId} emotion={emotion} blink={blink} mouth={mouth} startled={startled} laughing={laughing} firm={firm} worried={worried} reduced={reduced} tilt={tilt}/>:<>{illustrated?<image href={headSource} x={headFrame[0]} y={headFrame[1]} width={headFrame[2]} height={headFrame[3]} preserveAspectRatio="none" onError={()=>setFailedHead(headSource)} data-illustrated-head="true"/>:<>{hairstyle==='bun'&&<g fill={hair} stroke={ink} strokeWidth="2"><ellipse cx="158" cy="146" rx="19" ry="23"/><path d="M 149 128 Q 171 132 166 151 M 147 137 Q 163 141 158 162" fill="none" stroke={shade(hairBase,-.25)}/></g>}{hairstyle==='long'&&<path d="M 87 74 Q 55 102 66 175 Q 64 195 55 208 Q 92 210 98 169 L 151 169 Q 160 192 175 197 Q 163 159 168 118 Q 167 69 138 61 Z" fill={hair} stroke={ink} strokeWidth="2.5"/>}
  {hairstyle==='bob'&&<path d="M 84 69 Q 63 90 70 148 L 66 164 Q 88 178 110 164 L 143 164 Q 162 172 174 158 Q 164 138 168 107 Q 166 64 138 57 Z" fill={hair} stroke={ink} strokeWidth="2.5"/>}
  <path d={hairstyle==='tousled'?"M 78 120 Q 71 110 74 99 L 68 101 Q 68 89 78 80 L 70 79 Q 77 68 92 65 L 87 58 Q 108 61 118 48 Q 127 52 130 58 L 142 52 Q 151 60 151 66 L 163 65 L 161 76 Q 171 83 166 96 L 171 106 L 162 105 L 157 130 L 84 132 Z":['bun','swept'].includes(hairstyle)?"M 78 122 Q 68 96 80 78 Q 94 55 123 57 Q 148 53 163 76 Q 171 98 160 125 L 151 144 L 87 143 Z":hairstyle==='cropped'?"M 78 115 Q 70 78 89 67 Q 112 52 141 61 Q 164 66 163 108 L 155 128 L 85 128 Z":manga?"M 79 110 L 72 101 L 75 84 L 69 90 Q 72 62 92 55 L 87 49 Q 112 48 121 41 Q 143 43 154 58 L 163 55 L 162 68 Q 175 83 162 122 L 157 140 L 151 132 L 91 137 L 82 129 Z":"M 79 103 Q 67 61 100 48 Q 125 35 148 54 Q 173 66 162 112 L 151 153 L 87 151 Z"} fill={hair} stroke={ink} strokeWidth="2.5"/>
  <ellipse cx="81" cy="121" rx="7" ry="11" fill={skin} stroke={ink} strokeWidth="2"/><ellipse cx="159" cy="121" rx="7" ry="11" fill={skin} stroke={ink} strokeWidth="2"/>

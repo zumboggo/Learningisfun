@@ -56,3 +56,18 @@ it('round-trips angle artwork and anchors through the normal ZIP exporter',async
  const pack=JSON.parse(readFileSync('public/stories/animated/kevin-starter.json','utf8'));pack.assets.characters.Hepting=hepting;
  const blob=await exportStory(pack);const imported=await importStory(blob as File);expect(imported).toEqual(pack);expect(packageContentBytes(imported)).toBeLessThan(5000000);
 });
+it('preserves a custom vector silhouette and anchors in either direction',()=>{
+ const design={id:'test-v2',skin:'#dcaf8e',hair:'#282b2a',ink:'#202c32',iris:'#946b37',outline:'M90 90 L160 90 L170 140 L120 170Z',hairPath:'M80 90 L150 55 L160 95Z',hairLight:'M90 80 L140 65',hairHighlight:'#626366',ear:'M100 120 L110 140Z',shadow:'M90 100 L100 150Z',nearEye:[140,120] as [number,number],mouth:[150,150] as [number,number]};
+ const {container,rerender}=render(<CartoonActor character={kevin} angleDesigns={{profile:design}} orientation="profile" reduced/>);
+ expect(container.querySelector('[data-vector-design]')).toHaveAttribute('data-vector-design','test-v2');expect(container.querySelector(`path[d="${design.outline}"]`)).not.toBeNull();expect(container.querySelectorAll('[data-angle-eye]')).toHaveLength(1);
+ rerender(<CartoonActor character={kevin} angleDesigns={{'three-quarter':design}} turn={-1} reduced/>);expect(container.querySelector('[data-angle-face]')).toHaveAttribute('transform','translate(240 0) scale(-1 1)');
+});
+it('does not interrupt a reaction for speech start/pause or ordinary dialogue cursor changes',()=>{
+ vi.useFakeTimers();const renderActor=(key:number,talking:boolean)=><CartoonActor character={kevin} response="explain" performanceKey={key} talking={talking}/>;
+ const {container,rerender}=render(renderActor(1,false));act(()=>vi.advanceTimersByTime(450));
+ const arm=()=>container.querySelector('[data-arm="right"]')!.innerHTML;
+ const before=arm();rerender(renderActor(1,true));act(()=>vi.advanceTimersByTime(160));expect(arm()).not.toBe(before);
+ // A speaking gesture uses cursor-independent performance identity.
+ rerender(<CartoonActor character={kevin} gesture="explain" talking performanceKey={2}/>);act(()=>vi.advanceTimersByTime(450));
+ const mid=arm();rerender(<CartoonActor character={kevin} gesture="explain" talking performanceKey={3}/>);act(()=>vi.advanceTimersByTime(160));expect(arm()).not.toBe(mid);
+});
