@@ -79,5 +79,28 @@
     "motion": "Locally rendered restrained camera push over a still illustration; no synthetic actor performance.",
     "paidVideoGenerationUSD": 0,
     "generatedVideoNotSubmitted": "Current Replicate page did not establish a maximum price within $0.15 for exact settings."
+  },
+  "revision20261026": {
+    "historicalImages": [
+      {
+        "file": "hose-archive.jpg",
+        "archive": "https://crdl.usg.edu/record/aar_amg_206443",
+        "sha256": "2fdecf277d403d2bbb61d1b53e9310d57780159116b55c3633f62806faafe6af",
+        "alterations": "None; original supplied web-resolution JPEG; displayed uncropped with object-fit contain.",
+        "rights": "Copyright Alabama Department of Archives and History; Alabama Media Group Collection / Birmingham News. Used as evidence for educational critique, not claimed openly licensed."
+      },
+      {
+        "file": "dog-archive.jpg",
+        "archive": "https://crdl.usg.edu/record/aar_amg_14478",
+        "sha256": "e2570150e572ebb782e904b809950a35e8dcdbdbaa65cb5ac1390a77622d6df1",
+        "alterations": "None; original supplied web-resolution JPEG; displayed uncropped with object-fit contain.",
+        "rights": "Copyright Alabama Department of Archives and History; Alabama Media Group Collection / Birmingham News. Used as evidence for educational critique, not claimed openly licensed."
+      }
+    ],
+    "background": "Original simplified vector meeting room; source meeting-room-v2.svg; not a documentary likeness.",
+    "newVideoGenerationUSD": 0,
+    "opening": "Existing approved v2 clip reused.",
+    "crawl": "Two paragraphs, 27 seconds, after taxi per the requested sequence.",
+    "verification": "Eight choices, 24 option responses, all 16 callback states and replay checked; desktop and 390px phone photo layout inspected."
   }
 }

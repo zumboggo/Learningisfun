@@ -17,3 +17,5 @@
 @keyframes story-context-crawl{from{transform:rotateX(17deg) translateY(38dvh)}to{transform:rotateX(17deg) translateY(-110%)}}
 @media(max-width:600px){.story-interlude{padding:12px 14px 20px;gap:10px}.interlude-film video{max-height:38dvh}.interlude-description{font-size:13px}.crawl-text{width:90%;font-size:22px;text-align:left}.crawl-viewport{min-height:240px}.interlude-actions button{font-size:13px;padding:9px 12px}}
 @media(prefers-reduced-motion:reduce){.crawl-text{animation:none;transform:none}.crawl-viewport{overflow:auto;perspective:none;mask-image:none}}
+
+.interlude-archive{margin:0 auto;max-width:880px}.interlude-archive img{display:block;width:100%;max-height:52vh;object-fit:contain;background:#171b20}.interlude-archive figcaption{font-size:.94rem;line-height:1.5;margin:12px 0}.archive-credit{font-size:.78rem;line-height:1.4;opacity:.8}.interlude-photo{overflow-y:auto}.interlude-photo>button{margin:16px 0}.interlude-photo h2{margin:8px 0 14px}

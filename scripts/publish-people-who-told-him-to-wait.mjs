@@ -21,11 +21,17 @@ if(process.argv.includes('--preflight')){const assignedText=await call({action:'
 const pack=JSON.parse(await readFile(`public/stories/animated/${id}/episode.json`,'utf8'));
 const {errors}=validatePackage(pack);if(errors.length)throw Error(JSON.stringify(errors));if(packageBytes(pack)>5000000)throw Error('Package too large');
 let draft=before.drafts.find(d=>d.id===id);
-if(draft){draft=await call({action:'animatedReadDraft',id});if(JSON.stringify(draft.pack)!==JSON.stringify(pack))throw Error('Existing draft differs; preserve teacher changes');}
+if(draft){draft=await call({action:'animatedReadDraft',id});if(JSON.stringify(draft.pack)!==JSON.stringify(pack)){if(draft.revision!==1||draft.fileId!=='cf93b38f1cbf9612f66d4c1c6860f37a')throw Error('Unexpected teacher draft; preserve changes');draft=await call({action:'animatedSaveDraft',id,revision:draft.revision,pack});}}
 else draft=await call({action:'animatedSaveDraft',id,revision:0,pack});
 const version=await call({action:'animatedPublish',id,revision:draft.revision});
-if(weekly.length>1||weekly.some(a=>a.versionId!==version.versionId))throw Error('Conflicting weekly assignment');
-await call({action:'animatedAssign',versionId:version.versionId,classId:cls.$id,date,releaseAt,assignmentId:weekly[0]?.assignmentId});
+if(weekly.length>1||weekly.some(a=>a.date!==date))throw Error('Conflicting weekly assignment');
+let preservedPriorAssignment;
+try{await call({action:'animatedAssign',versionId:version.versionId,classId:cls.$id,date,releaseAt,assignmentId:weekly[0]?.assignmentId});}
+catch(error){if(!/Students have started this assignment/.test(error.message))throw error;
+ // Publish a separate current assignment; never rewrite a started version or its attempts.
+ await call({action:'animatedAssign',versionId:version.versionId,classId:cls.$id,date,releaseAt});
+ await call({action:'animatedArchiveAssignment',assignmentId:weekly[0].assignmentId,archived:true});preservedPriorAssignment=weekly[0].assignmentId;
+}
 const library=await call({action:'animatedLibrary'}),assignments=library.assignments.filter(a=>a.id===id&&a.classId===cls.$id&&a.date===date);
 if(assignments.length!==1)throw Error('Expected one assignment');const a=assignments[0];
 if(a.versionId!==version.versionId||Date.parse(a.releaseAt)!==Date.parse(releaseAt))throw Error('Version/release mismatch');
@@ -35,5 +41,5 @@ const record=await db.getDocument({databaseId,collectionId:'episode_records',doc
 const raw=await new Storage(admin).getFileDownload({bucketId:'animated-episodes',fileId:published.fileId});
 if(JSON.stringify(raw?.format?raw:JSON.parse(Buffer.from(raw).toString()))!==JSON.stringify(pack))throw Error('Published bytes differ');
 let studentReadVerified=false;const active=members.documents.find(m=>!m.expiresAt||Date.parse(m.expiresAt)>Date.now());if(active&&Date.parse(a.releaseAt)<=Date.now()){const token=await users.createJWT({userId:active.userId,duration:60});const sf=new Functions(new Client().setEndpoint(process.env.APPWRITE_ENDPOINT).setProject(process.env.APPWRITE_PROJECT_ID).setJWT(token.jwt));const e=await sf.createExecution({functionId:'learning-content',body:JSON.stringify({action:'animatedRead',assignmentId:a.assignmentId})});const r=JSON.parse(e.responseBody||'{}');if(e.responseStatusCode>=400||r.preview||JSON.stringify(r.pack)!==JSON.stringify(pack))throw Error('Student read failed');studentReadVerified=true;}
-const receipt={studentReadVerified,id,title:pack.title,status:'published-assigned',version:version.version,versionId:version.versionId,bytes:packageBytes(pack),activeMembershipsVerified:true,liveTeacherReadVerified:true,publishedBytesVerified:true,studentAccess:'Available from October 23 at 08:00 Asia/Shanghai. No student attempts created.',studioUrl:'https://zumboggo.github.io/Learningisfun/#/game/create?draft='+id,previewUrl:'https://zumboggo.github.io/Learningisfun/#/game/story-preview/'+id,assignments:[{classId:cls.$id,className:cls.name,courseName:cls.courseName,date:a.date,releaseAt:a.releaseAt,assignmentId:a.assignmentId,playUrl:'https://zumboggo.github.io/Learningisfun/#/game/play/'+a.assignmentId}]};
+const receipt={preservedPriorAssignment,studentReadVerified,id,title:pack.title,status:'published-assigned',version:version.version,versionId:version.versionId,bytes:packageBytes(pack),activeMembershipsVerified:true,liveTeacherReadVerified:true,publishedBytesVerified:true,studentAccess:'Available from October 23 at 08:00 Asia/Shanghai. No student attempts created.',studioUrl:'https://zumboggo.github.io/Learningisfun/#/game/create?draft='+id,previewUrl:'https://zumboggo.github.io/Learningisfun/#/game/story-preview/'+id,assignments:[{classId:cls.$id,className:cls.name,courseName:cls.courseName,date:a.date,releaseAt:a.releaseAt,assignmentId:a.assignmentId,playUrl:'https://zumboggo.github.io/Learningisfun/#/game/play/'+a.assignmentId}]};
 await writeFile(`stories/animated/${id}/publication.json`,JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt,null,2));

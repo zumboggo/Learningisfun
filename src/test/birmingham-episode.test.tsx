@@ -9,16 +9,21 @@ import StoryInterlude from '@/components/animated/StoryInterlude';
 import StoryPlayer from '@/components/animated/StoryPlayer';
 const pack:StoryPackage=JSON.parse(readFileSync('public/stories/animated/the-people-who-told-him-to-wait/episode.json','utf8'));
 afterEach(()=>{cleanup();vi.restoreAllMocks();});
-it('validates every route, preserves both callbacks and replays legal progress',()=>{
+it('covers all eight decisions and callback states, preserves chronology, and replays progress',()=>{
  const {story,errors}=validatePackage(pack);expect(errors).toEqual([]);expect(packageContentBytes(pack)).toBeLessThan(5000000);
- const interludes=storyInterludeCursors(story),taxi=taxiCutsceneCursors(story);let routes=0;
+ const interludes=storyInterludeCursors(story),taxi=taxiCutsceneCursors(story),seen=new Set<string>(),options=new Set<string>();let endings=0;
  const visit=(state:StoryState,steps:(string|null)[],events:string[])=>{
-  if(state.ended){routes++;expect(replayStory(story,steps,13)).toEqual(state);expect(events).toEqual(['video','arrival','departure','crawl']);const text=state.history.map(h=>h.text).join(' ');expect(text).toContain('I can finally answer');expect(text).toContain('if someone understands');expect(text.includes('We both began')).toBe(state.variables.StartedWithWait);expect(text.includes('risk you raised stays')).toBe(state.variables.AskedAboutRisk);return;}
+  const key=JSON.stringify([state.cursor,state.variables,state.ended]);if(seen.has(key))return;seen.add(key);
+  if(state.ended){endings++;expect(replayStory(story,steps,13)).toEqual(state);expect(events).toEqual(['video','arrival','departure','crawl','photo','photo']);const text=state.history.map(h=>h.text).join(' ');expect(text).toContain('My job was small');expect(text).toContain('what do we still owe');expect(text.includes('advice I gave on arrival')).toBe(state.variables.UrgedWait);expect(text.includes('choice made before the arrests')).toBe(state.variables.AskedConsent);expect(text.includes('question back to the people facing')).toBe(state.variables.ProtectedPeople);expect(text.includes('consultation I asked for')).toBe(state.variables.DemandedConsultation);return;}
   const node=story.nodes[state.cursor],nextEvents=[...events];if(interludes[state.cursor])nextEvents.push(interludes[state.cursor].kind);if(taxi[state.cursor])nextEvents.push(taxi[state.cursor]!);
-  for(const option of node.type==='choice'?node.options.map((o:{id:string})=>o.id):[null])visit(advanceStory(story,state,option),[...steps,option],nextEvents);
+  for(const option of node.type==='choice'?node.options.map((o:{id:string})=>o.id):[null]){if(option)options.add(state.cursor+':'+option);visit(advanceStory(story,state,option),[...steps,option],nextEvents);}
  };
- visit(settleStory(story,initialStoryState(story,13)),[],[]);expect(routes).toBe(729);expect(quizScore(pack.quiz,pack.quiz.map(q=>q.answer))).toBe(100);
+ visit(settleStory(story,initialStoryState(story,13)),[],[]);expect(options.size).toBe(24);expect(endings).toBe(16);expect(quizScore(pack.quiz,pack.quiz.map(q=>q.answer))).toBe(100);
 },30000);
+it('shows complete attributed photographs and a usable failure fallback',()=>{
+ const next=vi.fn();render(<StoryInterlude media={STORY_INTERLUDES.birmingham_dog_v2} onContinue={next}/>);
+ expect(screen.getByRole('img')).toHaveAttribute('alt',expect.stringContaining('Walter Gadsden'));expect(screen.getByRole('link')).toHaveAttribute('href','https://crdl.usg.edu/record/aar_amg_14478');fireEvent.error(screen.getByRole('img'));expect(screen.getByRole('status')).toHaveTextContent('unavailable');expect(screen.getByText(/Walter Gadsden recoils/)).toBeVisible();fireEvent.click(screen.getByText('Continue to the story →'));expect(next).toHaveBeenCalledOnce();
+});
 it('opens with archive media only after deliberate playback, with one advance on end/skip',()=>{
  vi.spyOn(HTMLMediaElement.prototype,'pause').mockImplementation(()=>{});const play=vi.spyOn(HTMLMediaElement.prototype,'play').mockResolvedValue();const next=vi.fn();
  render(<StoryInterlude media={STORY_INTERLUDES.birmingham_opening_v1} onContinue={next}/>);
