@@ -9,9 +9,10 @@ for(const [path,data]of outputs){const url=new URL(path,root);if(process.argv.in
 console.log('Lin rig and acting reference are current.');
 // Versioned snapshots: the renderer shares motion; packs describe identity.
 const cast=JSON.parse(await readFile(new URL('stories/characters/cast.json',root),'utf8'));
-for(const {id,name,version,palette,appearance,provenance,fallback,finish,headAsset} of cast){
+for(const {id,name,version,palette,appearance,provenance,fallback,finish,headAsset,viewAssets} of cast){
  const head=headAsset?{...await image(headAsset.path),frame:headAsset.frame}:undefined;
- const cartoon=createCharacter({id,name,version,palette,appearance,provenance,finish,head});
+ const views=viewAssets?Object.fromEntries(await Promise.all(Object.entries(viewAssets).map(async([angle,v])=>[angle,{...await image(v.path),frame:v.frame,anchors:v.anchors}]))):undefined;
+ const cartoon=createCharacter({id,name,version,palette,appearance,provenance,finish,head,views});
  cartoon.expressions=fallback?{neutral:await image(fallback)}:{};
  const path=new URL(`public/stories/animated/rigs/${id.toLowerCase()}-cartoon.json`,root),data=JSON.stringify(cartoon,null,2)+'\n';
  if(process.argv.includes('--check')){if(await readFile(path,'utf8')!==data)throw Error('Stale cartoon '+id);}else await writeFile(path,data);

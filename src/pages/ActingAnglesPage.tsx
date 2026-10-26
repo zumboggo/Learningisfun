@@ -1,0 +1,32 @@
+import {useEffect,useState} from 'react';
+import {Link} from 'react-router-dom';
+import StoryStage from '../components/animated/StoryStage';
+import {ACTING_PROFILES} from '../components/animated/acting-motion';
+import type {CharacterOrientation} from '../components/animated/character-angles';
+import type {StoryPackage,StoryState} from '../../functions/learning-content/src/story-engine.js';
+import '../components/animated/story-player.css';
+import './animation-lab.css';
+const lines:Record<string,string>={explain:'I tried a different opening. Let me show you.',reassure:'You can keep your voice. We will work on it together.',question:'Which part made you change your mind?',insist:'That sentence matters. I want to keep it.',hesitant:'I thought it made sense… until I read it aloud.',nod:'All right. I see what you mean.','shake-head':'No. That is not quite what I meant.',shrug:'Maybe. I am still deciding.',laugh:'We have been arguing about the title all this time.',sigh:'Let me try that again.',disappointed:'I hoped you would understand.','cross-arms':'I am listening. But I am not convinced yet.'};
+export default function ActingAnglesPage(){
+ const [cast,setCast]=useState<StoryPackage['assets']['characters']>({}),[error,setError]=useState(''),[lead,setLead]=useState('Kevin'),[partner,setPartner]=useState('Hepting');
+ const [angle,setAngle]=useState<CharacterOrientation>('three-quarter'),[cue,setCue]=useState('explain'),[run,setRun]=useState(0),[playing,setPlaying]=useState(false),[facing,setFacing]=useState(1),[shot,setShot]=useState('two'),[paused,setPaused]=useState(false),[still,setStill]=useState(false),[systemReduced,setSystemReduced]=useState(false);
+ useEffect(()=>{const c=new AbortController();(async()=>{const r=await fetch(import.meta.env.BASE_URL+'stories/animated/rigs/catalog.json',{signal:c.signal});if(!r.ok)throw Error('Cast catalog could not load.');const entries=await r.json();const pairs=await Promise.all(entries.map(async({id}:{id:string})=>{const r=await fetch(import.meta.env.BASE_URL+`stories/animated/rigs/${id.toLowerCase()}-cartoon.json`,{signal:c.signal});if(!r.ok)throw Error('Character could not load: '+id);return [id,await r.json()]}));setCast(Object.fromEntries(pairs));})().catch(e=>{if(e.name!=='AbortError')setError(e.message)});return()=>c.abort()},[]);
+ useEffect(()=>{const m=window.matchMedia('(prefers-reduced-motion: reduce)'),change=()=>setSystemReduced(m.matches);change();m.addEventListener('change',change);return()=>m.removeEventListener('change',change)},[]);
+ useEffect(()=>{if(!playing||paused)return;const t=setTimeout(()=>setPlaying(false),3800);return()=>clearTimeout(t)},[playing,run,paused]);
+ const emotion=cue==='hesitant'?'worried':cue==='disappointed'?'disappointed':cue==='laugh'?'laughing':cue==='reassure'?'relieved':'neutral';
+ const pack={format:2,title:'Conversation rehearsal',script:'story 2',assets:{backgrounds:{},characters:cast}} as StoryPackage;
+ const state:StoryState={cursor:run,variables:{},stage:{background:null,camera:{shot,actor:lead,otherActor:partner},actors:{[lead]:{expression:emotion,position:'left',facing,orientation:angle},[partner]:{expression:'curious',position:'right',facing:-1,orientation:'auto'}}},history:[],events:[],seed:1,ended:false};
+ return <main className="animation-lab angles-rehearsal"><header className="lab-header"><Link to="/game/acting-demo">← Acting library</Link><span className="lab-kicker">CHARACTER ANGLES / CONVERSATION</span><h1>A turn. A pause. A little more life.</h1><p>Same characters, same words. Compare the earlier gesture timing with the new performances, and try each angle.</p></header>
+ <section className="lab-controls"><div className="lab-play-row">
+ <label>Speaker<select aria-label="Speaker" value={lead} onChange={e=>{setLead(e.target.value);if(e.target.value===partner)setPartner(lead)}}>{Object.entries(cast).map(([id,c])=><option key={id} value={id}>{c.name}</option>)}</select></label>
+ <label>Listener<select aria-label="Listener" value={partner} onChange={e=>setPartner(e.target.value)}>{Object.entries(cast).filter(([id])=>id!==lead).map(([id,c])=><option key={id} value={id}>{c.name}</option>)}</select></label>
+ <label>Angle<select aria-label="Angle" value={angle} onChange={e=>setAngle(e.target.value as CharacterOrientation)}>{['auto','front','three-quarter','profile'].map(v=><option key={v}>{v}</option>)}</select></label>
+ <label>Facing<select aria-label="Facing" value={facing} onChange={e=>setFacing(Number(e.target.value))}><option value="1">Right</option><option value="-1">Left</option></select></label>
+ <label>Framing<select aria-label="Framing" value={shot} onChange={e=>setShot(e.target.value)}><option value="two">Conversation</option><option value="close">Close-up</option><option value="wide">Full figure</option></select></label>
+ <label>Performance<select aria-label="Performance" value={cue} onChange={e=>{setCue(e.target.value);setRun(r=>r+1);setPlaying(true)}}>{Object.keys(ACTING_PROFILES).map(v=><option key={v}>{v}</option>)}</select></label>
+ <button className="lab-play" onClick={()=>{setPlaying(true);setPaused(false);setRun(r=>r+1)}}>Replay performance</button><button onClick={()=>setPaused(!paused)}>{paused?'Resume':'Pause'}</button><label><input type="checkbox" checked={still||systemReduced} disabled={systemReduced} onChange={e=>setStill(e.target.checked)}/> Reduced motion</label>
+ </div></section>
+ {error&&<p role="alert">{error}</p>}{!cast[lead]&&!error&&<p role="status">Loading the cast…</p>}
+ {cast[lead]&&cast[partner]&&<div className="angles-comparison">{(['classic','polished'] as const).map(style=><section key={style} className="animated-story story-modern"><h2>{style==='classic'?'Earlier timing':'New acting'}</h2><StoryStage key={`${lead}-${partner}`} pack={pack} state={state} current={{type:'say',actor:lead,text:lines[cue],gesture:cue}} speaking={playing} reduced={still||systemReduced} responses={playing||still||systemReduced?{[lead]:cue}:{}} motionPaused={paused} hideMotionControl actingStyle={style}/><div className="story-dialogue"><strong>{cast[lead].name}</strong><p>{lines[cue]}</p></div></section>)}</div>}
+ <p className="lab-motion-note">This unassigned rehearsal records no student results. Illustrated profiles use matching artwork; legacy packages without angle artwork retain their original head. Props and contact actions retain stable front geometry.</p><p><Link to="/game/cast">Inspect the whole cast →</Link></p></main>;
+}

@@ -41,9 +41,10 @@ export function compileStory(source,assets={}) {
    if(!PROPS.includes(m[2]))error(line,'Unknown prop '+m[2]);
    add({type:'prop',actor:m[1],prop:m[2]},line);continue;
   }
-  if(version===2&&(m=s.match(new RegExp(`^(express|look) (${id}) (${id})$`)))){
+  if(version===2&&(m=s.match(new RegExp(`^(express|look|orient) (${id}) (${id})$`)))){
    if(!assets.characters?.[m[2]])error(line,'Unknown actor');
    if(m[1]==='express'&&!EMOTIONS.includes(m[3]))error(line,'Unknown emotion '+m[3]);
+   if(m[1]==='orient'&&!['auto','front','three-quarter','profile'].includes(m[3]))error(line,'Orientation must be auto/front/three-quarter/profile');
    if(m[1]==='look'&&!['auto','front','away','down'].includes(m[3])&&(!assets.characters?.[m[3]]||m[2]===m[3]))error(line,'Look needs another character or auto/front/away/down');
    add({type:m[1],actor:m[2],value:m[3]},line);continue;
   }
@@ -116,11 +117,11 @@ export function compileStory(source,assets={}) {
  }
  const edges=i=>{const n=nodes[i];return n.type==='end'?[]:n.type==='choice'?n.options.map(o=>labels[o.target]):['if','chance'].includes(n.type)?[labels[n.target],labels[n.otherwise]]:n.type==='goto'?[labels[n.target]]:[i+1];};
  if(!errors.length){const reached=new Set(),active=new Set();const visit=i=>{if(i>=nodes.length){error(lines.length,'A path falls off the script without end');return;}if(active.has(i)){error(nodes[i].line,'Loops are not supported; reconnect branches farther ahead');return;}if(reached.has(i))return;reached.add(i);active.add(i);edges(i).forEach(visit);active.delete(i);};if(nodes.length)visit(0);else error(1,'Add a story');nodes.forEach((n,i)=>{if(!reached.has(i))error(n.line,'Unreachable content');});}
- if(!errors.length&&nodes.some(n=>(['act','perform','prop','express','look','activity','scroll'].includes(n.type)||n.type==='camera'&&['two','action','listener'].includes(n.shot)))){
+ if(!errors.length&&nodes.some(n=>(['act','perform','prop','express','look','orient','activity','scroll'].includes(n.type)||n.type==='camera'&&['two','action','listener'].includes(n.shot)))){
   const incoming=nodes.map(()=>[]);nodes.forEach((_,i)=>edges(i).forEach(j=>incoming[j].push(i)));
   const cache=new Map();
   const after=i=>{if(cache.has(i))return cache.get(i);const parents=incoming[i].map(after);let visible=parents.length?new Map([...parents[0]].filter(([a,pos])=>parents.every(p=>p.get(a)===pos))):new Map();const n=nodes[i];
-   if((['act','perform','prop','express','look','activity','scroll'].includes(n.type)||n.type==='camera'&&['two','action','listener'].includes(n.shot))){for(const a of [n.actor,n.targetActor,n.otherActor,n.type==='look'&&!['auto','front','away','down'].includes(n.value)?n.value:null].filter(Boolean))if(!visible.has(a))error(n.line,'Show '+a+' in a distinct position on every path before this action');}
+   if((['act','perform','prop','express','look','orient','activity','scroll'].includes(n.type)||n.type==='camera'&&['two','action','listener'].includes(n.shot))){for(const a of [n.actor,n.targetActor,n.otherActor,n.type==='look'&&!['auto','front','away','down'].includes(n.value)?n.value:null].filter(Boolean))if(!visible.has(a))error(n.line,'Show '+a+' in a distinct position on every path before this action');}
    if(n.type==='scroll'&&n.actor&&assets.backgrounds?.[visible.get('@background')]?.loop!=='mirror')error(n.line,'Scrolling requires the current background to declare loop: mirror');
    if(n.type==='ensemble')visible=new Map([...visible].filter(([a])=>a==='@background'||n.actors.includes(a)));
    if(n.type==='scene')visible=new Map([['@background',n.asset]]);
@@ -158,6 +159,7 @@ export function settleStory(story,state){const s=structuredClone(state);s.cues=[
  if(n.type==='scroll'){if(n.actor)s.stage.scroll=n.actor;else delete s.stage.scroll;}
  if(n.type==='ambience'||n.type==='environment')s.stage[n.type]=n.preset;
  if(n.type==='express'&&s.stage.actors[n.actor])s.stage.actors[n.actor].expression=n.value;
+ if(n.type==='orient'&&s.stage.actors[n.actor])s.stage.actors[n.actor].orientation=n.value;
  if(n.type==='look'&&s.stage.actors[n.actor])s.stage.actors[n.actor].gaze=n.value;
  if(n.type==='perform'){
   const a=s.stage.actors[n.actor],b=s.stage.actors[n.targetActor];

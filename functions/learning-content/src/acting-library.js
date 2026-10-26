@@ -127,7 +127,7 @@ export const ACTING_DESCRIPTIONS={
  explain:'One open hand presents an idea.',reassure:'Gentle open hands and a sympathetic tilt.',question:'Both hands open with a questioning head tilt.',insist:'A firm single-hand emphasis.',hesitant:'Small hand movement and a tentative tilt.',celebrate:'Open arms and an upbeat emphasis.',
  nod:'One head nod, then return to rest.','shake-head':'A small side-to-side head motion.',shrug:'Raised forearms and a questioning tilt.',point:'Extend an arm toward something.',wave:'Lift a forearm and wave the hand.',recoil:'Lean back with raised forearms.',laugh:'Lean back, tip the head up and hold the belly through a burst of laughter.',sigh:'Head and shoulders settle downward.',
 };
-export function packageAssetEntries(pack){return [...Object.values(pack.assets?.backgrounds||{}),...Object.values(pack.assets?.characters||{}).flatMap(c=>[...Object.values(c.expressions||{}),...Object.values(c.rig?.parts||{}),...(c.rig?.head?[c.rig.head]:[])]),...(pack.assets?.music?[pack.assets.music]:[])];}
+export function packageAssetEntries(pack){return [...Object.values(pack.assets?.backgrounds||{}),...Object.values(pack.assets?.characters||{}).flatMap(c=>[...Object.values(c.expressions||{}),...Object.values(c.rig?.parts||{}),...(c.rig?.head?[c.rig.head]:[]),...Object.values(c.rig?.views||{})]),...(pack.assets?.music?[pack.assets.music]:[])];}
 export function validateRig(rig){
  if(rig?.version===2&&rig.preset==='cartoon-v1'){if(rig.style!==undefined&&!['manga','simple'].includes(rig.style))return 'Cartoon style must be simple or manga';if(!rig.palette||Object.keys(rig.palette).some(k=>!['skin','hair','shirt','glasses','beard','trim'].includes(k))||Object.values(rig.palette).some(v=>typeof v!=='string'||!/^#[0-9a-fA-F]{6}$/.test(v)))return 'Cartoon palette accepts only skin, hair, shirt, glasses, beard and trim hex colours';if(rig.appearance!==undefined&&(typeof rig.appearance!=='object'||rig.appearance===null||Array.isArray(rig.appearance)||Object.entries(rig.appearance).some(([k,v])=>!Object.hasOwn(CHARACTER_OPTIONS,k)||!CHARACTER_OPTIONS[k].includes(v))))return 'Cartoon appearance must use the shared age, hair, glasses, outfit, face, eyes and facialHair options';if(rig.parts)return 'Cartoon rigs use continuous vector shapes, not image parts';
   if(rig.finish!==undefined&&!['polished','hybrid'].includes(rig.finish))return 'Character finish must be polished or hybrid';
@@ -136,6 +136,15 @@ export function validateRig(rig){
    const h=rig.head;
    if(rig.finish!=='hybrid'||!h||typeof h!=='object'||Array.isArray(h)||Object.keys(h).some(k=>!['src','frame'].includes(k))||typeof h.src!=='string'||!/^data:image\/webp;base64,[A-Za-z0-9+/]+=*$/.test(h.src))return 'Hybrid heads must be embedded WebP images';
    if(!Array.isArray(h.frame)||h.frame.length!==4||h.frame.some(n=>typeof n!=='number'||!Number.isFinite(n))||h.frame[0]<-40||h.frame[0]>240||h.frame[1]<-40||h.frame[1]>240||h.frame[2]<40||h.frame[2]>240||h.frame[3]<40||h.frame[3]>260)return 'Hybrid head frame must have bounded x, y, width and height';
+  }
+  if(rig.views!==undefined){
+   if(rig.finish!=='hybrid'||!rig.views||typeof rig.views!=='object'||Array.isArray(rig.views)||Object.keys(rig.views).some(k=>!['three-quarter','profile'].includes(k)))return 'Angle artwork requires named hybrid views';
+   for(const [angle,v] of Object.entries(rig.views)){
+    if(!v||typeof v!=='object'||Object.keys(v).some(k=>!['src','frame','anchors'].includes(k)))return 'Invalid angle artwork';
+    const err=validateRig({...rig,views:undefined,head:{src:v.src,frame:v.frame}});if(err)return err;
+    const a=v.anchors,point=p=>Array.isArray(p)&&p.length===2&&p.every(n=>Number.isFinite(n)&&n>=0&&n<=240);
+    if(!a||Object.keys(a).some(k=>!['nearEye','farEye','mouth'].includes(k))||!point(a.nearEye)||!point(a.mouth)||(angle==='three-quarter'&&!point(a.farEye))||(a.farEye!==undefined&&!point(a.farEye)))return 'Angle artwork needs bounded eye and mouth anchors';
+   }
   }
   return null;}
  if(!rig||rig.version!==1||rig.preset!=='teen-v1')return 'Use rig version 1 and the teen-v1 preset';

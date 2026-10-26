@@ -1,3 +1,4 @@
+import {ACTING_PROFILES} from './acting-motion';
 import ActivityRunner from './ActivityRunner';
 import {actorBounds,fitCamera,unionBoxes} from './camera-framing';
 import {useCallback,useEffect,useLayoutEffect,useRef,useState,type CSSProperties} from 'react';
@@ -6,7 +7,7 @@ import PuppetActor from './PuppetActor';
 import MountedActor from './MountedActor';
 import {armGeometry} from './character-geometry';
 import {ACTIONS,POSES} from '../../../functions/learning-content/src/acting-library.js';
-export default function StoryStage({pack,state,current,speaking,reduced,responses={},motionPaused,onMotionPause,hideMotionControl=false}:{pack:StoryPackage;state:StoryState;current:any;speaking:boolean;reduced:boolean;responses?:Record<string,string>;motionPaused?:boolean;onMotionPause?:(paused:boolean)=>void;hideMotionControl?:boolean}){
+export default function StoryStage({pack,state,current,speaking,reduced,responses={},motionPaused,onMotionPause,hideMotionControl=false,actingStyle='polished'}:{pack:StoryPackage;state:StoryState;current:any;speaking:boolean;reduced:boolean;responses?:Record<string,string>;motionPaused?:boolean;onMotionPause?:(paused:boolean)=>void;hideMotionControl?:boolean;actingStyle?:'classic'|'polished'}){
  const [activityResponses,setActivityResponses]=useState<Record<string,Record<string,string>>>({});
  const onActivityResponse=useCallback((actor:string,value:Record<string,string>)=>setActivityResponses(old=>({...old,[actor]:value})),[]);
  const [localPaused,setLocalPaused]=useState(false),[hidden,setHidden]=useState(()=>typeof document!=='undefined'&&document.hidden);
@@ -62,11 +63,11 @@ export default function StoryStage({pack,state,current,speaking,reduced,response
      const gazeX=a.activity?.kind==='walk'&&(!a.gaze||a.gaze==='auto')?2.5:a.gaze==='front'||a.gaze==='down'?0:(a.gaze==='away'?-(direction||1):direction)*a.facing*2.5;
      const gazeY=a.gaze==='down'||(!a.gaze&&a.expression==='embarrassed')?2:0;
      // Keep contact actions and activities in their authored geometry.
-     const occupied=!!a.activity||!!a.prop&&a.prop!=='none'||!!a.rest||blocked.has(id)||!!allResponses[id];
+     const occupied=!!a.activity||!!a.prop&&a.prop!=='none'||!!a.rest||!!performance&&(performance.actor===id||performance.targetActor===id)||!!allResponses[id]&&!ACTING_PROFILES[allResponses[id]];
      const turn=occupied?0:Math.max(-1,Math.min(1,gazeX/2.5));
      const listening=!!speaker&&speaker!==id&&!occupied&&a.gaze!=='front'&&a.gaze!=='away'&&a.gaze!=='down';
      return <div data-actor={id} data-rest={a.rest} data-expression={a.expression} data-gaze={a.gaze||'auto'} data-impact={c.impact} style={{zIndex:performance?.actor===id?2:undefined}} key={id} className={`story-actor position-${a.position} ${c.rig?'has-rig':''} ${performance?.action==='mounted-charge'&&performance.actor===id?'is-mounted':''}`}>
-     <div className="story-facing" style={{transform:`scaleX(${a.facing})`}}>{performance?.action==='mounted-charge'&&performance.actor===id?<MountedActor character={c} emotion={a.expression} reduced={reduced} active={!!responses[id]} performanceKey={state.cursor}/>:c.rig?<PuppetActor turn={turn} listening={listening} idlePaused={paused||hidden||state.ended} activity={a.activity} activityPaused={!enabled(id)} gazeX={gazeX} gazeY={gazeY} character={c} actorId={id} performanceKey={training&&(id===training[0]||id===training[1].activity?.targetActor)?0:state.cursor} emotion={a.expression} talking={speaking&&id===speaker} gesture={id===speaker?current.gesture:undefined} rest={a.rest} prop={a.prop} response={allResponses[id]||current?.beatResponses?.[id]||(reduced&&current?.type==='act'?(id===current.actor?ACTIONS[current.action]?.actor:id===current.targetActor?ACTIONS[current.action]?.target:undefined):undefined)} reduced={reduced}/>:<img src={asset?.src} alt={`${c.name} — ${a.expression}`} onError={e=>{e.currentTarget.style.opacity='0';}}/>}</div>
+     <div className="story-facing" style={{transform:`scaleX(${a.facing})`}}>{performance?.action==='mounted-charge'&&performance.actor===id?<MountedActor character={c} emotion={a.expression} reduced={reduced} active={!!responses[id]} performanceKey={state.cursor}/>:c.rig?<PuppetActor actingStyle={actingStyle} orientation={occupied?'front':a.orientation} turn={turn} listening={listening} idlePaused={paused||hidden||state.ended} activity={a.activity} activityPaused={!enabled(id)} gazeX={gazeX} gazeY={gazeY} character={c} actorId={id} performanceKey={training&&(id===training[0]||id===training[1].activity?.targetActor)?0:state.cursor} emotion={a.expression} talking={speaking&&id===speaker} gesture={id===speaker?current.gesture:undefined} rest={a.rest} prop={a.prop} response={allResponses[id]||current?.beatResponses?.[id]||(reduced&&current?.type==='act'?(id===current.actor?ACTIONS[current.action]?.actor:id===current.targetActor?ACTIONS[current.action]?.target:undefined):undefined)} reduced={reduced}/>:<img src={asset?.src} alt={`${c.name} — ${a.expression}`} onError={e=>{e.currentTarget.style.opacity='0';}}/>}</div>
      {!modern&&<span>{c.name}</span>}
     </div>;})}
     {performance&&['shoot-arrow','magic-beam'].includes(performance.action)&&<Projectile key={`${state.cursor}-${!!responses[performance.actor]}`} state={state} current={performance} reduced={reduced} active={!!responses[performance.actor]}/>}

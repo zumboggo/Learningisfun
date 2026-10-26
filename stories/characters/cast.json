@@ -22,7 +22,7 @@
   {
     "id": "Lin",
     "name": "Lin",
-    "version": 6,
+    "version": 7,
     "finish": "hybrid",
     "provenance": "Original reusable illustrated character; students are fictional, not real student likenesses. Teacher identity follows the previously authorized character design. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json.",
     "palette": {
@@ -46,12 +46,56 @@
         126,
         169
       ]
+    },
+    "viewAssets": {
+      "three-quarter": {
+        "path": "public/stories/animated/heads/angles-v1/yeyul-three-quarter.webp",
+        "frame": [
+          72,
+          43,
+          102,
+          135
+        ],
+        "anchors": {
+          "nearEye": [
+            131,
+            120
+          ],
+          "farEye": [
+            158,
+            117
+          ],
+          "mouth": [
+            149,
+            151
+          ]
+        }
+      },
+      "profile": {
+        "path": "public/stories/animated/heads/angles-v1/yeyul-profile.webp",
+        "frame": [
+          77,
+          43,
+          99,
+          135
+        ],
+        "anchors": {
+          "nearEye": [
+            150,
+            119
+          ],
+          "mouth": [
+            164,
+            150
+          ]
+        }
+      }
     }
   },
   {
     "id": "Hepting",
     "name": "Mr. Hepting",
-    "version": 5,
+    "version": 6,
     "palette": {
       "skin": "#e5b495",
       "hair": "#514038",
@@ -77,12 +121,56 @@
         155
       ]
     },
-    "provenance": "Original reusable illustrated character; students are fictional, not real student likenesses. Teacher identity follows the previously authorized character design. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json."
+    "provenance": "Original reusable illustrated character; students are fictional, not real student likenesses. Teacher identity follows the previously authorized character design. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json.",
+    "viewAssets": {
+      "three-quarter": {
+        "path": "public/stories/animated/heads/angles-v1/hepting-three-quarter.webp",
+        "frame": [
+          72,
+          43,
+          102,
+          135
+        ],
+        "anchors": {
+          "nearEye": [
+            131,
+            120
+          ],
+          "farEye": [
+            158,
+            117
+          ],
+          "mouth": [
+            149,
+            151
+          ]
+        }
+      },
+      "profile": {
+        "path": "public/stories/animated/heads/angles-v1/hepting-profile.webp",
+        "frame": [
+          77,
+          43,
+          99,
+          135
+        ],
+        "anchors": {
+          "nearEye": [
+            150,
+            119
+          ],
+          "mouth": [
+            164,
+            150
+          ]
+        }
+      }
+    }
   },
   {
     "id": "Mei",
     "name": "Mei",
-    "version": 4,
+    "version": 5,
     "palette": {
       "skin": "#efc6a3",
       "hair": "#292b31",
@@ -106,12 +194,56 @@
         174
       ]
     },
-    "provenance": "Original reusable illustrated character; students are fictional, not real student likenesses. Teacher identity follows the previously authorized character design. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json."
+    "provenance": "Original reusable illustrated character; students are fictional, not real student likenesses. Teacher identity follows the previously authorized character design. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json.",
+    "viewAssets": {
+      "three-quarter": {
+        "path": "public/stories/animated/heads/angles-v1/mei-three-quarter.webp",
+        "frame": [
+          72,
+          43,
+          102,
+          135
+        ],
+        "anchors": {
+          "nearEye": [
+            131,
+            120
+          ],
+          "farEye": [
+            158,
+            117
+          ],
+          "mouth": [
+            149,
+            151
+          ]
+        }
+      },
+      "profile": {
+        "path": "public/stories/animated/heads/angles-v1/mei-profile.webp",
+        "frame": [
+          77,
+          43,
+          99,
+          135
+        ],
+        "anchors": {
+          "nearEye": [
+            150,
+            119
+          ],
+          "mouth": [
+            164,
+            150
+          ]
+        }
+      }
+    }
   },
   {
     "id": "Yeyul",
     "name": "Yeyul",
-    "version": 5,
+    "version": 6,
     "finish": "hybrid",
     "provenance": "Original reusable illustrated character; students are fictional, not real student likenesses. Teacher identity follows the previously authorized character design. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json.",
     "palette": {
@@ -128,12 +260,56 @@
         126,
         157
       ]
+    },
+    "viewAssets": {
+      "three-quarter": {
+        "path": "public/stories/animated/heads/angles-v1/lin-three-quarter.webp",
+        "frame": [
+          72,
+          43,
+          102,
+          135
+        ],
+        "anchors": {
+          "nearEye": [
+            131,
+            120
+          ],
+          "farEye": [
+            158,
+            117
+          ],
+          "mouth": [
+            149,
+            151
+          ]
+        }
+      },
+      "profile": {
+        "path": "public/stories/animated/heads/angles-v1/lin-profile.webp",
+        "frame": [
+          77,
+          43,
+          99,
+          135
+        ],
+        "anchors": {
+          "nearEye": [
+            150,
+            119
+          ],
+          "mouth": [
+            164,
+            150
+          ]
+        }
+      }
     }
   },
   {
     "id": "Jordan",
     "name": "Jordan",
-    "version": 3,
+    "version": 4,
     "palette": {
       "skin": "#c88e68",
       "hair": "#392b27",
@@ -156,6 +332,50 @@
         126,
         157
       ]
+    },
+    "viewAssets": {
+      "three-quarter": {
+        "path": "public/stories/animated/heads/angles-v1/jordan-three-quarter.webp",
+        "frame": [
+          72,
+          43,
+          102,
+          135
+        ],
+        "anchors": {
+          "nearEye": [
+            131,
+            120
+          ],
+          "farEye": [
+            158,
+            117
+          ],
+          "mouth": [
+            149,
+            151
+          ]
+        }
+      },
+      "profile": {
+        "path": "public/stories/animated/heads/angles-v1/jordan-profile.webp",
+        "frame": [
+          77,
+          43,
+          99,
+          135
+        ],
+        "anchors": {
+          "nearEye": [
+            150,
+            119
+          ],
+          "mouth": [
+            164,
+            150
+          ]
+        }
+      }
     }
   }
 ]
