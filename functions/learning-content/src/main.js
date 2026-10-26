@@ -1,3 +1,4 @@
+import {usageSummary} from './usage-summary.js';
 import {writingSettings,writingArchive,writingWorkspace,listAll} from './writing-discussion.js';
 import {atomicDiscussion,guardWorkspace} from './curated-questions.js';
 import {animatedEpisodeAction} from './animated-episodes.js';
@@ -148,6 +149,10 @@ export default async ({ req, res, error }) => {
     const db = new Databases(client), users = new Users(client), databaseId = process.env.APPWRITE_DATABASE_ID || 'main';
     if (body.action === 'selfProfile') return res.json({ profile: await selfProfile({ db, users, databaseId, userId }) });
     const profile = await db.getDocument(databaseId, 'users', userId);
+    if (body.action === 'usageSummary') {
+      try { return res.json(await usageSummary({body,profile,userId,db,databaseId})); }
+      catch (cause) { if ([400,403].includes(cause.code)) return res.json({error:cause.message},cause.code); throw cause; }
+    }
     if (body.action === 'readUserProfile') {
       if (!await canReadProfile({ db, databaseId, userId, profile, targetId: body.userId })) return res.json({ error: 'Profile unavailable' }, 403);
       return res.json({ profile: projectProfile(await db.getDocument(databaseId, 'users', body.userId)) });

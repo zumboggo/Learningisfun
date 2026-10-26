@@ -56,6 +56,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         { to: '/texts', label: 'Texts', icon: 'T' },
         { to: '/writing', label: 'Writing', icon: 'W' },
         { to: '/game', label: 'The Game', icon: 'G' },
+        { to: '/usage', label: 'Usage & impact', icon: '#' },
         { to: '/settings', label: 'Settings', icon: '?' },
       ]
     : isParent ? [
