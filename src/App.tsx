@@ -135,7 +135,7 @@ export default function App() {
           <Route path="/game/scene-beats" element={<Suspense fallback={<p>Loading scene beats…</p>}><SceneBeatsPage/></Suspense>} />
           <Route path="/game/cast" element={<Suspense fallback={<p>Loading the cast…</p>}><CastGalleryPage/></Suspense>} />
           <Route path="/game/animation-lab" element={<Suspense fallback={<p>Loading animation comparison…</p>}><AnimationLabPage/></Suspense>} />
-          <Route path="/game/acting-demo" element={<Suspense fallback={<p>Loading Lin…</p>}><ActingDemoPage/></Suspense>} />
+          <Route path="/game/acting-demo" element={<Suspense fallback={<p>Loading Kevin…</p>}><ActingDemoPage/></Suspense>} />
           <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
           <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />

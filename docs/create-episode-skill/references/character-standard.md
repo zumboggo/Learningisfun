@@ -1,10 +1,12 @@
 # Shared manga character standard
 
-Use `cartoon-v1` for new articulated characters. Lin is the visual reference; Mr. Hepting, Mei, Yeyul and Jordan use the same renderer and acting controller. The character's identity is data, not a new animation implementation. David’s default is hybrid for the five existing recurring classmates/teacher and polished SVG for newly created characters. Do not automatically commission illustrated heads for new or one-off characters; use hybrid for an additional recurring character only when requested.
+Use `cartoon-v1` for new articulated characters. Kevin’s approved design is the main-student reference; Mr. Hepting, Mei, Yeyul and Jordan use the same renderer and acting controller. The character's identity is data, not a new animation implementation. David’s default is hybrid for the five existing recurring classmates/teacher and polished SVG for newly created characters. Do not automatically commission illustrated heads for new or one-off characters; use hybrid for an additional recurring character only when requested.
 
 ## Identity and appearance
 
-Available packs: `public/stories/animated/rigs/{lin,hepting,mei,yeyul,jordan}-cartoon.json`. Add them from the studio's **Reusable cast** selector. The AP episode uses Lin and Mr. Hepting; Mei and Yeyul remain reusable library characters, without inserting them into its story.
+**Main classroom student: Kevin (he/him).** For new Learning is Fun classroom episodes, use `Kevin` and `public/stories/animated/rigs/kevin-cartoon.json` as the main student, replacing Lin in that role going forward. Reuse his approved graphic-novel design C with its narrowed neck and lowered head, tousled black hair, warm smile, white polo and dark trousers. The approved vector reference is `public/stories/animated/characters/kevin/approved-design.svg`; his recipe is first in `stories/characters/cast.json`. Use the supported `face: "kevin"`, `hair: "tousled"`, `finish: "polished"` recipe through the shared animation system. David approved the design and reported Kevin’s enthusiastic permission on 2026-10-26. Keep the source photograph private. This permission/provenance belongs in authoring records, not story dialogue. Existing released packages and saved attempts retain their cast; do not rewrite them automatically. Chinese and source-based standalone protagonists retain their established identities.
+
+Available packs: `public/stories/animated/rigs/{kevin,lin,hepting,mei,yeyul,jordan}-cartoon.json`. Add them from the studio's **Reusable cast** selector. The AP episode uses Lin and Mr. Hepting; Mei and Yeyul remain reusable library characters, without inserting them into its story.
 
 A character pack contains name, incrementing version, provenance, `expressions: {}`, and the rig below. Polished SVG neutral poses are drawn directly; no image is needed for new characters. Recurring hybrid packs embed an illustrated head base, with the eyes, brows, mouth, glasses and beard rendered as shared SVG layers. Legacy and static characters keep their neutral WebP fallback.
 
@@ -27,7 +29,7 @@ Only six-digit hex colours are allowed. Optional palette keys `glasses`, `beard`
 | face | default, oval, round, angular | default |
 | facialHair | none, full | none |
 
-Preserve identity through silhouette, hair, age, glasses and clothing—not palette alone. Hepting is an adult with a broader jaw, smaller irises, short brown hair, blue glasses, a neatly cropped brown beard, teal top and tan trousers. Lin has layered short hair; Mei long hair and a round face; Yeyul a bob and oval face; Jordan a side-part and angular face. Classmates wear red CDIS polos and navy trousers. Students are fictional illustrated people, not real student likenesses. Mr. Hepting’s updated portrait uses David’s explicitly supplied reference photo. Keep source photos outside published assets; record authorization in provenance.
+Preserve identity through silhouette, hair, age, glasses and clothing—not palette alone. Hepting is an adult with a broader jaw, smaller irises, short brown hair, blue glasses, a neatly cropped brown beard, teal top and tan trousers. Lin has layered short hair; Mei long hair and a round face; Yeyul a bob and oval face; Jordan a side-part and angular face. Classmates wear red CDIS polos and navy trousers. Kevin is an authorized real-student likeness; the other students are original illustrated characters. Mr. Hepting’s updated portrait uses David’s explicitly supplied reference photo. Keep source photos outside published assets; record authorization in provenance.
 
 ## Drawing constraints
 

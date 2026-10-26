@@ -20,3 +20,10 @@ for(const {id,name,version,palette,appearance,provenance,fallback,finish,headAss
 const manifest=JSON.stringify(cast.map(({id,name})=>({id,name})),null,2)+'\n';
 const manifestPath=new URL('public/stories/animated/rigs/catalog.json',root);
 if(process.argv.includes('--check')){if(await readFile(manifestPath,'utf8')!==manifest)throw Error('Stale cast catalog');}else await writeFile(manifestPath,manifest);
+
+// New drafts start with Kevin; existing drafts and published episodes retain their snapshots.
+const demo=JSON.parse(await readFile(new URL('public/stories/animated/demo.json',root),'utf8'));
+const {Lin:legacyStudent,...classmates}=demo.assets.characters;
+const starter={...demo,format:2,title:'Kevin’s next adventure',description:'Unassigned classroom authoring starter with Kevin.',script:demo.script.replace(/^story 1/m,'story 2').replace(/\bLin\b/g,'Kevin'),assets:{...demo.assets,characters:{Kevin:JSON.parse(await readFile(new URL('public/stories/animated/rigs/kevin-cartoon.json',root),'utf8')),...classmates}}};
+const starterPath=new URL('public/stories/animated/kevin-starter.json',root),starterData=JSON.stringify(starter,null,2)+'\n';
+if(process.argv.includes('--check')){if(await readFile(starterPath,'utf8')!==starterData)throw Error('Stale Kevin starter');}else await writeFile(starterPath,starterData);

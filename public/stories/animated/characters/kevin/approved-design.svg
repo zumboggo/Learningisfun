@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="35 30 210 540"><title>Kevin — C — Refined neck</title><g stroke="#242b35" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
+ <ellipse cx="122" cy="554" rx="72" ry="9" fill="#173d39" opacity=".10" stroke="none"/>
+ <g id="legs"><path d="M78 323 L164 323 L155 438 L149 529 Q134 537 121 529 L120 413 L111 531 Q93 537 81 530 L77 423 Z" fill="#27313b"/>
+ <path d="M120 356 L120 413 M85 350 L90 453 L87 514 M152 351 L139 460 L140 514" fill="none" stroke="#49515a" stroke-width="2"/>
+ <path d="M81 527 L110 528 L113 548 Q96 559 66 550 Q65 541 81 527 Z M122 528 L149 526 Q161 538 168 548 Q147 559 122 548 Z" fill="#252a30"/>
+ <path d="M68 548 Q90 554 112 547 M123 547 Q146 554 166 547" stroke="#f4f0e7" stroke-width="5"/>
+ <path d="M82 537 L98 539 M79 542 L96 544 M137 536 L151 538 M139 542 L156 544" stroke="#c8c8c2" stroke-width="2"/></g>
+ <g id="left-arm"><path d="M65 224 Q58 274 86 297 L94 274 Q81 258 87 229 Z" fill="#dca678"/><path d="M69 235 Q65 270 85 286" fill="none" stroke="#b87c57" stroke-width="6"/></g>
+ <g id="right-arm"><path d="M161 218 Q168 250 183 257 Q194 259 201 243 Q211 209 209 175 L192 171 L181 220 L179 205 Z" fill="#dca678"/><path d="M191 246 Q202 212 201 185" stroke="#b87c57" stroke-width="5" fill="none"/></g>
+ <g id="polo"><path d="M99 160 L79 166 Q59 174 58 213 L57 233 L85 240 L81 309 L76 334 Q116 350 169 335 L162 282 L163 235 L181 230 L176 195 Q174 176 149 167 L141 160 Z" fill="#f5f1e8"/>
+ <path d="M78 183 L86 225 L90 311 L84 333 M161 186 L153 239 L158 314 L161 334" stroke="#dcd8cf" stroke-width="7" fill="none"/>
+ <path d="M106 148 L105 164 Q109 175 119 181 Q130 175 136 164 L134 148 Z" fill="#dca678"/>
+ <path d="M106 151 Q120 162 134 151 L134 161 Q120 170 106 161 Z" fill="#b87c57" stroke="none"/>
+ <path d="M104 161 L119 181 L106 196 L92 171 Z M137 161 L119 181 L135 195 L148 172 Z" fill="#fffdf5"/>
+ <path d="M119 183 L119 228 L129 228 L128 194" fill="#e9e5db" stroke="#c4c0b7" stroke-width="1"/>
+ <circle cx="123" cy="202" r="1.7" fill="#b3aca1" stroke="none"/><circle cx="123" cy="218" r="1.7" fill="#b3aca1" stroke="none"/>
+ <path d="M139 210 L146 203 L152 210 L149 219 L142 219 Z" fill="#bd3543" stroke="none"/><path d="M142 211 L149 211 M146 207 L146 216" stroke="#fff4e8" stroke-width="1.5"/>
+ <path d="M60 228 L82 233 M164 229 L178 224 M87 325 Q122 336 159 326" fill="none" stroke="#d7d3ca" stroke-width="1.3"/></g>
+ <g id="head" transform="translate(0 12)">
+ <path d="M94 103 Q80 96 85 115 Q88 126 97 122 M146 103 Q159 96 154 116 Q150 125 143 123" fill="#dca678"/>
+ <path d="M94 76 Q121 64 148 79 L146 114 L140 133 L124 148 Q118 151 110 144 L97 132 L92 111 Z" fill="#dca678"/>
+ <path d="M94 103 Q92 127 110 139 Q119 146 130 141 Q115 155 102 139 Q89 125 94 103" fill="#b87c57" stroke="none" opacity=".6"/>
+ <path d="M99 100 Q106 96 113 99 M128 99 Q136 96 143 101" fill="none" stroke-width="2.8"/>
+ <path d="M99 110 Q106 104 114 110 M128 110 Q136 105 143 111" fill="none" stroke-width="2.3"/>
+ <path d="M120 110 L117 121 Q121 125 125 121" fill="none" stroke="#b87c57" stroke-width="1.5"/>
+ <path d="M103 128 Q121 134 139 126 Q134 142 120 142 Q109 140 103 128 Z" fill="#633e35" stroke-width="1.3"/>
+ <path d="M106 130 Q121 135 136 128 L132 135 Q119 140 109 134 Z" fill="#fff8e8" stroke="none"/>
+ <path d="M99 127 L98 131 M142 125 L143 129" stroke="#b87c57" fill="none" stroke-width="1"/>
+ <path d="M88 108 L82 91 L85 80 L81 76 L90 58 L88 52 L105 49 L113 42 L126 47 L139 43 L150 53 Q164 63 159 83 L153 108 L148 101 L145 80 Q142 97 135 101 L137 78 Q131 96 122 102 L125 76 Q117 94 108 99 L112 76 Q100 95 95 97 L95 114 Z" fill="#222321"/>
+ <path d="M92 76 Q96 57 108 56 M105 71 Q113 52 123 53 M122 69 Q133 50 142 58 M143 67 Q153 75 151 88" stroke="#46443e" fill="none" stroke-width="1.5"/>
+ </g>
+ <g id="peace-hand"><path d="M192 181 Q183 173 187 161 L181 133 Q177 124 182 122 Q187 121 190 132 L198 151 L201 119 Q201 109 206 110 Q211 111 210 120 L208 150 Q216 146 219 154 Q226 154 226 164 L221 182 Q217 194 207 195 Q196 193 192 181 Z" fill="#dca678"/>
+ <path d="M208 151 Q200 157 204 165 Q208 169 213 160 M218 155 Q212 160 214 168 Q217 171 222 164 M190 166 Q198 158 205 169 L200 180" fill="none" stroke="#b87c57" stroke-width="1.6"/></g>
+ </g></svg>

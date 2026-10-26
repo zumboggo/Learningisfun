@@ -11,7 +11,7 @@ export default function ActingLibrary({pack,onChange}:{pack:StoryPackage;onChang
  useEffect(()=>{if(!reaction)return;const t=setTimeout(()=>setReaction(''),1900);return()=>clearTimeout(t);},[reaction,run]);
  const [second,setSecond]=useState(''),[cameraMove,setCameraMove]=useState('cut'),[ambience,setAmbience]=useState('hall'),[environment,setEnvironment]=useState('dust'),[sound,setSound]=useState('chime');
  const paired=['two','action'].includes(shot),other=Object.keys(pack.assets.characters).filter(id=>id!==actor).find(id=>id===second)||Object.keys(pack.assets.characters).find(id=>id!==actor);
- const [libraryActor,setLibraryActor]=useState('Lin');
+ const [libraryActor,setLibraryActor]=useState('Kevin');
 
  useEffect(()=>{let active=true;fetch(import.meta.env.BASE_URL+'stories/animated/rigs/catalog.json').then(r=>{if(!r.ok)throw Error('Could not load reusable cast');return r.json();}).then(c=>{if(active)setCatalog(c);}).catch(e=>{if(active)setError(String(e));});return()=>{active=false;};},[]);
  useEffect(()=>{const m=window.matchMedia?.('(prefers-reduced-motion: reduce)');if(!m)return;const change=()=>setReduced(m.matches);m.addEventListener?.('change',change);return()=>m.removeEventListener?.('change',change);},[]);

@@ -1,0 +1,25 @@
+{
+  "name": "Kevin",
+  "version": 1,
+  "provenance": "Kevin is the main student for new classroom episodes. David reports Kevin enthusiastically consented to being part of the app. David approved graphic-novel SVG design C with narrowed neck and lowered head on 2026-10-26. Approved vector reference: characters/kevin/approved-design.svg. Personal source photo is private and not distributed. Shared finite animation controller; no bitmap head.",
+  "expressions": {},
+  "rig": {
+    "version": 2,
+    "preset": "cartoon-v1",
+    "style": "manga",
+    "finish": "polished",
+    "palette": {
+      "skin": "#dca678",
+      "hair": "#222321",
+      "shirt": "#f5f1e8",
+      "trim": "#bd3543"
+    },
+    "appearance": {
+      "age": "teen",
+      "hair": "tousled",
+      "glasses": "none",
+      "outfit": "uniform",
+      "face": "kevin"
+    }
+  }
+}
