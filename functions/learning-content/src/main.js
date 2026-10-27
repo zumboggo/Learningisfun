@@ -1,3 +1,4 @@
+import {episodeSharingAction} from './public-episode.js';
 import {usageSummary} from './usage-summary.js';
 import {writingSettings,writingArchive,writingWorkspace,listAll} from './writing-discussion.js';
 import {atomicDiscussion,guardWorkspace} from './curated-questions.js';
@@ -161,6 +162,7 @@ export default async ({ req, res, error }) => {
       try{return res.json(await publicSharingAction({body,profile,userId,db,databaseId}));}
       catch{return res.json({error:'Only the text owner can manage public sharing'},403);}
     }
+    if(['readEpisodePublicSharing','setEpisodePublicSharing'].includes(body.action)){try{return res.json(await episodeSharingAction({body,profile,userId,db,databaseId}));}catch(cause){return res.json({error:cause.message},[400,403,404].includes(cause.code)?cause.code:500);}}
     if (body.action === 'importLegacyWord') return res.json(await importLegacyWord(profile, body.data));
     const memberships = await db.listDocuments(databaseId, 'class_members', [Query.equal('userId', userId), Query.limit(500)]);
     const nowTime = Date.now();

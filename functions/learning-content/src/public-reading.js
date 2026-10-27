@@ -1,9 +1,11 @@
+import {readPublicEpisode} from './public-episode.js';
 import { readingImageAction } from './reading-images.js';
-import { Client, Databases, Query, Tokens } from 'node-appwrite';
+import { Client, Databases, Query, Tokens, Storage } from 'node-appwrite';
 import { PDF_BUCKET, ownsPdf } from './original-pdf.js';
 
 // Separate guest-executable entry point. Never dispatch private learning actions.
-export async function readPublicText({body,db,databaseId,tokens,endpoint,projectId}) {
+export async function readPublicText({body,db,databaseId,tokens,endpoint,projectId,storage}) {
+  if(body.action==='readEpisode')return readPublicEpisode({body,db,databaseId,storage});
   if(body.action==='readReadingImage') return readingImageAction({body,db,databaseId,tokens,endpoint,projectId,publicOnly:true});
   if (!['read','original'].includes(body.action) || typeof body.textId !== 'string' || !/^[\w-]{1,36}$/.test(body.textId)) throw new Error('Reading unavailable');
   const text=await db.getDocument(databaseId,'texts',body.textId);
@@ -38,6 +40,6 @@ export async function publicSharingAction({body,profile,userId,db,databaseId}) {
 export default async({req,res})=>{
   try {
     const client=new Client().setEndpoint(process.env.APPWRITE_ENDPOINT).setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID).setKey(process.env.APPWRITE_API_KEY);
-    return res.json(await readPublicText({body:JSON.parse(req.bodyText||'{}'),db:new Databases(client),databaseId:process.env.APPWRITE_DATABASE_ID||'main',tokens:new Tokens(client),endpoint:process.env.APPWRITE_ENDPOINT,projectId:process.env.APPWRITE_FUNCTION_PROJECT_ID}),200,{'cache-control':'no-store'});
-  }catch{return res.json({error:'This text is not publicly shared. Sign in with an assigned class account to read it.'},404,{'cache-control':'no-store'});}
+    return res.json(await readPublicText({body:JSON.parse(req.bodyText||'{}'),db:new Databases(client),databaseId:process.env.APPWRITE_DATABASE_ID||'main',storage:new Storage(client),tokens:new Tokens(client),endpoint:process.env.APPWRITE_ENDPOINT,projectId:process.env.APPWRITE_FUNCTION_PROJECT_ID}),200,{'cache-control':'no-store'});
+  }catch{return res.json({error:'This content is not publicly shared. Ask the teacher for an active public link.'},404,{'cache-control':'no-store'});}
 };

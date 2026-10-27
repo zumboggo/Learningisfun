@@ -1,3 +1,4 @@
+const PublicEpisodePage = lazy(() => import('@/pages/PublicEpisodePage'));
 const UsagePage = lazy(() => import('@/pages/UsagePage'));
 const FamilyContactsPage = lazy(() => import('@/pages/FamilyContactsPage'));
 const PublicQuixotePage = lazy(() => import('@/pages/PublicQuixotePage'));
@@ -132,6 +133,7 @@ export default function App() {
           <Route path="/quixote/:slug" element={<Suspense fallback={<p>Opening the book…</p>}><PublicQuixotePage/></Suspense>} />
           <Route path="/ethics" element={<Suspense fallback={<p>Loading adventures…</p>}><PublicEthicsPage/></Suspense>} />
           <Route path="/ethics/:slug" element={<Suspense fallback={<p>Loading adventure…</p>}><PublicEthicsPage/></Suspense>} />
+          <Route path="/game/public/:shareId" element={<Suspense fallback={<p>Loading episode…</p>}><PublicEpisodePage/></Suspense>} />
           <Route path="/game/story-preview/:slug" element={<Suspense fallback={<p>Loading episode…</p>}><StoryPreviewPage/></Suspense>} />
           <Route path="/game/scene-beats" element={<Suspense fallback={<p>Loading scene beats…</p>}><SceneBeatsPage/></Suspense>} />
           <Route path="/game/cast" element={<Suspense fallback={<p>Loading the cast…</p>}><CastGalleryPage/></Suspense>} />
