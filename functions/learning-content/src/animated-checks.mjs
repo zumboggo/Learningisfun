@@ -85,3 +85,23 @@ test('World Lit synchronization checks ownership of both sections before assigni
  await assert.rejects(call({action:'animatedAssign',classId:red,versionId:v.versionId,date:'2026-01-01'}),/Only the class teacher/);
  assert.equal([...records.values()].filter(r=>r.kind==='animated-assignment').length,0);
 });
+
+test('English Corner writing is version/identity scoped, resumable and required for completion',async()=>{
+ const {call}=harness();const p={...pack,profile:'english-corner',writing:{prompts:['Explain a change.','Explain a friendship.','Explain a decision.']}};
+ await call({action:'animatedSaveDraft',id:'writing',revision:0,pack:p});const v=await call({action:'animatedPublish',id:'writing',revision:1});const a=await call({action:'animatedAssign',classId:'class',versionId:v.versionId,date:'2026-01-01'});
+ const base={action:'animatedSaveAttempt',assignmentId:a.assignmentId,attemptId:'write',steps:[],quizzes:[]};const t=await call(base,'student');
+ await assert.rejects(call({...base,writing:{question:0,text:'Hello',submitted:false,revision:1}},'student'),/quiz/);
+ const {validatePackage,replayStory,advanceStory}=await import('./story-engine.js');const {story}=validatePackage(p);let state=replayStory(story,[],t.seed),steps=[];
+ while(!state.ended){const n=story.nodes[state.cursor],option=n.type==='choice'?n.options[0].id:null;steps.push(option);state=advanceStory(story,state,option);}
+ const body={...base,steps,quizzes:[p.quiz.map(q=>q.answer)]};assert.equal((await call(body,'student')).complete,false);
+ const writing={question:2,text:'A specific detail supports my answer.',submitted:false,revision:1};await call({...body,writing},'student');
+ assert.deepEqual((await call({action:'animatedRead',assignmentId:a.assignmentId},'student')).attempts[0].writing,writing);
+ await assert.rejects(call({...body,writing:{...writing,text:'changed'}},'student'),/another device/);
+ await assert.rejects(call({...body,writing:{...writing,question:3,revision:2}},'student'),/Invalid paragraph/);
+ await assert.rejects(call({...body,writing:{...writing,text:' ',submitted:true,revision:2}},'student'),/Invalid paragraph/);
+ const submitted={...writing,submitted:true,revision:2};assert.equal((await call({...body,writing:submitted},'student')).complete,true);
+ assert.equal((await call({...body,writing:submitted},'student')).complete,true);
+ await assert.rejects(call({...body,writing:{...submitted,text:'overwrite',revision:3}},'student'),/replay/);
+ await assert.rejects(call({...body,writing:submitted},'student','outsider'),/not available/);
+ const replay=await call({...base,attemptId:'separate'},'student');assert.equal(replay.writing,undefined);
+});

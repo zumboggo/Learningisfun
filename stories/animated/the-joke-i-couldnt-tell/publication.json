@@ -1,0 +1,26 @@
+{
+  "studentReadVerified": true,
+  "id": "the-joke-i-couldnt-tell",
+  "title": "The Joke I Couldn’t Tell",
+  "status": "published-assigned",
+  "version": 1,
+  "versionId": "d7401f3518a5ce52dbc3b6c0a50c2191",
+  "bytes": 596188,
+  "activeMemberships": 10,
+  "liveTeacherReadVerified": true,
+  "publishedBytesVerified": true,
+  "studentAccess": "Available from October 27 at 08:00 Asia/Shanghai. No student attempts created.",
+  "studioUrl": "https://zumboggo.github.io/Learningisfun/#/game/create?draft=the-joke-i-couldnt-tell",
+  "previewUrl": "https://zumboggo.github.io/Learningisfun/#/game/story-preview/the-joke-i-couldnt-tell",
+  "assignments": [
+    {
+      "classId": "7e5810c3-dfac-4595-ba51-0e20e645e727",
+      "className": "High School",
+      "courseName": "English Corner",
+      "date": "2026-10-28",
+      "releaseAt": "2026-10-27T00:00:00.000Z",
+      "assignmentId": "0761a52c3ba5435c1bfba2a8bf5fab90",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/0761a52c3ba5435c1bfba2a8bf5fab90"
+    }
+  ]
+}

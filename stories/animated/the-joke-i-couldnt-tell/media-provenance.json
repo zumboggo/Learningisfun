@@ -1,0 +1,20 @@
+{
+  "imageTool": "built-in imagegen",
+  "imageId": "exec-c541259a-9dae-4662-bc5d-f4abc9bcc98c",
+  "reference": "public/stories/animated/characters/kevin/approved-design.svg",
+  "imagePrompt": "Preserve approved Kevin in a warm graphic-novel lunch-table scene with an original newcomer, hopeful eye contact and nervous storytelling; no text. Reference-based generated still; not a photograph.",
+  "videoModel": "prunaai/p-video-2-pro",
+  "videoPrompt": "Animate this exact graphic-novel school scene, preserving both characters, costumes and faces. Fixed camera, subtle natural movement. The boy Kevin hesitates, smiles nervously, and says in clear English exactly once: \"Can I try that again?\" The girl listens with a small encouraging nod. Kevin closes his mouth after the line. No other words, no other voices, no laughter, no filler, no narration, no music, no text. Quiet school room ambience only. One meaningful six-second moment before he risks telling a joke in English. No new objects or camera cuts.",
+  "settings": {
+    "duration": 6,
+    "resolution": "480p",
+    "mode": "cost",
+    "prompt_upsampler": "off"
+  },
+  "predictionId": "ejz9r99b65rmy0d1febs7asx70",
+  "maximumChargeUsd": 0.06,
+  "paidAttempts": 1,
+  "verifiedDate": "2026-10-27",
+  "firstFrameHoldSeconds": 3,
+  "motionSeconds": 6
+}

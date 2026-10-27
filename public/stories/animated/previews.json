@@ -72,5 +72,12 @@
     "profile": "ethics",
     "package": "stories/animated/courage-without-applause/episode.json",
     "zip": "stories/animated/courage-without-applause/episode.zip"
+  },
+  {
+    "id": "the-joke-i-couldnt-tell",
+    "title": "The Joke I Couldn\u2019t Tell",
+    "profile": "english-corner",
+    "package": "stories/animated/the-joke-i-couldnt-tell/episode.json",
+    "zip": "stories/animated/the-joke-i-couldnt-tell/episode.zip"
   }
 ]
