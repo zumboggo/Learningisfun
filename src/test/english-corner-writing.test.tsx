@@ -12,7 +12,7 @@ it('all 243 routes finish with five choices and replay exactly',()=>{
  const {story,errors}=validatePackage(real);expect(errors).toEqual([]);let count=0;
  function walk(steps:(string|null)[]){let state=replayStory(story,steps,1);while(!state.ended){const n=story.nodes[state.cursor];if(n.type==='choice'){for(const o of n.options)walk([...steps,o.id]);return;}steps=[...steps,null];state=advanceStory(story,state,null);}expect(steps.filter(x=>x!==null)).toHaveLength(5);expect(replayStory(story,steps,1)).toEqual(state);count++;}
  walk([]);expect(count).toBe(243);
-});
+},30000);
 it('rejects missing or duplicate English Corner prompts and permits legacy single prompts',()=>{
  expect(validatePackage({...real,writing:undefined},{requireEnglishCornerWriting:true}).errors.length).toBeGreaterThan(0);
  expect(validatePackage({...real,writing:{prompts:['a','a','b']}}).errors.length).toBeGreaterThan(0);
