@@ -1,5 +1,4 @@
 const PublicEpisodePage = lazy(() => import('@/pages/PublicEpisodePage'));
-const UsagePage = lazy(() => import('@/pages/UsagePage'));
 const FamilyContactsPage = lazy(() => import('@/pages/FamilyContactsPage'));
 const PublicQuixotePage = lazy(() => import('@/pages/PublicQuixotePage'));
 const PublicEthicsPage = lazy(() => import('@/pages/PublicEthicsPage'));
@@ -191,7 +190,6 @@ export default function App() {
           <Route path="/classes/:classId/notes/:sessionId/edit" element={<FullscreenTeacherRoute><TodayNotesPage /></FullscreenTeacherRoute>} />
           <Route path="/classes/:classId/timer" element={<FullscreenTeacherRoute><ClassTimerPage /></FullscreenTeacherRoute>} />
 
-          <Route path="/usage" element={<ProtectedRoute><TeacherRoute><Suspense fallback={<p>Loading usage…</p>}><UsagePage /></Suspense></TeacherRoute></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><TeacherRoute><TeacherSettingsPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/planner" element={<ProtectedRoute><TeacherRoute><PlannerPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/brainstorming" element={<ProtectedRoute><PlanningPage /></ProtectedRoute>} />
