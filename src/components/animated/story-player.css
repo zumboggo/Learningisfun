@@ -201,4 +201,4 @@
 .story-writing input[type="radio"] { margin-right:.6rem; }
 .story-writing p { overflow-wrap:anywhere; }
 
-.story-player.story-cinema .story-writing strong { color:#fff2c6; opacity:1; text-transform:none; letter-spacing:normal; }
+.animated-story.story-cinema .story-writing strong { color:#fff2c6; opacity:1; text-transform:none; letter-spacing:normal; }
