@@ -90,7 +90,7 @@ export async function createText(params: { publicReadEnabled?: boolean; teacherI
   const hostedParagraphs = splitParagraphs(await hostReadingImages(params.paragraphs.join('\n\n'), textId));
   const now = getTimestamp();
   const text: LearningText = { $id: textId, teacherId: params.teacherId, title: params.title, author: params.author,
-    publicReadEnabled: params.publicReadEnabled ?? true, annotationMode: 'tqe', source: params.source, ...(originalPdfId ? { originalPdfId } : {}), contentMode: params.contentMode || 'full', externalUrl: params.externalUrl || '', status: 'published', createdAt: now, updatedAt: now, syncStatus: 'local' };
+    publicReadEnabled: params.publicReadEnabled ?? false, annotationMode: 'tqe', source: params.source, ...(originalPdfId ? { originalPdfId } : {}), contentMode: params.contentMode || 'full', externalUrl: params.externalUrl || '', status: 'published', createdAt: now, updatedAt: now, syncStatus: 'local' };
   await db.transaction('rw', db.texts, db.text_paragraphs, db.sync_queue, async () => {
   await db.texts.put(text); await addToQueue(params.teacherId, 'text', text.$id, 'create', text);
   for (let i = 0; i < hostedParagraphs.length; i++) {

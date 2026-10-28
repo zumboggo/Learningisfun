@@ -13,7 +13,7 @@ it('prefills the class and preserves the selected week for a quick title-only en
   fireEvent.change(screen.getByPlaceholderText('Title'),{target:{value:'Shared reading'}});
   fireEvent.click(screen.getByRole('checkbox',{name:'Red'}));
   fireEvent.click(screen.getByRole('button',{name:'Save text'}));
-  await waitFor(()=>expect(create).toHaveBeenCalledWith(expect.objectContaining({title:'Shared reading',classIds:['blue','red'],schedule:{assignedAt:'2026-09-21T04:00:00.000Z'},publicReadEnabled:true})));
+  await waitFor(()=>expect(create).toHaveBeenCalledWith(expect.objectContaining({title:'Shared reading',classIds:['blue','red'],schedule:{assignedAt:'2026-09-21T04:00:00.000Z'},publicReadEnabled:false})));
 });
 it('full-text entry requires content and allows switching to the existing-text picker',()=>{
   const choose=vi.fn();

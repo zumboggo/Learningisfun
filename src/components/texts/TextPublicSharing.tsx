@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { executeLearningContent } from '@/services/learning-content.service';
 export function PublicReadingChoice({enabled,onChange}:{enabled:boolean;onChange:(value:boolean)=>void}) {
-  return <div className="rounded-xl border bg-slate-50 p-3 text-sm"><label className="flex gap-2 font-medium"><input type="checkbox" checked={enabled} onChange={e=>onChange(e.target.checked)}/>Anyone with the link can read</label><p className="mt-1 text-xs text-slate-600">On by default for new texts. Includes the uploaded original; public links work before class due dates. Turn off for class-only material. Student work stays private.</p></div>;
+  return <div className="rounded-xl border bg-slate-50 p-3 text-sm"><label className="flex gap-2 font-medium"><input type="checkbox" checked={enabled} onChange={e=>onChange(e.target.checked)}/>Anyone with the link can read</label><p className="mt-1 text-xs text-slate-600">Off by default for new texts. Enable only to share the reading and its uploaded original publicly, including before class due dates. Student work stays private.</p></div>;
 }
 export function TextPublicSharing({textId}:{textId:string}) {
   const [open,setOpen]=useState(false),[enabled,setEnabled]=useState<boolean|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState('');

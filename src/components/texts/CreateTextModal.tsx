@@ -11,7 +11,7 @@ import { createText, splitParagraphs } from '@/services/text.service';
 import type { TextPurpose } from './TextPurpose';
 export function CreateTextModal({teacherId,classes,onClose,initialClassIds=[],onChooseExisting,initialMode='full',assignedAt,allowTitleOnly=false}:{teacherId:string;classes:Array<{id:string;name:string}>;onClose:()=>void;initialClassIds?:string[];onChooseExisting?:()=>void;initialMode?:'full'|'link';assignedAt?:string;allowTitleOnly?:boolean}) {
   const [title,setTitle]=useState(''); const [author,setAuthor]=useState(''); const [mode,setMode]=useState<'full'|'link'>(initialMode); const [externalUrl,setExternalUrl]=useState(''); const [raw,setRaw]=useState(''); const [paragraphs,setParagraphs]=useState<string[]>([]); const [selected,setSelected]=useState(new Set<string>(initialClassIds)); const [busy,setBusy]=useState(false); const preview=paragraphs.length?paragraphs:splitParagraphs(raw);
-  const [publicReadEnabled,setPublicReadEnabled]=useState(true);
+  const [publicReadEnabled,setPublicReadEnabled]=useState(false);
   const [purposes,setPurposes]=useState<Record<string,TextPurpose>>({});
   const [dates,setDates]=useState<Record<string,string>>({});
   const [originalPdf,setOriginalPdf]=useState<File>(); const [saveError,setSaveError]=useState('');
