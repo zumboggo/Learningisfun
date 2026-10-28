@@ -5,7 +5,7 @@ import { PDF_BUCKET, ownsPdf } from './original-pdf.js';
 
 // Separate guest-executable entry point. Never dispatch private learning actions.
 export async function readPublicText({body,db,databaseId,tokens,endpoint,projectId,storage}) {
-  if(body.action==='readEpisode')return readPublicEpisode({body,db,databaseId,storage});
+  if(body.action==='readEpisode')return readPublicEpisode({body,db,databaseId,storage,tokens,endpoint,projectId});
   if(body.action==='readReadingImage') return readingImageAction({body,db,databaseId,tokens,endpoint,projectId,publicOnly:true});
   if (!['read','original'].includes(body.action) || typeof body.textId !== 'string' || !/^[\w-]{1,36}$/.test(body.textId)) throw new Error('Reading unavailable');
   const text=await db.getDocument(databaseId,'texts',body.textId);

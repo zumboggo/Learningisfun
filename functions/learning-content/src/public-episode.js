@@ -1,3 +1,4 @@
+import {privateMediaUrls} from './private-media.js';
 import {createHash} from 'node:crypto';
 const collection='episode_records';
 const unavailable=()=>{throw Object.assign(Error('This episode is not publicly shared.'),{code:404});};
@@ -18,12 +19,12 @@ export async function episodeSharingAction({body,profile,userId,db,databaseId}) 
  }
  return {enabled:existing?JSON.parse(existing.dataJson).enabled===true:false,shareId:id};
 }
-export async function readPublicEpisode({body,db,databaseId,storage}) {
+export async function readPublicEpisode({body,db,databaseId,storage,tokens,endpoint,projectId}) {
  if(body.action!=='readEpisode'||typeof body.shareId!=='string'||! /^[a-f0-9]{32}$/.test(body.shareId))return unavailable();
  const sharing=JSON.parse((await db.getDocument(databaseId,collection,body.shareId)).dataJson);
  if(sharing.type!=='public-episode'||sharing.enabled!==true)return unavailable();
  const raw=await storage.getFileDownload({bucketId:'animated-episodes',fileId:sharing.fileId});
  const pack=raw&&[1,2].includes(raw.format)?raw:JSON.parse(Buffer.from(raw).toString());
  // The share contains only the published story, never assignments or attempts.
- return {pack};
+ const mediaUrls=await privateMediaUrls({pack,db,databaseId,tokens,endpoint,projectId});return {pack,...(Object.keys(mediaUrls).length?{mediaUrls}:{})};
 }

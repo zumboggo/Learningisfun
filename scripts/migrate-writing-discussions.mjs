@@ -11,7 +11,7 @@ for(const id of ['reading_posts','reading_settings','reading_reply_rounds','read
  if(c.$permissions.length||c.documentSecurity)throw Error(`${id} must be server-only`);
 }
 for(const id of ['discussion_answers','discussion_questions','class_sessions']){
- const c=await db.getCollection(databaseId,id),permissions=id==='discussion_answers'?[]:['read("users")'];
+ const c=await db.getCollection(databaseId,id),permissions=[];
  if(apply)await db.updateCollection(databaseId,id,c.name,permissions,false,c.enabled);
  console.log(`${apply?'Applied':'Planned'} ${id}: ${id==='discussion_answers'?'server-only':'browser read-only; writes use authorized backend'}`);
 }

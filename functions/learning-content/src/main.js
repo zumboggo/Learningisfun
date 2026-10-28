@@ -1,3 +1,10 @@
+import {authorizeContentMutation} from './content-ownership.js';
+import {privateEpisodeAction,privateAnimatedPreviewAction} from './private-episodes.js';
+import {scopedDataAction} from './scoped-data.js';
+import {generalPlannerAction} from './general-planner.js';
+import {episodeAuthoringAction} from './episode-authoring.js';
+import {teacherAIAction,paidCompletion} from './teacher-ai.js';
+import {teacherWorkspaceAction, allRows} from './teacher-workspace.js';
 import {episodeSharingAction} from './public-episode.js';
 import {usageSummary} from './usage-summary.js';
 import {writingSettings,writingArchive,writingWorkspace,listAll} from './writing-discussion.js';
@@ -22,7 +29,6 @@ import { originalPdfAction, authorizeTextMutation, readEditableParagraphs } from
 import { handleTqe } from './tqe.js';
 import { publicSharingAction } from './public-reading.js';
 import { readingDiscussionAction } from './reading-discussion.js';
-import { familyContactsAction } from './family-contacts.js';
 
 const studentCollections = new Set(['quiz_attempts', 'writing_submissions', 'peer_reviews', 'discussion_questions', 'discussion_answers', 'question_votes', 'text_annotations', 'text_discussion_posts', 'text_discussion_votes']);
 const substitutePostCollections = new Set(['discussion_questions', 'discussion_answers', 'text_annotations', 'text_discussion_posts']);
@@ -107,29 +113,15 @@ const paragraphBatches = paragraphs => {
   if (current.length) batches.push(current);
   return batches;
 };
-async function adaptTextParagraphs(paragraphs, level) {
+async function adaptTextParagraphs(paragraphs, level, aiArgs, ownerId) {
   if (!process.env.OPENROUTER_API_KEY) throw new Error('AI text support is not configured');
   const guidance = level === 'highly_supported'
     ? 'Use very clear, direct English, mostly short sentences, and explicitly identify pronoun referents and implied relationships. Keep essential academic or literary terms and briefly explain them in context.'
     : 'Use clearer sentence structure and moderately simpler English while retaining the original detail, tone, sequence, and important academic or literary vocabulary.';
   const output = [];
   for (const batch of paragraphBatches(paragraphs)) {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini',
-        temperature: 0.2,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: `You adapt grade-level classroom readings for multilingual secondary students. ${guidance} Preserve every fact, name, event, argument, theme, and paragraph boundary. Do not summarize, censor, add facts, add headings, or answer questions about the text. For literary writing, preserve meaningful imagery and explain difficult meaning through clearer wording rather than deleting it. Return only JSON: {"paragraphs":[{"id":"the supplied id","content":"adapted paragraph"}]}. Return exactly one item for every supplied paragraph in the same order.` },
-          { role: 'user', content: JSON.stringify({ paragraphs: batch.map(row => ({ id: row.$id, content: row.content })) }) },
-        ],
-      }),
-    });
-    if (!response.ok) throw new Error(`AI provider returned ${response.status}`);
-    const body = await response.json();
-    const result = parseAiJson(body.choices?.[0]?.message?.content || '{}');
+    const content=await paidCompletion(aiArgs,{ownerId,messages:[{ role: 'system', content: `You adapt grade-level classroom readings for multilingual secondary students. ${guidance} Preserve every fact, name, event, argument, theme, and paragraph boundary. Do not summarize, censor, add facts, add headings, or answer questions about the text. For literary writing, preserve meaningful imagery and explain difficult meaning through clearer wording rather than deleting it. Return only JSON: {"paragraphs":[{"id":"the supplied id","content":"adapted paragraph"}]}. Return exactly one item for every supplied paragraph in the same order.` },{role:'user',content:JSON.stringify({paragraphs:batch.map(row=>({id:row.$id,content:row.content}))})}]});
+    const result=parseAiJson(content);
     if (!Array.isArray(result.paragraphs) || result.paragraphs.length !== batch.length) throw new Error('AI returned an incomplete text version');
     const byId = new Map(result.paragraphs.map(row => [String(row.id), String(row.content || '').trim()]));
     for (const paragraph of batch) {
@@ -150,6 +142,12 @@ export default async ({ req, res, error }) => {
     const db = new Databases(client), users = new Users(client), databaseId = process.env.APPWRITE_DATABASE_ID || 'main';
     if (body.action === 'selfProfile') return res.json({ profile: await selfProfile({ db, users, databaseId, userId }) });
     const profile = await db.getDocument(databaseId, 'users', userId);
+    if(body.action==='scopedData'){try{return res.json(await scopedDataAction({body,profile,userId,db,databaseId}));}catch(e){return res.json({error:e.message},e.code||500);}}
+    if(['readGeneralPlanner','saveGeneralPlanner','readGeneralPlannerHistory','publishGeneralLesson','readGeneralPlannerMaterials'].includes(body.action)){try{return res.json(await generalPlannerAction({body,profile,userId,db,databaseId,storage:new Storage(client)}));}catch(e){return res.json({error:e.message},e.code||500);}}
+    if(['readEpisodeAuthoring','savePersonalCharacter','generateEpisodeDraft'].includes(body.action)){try{return res.json(await episodeAuthoringAction({body,profile,userId,db,databaseId}));}catch(e){return res.json({error:e.message},e.code||500);}}
+    if(['generateTeacherAI','reconcileAIUsage','readAIAllowance','manageAIAllowance','listAIAllowances'].includes(body.action)){try{return res.json(await teacherAIAction({body,profile,userId,db,databaseId}));}catch(e){return res.json({error:e.message},e.code||500);}}
+    if(['redeemTeacherInvitation','readTeacherPreferences','saveTeacherPreferences','manageTeacherInvitation','readTeacherInvitation'].includes(body.action)) {try{return res.json(await teacherWorkspaceAction({body,profile,userId,db,databaseId}));}catch(e){return res.json({error:e.message},e.code||500);}}
+    if(['readFamilyContacts','saveFamilyContacts'].includes(body.action))return res.json({error:'The family contact form has been retired.'},410);
     if (body.action === 'usageSummary') {
       try { return res.json(await usageSummary({body,profile,userId,db,databaseId})); }
       catch (cause) { if ([400,403].includes(cause.code)) return res.json({error:cause.message},cause.code); throw cause; }
@@ -164,15 +162,12 @@ export default async ({ req, res, error }) => {
     }
     if(['readEpisodePublicSharing','setEpisodePublicSharing'].includes(body.action)){try{return res.json(await episodeSharingAction({body,profile,userId,db,databaseId}));}catch(cause){return res.json({error:cause.message},[400,403,404].includes(cause.code)?cause.code:500);}}
     if (body.action === 'importLegacyWord') return res.json(await importLegacyWord(profile, body.data));
-    const memberships = await db.listDocuments(databaseId, 'class_members', [Query.equal('userId', userId), Query.limit(500)]);
+    const memberships = {documents:await allRows(db,databaseId,'class_members',[Query.equal('userId',userId)])};
     const nowTime = Date.now();
     const memberClassIds = new Set(memberships.documents.filter(row => row.role !== 'substitute' || (row.expiresAt && new Date(row.expiresAt).getTime() > nowTime)).map(row => row.classId));
-    if (['readFamilyContacts','saveFamilyContacts'].includes(body.action)) {
-      const validMembers = new Set(memberships.documents.filter(row => row.role === 'student' && (!row.expiresAt || Date.parse(row.expiresAt) > nowTime)).map(row => row.classId));
-      try { return res.json(await familyContactsAction({body,profile,userId,memberClassIds:validMembers,db,databaseId})); }
-      catch (cause) { if ([400,403].includes(cause.code)) return res.json({error:cause.message},cause.code); throw cause; }
-    }
-    if(['animatedLibrary','animatedSaveDraft','animatedReadDraft','animatedPublish','animatedAssign','animatedArchiveAssignment','animatedRead','animatedSaveAttempt'].includes(body.action)){const validMembers=new Set(memberships.documents.filter(r=>r.role==='student'&&(!r.expiresAt||Date.parse(r.expiresAt)>nowTime)).map(r=>r.classId));try{return res.json(await animatedEpisodeAction({body,profile,userId,memberClassIds:validMembers,db,databaseId,storage:new Storage(client)}));}catch(cause){if([400,403,404,409].includes(cause.code))return res.json({error:cause.message},cause.code);throw cause;}}
+    if(body.action==='readPrivateAnimatedPreview'){try{return res.json(await privateAnimatedPreviewAction({body,userId,db,databaseId,storage:new Storage(client),tokens:new Tokens(client),endpoint:process.env.APPWRITE_ENDPOINT,projectId:process.env.APPWRITE_FUNCTION_PROJECT_ID}));}catch(e){return res.json({error:e.message},e.code||500);}}
+    if(body.action==='readPrivateEpisode'){try{return res.json(await privateEpisodeAction({body,profile,userId,memberClassIds:new Set(memberships.documents.filter(r=>r.role==='student').map(r=>r.classId)),db,databaseId,storage:new Storage(client)}));}catch(e){return res.json({error:e.message},e.code||500);}}
+    if(['animatedLibrary','animatedSaveDraft','animatedReadDraft','animatedPublish','animatedAssign','animatedArchiveAssignment','animatedRead','animatedSaveAttempt'].includes(body.action)){const validMembers=new Set(memberships.documents.filter(r=>r.role==='student'&&(!r.expiresAt||Date.parse(r.expiresAt)>nowTime)).map(r=>r.classId));try{return res.json(await animatedEpisodeAction({body,profile,userId,memberClassIds:validMembers,db,databaseId,storage:new Storage(client),tokens:new Tokens(client),endpoint:process.env.APPWRITE_ENDPOINT,projectId:process.env.APPWRITE_FUNCTION_PROJECT_ID}));}catch(cause){if([400,403,404,409].includes(cause.code))return res.json({error:cause.message},cause.code);throw cause;}}
     if(body.action==='saveFlashcardBatch'){if(!['student','teacher','admin'].includes(profile.role))return res.json({error:'Practice saving requires a student or teacher account'},403);return res.json(await saveFlashcardBatch({body,userId,memberClassIds,db,databaseId}));}
     if(body.action==='readFlashcardDeck'){try{return res.json(await readFlashcardDeck({body,userId,memberClassIds,db,databaseId}));}catch(cause){if(cause.code===403)return res.json({error:cause.message},403);throw cause;}}
     if (['readEpisodeText','saveEpisodeText'].includes(body.action)) {
@@ -224,39 +219,37 @@ export default async ({ req, res, error }) => {
 
     if (body.action === 'listManagedUsers') {
       if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
-      const [profiles, memberRows, classes, accounts] = await Promise.all([
-        db.listDocuments(databaseId, 'users', [Query.orderAsc('name'), Query.limit(500)]),
-        db.listDocuments(databaseId, 'class_members', [Query.limit(5000)]),
-        db.listDocuments(databaseId, 'classes', [Query.equal('teacherId', userId), Query.limit(500)]),
-        users.list({queries:[Query.limit(500)]}),
-      ]);
-      const owned = new Map(classes.documents.map(row=>[row.$id, row.name===row.courseName?row.name:`${row.courseName} · ${row.name}`]));
-      const accountById = new Map(accounts.users.map(row=>[row.$id,row]));
-      const rows = profiles.documents.filter(row=>row.role!=='teacher' && memberRows.documents.some(member=>member.userId===row.$id && owned.has(member.classId))).map(row=>{
-        const account=accountById.get(row.$id),classNames=memberRows.documents.filter(member=>member.userId===row.$id&&owned.has(member.classId)).map(member=>owned.get(member.classId));
-        return {$id:row.$id,name:row.name,email:row.email,role:row.role,classNames:[...new Set(classNames)],hasLogin:Boolean(account),verified:Boolean(account?.emailVerification)};
-      });
+      const classes=await allRows(db,databaseId,'classes',[Query.equal('teacherId',userId)]);
+      const owned=new Map(classes.map(row=>[row.$id,row.name===row.courseName?row.name:`${row.courseName} · ${row.name}`]));
+      const members=(await Promise.all(classes.map(cls=>allRows(db,databaseId,'class_members',[Query.equal('classId',cls.$id)])))).flat();
+      const rows=[];
+      for(const id of new Set(members.map(row=>row.userId))){
+        const row=await db.getDocument(databaseId,'users',id);if(!['student','parent'].includes(row.role))continue;
+        let account;try{account=await users.get({userId:id});}catch(e){if(e.code!==404)throw e;}
+        rows.push({$id:row.$id,name:row.name,email:row.email,role:row.role,classNames:[...new Set(members.filter(m=>m.userId===id).map(m=>owned.get(m.classId)))],hasLogin:Boolean(account),verified:Boolean(account?.emailVerification)});
+      }
+      rows.sort((a,b)=>a.name.localeCompare(b.name));
       return res.json({ users: rows });
     }
 
     if (body.action === 'updateManagedUserRole') {
       if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
       const target=await db.getDocument(databaseId,'users',body.targetUserId),role=body.role;
-      if(target.role==='teacher'||!['student','parent'].includes(role))return res.json({error:'That role cannot be changed here'},403);
-      const targetMemberships=await db.listDocuments(databaseId,'class_members',[Query.equal('userId',target.$id),Query.limit(500)]),owned=await db.listDocuments(databaseId,'classes',[Query.equal('teacherId',userId),Query.limit(500)]),ownedIds=new Set(owned.documents.map(row=>row.$id));
-      if(targetMemberships.documents.some(row=>!ownedIds.has(row.classId)))return res.json({error:'This account belongs to a class you do not manage'},403);
-      for(const member of targetMemberships.documents)await db.updateDocument(databaseId,'class_members',member.$id,{role});
+      if(!['student','parent'].includes(target.role)||!['student','parent'].includes(role))return res.json({error:'That role cannot be changed here'},403);
+      const targetMemberships=await allRows(db,databaseId,'class_members',[Query.equal('userId',target.$id)]),owned=await allRows(db,databaseId,'classes',[Query.equal('teacherId',userId)]),ownedIds=new Set(owned.map(row=>row.$id));
+      if(!targetMemberships.length||targetMemberships.some(row=>!ownedIds.has(row.classId)))return res.json({error:'This account belongs to a class you do not manage'},403);
+      for(const member of targetMemberships)await db.updateDocument(databaseId,'class_members',member.$id,{role});
       const updated=await db.updateDocument(databaseId,'users',target.$id,{role});return res.json({user:clean(updated)});
     }
 
     if (body.action === 'resetManagedUserAccount') {
       if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
-      const target=await db.getDocument(databaseId,'users',body.targetUserId);if(target.role==='teacher')return res.json({error:'Teacher accounts cannot be reset here'},403);
+      const target=await db.getDocument(databaseId,'users',body.targetUserId);if(!['student','parent'].includes(target.role))return res.json({error:'Teacher accounts cannot be reset here'},403);
       const checks=[['card_reviews','userId'],['flashcard_review_events','userId'],['flashcard_study_sessions','userId'],['student_card_state','userId'],['student_deck_notes','userId'],['quiz_attempts','userId'],['writing_submissions','authorId'],['peer_reviews','reviewerId'],['presentation_peer_reviews','reviewerId'],['presentation_peer_reviews','presenterId'],['discussion_questions','authorId'],['discussion_answers','authorId'],['question_votes','userId'],['text_annotations','authorId'],['text_discussion_posts','authorId'],['text_discussion_votes','userId'],['copywork_entries','userId'],['nickname_reports','reporterId'],['nickname_reports','targetUserId']];
       for(const [collection,field] of checks){const result=await db.listDocuments(databaseId,collection,[Query.equal(field,target.$id),Query.limit(1)]);if(result.total)return res.json({error:'This account has student work. Change its role instead of resetting it.'},409);}
-      const targetMemberships=await db.listDocuments(databaseId,'class_members',[Query.equal('userId',target.$id),Query.limit(500)]),owned=await db.listDocuments(databaseId,'classes',[Query.equal('teacherId',userId),Query.limit(500)]),ownedIds=new Set(owned.documents.map(row=>row.$id));if(targetMemberships.documents.some(row=>!ownedIds.has(row.classId)))return res.json({error:'This account belongs to a class you do not manage'},403);
+      const targetMemberships=await allRows(db,databaseId,'class_members',[Query.equal('userId',target.$id)]),owned=await allRows(db,databaseId,'classes',[Query.equal('teacherId',userId)]),ownedIds=new Set(owned.map(row=>row.$id));if(!targetMemberships.length||targetMemberships.some(row=>!ownedIds.has(row.classId)))return res.json({error:'This account belongs to a class you do not manage'},403);
       await users.delete({userId:target.$id});
-      for(const member of targetMemberships.documents)await db.deleteDocument(databaseId,'class_members',member.$id);
+      for(const member of targetMemberships)await db.deleteDocument(databaseId,'class_members',member.$id);
       await db.deleteDocument(databaseId,'users',target.$id);
       return res.json({deleted:true});
     }
@@ -1136,7 +1129,7 @@ export default async ({ req, res, error }) => {
         if (!paragraphResult.total) throw new Error('This text has no paragraphs');
         const totalCharacters = paragraphResult.documents.reduce((sum, row) => sum + String(row.content || '').length, 0);
         if (totalCharacters > 100000) throw new Error('This text is too long to adapt in one request');
-        const adapted = await adaptTextParagraphs(paragraphResult.documents, level);
+        const adapted = await adaptTextParagraphs(paragraphResult.documents, level, {db,databaseId,body,userId}, text.teacherId);
         for (const row of adapted) await db.createDocument(databaseId, 'text_version_paragraphs', textVersionParagraphId(versionId, row.originalParagraphId), { versionId, textId: text.$id, originalParagraphId: row.originalParagraphId, sortOrder: row.sortOrder, content: row.content });
         version = await db.updateDocument(databaseId, 'text_versions', versionId, { status: 'ready', error: '', updatedAt: new Date().toISOString() });
         const rows = await db.listDocuments(databaseId, 'text_version_paragraphs', [Query.equal('versionId', versionId), Query.orderAsc('sortOrder'), Query.limit(5000)]);
@@ -1249,7 +1242,7 @@ export default async ({ req, res, error }) => {
       const session = await db.getDocument(databaseId, 'class_sessions', body.sessionId);
       if(session.discussionType==='presentation')return res.json({error:'Use the writing prompt discussion'},403);
       const ownsClass = profile.role === 'teacher' && (await db.listDocuments(databaseId, 'classes', [Query.equal('$id', session.classId), Query.equal('teacherId', userId), Query.limit(1)])).total > 0;
-      if (!memberClassIds.has(session.classId) && !ownsClass) return res.json({ error: 'Not enrolled' }, 403);
+      if ((!memberClassIds.has(session.classId) || session.status==='draft') && !ownsClass) return res.json({ error: 'Not enrolled or not published' }, 403);
       const questionResult = await db.listDocuments(databaseId, 'discussion_questions', [Query.equal('classSessionId', body.sessionId), Query.limit(5000)]);
       const questions = questionResult.documents.filter(row => ownsClass || row.moderationStatus === 'visible');
       const questionIds = questions.map(row => row.$id);
@@ -1274,7 +1267,7 @@ export default async ({ req, res, error }) => {
     }
     if (collection === 'quiz_attempts') return res.json({ error: 'Quiz attempts must use the secure quiz submission actions' }, 400);
     const data = { ...body.data }; delete data.$id; delete data.syncStatus;
-    try { await authorizeTextMutation({ collection, id, data, userId, db, databaseId }); }
+    try { await authorizeContentMutation({collection,id,data,userId,profile,memberClassIds,db,databaseId});await authorizeTextMutation({ collection, id, data, userId, db, databaseId }); }
     catch (cause) { return res.json({ error: cause.message }, 403); }
     let existing = null; try { existing = await db.getDocument(databaseId, collection, id); } catch(cause) { if(cause.code!==404)throw cause; }
     for(const field of ['classId','classSessionId','questionId'])if(existing?.[field]&&data[field]&&existing[field]!==data[field])return res.json({error:'Cannot move an existing contribution'},403);
