@@ -1,3 +1,4 @@
+import WorkshopPage from './pages/WorkshopPage';
 import PrivateEpisodeGate from './components/teachers/PrivateEpisodeGate';
 import PlannerAccess from './components/teachers/PlannerAccess';
 import TeacherAccessPage from './pages/TeacherAccessPage';
@@ -173,6 +174,7 @@ export default function App() {
           <Route path="/decks/import" element={<ProtectedRoute><ImportDeckPage /></ProtectedRoute>} />
           <Route path="/decks/new" element={<ProtectedRoute><CreateDeckPage /></ProtectedRoute>} />
 
+          <Route path="/workshop" element={<ProtectedRoute><WorkshopPage/></ProtectedRoute>} />
           <Route path="/classes" element={<ProtectedRoute><ClassesListPage /></ProtectedRoute>} />
           <Route path="/classes/:classId/episodes/:episodeId" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening episode…</p>}><PrivateEpisodeGate><EpisodePage /></PrivateEpisodeGate></Suspense></ProtectedRoute>} />
           <Route path="/game/create" element={<ProtectedRoute><TeacherRoute><Suspense fallback={<p>Opening studio…</p>}><AnimatedStudioPage /></Suspense></TeacherRoute></ProtectedRoute>} />

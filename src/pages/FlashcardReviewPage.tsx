@@ -1,3 +1,4 @@
+import {workshopReturn} from '@/services/workshop-context';
 import { selectedVocabularyCards, type VocabularySelection } from '@/services/student-vocabulary';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
@@ -436,7 +437,7 @@ export function FlashcardReviewPage() {
           <Button onClick={() => isCombined ? navigate('/decks') : setSessionStarted(false)} className="w-full">
             {isCombined ? 'Back to Cards' : 'Back to deck'}
           </Button>
-          <Button onClick={() => navigate('/dashboard')} variant="ghost" className="w-full">
+          <Button onClick={() => navigate(workshopReturn('/dashboard'))} variant="ghost" className="w-full">
             Go to dashboard
           </Button>
         </div>

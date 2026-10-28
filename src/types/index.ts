@@ -264,6 +264,7 @@ export interface StudentDeckNote {
 }
 
 export interface SyncOperation {
+  workshop?: boolean;
   id?: number;
   operationId: string;
   userId: string;

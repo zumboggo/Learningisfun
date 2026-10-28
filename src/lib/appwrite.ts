@@ -1,3 +1,4 @@
+import {workshopPayload} from '@/services/workshop-context';
 import { Client, Account, Databases, Functions } from 'appwrite';
 
 const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1';
@@ -18,7 +19,13 @@ export const databases = new Proxy(new Databases(client), {get(target,property){
  const body=JSON.parse(result.responseBody||'{}');if(result.status==='failed'||result.responseStatusCode>=400||body.error)throw Object.assign(new Error(body.error||'Classroom request failed'),{code:result.responseStatusCode});return body;
  };
 }});
-export const functions = new Functions(client);
+export const functions = new Proxy(new Functions(client),{get(target,property){
+ const value=Reflect.get(target,property);if(property!=='createExecution')return typeof value==='function'?value.bind(target):value;
+ return (...args:unknown[])=>{const object=typeof args[0]==='object'&&args[0]!==null?args[0] as Record<string,unknown>:null;const functionId=object?.functionId??args[0],body=object?.body??args[1];
+  if(functionId===FUNCTION_IDS.learningContent&&typeof body==='string'){try{const payload=JSON.parse(body);if(payload&&typeof payload==='object'&&!Array.isArray(payload)){const next=JSON.stringify(workshopPayload(payload));if(object)args[0]={...object,body:next};else args[1]=next;}}catch{/* The server reports invalid JSON. */}}
+  return value.apply(target,args);
+ };
+}});
 
 export const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID || '';
 

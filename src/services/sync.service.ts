@@ -1,3 +1,4 @@
+import {workshopLocation} from './workshop-context';
 import {executeLearningContent} from './learning-content.service';
 import { db } from '@/db/schema';
 import { generateDeviceId, isOnline, getTimestamp } from '@/utils/helpers';
@@ -35,6 +36,7 @@ export async function addToQueue(
   }
   await db.sync_queue.add({
     operationId,
+    workshop:workshopLocation(),
     userId,
     deviceId,
     entityType,
@@ -96,7 +98,7 @@ async function processQueueUnlocked(): Promise<void> {
     if(practice.length){
       for(const op of practice)await db.sync_queue.update(op.id!,{syncStatus:'syncing',timestamp:Date.now()});
       try{
-        const result=await executeLearningContent<{results:Array<{id:string;ok:boolean;error?:string}>}>({action:'saveFlashcardBatch',operations:practice.map(op=>({id:op.entityId,entityType:op.entityType,payload:op.payload}))});
+        const result=await executeLearningContent<{results:Array<{id:string;ok:boolean;error?:string}>}>({action:'saveFlashcardBatch',workshop:false,operations:practice.map(op=>({id:op.entityId,entityType:op.entityType,payload:op.payload}))});
         for(const op of practice){
           const saved=result.results.find(row=>row.id===op.entityId);
           if(saved?.ok){const latest=await db.sync_queue.get(op.id!);await db.sync_queue.update(op.id!,{syncStatus:JSON.stringify(latest?.payload)===JSON.stringify(op.payload)?'synced':'pending'});if(op.entityType==='card_review')await db.card_reviews.update(op.entityId,{syncStatus:'synced'});else await markEntitySynced(op.entityType,op.entityId);}
@@ -142,7 +144,7 @@ async function executeSyncOperation(op: SyncOperation): Promise<void> {
     'class_session', 'text_discussion_vote', 'question', 'vote', 'discussion_answer', 'class_links', 'deck_assignment',
   ].includes(entityType)) {
     const execution = await functions.createExecution(FUNCTION_IDS.learningContent, JSON.stringify({
-      action: 'mutate', collection: secureCollection, operation: operationType,
+      action: 'mutate', workshop:op.workshop===true, collection: secureCollection, operation: operationType,
       id: (data.$id as string | undefined) || entityId, data,
     }));
     if (execution.status === 'failed') throw new Error(execution.errors || 'Secure sync failed');

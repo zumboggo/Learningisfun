@@ -1,3 +1,4 @@
+import {workshopReturn} from '@/services/workshop-context';
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -146,7 +147,7 @@ export function QuizTakingPage() {
       <div className="p-4 max-w-lg mx-auto">
         <div className="text-center py-8">
           <p className="text-gray-500">Quiz not found or has no questions.</p>
-          <Button onClick={() => navigate('/quizzes')} className="mt-4">Back to quizzes</Button>
+          <Button onClick={() => navigate(workshopReturn('/quizzes'))} className="mt-4">Back to quizzes</Button>
         </div>
       </div>
     );
@@ -179,7 +180,7 @@ export function QuizTakingPage() {
 
             <div className="space-y-2">
               {!isPractice && results.attemptsRemaining > 0 && <Button onClick={() => void handleRetry()} className="w-full">Try second attempt</Button>}
-              <Button variant={results.attemptsRemaining > 0 && !isPractice ? 'secondary' : 'primary'} onClick={() => navigate(isPractice ? returnTo : '/classes')} className="w-full">Back to classes</Button>
+              <Button variant={results.attemptsRemaining > 0 && !isPractice ? 'secondary' : 'primary'} onClick={() => navigate(workshopReturn(isPractice ? returnTo : '/classes'))} className="w-full">Back to classes</Button>
             </div>
           </div>
         </Card>
@@ -190,7 +191,7 @@ export function QuizTakingPage() {
   if (!started) {
     return (
       <div className="p-4 max-w-lg mx-auto">
-        <button onClick={() => navigate(isPractice ? returnTo : '/quizzes')} className="text-gray-500 mb-4">Back</button>
+        <button onClick={() => navigate(workshopReturn(isPractice ? returnTo : '/quizzes'))} className="text-gray-500 mb-4">Back</button>
         <Card>
           <h1 className="text-2xl font-bold mb-2">{quiz.title}</h1>
           <p className="text-gray-500 mb-4">{quiz.questionCount} points · {questions.length} question blocks</p>
@@ -211,7 +212,7 @@ export function QuizTakingPage() {
   return (
     <div className="p-4 max-w-lg mx-auto">
       <div className="flex items-center justify-between mb-4">
-        <button onClick={() => navigate(isPractice ? returnTo : '/quizzes')} className="text-gray-500">Exit</button>
+        <button onClick={() => navigate(workshopReturn(isPractice ? returnTo : '/quizzes'))} className="text-gray-500">Exit</button>
         <span className="text-sm text-gray-400">
           {Object.keys(answers).length} / {questions.length} answered
         </span>

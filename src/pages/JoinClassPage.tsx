@@ -1,3 +1,4 @@
+import {WORKSHOP_CLASS_ID} from '@/services/workshop-context';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -77,7 +78,7 @@ export function JoinClassPage() {
       );
       return false;
     }
-    navigate('/dashboard', { replace: true });
+    navigate(joined.$id===WORKSHOP_CLASS_ID?`/classes/${WORKSHOP_CLASS_ID}`:'/dashboard', { replace: true });
     return true;
   }, [code, joinRole, navigate]);
 
@@ -116,8 +117,8 @@ export function JoinClassPage() {
     setSubmitting(true);
     try {
       await enrol(user!.$id);
-    } catch {
-      setError('Could not join the class. Please try again.');
+    } catch (cause) {
+      setError(cause instanceof Error?cause.message:'Could not join the class. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -162,7 +163,7 @@ export function JoinClassPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-blue-700">Learning is Fun</h1>
-          <p className="text-gray-500 mt-2">Join as a student, parent observer, or substitute</p>
+          <p className="text-gray-500 mt-2">Join as a student, parent observer, or substitute. Teacher accounts may join Lifeplus Workshop as participants.</p>
         </div>
 
         {loading ? (

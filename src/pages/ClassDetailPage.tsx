@@ -1,3 +1,4 @@
+import {WorkshopLink as Link} from '@/components/WorkshopLink';
 import {useTeacherPreferences} from "@/services/teacher-preferences";
 import {STONE_CLASS_ID} from '@/services/stone.service';
 import {CreateWritingPromptModal} from '@/components/discussions/CreateWritingPromptModal';
@@ -19,7 +20,7 @@ import { textSchedule, textAssignmentAvailable } from '@/services/text-schedule'
 import { ClassReadingDate } from '@/components/texts/ClassReadingDate';
 import { useWeeklyVocabulary } from '@/hooks/useWeeklyVocabulary';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import {useParams, useNavigate} from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/db/schema';

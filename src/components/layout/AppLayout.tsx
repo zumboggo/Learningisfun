@@ -1,3 +1,4 @@
+import {WORKSHOP_CLASS_ID,isWorkshopPath} from '@/services/workshop-context';
 import {GameDisplay} from '@/components/GameDisplay';
 import {isGamePlayerRoute} from '@/services/game-display';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -13,7 +14,7 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const { user, logout, isTeacher, isParent, viewAsStudent, setViewAsStudent } = useAuth();
+  const { user, logout, isTeacher, isParent, viewAsStudent, setViewAsStudent,workshopMode,workshopAccess,workshopError } = useAuth();
   const location = useLocation();
   const syncState = useSyncStatus(user?.$id);
   const online = useOnlineStatus();
@@ -73,6 +74,8 @@ export function AppLayout({ children }: AppLayoutProps) {
         { to: '/brainstorming', label: 'Planner', icon: 'write' },
       ];
 
+  if(workshopMode)return <div className="min-h-screen bg-white"><header className="flex flex-wrap items-center justify-between gap-3 border-b bg-teal-50 px-4 py-3"><div><strong>Lifeplus Workshop</strong><p className="text-sm">Participating as a learner · your teacher account stays active</p></div><nav className="flex gap-4"><Link to={`/classes/${WORKSHOP_CLASS_ID}`}>Workshop materials</Link><Link to="/classes">Return to teaching</Link></nav></header><main>{content}</main></div>;
+  if(isActualTeacher&&isWorkshopPath(location.pathname,location.search)&&!workshopAccess?.owner&&!workshopAccess?.enrolled&&location.pathname!=='/workshop')return <main className="mx-auto max-w-lg space-y-4 p-6"><p>{workshopError||'Join Lifeplus Workshop before opening its materials.'}</p><Link to="/workshop">Join workshop</Link><Link className="ml-4" to="/classes">Return to teaching</Link></main>;
   if (!isTeacher) {
     return (
       <div className="student-shell min-h-screen">

@@ -1,4 +1,5 @@
-import {Link, type LinkProps} from 'react-router-dom';
+import {WorkshopLink as Link} from '@/components/WorkshopLink';
+import {type LinkProps} from 'react-router-dom';
 import {useAuth} from '@/contexts/AuthContext';
 import {enterGameFullscreen,prefersGameFullscreen} from '@/services/game-display';
 // Request while the link click still carries browser user activation; never wait for a route effect.

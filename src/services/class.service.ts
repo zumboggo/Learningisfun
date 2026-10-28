@@ -1,3 +1,4 @@
+import {WORKSHOP_CLASS_ID} from './workshop-context';
 import { databases, DATABASE_ID, COLLECTIONS } from '@/lib/appwrite';
 import { db } from '@/db/schema';
 import { generateId, generateJoinCode, getTimestamp } from '@/utils/helpers';
@@ -157,6 +158,7 @@ export async function joinClass(userId: string, joinCode: string, role: 'student
   const localDuplicates = await db.class_members.where('[classId+userId]').equals([cls.$id, userId]).toArray();
   await db.class_members.bulkDelete(localDuplicates.map(member => member.$id));
   await db.class_members.put(result.membership);
+  if(cls.$id===WORKSHOP_CLASS_ID)window.dispatchEvent(new Event('workshop-enrollment-changed'));
 
   return cls;
 }

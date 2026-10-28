@@ -11,7 +11,7 @@ import { joinClass, updateClassDetails } from '@/services/class.service';
 import type { Class } from '@/types';
 
 export function ClassesListPage() {
-  const { user, isTeacher } = useAuth();
+  const { user, isTeacher,workshopAccess } = useAuth();
   const [editing, setEditing] = useState<Class | null>(null);
   const [query, setQuery] = useState('');
   const [joining, setJoining] = useState(false);
@@ -110,6 +110,7 @@ export function ClassesListPage() {
           {classes?.length ? <button type="button" onClick={() => setQuery('')} className="mt-4 inline-flex min-h-10 items-center rounded-lg bg-gray-950 px-4 text-sm font-semibold text-white hover:bg-gray-800">Clear search</button> : user?.role === 'student' ? <Button className="mt-4" onClick={() => setJoining(true)}>Join a class</Button> : !isTeacher && <Link to="/dashboard" className="mt-4 inline-flex min-h-10 items-center rounded-lg bg-gray-950 px-4 text-sm font-semibold text-white hover:bg-gray-800">Join a class</Link>}
         </Card>
       )}
+      {isTeacher&&!workshopAccess?.owner&&<Card><h2 className="font-semibold">Lifeplus Workshop</h2><p className="my-2 text-sm">Join the workshop as a learner while keeping your teacher account.</p><Link className="font-semibold text-teal-800 underline" to="/workshop">{workshopAccess?.enrolled?'Open workshop':'Join workshop'}</Link></Card>}
       {joining && user?.role === 'student' && <JoinAnotherClassModal userId={user.$id} onClose={() => setJoining(false)} onJoined={cls => { setJoining(false); setQuery(''); setJoinedMessage(`Joined ${cls.courseName} · ${cls.name}.`); }} />}
       {editing && <EditClassModal cls={editing} onClose={() => setEditing(null)} />}
     </div>

@@ -1,10 +1,11 @@
+import {WorkshopLink as Link} from '@/components/WorkshopLink';
 import { PresentQuestions } from '@/components/discussions/PresentQuestions';
 import {DiscussionComposer, ReadingThread} from '@/components/discussions/DiscussionThread';
 import { QuestionNotebook } from '@/components/discussions/QuestionNotebook';
 import { ReplyAssignments } from '@/components/discussions/ReplyAssignments';
 import { QuestionVoting } from '@/components/discussions/QuestionVoting';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import {useLocation, useNavigate, useParams} from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/common/Button';
 import { ParallelReading } from '@/components/texts/ParallelReading';

@@ -1,6 +1,8 @@
+import {WORKSHOP_CLASS_ID,workshopReturn} from '@/services/workshop-context';
+import {WorkshopLink as Link} from '@/components/WorkshopLink';
 import { publicReadingRequest, type PublicReading } from '@/services/public-reading.service';
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
 import { useAuth } from '@/contexts/AuthContext';
@@ -22,7 +24,7 @@ import type { TextParagraph, TextSupportLevel } from '@/types';
 export function TextReaderPage({publicReading}:{publicReading?:PublicReading}={}) {
   const navigate=useNavigate();
   const { textId }=useParams(),[search,setSearch]=useSearchParams();
-  const {user,isTeacher:teacher,isParent:parent}=useAuth();
+  const {user,isTeacher:teacher,isParent:parent,workshopMode}=useAuth();
   const isTeacher=teacher&&!publicReading,isParent=parent||Boolean(publicReading);
   const shell=useRef<HTMLDivElement>(null);
   const [fullscreen,setFullscreen]=useState(false),[fullscreenError,setFullscreenError]=useState('');
@@ -40,9 +42,9 @@ export function TextReaderPage({publicReading}:{publicReading?:PublicReading}={}
     const assignments=await db.text_assignments.where('textId').equals(textId).toArray();
     const members=await db.class_members.where('userId').equals(user.$id).toArray();
     const classes=await db.classes.bulkGet(assignments.map(a=>a.classId));
-    return classes.filter(c=>c&&(c.teacherId===user.$id||members.some(m=>m.classId===c.$id)&&assignments.some(a=>a.classId===c.$id&&textAssignmentAvailable(a))));
-  },[textId,user?.$id,publicReading]);
-  const requestedClass=search.get('classId');
+    return classes.filter(c=>c&&(!workshopMode||c.$id===WORKSHOP_CLASS_ID)&&(c.teacherId===user.$id||members.some(m=>m.classId===c.$id)&&assignments.some(a=>a.classId===c.$id&&textAssignmentAvailable(a))));
+  },[textId,user?.$id,publicReading,workshopMode]);
+  const requestedClass=workshopMode?WORKSHOP_CLASS_ID:search.get('classId');
   const classId=availableClasses?.find(c=>c?.$id===requestedClass)?.$id||availableClasses?.[0]?.$id;
   const readingAssignment=useLiveQuery(()=>textId&&classId?db.text_assignments.where('[textId+classId]').equals([textId,classId]).first():undefined,[textId,classId]);
   useEffect(()=>{
@@ -61,7 +63,7 @@ export function TextReaderPage({publicReading}:{publicReading?:PublicReading}={}
   const useQuote=!isParent&&classId&&readingAssignment?.isAssignedReading?(quote:{quotation:string;paragraph:number},destination:'question'|'reply')=>navigate(`/discussions/texts/${textId}/${classId}`,{state:{selectedQuote:{...quote,destination,token:crypto.randomUUID()}}}):undefined;
   const label=(value:string)=>value==='original'?'Original':value==='supported'?'Supported':'Highly supported';
   return <div ref={shell} className="reader-shell mx-auto max-w-6xl space-y-5 overflow-auto bg-white p-4 sm:p-6">
-    <header className="space-y-3"><div className="flex flex-wrap items-center gap-3"><Link to={isTeacher?'/classes':'/dashboard'} className="inline-flex min-h-11 items-center rounded-xl border px-4">Home</Link><Link to="/texts" className="text-sm text-blue-700">← Texts</Link>{classId&&readingAssignment?.isAssignedReading&&<Link to={`/discussions/texts/${textId}/${classId}`} className="ml-auto inline-flex min-h-11 items-center rounded-xl bg-blue-50 px-4 font-semibold text-blue-800">Discuss text →</Link>}</div><h1 className="reader-title text-3xl font-semibold sm:text-4xl">{text.title}</h1><p className="text-slate-500">{text.author}</p>{readingAssignment&&<TextPurposeLabels value={readingAssignment}/>}<TextSource source={text.source} url={text.contentMode!=='link'?text.externalUrl:undefined}/>{isTeacher&&<CopyTextLinkButton textId={text.$id} title={text.title}/>}</header>
+    <header className="space-y-3"><div className="flex flex-wrap items-center gap-3"><Link to={workshopReturn(isTeacher?'/classes':'/dashboard')} className="inline-flex min-h-11 items-center rounded-xl border px-4">Home</Link><Link to={workshopReturn("/texts")} className="text-sm text-blue-700">← {workshopMode?"Workshop":"Texts"}</Link>{classId&&readingAssignment?.isAssignedReading&&<Link to={`/discussions/texts/${textId}/${classId}`} className="ml-auto inline-flex min-h-11 items-center rounded-xl bg-blue-50 px-4 font-semibold text-blue-800">Discuss text →</Link>}</div><h1 className="reader-title text-3xl font-semibold sm:text-4xl">{text.title}</h1><p className="text-slate-500">{text.author}</p>{readingAssignment&&<TextPurposeLabels value={readingAssignment}/>}<TextSource source={text.source} url={text.contentMode!=='link'?text.externalUrl:undefined}/>{isTeacher&&<CopyTextLinkButton textId={text.$id} title={text.title}/>}</header>
     <div className="flex justify-end"><button className="min-h-11 rounded-xl border px-3 text-sm" onClick={()=>{setFullscreenError('');const operation=document.fullscreenElement?document.exitFullscreen():shell.current?.requestFullscreen?.();if(!operation){setFullscreenError('Fullscreen is not supported by this browser.');return;}void operation.catch(()=>setFullscreenError('Fullscreen was blocked by this browser.'));}}>{fullscreen?'Exit fullscreen':'Fullscreen'}</button></div>{fullscreenError&&<p role="status">{fullscreenError}</p>}
     <ReaderToolbar mode={mode} panel={panel} size={fontSize} onSize={setFontSize} onArticle={()=>{setMode('article');setPanel(null);setLevel('original');}} onOriginal={()=>{setMode('original');setPanel(null);}} onPanel={setPanel}>
       {panel==='support'&&<><div className="flex flex-wrap gap-2">{(publicReading?['original'] as const:['original','supported','highly_supported'] as const).map(value=><Button key={value} size="sm" variant={level===value?'primary':'secondary'} onClick={()=>{setLevel(value);setMode('article');}}>{label(value)}</Button>)}</div>{level!=='original'&&<label className="flex gap-2 text-sm"><input type="checkbox" checked={compare} onChange={e=>setCompare(e.target.checked)}/>Compare with original</label>}<p className="text-xs text-slate-600">Supported versions are AI-generated. Check the original if the meaning seems different.</p><ReadingTools key={`${textId}:${level}`} title={text.title} paragraphs={ready&&text.contentMode!=='link'?contents:[]} unavailable="Open the original source or choose an available article version to read aloud."/></>}

@@ -1,8 +1,9 @@
+import {WorkshopLink as Link} from '@/components/WorkshopLink';
 import {WritingDiscussionPanel} from '@/components/discussions/WritingDiscussionPanel';
 import { Markdown } from '@/components/common/Markdown';
 import { MarkdownPasteEditor } from '@/components/common/MarkdownPasteEditor';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import {useParams} from 'react-router-dom';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
 import { controlLivePresentation, readLivePresentation, submitLiveAnswer, updateWritingPrompt, type LivePresentationState, type WritingPromptSize } from '@/services/presentation.service';

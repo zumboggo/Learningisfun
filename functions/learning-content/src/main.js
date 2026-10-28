@@ -1,3 +1,5 @@
+import {WORKSHOP_CLASS_ID} from './workshop-policy.js';
+import {canJoinWorkshop,workshopAccess,workshopRequestContext} from './workshop-access.js';
 import {authorizeContentMutation} from './content-ownership.js';
 import {privateEpisodeAction,privateAnimatedPreviewAction} from './private-episodes.js';
 import {scopedDataAction} from './scoped-data.js';
@@ -141,7 +143,10 @@ export default async ({ req, res, error }) => {
     const client = new Client().setEndpoint(process.env.APPWRITE_ENDPOINT).setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID).setKey(process.env.APPWRITE_API_KEY);
     const db = new Databases(client), users = new Users(client), databaseId = process.env.APPWRITE_DATABASE_ID || 'main';
     if (body.action === 'selfProfile') return res.json({ profile: await selfProfile({ db, users, databaseId, userId }) });
-    const profile = await db.getDocument(databaseId, 'users', userId);
+    const accountProfile = await db.getDocument(databaseId, 'users', userId);
+    if(body.action==='readWorkshopAccess'){try{return res.json(await workshopAccess({db,databaseId,userId,profile:accountProfile}));}catch(e){return res.json({error:e.message},e.code||500);}}
+    let workshop;try{workshop=await workshopRequestContext({body,profile:accountProfile,userId,db,databaseId});}catch(e){return res.json({error:e.message},e.code||500);}
+    const profile=workshop.profile;
     if(body.action==='scopedData'){try{return res.json(await scopedDataAction({body,profile,userId,db,databaseId}));}catch(e){return res.json({error:e.message},e.code||500);}}
     if(['readGeneralPlanner','saveGeneralPlanner','readGeneralPlannerHistory','publishGeneralLesson','readGeneralPlannerMaterials'].includes(body.action)){try{return res.json(await generalPlannerAction({body,profile,userId,db,databaseId,storage:new Storage(client)}));}catch(e){return res.json({error:e.message},e.code||500);}}
     if(['readEpisodeAuthoring','savePersonalCharacter','generateEpisodeDraft'].includes(body.action)){try{return res.json(await episodeAuthoringAction({body,profile,userId,db,databaseId}));}catch(e){return res.json({error:e.message},e.code||500);}}
@@ -162,7 +167,7 @@ export default async ({ req, res, error }) => {
     }
     if(['readEpisodePublicSharing','setEpisodePublicSharing'].includes(body.action)){try{return res.json(await episodeSharingAction({body,profile,userId,db,databaseId}));}catch(cause){return res.json({error:cause.message},[400,403,404].includes(cause.code)?cause.code:500);}}
     if (body.action === 'importLegacyWord') return res.json(await importLegacyWord(profile, body.data));
-    const memberships = {documents:await allRows(db,databaseId,'class_members',[Query.equal('userId',userId)])};
+    const memberships = {documents:(await allRows(db,databaseId,'class_members',[Query.equal('userId',userId)])).filter(m=>!workshop.learner||(m.classId===WORKSHOP_CLASS_ID&&m.role==='student'&&(!m.expiresAt||Date.parse(m.expiresAt)>Date.now())))};
     const nowTime = Date.now();
     const memberClassIds = new Set(memberships.documents.filter(row => row.role !== 'substitute' || (row.expiresAt && new Date(row.expiresAt).getTime() > nowTime)).map(row => row.classId));
     if(body.action==='readPrivateAnimatedPreview'){try{return res.json(await privateAnimatedPreviewAction({body,userId,db,databaseId,storage:new Storage(client),tokens:new Tokens(client),endpoint:process.env.APPWRITE_ENDPOINT,projectId:process.env.APPWRITE_FUNCTION_PROJECT_ID}));}catch(e){return res.json({error:e.message},e.code||500);}}
@@ -391,8 +396,8 @@ export default async ({ req, res, error }) => {
 
     if (body.action === 'joinClass') {
       const role = body.role === 'parent' ? 'parent' : body.role === 'substitute' ? 'substitute' : 'student';
-      if (profile.role !== role) return res.json({ error: `A ${profile.role} account cannot join as ${role}` }, 403);
       const targetClass = await db.getDocument(databaseId, 'classes', body.classId);
+      if (profile.role !== role && !(role==='student'&&await canJoinWorkshop({profile,userId,cls:targetClass}))) return res.json({ error: `A ${profile.role} account cannot join as ${role}` }, 403);
       const validCode = role === 'parent'
         ? targetClass.parentCodeActive && targetClass.parentCode === body.joinCode
         : role === 'substitute'

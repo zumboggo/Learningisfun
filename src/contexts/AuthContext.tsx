@@ -1,3 +1,6 @@
+import {useLocation} from 'react-router-dom';
+import {executeLearningContent} from '@/services/learning-content.service';
+import {isWorkshopPath,workshopLocation,WORKSHOP_CLASS_ID,type WorkshopAccess} from '@/services/workshop-context';
 import {clearPrivateEpisodeMemory} from '@/services/private-episode-content';
 import {invalidateDeckCards} from '@/services/flashcard-cache';
 import { syncClassMaterials, type ContentDomain } from '@/services/class-material-refresh.service';
@@ -27,6 +30,9 @@ interface AuthContextType {
   isTeacher: boolean;
   isAdmin: boolean;
   isParent: boolean;
+  workshopMode: boolean;
+  workshopAccess: WorkshopAccess | null;
+  workshopError: string;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -35,10 +41,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [viewAsStudent, setViewAsStudent] = useState(false);
+  const location=useLocation();
+  const [workshopState, setWorkshopState] = useState<{userId: string; access: WorkshopAccess | null; error: string} | null>(null);
+  const workshopAccess = workshopState?.userId === user?.$id ? workshopState?.access || null : null;
+  const workshopError = workshopState?.userId === user?.$id ? workshopState?.error || '' : '';
+  const actualTeacher = user?.role === 'teacher' || user?.role === 'admin';
+  const accountId = user?.$id;
+  const workshopRequested = isWorkshopPath(location.pathname, location.search);
+  const workshopMode = Boolean(actualTeacher && workshopRequested && workshopAccess?.enrolled && !workshopAccess.owner);
+  useEffect(() => {
+    let active = true, sequence = 0;
+    const load = () => {
+      if (!actualTeacher || !accountId) return;
+      const request = ++sequence;
+      void executeLearningContent<WorkshopAccess>({action: 'readWorkshopAccess'})
+        .then(access => { if (active && request === sequence) setWorkshopState({userId: accountId, access, error: ''}); })
+        .catch(cause => { if (active && request === sequence) setWorkshopState({userId: accountId, access: null, error: cause.message}); });
+    };
+    load();
+    window.addEventListener('workshop-enrollment-changed', load);
+    return () => { active = false; window.removeEventListener('workshop-enrollment-changed', load); };
+  }, [accountId, actualTeacher]);
 
   useEffect(()=>{const switched=(event:StorageEvent)=>{if(event.key==='learning-account-scope'&&event.oldValue!==event.newValue)window.location.reload()};window.addEventListener('storage',switched);return()=>window.removeEventListener('storage',switched)},[]);
 
-  const effectiveRole = user ? (viewAsStudent ? 'student' : user.role) : null;
+  const effectiveRole = user ? (viewAsStudent||workshopMode ? 'student' : user.role) : null;
   const isTeacher = effectiveRole === 'teacher' || effectiveRole === 'admin';
   const isAdmin = effectiveRole === 'admin';
   const isParent = effectiveRole === 'parent';
@@ -50,11 +77,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const memberships = await db.class_members.where('userId').equals(userId).toArray();
     const taught = await db.classes.where('teacherId').equals(userId).toArray();
-    const classIds = [...new Set([...memberships.map(m => m.classId), ...taught.map(c => c.$id)])];
+    const classIds = workshopLocation()?[WORKSHOP_CLASS_ID]:[...new Set([...memberships.map(m => m.classId), ...taught.map(c => c.$id)])];
     const cachedUser = await authService.getCachedUser();
-    const isTeacher = cachedUser?.role === 'teacher' || cachedUser?.role === 'admin';
+    const isTeacher = !workshopLocation()&&(cachedUser?.role === 'teacher' || cachedUser?.role === 'admin');
     await syncClassMaterials(classIds, userId, isTeacher, force, [...domains].filter((domain): domain is ContentDomain => domain !== 'account'));
   }, []);
+
+  useEffect(() => {
+    if (workshopMode && user?.$id) void syncUserData(user.$id, true);
+  }, [workshopMode, user?.$id, syncUserData]);
 
   const refreshUser = useCallback(async () => {
     try {
@@ -171,14 +202,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearPrivateEpisodeMemory();
     await authService.logout();
     setUser(null);
-    setViewAsStudent(false);
+    setViewAsStudent(false);setWorkshopState(null);
     if(import.meta.env.MODE!=='test')window.location.replace(import.meta.env.BASE_URL+'#/login');
   }, []);
 
   return (
     <AuthContext.Provider value={{
-      user,
-      loading,
+      user:workshopMode&&user?{...user,role:'student'}:user,
+      loading:loading||(actualTeacher&&workshopRequested&&!workshopAccess&&!workshopError),
+      workshopMode,workshopAccess,workshopError,
       login: loginHandler,
       register: registerHandler,
       logout: logoutHandler,

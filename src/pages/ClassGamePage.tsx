@@ -1,9 +1,10 @@
+import {WorkshopLink as Link} from '@/components/WorkshopLink';
 import {useAnimatedLibrary} from '@/services/use-animated-library';
 import {GameLaunchLink} from '@/components/GameLaunchLink';
 import {EpisodeCards} from '@/components/EpisodeCards';
 import {assignedEpisodes} from '../../functions/learning-content/src/episode-catalog.js';
 import {useEffect, useState} from 'react';
-import {Link, useParams} from 'react-router-dom';
+import {useParams} from 'react-router-dom';
 import {useLiveQuery} from 'dexie-react-hooks';
 import {useAuth} from '@/contexts/AuthContext';
 import {db} from '@/db/schema';
