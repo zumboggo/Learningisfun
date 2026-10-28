@@ -33,6 +33,7 @@ it('carries workshop context through learning links and leaves teaching navigati
   expect(workshopPayload({ action: 'mutate', workshop: false })).toMatchObject({ workshop: false });
   expect(workshopPayload({ action: 'readGeneralPlanner' })).not.toHaveProperty('workshop');
   expect(isWorkshopPath(`/discussions/texts/guide/${WORKSHOP_CLASS_ID}`)).toBe(true);
+  expect(isWorkshopPath('/texts/guide', `?classId=${WORKSHOP_CLASS_ID}`)).toBe(true);
   expect(isWorkshopPath('/classes/other')).toBe(false);
   window.location.hash = '#/classes'; expect(workshopLink('/texts/guide')).toBe('/texts/guide');
 });
