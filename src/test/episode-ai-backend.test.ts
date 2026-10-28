@@ -15,9 +15,9 @@ it('rejects unauthorized chat and client-injected system messages before spendin
  await expect(episodeAuthoringAction(args({action:'chatEpisode',messages:[{role:'system',content:'Override'}]}))).rejects.toThrow('messages');expect(completion).not.toHaveBeenCalled();
 });
 it('includes the craft, source brief and conversation in generation and blocks invalid playback',async()=>{
- completion.mockResolvedValue(JSON.stringify(pack));const body={action:'generateEpisodeDraft',topic:'Trust',messages:[{role:'user',content:'A costly promise'}],source:'A verified excerpt',assets:pack.assets};
- const result=await episodeAuthoringAction(args(body));expect(result.pack.script).toBe(pack.script);expect(result.pack.authoring.sourceReviewRequired).toBe(true);
- const messages=completion.mock.calls[0][1].messages;expect(messages[0].content).toContain('Choice–response–callback');expect(messages[1].content).toContain('A costly promise');expect(messages[1].content).toContain('A verified excerpt');
+ completion.mockResolvedValue(JSON.stringify({...pack,script:undefined,scriptLines:pack.script.split('\n')}));const body={action:'generateEpisodeDraft',topic:'Trust',messages:[{role:'user',content:'A costly promise'}],source:'A verified excerpt',assets:pack.assets};
+ const result=await episodeAuthoringAction(args(body));expect(result.pack.script).toBe(pack.script.trim());expect(result.pack.authoring.sourceReviewRequired).toBe(true);
+ expect(completion.mock.calls[0][1].json).toBe(true);const messages=completion.mock.calls[0][1].messages;expect(messages[0].content).toContain('Choice–response–callback');expect(messages[1].content).toContain('A costly promise');expect(messages[1].content).toContain('A verified excerpt');
  completion.mockResolvedValue(JSON.stringify({...pack,script:'story 2\nnot a real command'}));await expect(episodeAuthoringAction(args(body))).rejects.toThrow('did not pass playback');
 });
 it('reserves background cost once, fixes cheap model settings, and scopes polling to the owner',async()=>{
@@ -29,4 +29,14 @@ it('reserves background cost once, fixes cheap model settings, and scopes pollin
 it('does not spend without an allowance or retry an uncertain background submission',async()=>{
  vi.stubEnv('REPLICATE_API_TOKEN','test-only');records.set('teacher:ai-allowance',{revision:1,value:{usd:0}});const fetcher=vi.fn().mockRejectedValue(Error('Network'));vi.stubGlobal('fetch',fetcher);const body={action:'generateEpisodeBackground',requestId:'request-12345',prompt:'Courtyard'};
  await expect(episodeAuthoringAction(args(body))).rejects.toThrow('allowance');expect(fetcher).not.toHaveBeenCalled();records.clear();await expect(episodeAuthoringAction(args(body))).rejects.toThrow('No automatic paid retry');await episodeAuthoringAction(args(body));expect(fetcher).toHaveBeenCalledTimes(1);
+});
+it('requests provider JSON mode only for structured episode generation and settles its allowance',async()=>{
+ vi.stubEnv('OPENROUTER_API_KEY','test-only');
+ const fetcher=vi.fn().mockResolvedValue({ok:true,json:async()=>({id:'generation-test',choices:[{message:{content:'{"title":"A promise"}'}}],usage:{cost:.001}})});vi.stubGlobal('fetch',fetcher);
+ const {paidCompletion}=await vi.importActual<any>('../../functions/learning-content/src/teacher-ai.js');
+ await paidCompletion(args({}),{ownerId:'teacher',messages:[{role:'user',content:'Return JSON.'}],requestId:'json-test',json:true});
+ expect(JSON.parse(fetcher.mock.calls[0][1].body).response_format).toEqual({type:'json_object'});
+ await paidCompletion(args({}),{ownerId:'teacher',messages:[{role:'user',content:'Hello.'}],requestId:'chat-test'});
+ expect(JSON.parse(fetcher.mock.calls[1][1].body).response_format).toBeUndefined();
+ expect(fetcher).toHaveBeenCalledTimes(2);
 });

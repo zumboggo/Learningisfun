@@ -7,7 +7,7 @@ export const monthKey=(now=new Date())=>new Intl.DateTimeFormat('en-CA',{timeZon
 const INPUT_PRICE=.15,OUTPUT_PRICE=.6,OUTPUT_TOKENS=8192;
 export function maximumCost(messages){return Math.ceil(((Buffer.byteLength(JSON.stringify(messages),'utf8')+2048)*INPUT_PRICE+OUTPUT_TOKENS*OUTPUT_PRICE)/1e6*1e6)/1e6;}
 export async function budgetStatus(args,owner=args.userId){const {db,databaseId}=args;const allowance=await readRecord(db,databaseId,owner,'ai-allowance'),ledger=await readRecord(db,databaseId,owner,'ai-month:'+monthKey());const limit=allowance.value?.usd??1;return {ownerId:owner,month:monthKey(),limit,used:ledger.value?.used||0,remaining:Math.max(0,limit-(ledger.value?.used||0))};}
-export async function paidCompletion(args,{ownerId,messages,requestId=randomUUID()}){
+export async function paidCompletion(args,{ownerId,messages,requestId=randomUUID(),json=false}){
  if(!process.env.OPENROUTER_API_KEY)fail('AI is not configured. You can keep editing manually.',503);
  if(Buffer.byteLength(JSON.stringify(messages),'utf8')>100000)fail('Reduce the selected source material to under 100 KB.');
  const reservation=maximumCost(messages),month=monthKey(),requestKey='ai-request:'+requestId;
@@ -17,7 +17,7 @@ export async function paidCompletion(args,{ownerId,messages,requestId=randomUUID
  await writeRecord(db,args.databaseId,ownerId,'ai-month:'+month,{used:used+reservation,recent:[...recent,Date.now()]},ledger.revision);
  await writeRecord(db,args.databaseId,ownerId,requestKey,{month,reservation,status:'reserved',createdAt:new Date().toISOString()},0);});
  // Network uncertainty intentionally leaves the reservation charged. No automatic retries.
- const response=await fetch('https://openrouter.ai/api/v1/chat/completions',{method:'POST',headers:{Authorization:`Bearer ${process.env.OPENROUTER_API_KEY}`,'Content-Type':'application/json'},body:JSON.stringify({model:AI_MODEL,provider:{only:['openai','azure'],allow_fallbacks:false,max_price:{prompt:INPUT_PRICE,completion:OUTPUT_PRICE},require_parameters:true},max_tokens:OUTPUT_TOKENS,temperature:.5,messages,usage:{include:true}}),signal:AbortSignal.timeout(90000)});
+ const response=await fetch('https://openrouter.ai/api/v1/chat/completions',{method:'POST',headers:{Authorization:`Bearer ${process.env.OPENROUTER_API_KEY}`,'Content-Type':'application/json'},body:JSON.stringify({model:AI_MODEL,provider:{only:['openai','azure'],allow_fallbacks:false,max_price:{prompt:INPUT_PRICE,completion:OUTPUT_PRICE},require_parameters:true},max_tokens:OUTPUT_TOKENS,temperature:.5,...(json?{response_format:{type:"json_object"}}:{}),messages,usage:{include:true}}),signal:AbortSignal.timeout(90000)});
  if(!response.ok)fail('AI generation failed. Your draft is safe; no automatic retry was made.',503);
  const result=await response.json();const content=result.choices?.[0]?.message?.content;if(typeof content!=='string')fail('AI returned no text. Your draft is safe.',503);
  const actual=result.usage?.cost;
