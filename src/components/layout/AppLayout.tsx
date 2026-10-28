@@ -55,6 +55,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         { to: '/decks', label: 'Cards', icon: 'V' },
         { to: '/texts', label: 'Texts', icon: 'T' },
         { to: '/writing', label: 'Writing', icon: 'W' },
+        { to: '/teacher-access', label: 'Teacher access', icon: 'T' },
         { to: '/game', label: 'The Game', icon: 'G' },
         { to: '/settings', label: 'Settings', icon: '?' },
       ]

@@ -16,7 +16,7 @@ it('one recipe round-trips into legal packages for every class without image par
 });
 it('studio creates a distinct character and prevents accidental replacement',()=>{
  const add=vi.fn();render(<CharacterBuilder pack={pack} onAdd={add}/>);
- fireEvent.click(screen.getByText('Create a character · shared across all classes'));
+ fireEvent.click(screen.getByText('Create a character · reusable in your classes'));
  fireEvent.change(screen.getByLabelText('Script ID'),{target:{value:'Lin'}});fireEvent.click(screen.getByText('Add new character to draft'));expect(add).not.toHaveBeenCalled();expect(screen.getByRole('alert')).toHaveTextContent('already exists');
  fireEvent.change(screen.getByLabelText('Script ID'),{target:{value:'Jordan'}});fireEvent.change(screen.getByLabelText('Character name'),{target:{value:'Jordan'}});fireEvent.change(screen.getByLabelText('Hairstyle'),{target:{value:'side-part'}});fireEvent.click(screen.getByText('Add new character to draft'));expect(add).toHaveBeenCalledWith('Jordan',expect.objectContaining({name:'Jordan',rig:expect.objectContaining({appearance:expect.objectContaining({hair:'side-part'})})}));
 });

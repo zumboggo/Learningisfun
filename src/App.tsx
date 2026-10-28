@@ -1,5 +1,7 @@
+import PrivateEpisodeGate from './components/teachers/PrivateEpisodeGate';
+import PlannerAccess from './components/teachers/PlannerAccess';
+import TeacherAccessPage from './pages/TeacherAccessPage';
 const PublicEpisodePage = lazy(() => import('@/pages/PublicEpisodePage'));
-const FamilyContactsPage = lazy(() => import('@/pages/FamilyContactsPage'));
 const PublicQuixotePage = lazy(() => import('@/pages/PublicQuixotePage'));
 const PublicEthicsPage = lazy(() => import('@/pages/PublicEthicsPage'));
 const StoryPreviewPage = lazy(() => import('@/pages/StoryPreviewPage'));
@@ -172,15 +174,14 @@ export default function App() {
           <Route path="/decks/new" element={<ProtectedRoute><CreateDeckPage /></ProtectedRoute>} />
 
           <Route path="/classes" element={<ProtectedRoute><ClassesListPage /></ProtectedRoute>} />
-          <Route path="/classes/:classId/episodes/:episodeId" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening episode…</p>}><EpisodePage /></Suspense></ProtectedRoute>} />
+          <Route path="/classes/:classId/episodes/:episodeId" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening episode…</p>}><PrivateEpisodeGate><EpisodePage /></PrivateEpisodeGate></Suspense></ProtectedRoute>} />
           <Route path="/game/create" element={<ProtectedRoute><TeacherRoute><Suspense fallback={<p>Opening studio…</p>}><AnimatedStudioPage /></Suspense></TeacherRoute></ProtectedRoute>} />
           <Route path="/game/play/:assignmentId" element={<ProtectedRoute><Suspense fallback={<p>Opening episode…</p>}><AnimatedEpisodePage /></Suspense></ProtectedRoute>} />
           <Route path="/game" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening The Game…</p>}><GamePage /></Suspense></ProtectedRoute>} />
           <Route path="/classes/:classId/principles" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening portfolio…</p>}><PrinciplesPortfolioPage /></Suspense></ProtectedRoute>} />
           <Route path="/classes/:classId/game" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening The Game…</p>}><ClassGamePage /></Suspense></ProtectedRoute>} />
-          <Route path="/classes/:classId/game/preview/teaching-stone" element={<ProtectedRoute><TeacherRoute><Suspense fallback={<p className="p-6">Opening teacher preview…</p>}><TeachingStonePage teacherPreview /></Suspense></TeacherRoute></ProtectedRoute>} />
-          <Route path="/classes/:classId/teaching-stone" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening the Teaching Stone…</p>}><TeachingStonePage /></Suspense></ProtectedRoute>} />
-          <Route path="/classes/:classId/family-contacts" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening form…</p>}><FamilyContactsPage /></Suspense></ProtectedRoute>} />
+          <Route path="/classes/:classId/game/preview/teaching-stone" element={<ProtectedRoute><TeacherRoute><Suspense fallback={<p className="p-6">Opening teacher preview…</p>}><PrivateEpisodeGate stone><TeachingStonePage teacherPreview /></PrivateEpisodeGate></Suspense></TeacherRoute></ProtectedRoute>} />
+          <Route path="/classes/:classId/teaching-stone" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening the Teaching Stone…</p>}><PrivateEpisodeGate stone><TeachingStonePage /></PrivateEpisodeGate></Suspense></ProtectedRoute>} />
           <Route path="/classes/:classId" element={<ProtectedRoute><ClassDetailPage /></ProtectedRoute>} />
           <Route path="/classes/:classId/cards/new" element={<ProtectedRoute><TeacherRoute><AddClassCardsPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/classes/:classId/reports" element={<ProtectedRoute><TeacherRoute><ParticipationReportPage /></TeacherRoute></ProtectedRoute>} />
@@ -190,12 +191,13 @@ export default function App() {
           <Route path="/classes/:classId/notes/:sessionId/edit" element={<FullscreenTeacherRoute><TodayNotesPage /></FullscreenTeacherRoute>} />
           <Route path="/classes/:classId/timer" element={<FullscreenTeacherRoute><ClassTimerPage /></FullscreenTeacherRoute>} />
 
+          <Route path="/teacher-access" element={<ProtectedRoute><TeacherAccessPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><TeacherRoute><TeacherSettingsPage /></TeacherRoute></ProtectedRoute>} />
-          <Route path="/planner" element={<ProtectedRoute><TeacherRoute><PlannerPage /></TeacherRoute></ProtectedRoute>} />
+          <Route path="/planner" element={<ProtectedRoute><TeacherRoute><PlannerAccess entry><PlannerPage /></PlannerAccess></TeacherRoute></ProtectedRoute>} />
           <Route path="/brainstorming" element={<ProtectedRoute><PlanningPage /></ProtectedRoute>} />
-          <Route path="/planning" element={<ProtectedRoute><TeacherRoute><PlanningUnitsPage /></TeacherRoute></ProtectedRoute>} />
-          <Route path="/planner/:planId/lessons/:lessonId" element={<ProtectedRoute><TeacherRoute><PlannerLessonPage /></TeacherRoute></ProtectedRoute>} />
-          <Route path="/planner/:planId/print" element={<FullscreenTeacherRoute><PlannerPrintPage /></FullscreenTeacherRoute>} />
+          <Route path="/planning" element={<ProtectedRoute><TeacherRoute><PlannerAccess><PlanningUnitsPage /></PlannerAccess></TeacherRoute></ProtectedRoute>} />
+          <Route path="/planner/:planId/lessons/:lessonId" element={<ProtectedRoute><TeacherRoute><PlannerAccess><PlannerLessonPage /></PlannerAccess></TeacherRoute></ProtectedRoute>} />
+          <Route path="/planner/:planId/print" element={<FullscreenTeacherRoute><PlannerAccess><PlannerPrintPage /></PlannerAccess></FullscreenTeacherRoute>} />
 
           <Route path="/sessions/:sessionId" element={<ProtectedRoute><ClassSessionPage /></ProtectedRoute>} />
 

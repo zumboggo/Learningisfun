@@ -25,12 +25,12 @@ export const STORY_INTERLUDES:Record<string,StoryInterlude>={
  'How can an argument answer people who say the method undermines the goal?'
  ]}
 };
-export function storyInterludeCursors(story:{nodes:{type:string}[];labels:Record<string,number>}|undefined):Record<number,StoryInterlude>{
+export function storyInterludeCursors(story:{nodes:{type:string}[];labels:Record<string,number>}|undefined,mediaUrls:Record<string,string>={}):Record<number,StoryInterlude>{
  const result:Record<number,StoryInterlude>={};if(!story)return result;
  for(const [label,media] of Object.entries(STORY_INTERLUDES)){
   const start=story.labels[label];if(start===undefined)continue;
   const offset=story.nodes.slice(start+1).findIndex(n=>['say','choice','act','end'].includes(n.type));
-  if(offset>=0&&story.nodes[start+1+offset].type==='say')result[start+1+offset]=media;
+  if(offset>=0&&story.nodes[start+1+offset].type==='say'){const resolved={...media};for(const field of ['src','poster','captions'] as const)if(field in resolved){const path=(resolved as unknown as Record<string,string>)[field].replace(import.meta.env.BASE_URL,'');if(mediaUrls[path])(resolved as unknown as Record<string,string>)[field]=mediaUrls[path];}result[start+1+offset]=resolved;}
  }
  return result;
 }

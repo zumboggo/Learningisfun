@@ -8,7 +8,16 @@ export const client = new Client()
   .setProject(projectId);
 
 export const account = new Account(client);
-export const databases = new Databases(client);
+// Legacy service calls share one authenticated, owner-scoped server gateway.
+export const databases = new Proxy(new Databases(client), {get(target,property){
+ const operations:Record<string,string>={listDocuments:'list',getDocument:'get',createDocument:'create',updateDocument:'update',deleteDocument:'delete'};
+ if(typeof property!=='string'||!operations[property]){const value=Reflect.get(target,property);return typeof value==='function'?value.bind(target):value;}
+ return async (...args:unknown[])=>{const object=typeof args[0]==='object'&&args[0]!==null?args[0] as Record<string,unknown>:null;
+ const collection=object?.collectionId??args[1],operation=operations[property],id=object?.documentId??(operation==='list'?undefined:args[2]),queries=object?.queries??(operation==='list'?args[2]:undefined),data=object?.data??args[3];
+ const result=await functions.createExecution(FUNCTION_IDS.learningContent,JSON.stringify({action:'scopedData',collection,operation,id,queries,data}));
+ const body=JSON.parse(result.responseBody||'{}');if(result.status==='failed'||result.responseStatusCode>=400||body.error)throw Object.assign(new Error(body.error||'Classroom request failed'),{code:result.responseStatusCode});return body;
+ };
+}});
 export const functions = new Functions(client);
 
 export const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID || '';

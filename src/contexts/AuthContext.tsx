@@ -1,3 +1,4 @@
+import {clearPrivateEpisodeMemory} from '@/services/private-episode-content';
 import {invalidateDeckCards} from '@/services/flashcard-cache';
 import { syncClassMaterials, type ContentDomain } from '@/services/class-material-refresh.service';
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
@@ -34,6 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [viewAsStudent, setViewAsStudent] = useState(false);
+
+  useEffect(()=>{const switched=(event:StorageEvent)=>{if(event.key==='learning-account-scope'&&event.oldValue!==event.newValue)window.location.reload()};window.addEventListener('storage',switched);return()=>window.removeEventListener('storage',switched)},[]);
 
   const effectiveRole = user ? (viewAsStudent ? 'student' : user.role) : null;
   const isTeacher = effectiveRole === 'teacher' || effectiveRole === 'admin';
@@ -105,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     const refresh = () => { if (document.visibilityState === 'visible') scheduleSync(500, false); };
     document.addEventListener('visibilitychange', refresh);
+    const poll=window.setInterval(refresh,60000);
     const domainCollections: Array<[SyncDomain, string[]]> = [
       ['account', [COLLECTIONS.classes, COLLECTIONS.class_members]],
       ['sessions', [COLLECTIONS.class_sessions]],
@@ -142,6 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       disposed = true;
       if (timer !== undefined) window.clearTimeout(timer);
       document.removeEventListener('visibilitychange', refresh);
+      window.clearInterval(poll);
       unsubscribe();
     };
   }, [user, syncUserData]);
@@ -163,8 +168,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [syncUserData]);
 
   const logoutHandler = useCallback(async () => {
+    clearPrivateEpisodeMemory();
     await authService.logout();
     setUser(null);
+    setViewAsStudent(false);
+    if(import.meta.env.MODE!=='test')window.location.replace(import.meta.env.BASE_URL+'#/login');
   }, []);
 
   return (

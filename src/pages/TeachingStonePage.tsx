@@ -1,3 +1,4 @@
+import {privateEpisodeHtml,privateEpisodeAudio} from '@/services/private-episode-content';
 import EpisodeTextEditor from '@/components/EpisodeTextEditor';
 import EpisodePortfolio from '@/components/ethics/EpisodePortfolio';
 import {useCallback,useEffect,useRef,useState} from 'react';
@@ -7,9 +8,6 @@ import {db} from '@/db/schema';
 import {STONE_CLASS_ID,stoneDb,newAttempt,extendAttempt,localAttempts,readStone,syncStone,validStoneMessage,type StoneAttempt,type StoneRank} from '@/services/stone.service';
 import {assess} from '../../functions/learning-content/src/stone-engine.js';
 import EpisodeSound from '@/components/EpisodeSound';
-import stoneBuild from '../../stories/teaching-stone/build.json';
-const storyUrl=import.meta.env.BASE_URL+'stories/teaching-stone/v1/index.html?build='+stoneBuild.sourceSha256.slice(0,12);
-const assets=['index.html','village-pixel.webp','scribe-pixel.webp','household-pixel.webp','worker-pixel.webp','landholder-pixel.webp'];
 export default function TeachingStonePage({teacherPreview=false}:{teacherPreview?:boolean}){
  const {classId=''}=useParams(),{user}=useAuth();
  const [allowed,setAllowed]=useState(false),[error,setError]=useState(''),[status,setStatus]=useState('Checking class access…');
@@ -71,7 +69,7 @@ export default function TeachingStonePage({teacherPreview=false}:{teacherPreview
  },[allowed,user?.$id,classId,initialize,select,refreshHistory,synchronize]);
  const start=async()=>{
   setPlaying(true);
-  if('caches' in window){try{const cache=await caches.open('teaching-stone-v1');await cache.addAll(assets.map(a=>a==='index.html'?storyUrl:import.meta.env.BASE_URL+'stories/teaching-stone/v1/'+a));setCacheStatus('Episode saved for offline play');}catch{setCacheStatus('Offline download incomplete; text and choices still work while connected.');}}
+  setCacheStatus('Episode saved privately for this account.');
  };
  if(!user)return null;
  return <main className="mx-auto max-w-5xl p-3 sm:p-6">
@@ -80,8 +78,8 @@ export default function TeachingStonePage({teacherPreview=false}:{teacherPreview
   {error&&<p role="alert" className="mb-4 rounded-lg bg-red-50 p-4 text-red-900">{error}</p>}
   {allowed&&attempt&&!playing&&<section className="rounded-2xl bg-[#f4efdf] p-6 sm:p-10"><p className="text-xs uppercase tracking-widest text-teal-800">Episode 01 · Egypt · Historical fiction</p><h2 className="my-4 font-serif text-4xl">A village needs more<br/>than good intentions.</h2><p className="max-w-xl text-gray-700">A new body. A borrowed seal. Food for today—or seed for tomorrow? Meet the people who will live with your choices.</p><p className="my-4 text-sm">10–15 minutes · Ten decisions · No timer · Unlimited replays</p><button onClick={()=>void start()} className="rounded-lg bg-teal-900 px-6 py-3 font-semibold text-white">{attempt.choices.length?'Continue this life':'Begin a new life'}</button><p className="mt-4 text-xs text-gray-600">The opening includes a brief, non-graphic traffic accident. The stone assesses decisions, not your worth as a person.</p></section>}
   {allowed&&playing&&<EpisodeTextEditor iframeRef={frame} frameKey={frameKey} classId={classId} episode="teaching-stone" version={1} preview={!!attempt?.preview}/>}
-  {allowed&&playing&&<EpisodeSound key={`${user.$id}:${classId}`} trackUrl={import.meta.env.BASE_URL+'stories/teaching-stone/v1/egypt-loop-v1.mp3'} iframeRef={frame} frameKey={frameKey}/>}
-  {allowed&&playing&&<iframe key={frameKey} ref={frame} src={storyUrl} onLoad={initialize} title="The Teaching Stone: interactive story" sandbox="allow-scripts allow-same-origin allow-popups" className="h-[82dvh] min-h-[560px] w-full rounded-xl border border-stone-200 bg-[#efe8d9]"/>}
+  {allowed&&playing&&<EpisodeSound key={`${user.$id}:${classId}`} trackUrl={privateEpisodeAudio('teaching-stone',1)} iframeRef={frame} frameKey={frameKey}/>}
+  {allowed&&playing&&<iframe key={frameKey} ref={frame} srcDoc={privateEpisodeHtml('teaching-stone',1)} onLoad={initialize} title="The Teaching Stone: interactive story" sandbox="allow-scripts allow-same-origin allow-popups" className="h-[82dvh] min-h-[560px] w-full rounded-xl border border-stone-200 bg-[#efe8d9]"/>}
   {allowed&&playing&&<details className="mt-3 text-xs text-gray-600"><summary className="cursor-pointer">About the soundtrack</summary><p className="mt-2">An imagined ancient-Egyptian-inspired game soundtrack, generated with MusicGen-Looper. It is not a reconstruction of ancient music. Sound is optional; every part of the story works silently.</p></details>}
   {allowed&&attempt&&<div id="episode-reflection" tabIndex={-1} className="mt-6"><EpisodePortfolio userId={user.$id} classId={classId} preview={attempt.preview} source={{kind:'episode-notes',format:'stone',episode:'grain-we-keep',version:1,title:'The Grain We Keep'}}/></div>}
   {cacheStatus&&<p className="my-2 text-xs text-gray-500">{cacheStatus}</p>}

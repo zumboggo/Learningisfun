@@ -30,7 +30,7 @@ it.each([1,2,3,4])('adds both approved clips to a fresh archived version %i with
  fireEvent.click(screen.getByRole('button',{name:'Continue without video →'}));
  expect(screen.getByRole('region',{name:'Through the vortex'})).toBeInTheDocument();
  fireEvent.click(screen.getByRole('button',{name:'Continue without video →'}));
- expect(screen.getByTitle('The Ride That Wouldn’t Autocorrect')).toHaveAttribute('src',expect.stringContaining(`/v${version}/index.html`));
+ expect(screen.getByTitle('The Ride That Wouldn’t Autocorrect')).toHaveAttribute('srcdoc',expect.stringContaining(`episode v${version}`));
  const attempts=await episodeDb.attempts.toArray();expect(attempts).toHaveLength(1);expect(attempts[0].choices).toEqual([]);expect(attempts[0].revision).toBe(0);
 });
 it('continues an existing archived attempt without replaying the boarding clips',async()=>{
@@ -41,3 +41,5 @@ it('continues an existing archived attempt without replaying the boarding clips'
  expect(screen.getByTitle('The Ride That Wouldn’t Autocorrect')).toBeInTheDocument();
  expect((await episodeDb.attempts.get(attempt.attemptId))?.choices).toEqual(['voice']);
 });
+
+vi.mock('@/services/private-episode-content',async()=>{const content=await import('../../functions/learning-content/src/episode-content.js');const versions=await import('../../functions/learning-content/src/young-versions.js');const original=await vi.importActual<typeof import('@/services/private-episode-content')>('@/services/private-episode-content');return {...original,...content,...versions,privateEpisodeHtml:(_id:string,version:number)=>'<html>Private authenticated episode v'+version+'</html>'};});

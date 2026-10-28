@@ -1,6 +1,6 @@
 import { account } from '@/lib/appwrite';
 import { executeLearningContent } from './learning-content.service';
-import { db } from '@/db/schema';
+import { db,selectAccountDatabase,selectGuestDatabase } from '@/db/schema';
 import { generateDeviceId, getTimestamp } from '@/utils/helpers';
 import type { User, UserRole } from '@/types';
 import { ID } from 'appwrite';
@@ -15,6 +15,7 @@ export async function register(email: string, password: string, name: string, ro
 
 async function loadSelfProfile(): Promise<User> {
   const { profile } = await executeLearningContent<{ profile: User }>({ action: 'selfProfile' });
+  await selectAccountDatabase(profile.$id);
   await db.users.put(profile);
   await db.app_metadata.put({ key: 'currentUserId', value: profile.$id });
   return profile;
@@ -85,6 +86,7 @@ async function loginLocalDevelopmentTeacher(email: string, password: string): Pr
     lastSyncAt: now,
     createdAt: now,
   };
+  await selectAccountDatabase(user.$id);
   await db.users.put(user);
   await db.app_metadata.put({ key: 'currentUserId', value: user.$id });
   return user;
@@ -125,6 +127,7 @@ export async function logout(): Promise<void> {
     // Session may already be invalid
   }
   await db.app_metadata.delete('currentUserId');
+  await selectGuestDatabase();
 }
 
 export async function getCurrentUser(): Promise<User | null> {

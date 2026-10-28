@@ -40,7 +40,7 @@ export function ErrorLogPanel({ userId }: { userId: string }) {
           <label className="text-xs font-semibold text-slate-500"><span className="sm:hidden">Fix</span><textarea rows={2} maxLength={500} value={row.fix} onChange={event => update(row.id, 'fix', event.target.value)} className="mt-1 w-full resize-y rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal leading-5 text-slate-800" placeholder="What will you try next time?" /></label>
           <button type="button" className="justify-self-end rounded-lg px-3 py-2 text-lg text-red-500 hover:bg-red-50" aria-label={`Delete error log row ${index + 1}`} onClick={() => removeRow(row.id)}>×</button>
         </div>)}
-        {!rows.length && <p className="p-5 text-center text-sm text-slate-500">Your log is empty. Add a pattern you want to notice, or send an AI feedback suggestion here.</p>}
+        {!rows.length && <p className="p-5 text-center text-sm text-slate-500">Your log is empty. Add a pattern you want to notice in your writing.</p>}
       </div>}
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 p-3"><Button size="sm" variant="secondary" disabled={rows.length >= 50} onClick={addRow}>+ Add row</Button><div className="flex items-center gap-3">{message && <span role="status" className="max-w-xs text-right text-xs text-slate-500">{message}</span>}<Button size="sm" loading={saving} disabled={!dirty} onClick={() => void save()}>Save</Button></div></div>
     </div>

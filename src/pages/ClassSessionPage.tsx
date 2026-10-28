@@ -26,7 +26,7 @@ import { MarkdownToolbar } from '@/components/common/MarkdownToolbar';
 import { clipboardToMarkdown } from '@/utils/rich-text';
 import { Modal } from '@/components/common/Modal';
 import { StatusBadge } from '@/components/common/StatusBadge';
-import { getApiKey, generateFlashcardsFromNotes, type GeneratedCard } from '@/services/ai.service';
+import { generateFlashcardsFromNotes, type GeneratedCard } from '@/services/ai.service';
 import type {
   DeckAssignment,
   DiscussionQuestion,
@@ -139,17 +139,12 @@ export function ClassSessionPage() {
   };
 
   const handleGenerateFlashcards = async () => {
-    const notesToUse = notesPreview || sessionNotes;
+    const notesToUse = sessionNotes;
     if (!notesToUse.trim()) return;
     setGenerating(true);
     setAiError('');
     try {
-      const apiKey = await getApiKey();
-      if (!apiKey) {
-        setAiError('No API key configured. Add one in Settings → AI Settings.');
-        return;
-      }
-      const cards = await generateFlashcardsFromNotes(notesToUse, apiKey);
+      const cards = await generateFlashcardsFromNotes(notesToUse);
       setGeneratedCards(cards);
       setShowGeneratedModal(true);
     } catch (e) {

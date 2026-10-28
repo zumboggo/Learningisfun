@@ -5,6 +5,7 @@ import { Button } from '@/components/common/Button';
 export function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const [teacher, setTeacher] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,7 +28,7 @@ export function RegisterPage() {
     setLoading(true);
     try {
       await register(email, password, name, 'student');
-      navigate('/dashboard');
+      navigate(teacher ? '/teacher-access' : '/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
@@ -43,6 +44,7 @@ export function RegisterPage() {
           <p className="text-gray-500 mt-2">Create your account</p>
         </div>
 
+        <label className="mb-4 flex gap-2"><input type="checkbox" checked={teacher} onChange={e=>setTeacher(e.target.checked)}/>I am a Lifeplus teacher with an invitation code</label>
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
           {error && (
             <div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg">{error}</div>
@@ -50,7 +52,7 @@ export function RegisterPage() {
 
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              Nickname
+              {teacher ? "Your name" : "Nickname"}
             </label>
             <input
               id="name"
@@ -109,7 +111,7 @@ export function RegisterPage() {
             />
           </div>
 
-          <p className="text-sm text-gray-500">New accounts are student accounts. Ask your administrator for teacher access.</p>
+          <p className="text-sm text-gray-500">Teachers activate access with an invitation code after creating an account.</p>
 
           <Button type="submit" loading={loading} className="w-full">
             Create account

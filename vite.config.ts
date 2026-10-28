@@ -1,3 +1,5 @@
+// @ts-expect-error build-only output policy
+import privateEpisodeOutput from './scripts/private-output-policy.mjs';
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -9,6 +11,7 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    privateEpisodeOutput(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons/icon-192.png', 'icons/icon-512.png'],
@@ -41,27 +44,17 @@ export default defineConfig({
         ],
       },
       workbox: {
+        cleanupOutdatedCaches: true,
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         globIgnores: ['stories/**'],
         navigateFallbackDenylist: [/\/stories\//],
         runtimeCaching: [
-          { urlPattern: /\/stories\/[^/]+\/v\d+\//, handler: 'CacheFirst', options: { cacheName: 'episode-opened-assets', expiration: { maxEntries: 60 } } },
-          { urlPattern: /\/stories\/(own-english\/v[12]|shared)\//, handler: 'CacheFirst', options: { cacheName: 'own-english-assets', expiration: { maxEntries: 30 } } },
-          { urlPattern: /\/stories\/teaching-stone\/v1\//, handler: 'CacheFirst', options: { cacheName: 'teaching-stone-v1', expiration: { maxEntries: 12 } } },
           {
             urlPattern: /\/assets\/pdf\.worker\.min-[^/]+\.mjs$/,
             handler: 'CacheFirst',
             options: { cacheName: 'pdf-import-worker', expiration: { maxEntries: 2 } },
           },
-          {
-            urlPattern: /^https:\/\/cloud\.appwrite\.io\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'appwrite-api',
-              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 },
-              networkTimeoutSeconds: 10,
-            },
-          },
+
         ],
       },
     }),

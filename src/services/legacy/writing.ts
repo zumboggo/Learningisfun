@@ -2,9 +2,8 @@
 // Do not remove collections or migrate student work as part of UI cleanup.
 import { ID } from 'appwrite';
 import { db } from '@/db/schema';
-import { getApiKey, generateWritingFeedback } from '@/services/ai.service';
 import { addToQueue } from '@/services/sync.service';
-import { functions, DATABASE_ID, FUNCTION_IDS } from '@/lib/appwrite';
+import { DATABASE_ID } from '@/lib/appwrite';
 import { countMarkdownWords } from '@/components/common/Markdown';
 import { getTimestamp } from '@/utils/helpers';
 import { executeLearningContent } from '@/services/learning-content.service';
@@ -687,50 +686,7 @@ export async function getAiFeedback(submissionId: string): Promise<WritingAiFeed
   return db.writing_ai_feedback.where('submissionId').equals(submissionId).first();
 }
 
-export async function generateAiFeedbackForSubmission(
-  submissionId: string,
-): Promise<WritingAiFeedback> {
-  const submission = await db.writing_submissions.get(submissionId);
-  if (!submission) throw new Error('Submission not found');
-
-  const prompt = await db.writing_prompts.get(submission.promptId);
-  if (!prompt) throw new Error('Writing prompt not found');
-  if (!prompt.aiFeedbackEnabled) throw new Error('AI feedback is turned off for this prompt');
-
-  const text = submission.submittedMarkdown || submission.draftMarkdown;
-  if (!text.trim()) throw new Error('There is nothing written yet');
-
-  let result: { www: string; improvements: string[] };
-  if (FUNCTION_IDS.writingAiFeedback) {
-    const execution = await functions.createExecution(FUNCTION_IDS.writingAiFeedback, JSON.stringify({ submissionId }));
-    if (execution.status === 'failed') throw new Error(execution.errors || 'AI feedback failed');
-    result = JSON.parse(execution.responseBody || '{}') as typeof result;
-  } else {
-    const apiKey = await getApiKey();
-    if (!apiKey) throw new Error('AI feedback is not configured on the server yet.');
-    result = await generateWritingFeedback(
-    {
-      promptTitle: prompt.title,
-      promptText: prompt.promptMarkdown,
-      rubricSummary: rubricSummary(parseRubric(prompt.rubricJson)),
-      studentText: text,
-    },
-    apiKey,
-    );
-  }
-
-  const existing = await getAiFeedback(submissionId);
-  const record: WritingAiFeedback = {
-    $id: existing?.$id || ID.unique(),
-    submissionId,
-    wwwSummary: result.www,
-    improvementsJson: JSON.stringify(result.improvements),
-    model: 'openrouter',
-    generatedAt: getTimestamp(),
-  };
-  await db.writing_ai_feedback.put(record);
-  return record;
-}
+export async function generateAiFeedbackForSubmission(_submissionId:string):Promise<WritingAiFeedback>{void _submissionId;throw new Error('AI writing feedback has been retired.');}
 
 export { generatePersonalWritingFeedback } from '../writing-feedback.service';
 

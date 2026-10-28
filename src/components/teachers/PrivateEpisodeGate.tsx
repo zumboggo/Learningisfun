@@ -1,0 +1,6 @@
+import {useEffect,useState,type ReactNode} from 'react';
+import {useParams,useSearchParams} from 'react-router-dom';
+import {useAuth} from '@/contexts/AuthContext';
+import {loadPrivateEpisode} from '@/services/private-episode-content';
+import {episodes} from '../../../functions/learning-content/src/episode-catalog.js';
+export default function PrivateEpisodeGate({children,stone=false}:{children:ReactNode;stone?:boolean}){const {user}=useAuth(),{classId='',episodeId=''}=useParams(),[query]=useSearchParams(),[ready,setReady]=useState(''),[failure,setFailure]=useState({key:'',message:''});const episode=stone?'teaching-stone':episodeId,version=stone?1:Number(query.get('version')||(episode==='own-english'?4:episodes.find(e=>e.id===episode&&e.classId===classId)?.version||1)),key=user?.$id+':'+classId+':'+episode+':'+version;useEffect(()=>{let active=true;if(user)void loadPrivateEpisode(user.$id,classId,episode,version).then(()=>{if(active)setReady(key)}).catch(e=>{if(active)setFailure({key,message:e.message})});return()=>{active=false}},[key,user,classId,episode,version]);if(failure.key===key)return <p role="alert" className="p-6">{failure.message}</p>;return ready===key?<>{children}</>:<p className="p-6">Checking account access and opening your episode…</p>}

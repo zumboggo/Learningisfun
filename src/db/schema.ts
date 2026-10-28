@@ -41,7 +41,8 @@ import type {
   PresentationLink,
 } from '@/types';
 
-const db = new Dexie('LearningIsFunDB') as Dexie & {
+function createAccountDatabase(name:string){
+const db = new Dexie(name) as Dexie & {
   users: EntityTable<User, '$id'>;
   classes: EntityTable<Class, '$id'>;
   class_members: EntityTable<ClassMember, '$id'>;
@@ -338,5 +339,21 @@ db.version(13).stores({
   text_version_paragraphs: '$id, versionId, textId, originalParagraphId, [versionId+sortOrder]',
 });
 
-export { db };
-export default db;
+return db;
+}
+function initialDatabaseName(){try{const id=localStorage.getItem('learning-account-scope');return id?'LearningIsFunDB:'+id:'LearningIsFunDB';}catch{return 'LearningIsFunDB';}}
+let db=createAccountDatabase(initialDatabaseName());
+export async function selectAccountDatabase(userId:string){
+ const name='LearningIsFunDB:'+userId;if(db.name===name){await db.app_metadata.delete('openrouter_api_key');return;}
+ const old=db,next=createAccountDatabase(name);
+ // Migrate the original device cache only to its recorded owner, preserving pending work.
+ if(old.name==='LearningIsFunDB'&&(await old.app_metadata.get('currentUserId'))?.value===userId){
+  for(const table of old.tables){const rows=await table.toArray();if(rows.length)await next.table(table.name).bulkPut(rows);}
+ }
+ await next.app_metadata.delete('openrouter_api_key');
+ await old.app_metadata.delete('openrouter_api_key');
+ old.close();db=next;try{localStorage.setItem('learning-account-scope',userId)}catch{/* Account selection still works in memory. */}
+}
+export async function selectGuestDatabase(){await db.app_metadata.delete('openrouter_api_key');db.close();db=createAccountDatabase('LearningIsFunDB:guest');try{localStorage.setItem('learning-account-scope','guest')}catch{/* No persistent storage. */}}
+export {db};
+export {db as default};

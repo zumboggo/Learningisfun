@@ -1,6 +1,6 @@
 import { ID } from 'appwrite';
 import { db } from '@/db/schema';
-import { getApiKey, generateQuizFromSources, type QuizQuestion as AIQuizQuestion } from '@/services/ai.service';
+import { generateQuizFromSources, type QuizQuestion as AIQuizQuestion } from '@/services/ai.service';
 import {
   generateQuizFromFlashcards,
   splitCardsByRecency,
@@ -80,15 +80,12 @@ export async function generateQuizQuestions(
   const quiz = await db.quizzes.get(quizId);
   if (!quiz) throw new Error('Quiz not found');
 
-  const apiKey = await getApiKey();
-  if (!apiKey) throw new Error('No API key configured');
 
   const aiQuestions = await generateQuizFromSources(
     notes,
     flashcardFronts,
     quiz.questionCount,
     { notes: quiz.notesWeight, flashcards: quiz.flashcardWeight },
-    apiKey,
   );
 
   const questions: QuizQuestion[] = aiQuestions.map((q: AIQuizQuestion, i: number) => ({

@@ -1,0 +1,6 @@
+import {useState} from 'react';
+import {Link,useNavigate} from 'react-router-dom';
+import {useAuth} from '@/contexts/AuthContext';
+import {executeLearningContent} from '@/services/learning-content.service';
+import {Button} from '@/components/common/Button';
+export default function TeacherAccessPage(){const {refreshUser}=useAuth(),navigate=useNavigate();const [code,setCode]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false);return <main className="mx-auto max-w-lg space-y-4 p-6"><h1 className="text-2xl font-bold">Lifeplus teacher access</h1><p>Enter the invitation code supplied by your administrator. Your account and existing work will be preserved.</p><form className="space-y-4" onSubmit={async e=>{e.preventDefault();setBusy(true);setError('');try{await executeLearningContent({action:'redeemTeacherInvitation',code});setCode('');await refreshUser();navigate('/classes/new');}catch(e){setError((e as Error).message)}finally{setBusy(false)}}}><label className="block">Teacher invitation code<input type="password" autoComplete="off" required maxLength={128} className="block w-full rounded border p-3" value={code} onChange={e=>setCode(e.target.value)}/></label>{error&&<p role="alert">{error}</p>}<Button loading={busy}>Activate teacher account</Button></form><Link to="/dashboard">Back to dashboard</Link></main>}

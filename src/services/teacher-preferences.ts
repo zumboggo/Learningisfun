@@ -1,0 +1,5 @@
+import {useEffect,useState} from 'react';
+import {useAuth} from '@/contexts/AuthContext';
+import {executeLearningContent} from './learning-content.service';
+export interface TeacherPreferences {value:{presentationFolderUrl?:string;authoringGuidance?:string}|null;revision:number;isOwnerAdmin:boolean;legacyPlanner:boolean}
+export function useTeacherPreferences(){const {user}=useAuth();const owner=user?.$id,role=user?.role;const [state,setState]=useState<{owner?:string;preferences:TeacherPreferences|null;error:string}>({preferences:null,error:''});useEffect(()=>{let active=true;if(owner&&['teacher','admin'].includes(role||''))void executeLearningContent<TeacherPreferences>({action:'readTeacherPreferences'}).then(preferences=>{if(active)setState({owner,preferences,error:''})}).catch(e=>{if(active)setState({owner,preferences:null,error:e.message})});return()=>{active=false}},[owner,role]);return {preferences:state.owner===owner?state.preferences:null,setPreferences:(preferences:TeacherPreferences)=>setState({owner,preferences,error:''}),error:state.owner===owner?state.error:''};}

@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import {beforeEach,describe,expect,it} from 'vitest';
+import {vi,beforeEach,describe,expect,it} from 'vitest';
 import {advanceEpisode,episodeDb,makeEpisodeAttempt,attemptsFor,validEpisodeMessage} from '@/services/episodes.service';
 import {availableEpisodeVersions,AP_CLASS_ID} from '../../functions/learning-content/src/episode-catalog.js';
 import {isGameEpisode,resourceCategory,resourceColor} from '@/services/planner-appearance';
@@ -12,3 +12,5 @@ describe('episode persistence and isolation',()=>{
 });
 
 it('keeps failed driver checks active and preserves choices on retry',()=>{const a=makeEpisodeAttempt('one',e,false),choices=['voice','clarify','test','mix','power','assess','bridge','check','preserve','revisit'];const story=advanceEpisode(a,choices);expect(story.status).toBe('active');const failed=advanceEpisode(story,choices,[[0,0,0,2]]);expect(failed.status).toBe('active');const passed=advanceEpisode(failed,choices,[[0,0,0,2],[1,0,0,2]]);expect(passed.status).toBe('complete');expect(passed.choices).toEqual(choices);expect(passed.revision).toBe(12);expect(()=>advanceEpisode(passed,choices,[])).toThrow();});
+
+vi.mock('@/services/private-episode-content',async()=>{const content=await import('../../functions/learning-content/src/episode-content.js');const versions=await import('../../functions/learning-content/src/young-versions.js');const original=await vi.importActual<typeof import('@/services/private-episode-content')>('@/services/private-episode-content');return {...original,...content,...versions,privateEpisodeHtml:(_id:string,version:number)=>'<html>Private authenticated episode v'+version+'</html>'};});

@@ -1,0 +1,4 @@
+import 'fake-indexeddb/auto';
+import {expect,it} from 'vitest';
+import {db,selectAccountDatabase,selectGuestDatabase} from '@/db/schema';
+it('separates teacher browser databases and removes the obsolete browser AI key',async()=>{await selectAccountDatabase('cache-test-a');await db.app_metadata.put({key:'private-test',value:'Only A'});await db.app_metadata.put({key:'openrouter_api_key',value:'obsolete'});await selectGuestDatabase();expect(await db.app_metadata.get('private-test')).toBeUndefined();await selectAccountDatabase('cache-test-b');expect(await db.app_metadata.get('private-test')).toBeUndefined();await selectAccountDatabase('cache-test-a');expect((await db.app_metadata.get('private-test'))?.value).toBe('Only A');expect(await db.app_metadata.get('openrouter_api_key')).toBeUndefined();await db.app_metadata.clear();await selectAccountDatabase('cache-test-b');await db.app_metadata.clear();await selectGuestDatabase();});
