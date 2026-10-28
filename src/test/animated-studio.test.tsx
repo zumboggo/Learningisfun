@@ -3,6 +3,7 @@ import {afterEach,expect,it,vi} from 'vitest';
 import {cleanup,fireEvent,render,screen,waitFor} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
 import {readFileSync} from 'node:fs';
+vi.mock('@/components/teachers/AIAllowance',()=>({default:()=>null}));
 const call=vi.hoisted(()=>vi.fn());
 vi.mock('@/services/learning-content.service',()=>({executeLearningContent:call}));
 vi.mock('@/contexts/AuthContext',()=>({useAuth:()=>({user:{$id:'teacher',role:'teacher'}})}));
