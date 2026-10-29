@@ -1,0 +1,51 @@
+{
+  "className": "Ethics and Leadership",
+  "section": "Section 1",
+  "verifiedAt": "2026-10-29T00:58:03.691Z",
+  "readings": [
+    {
+      "part": 1,
+      "title": "History of Ethics in China — Part 1: The Teacher and the Tiger",
+      "textId": "china-ethics-2026-part-1",
+      "date": "2026-11-02",
+      "voice": "A",
+      "wordCount": 1607,
+      "images": 4,
+      "paragraphs": 49,
+      "url": "https://zumboggo.github.io/Learningisfun/#/texts/china-ethics-2026-part-1?classId=e24ec8d9-21d7-4c32-a30e-08655c2f4e65"
+    },
+    {
+      "part": 2,
+      "title": "History of Ethics in China — Part 2: The Job Offer and the Dead Tortoise",
+      "textId": "china-ethics-2026-part-2",
+      "date": "2026-11-05",
+      "voice": "B",
+      "wordCount": 1508,
+      "images": 4,
+      "paragraphs": 51,
+      "url": "https://zumboggo.github.io/Learningisfun/#/texts/china-ethics-2026-part-2?classId=e24ec8d9-21d7-4c32-a30e-08655c2f4e65"
+    },
+    {
+      "part": 3,
+      "title": "History of Ethics in China — Part 3: The King, the Ox, and the Extremely Convenient Horse",
+      "textId": "china-ethics-2026-part-3",
+      "date": "2026-11-09",
+      "voice": "B",
+      "wordCount": 1638,
+      "images": 4,
+      "paragraphs": 55,
+      "url": "https://zumboggo.github.io/Learningisfun/#/texts/china-ethics-2026-part-3?classId=e24ec8d9-21d7-4c32-a30e-08655c2f4e65"
+    },
+    {
+      "part": 4,
+      "title": "History of Ethics in China — Part 4: The Bamboo Would Not Explain Itself",
+      "textId": "china-ethics-2026-part-4",
+      "date": "2026-11-12",
+      "voice": "B",
+      "wordCount": 1608,
+      "images": 4,
+      "paragraphs": 56,
+      "url": "https://zumboggo.github.io/Learningisfun/#/texts/china-ethics-2026-part-4?classId=e24ec8d9-21d7-4c32-a30e-08655c2f4e65"
+    }
+  ]
+}

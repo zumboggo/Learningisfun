@@ -1,0 +1,72 @@
+{
+  "series": "History of Ethics in China",
+  "classId": "e24ec8d9-21d7-4c32-a30e-08655c2f4e65",
+  "timezone": "Asia/Shanghai",
+  "readingEstimate": "About 20 minutes at 80–95 words per minute, allowing time for illustrations and unfamiliar concepts.",
+  "parts": [
+    {
+      "part": 1,
+      "id": "china-ethics-2026-part-1",
+      "title": "History of Ethics in China — Part 1: The Teacher and the Tiger",
+      "voice": "A",
+      "date": "2026-11-02",
+      "wordCount": 1607,
+      "images": [
+        "images/01.png",
+        "images/02.png",
+        "images/03.png",
+        "images/04.png"
+      ],
+      "paragraphCount": 49,
+      "file": "part-1.md"
+    },
+    {
+      "part": 2,
+      "id": "china-ethics-2026-part-2",
+      "title": "History of Ethics in China — Part 2: The Job Offer and the Dead Tortoise",
+      "voice": "B",
+      "date": "2026-11-05",
+      "wordCount": 1508,
+      "images": [
+        "images/05.png",
+        "images/06.png",
+        "images/07.png",
+        "images/08.png"
+      ],
+      "paragraphCount": 51,
+      "file": "part-2.md"
+    },
+    {
+      "part": 3,
+      "id": "china-ethics-2026-part-3",
+      "title": "History of Ethics in China — Part 3: The King, the Ox, and the Extremely Convenient Horse",
+      "voice": "B",
+      "date": "2026-11-09",
+      "wordCount": 1638,
+      "images": [
+        "images/09.png",
+        "images/12.png",
+        "images/10.png",
+        "images/11.png"
+      ],
+      "paragraphCount": 55,
+      "file": "part-3.md"
+    },
+    {
+      "part": 4,
+      "id": "china-ethics-2026-part-4",
+      "title": "History of Ethics in China — Part 4: The Bamboo Would Not Explain Itself",
+      "voice": "B",
+      "date": "2026-11-12",
+      "wordCount": 1608,
+      "images": [
+        "images/13.png",
+        "images/14.png",
+        "images/15.png",
+        "images/16.png"
+      ],
+      "paragraphCount": 56,
+      "file": "part-4.md"
+    }
+  ]
+}
