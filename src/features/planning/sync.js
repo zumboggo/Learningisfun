@@ -20,42 +20,78 @@
   let deviceId = localStorage.getItem(prefix + ':device');
   if (!deviceId) { deviceId = crypto.randomUUID(); localStorage.setItem(prefix + ':device', deviceId); }
   const status = $('#cloud-status');
-  const BACKUP_DELAY = 60000;
-  let timer, busy = false, dirty = true, observed, backedUp;
-  const content = () => JSON.stringify({ device: $('#device-name').value.trim() || 'My device', boards: library.boards });
+  const BACKUP_DELAY = 1000;
+  let timer, busy = false, applying = false;
+  let observed = JSON.parse(JSON.stringify(library));
+  let backedUp = '';
+  let clock = Date.now();
+  for (const board of library.boards) for (const stamp of Object.values(board.versions || {})) clock = Math.max(clock, Number(String(stamp).split(':')[0]) || 0);
+  const content = () => JSON.stringify({ boards: library.boards, deleted: library.deleted || {} });
   $('#device-name').value = localStorage.getItem(prefix + ':name') || 'My device';
   function schedule() {
-    const current = content();
-    if (current === observed) return;
-    observed = current; dirty = current !== backedUp;
+    if (applying) return;
+    const stamp = String(clock = Math.max(Date.now(), clock + 1)).padStart(16, '0') + ':' + deviceId;
+    library.deleted ||= {};
+    for (const board of library.boards) {
+      const before = observed.boards.find(b => b.id === board.id);
+      const fields = planningFields(board.data), old = before ? planningFields(before.data) : {};
+      board.versions ||= {};
+      for (const [key, value] of Object.entries(fields)) {
+        if (JSON.stringify(value) !== JSON.stringify(old[key])) board.versions[key] = stamp;
+      }
+    }
+    for (const old of observed.boards) if (!library.boards.some(b => b.id === old.id)) library.deleted[old.id] = stamp;
+    observed = JSON.parse(JSON.stringify(library));
+    try { localStorage.setItem(prefix, JSON.stringify(library)); } catch { status.textContent = 'Storage unavailable — export to keep your work'; }
     clearTimeout(timer);
-    if (dirty) {
-      status.textContent = navigator.onLine ? 'Saved locally · cloud backup after 1 minute idle' : 'Offline · saved on this device';
+    if (content() !== backedUp) {
+      status.textContent = navigator.onLine ? 'Saved locally · syncing…' : 'Offline · saved on this device';
       timer = setTimeout(backup, BACKUP_DELAY);
     }
   }
   async function backup() {
     clearTimeout(timer);
-    if (busy) return;
-    if (!dirty && content() === backedUp) return;
-    if (!navigator.onLine) { status.textContent = 'Offline · saved on this device'; return; }
-    busy = true; dirty = false; let success = false;
-    const snapshot = content();
-    status.textContent = 'Backing up…';
+    if (busy || !navigator.onLine) return;
+    busy = true;
     try {
-      const payload = JSON.stringify({ version: 1, device: $('#device-name').value.trim() || 'My device', savedAt: new Date().toISOString(), library });
-      if (new TextEncoder().encode(payload).length > 950000) throw new Error('Backup is too large. Use Back up boards to save a file.');
-      await request('save', { deviceId, payload });
-      success = true; backedUp = snapshot; dirty = content() !== backedUp;
-      status.textContent = dirty ? 'Saved locally · cloud backup pending' : 'Private cloud backup saved';
-      $('#cloud-message').textContent = 'All boards on this device are backed up to your account.';
+      const { documents } = await request('list');
+      // Do not replace an open editor or a focused text input while typing.
+      if (document.querySelector('dialog[open]') || ['TEXTAREA', 'INPUT'].includes(document.activeElement?.tagName)) {
+        if (content() !== backedUp) await upload();
+        return;
+      }
+      const before = content();
+      for (const doc of documents) {
+        let remote;
+        try { remote = JSON.parse(doc.payload).library; } catch { continue; }
+        if (!remote?.boards?.every(b => typeof b.id === 'string' && validBoard(b.data))) continue;
+        remote.boards.forEach(b => { b.data = normalizeBoard(b.data); mergeAdditionalNotes(b.data); });
+        planningMerge(library, remote);
+        for (const board of remote.boards) for (const stamp of Object.values(board.versions || {})) clock = Math.max(clock, Number(String(stamp).split(':')[0]) || 0);
+      }
+      if (!library.boards.length) library.boards.push({ id: newId(), data: blankBoard() });
+      if (content() !== before) {
+        applying = true;
+        if (!library.boards.some(b => b.id === currentId)) currentId = library.boards[0].id;
+        state = library.boards.find(b => b.id === currentId).data;
+        $('#title').value = state.title;
+        observed = JSON.parse(JSON.stringify(library));
+        render(); refreshBoards(); applying = false;
+      }
+      if (content() !== backedUp) await upload();
+      status.textContent = 'Synced to your account';
     } catch (error) {
-      dirty = true; status.textContent = 'Saved locally · cloud backup needs attention';
+      status.textContent = 'Saved locally · sync will retry';
       $('#cloud-message').textContent = error.message;
-    } finally {
-      busy = false;
-      if (success && dirty) { clearTimeout(timer); timer = setTimeout(backup, BACKUP_DELAY); }
-    }
+    } finally { applying = false; busy = false; }
+  }
+  async function upload() {
+    const snapshot = content();
+    const payload = JSON.stringify({ version: 2, device: $('#device-name').value.trim().slice(0,60) || 'My device', savedAt: new Date().toISOString(), library });
+    if (new TextEncoder().encode(payload).length > 950000) throw new Error('Boards are too large to sync. Export a backup.');
+    await request('save', { deviceId, payload });
+    backedUp = snapshot;
+    status.textContent = content() === backedUp ? 'Synced to your account' : 'Saved locally · syncing…';
   }
   async function listBackups() {
     const list = $('#cloud-backups'); list.replaceChildren();
@@ -103,7 +139,11 @@
   $('#cloud-save').onclick = backup;
   $('#save-board').addEventListener('click', () => { void backup(); });
   $('#cloud-list').onclick = listBackups;
-  window.addEventListener('online', () => { if (dirty) void backup(); });
+  window.addEventListener('online', () => { void backup(); });
   window.addEventListener('offline', () => { status.textContent = 'Offline · saved on this device'; });
-  schedule();
+  window.addEventListener('focus', () => { void backup(); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) void backup(); });
+  document.addEventListener('focusout', () => { clearTimeout(timer); timer = setTimeout(backup, BACKUP_DELAY); });
+  setInterval(() => { if (!document.hidden) void backup(); }, 10000);
+  void backup();
 })();

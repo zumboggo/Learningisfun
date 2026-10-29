@@ -8,7 +8,7 @@ Local libraries and device identifiers are scoped by account ID. The existing PW
 
 The dedicated `teacher-planning` Appwrite function checks the authenticated request's user ID and existing student/teacher/admin profile. It never trusts a client-supplied owner or document ID. It uses a new `brainstorming/teacher_libraries` collection with no collection-wide permissions, document security enabled, and owner-only read permissions. All writes go through the function. The function uses a dynamically scoped Appwrite key; no API key is bundled into the frontend.
 
-Cloud backups are separate for each account/device. Changes automatically save locally and back up online. “Saved devices” lets a teacher restore another device's boards additively, or delete an older device backup. This deliberately retains the original snapshot workflow rather than silently overwriting work across devices.
+Planning sync automatically pulls all private device snapshots on opening, reconnecting, returning to the tab, and every 10 seconds while visible. Local edits upload after one second idle or immediately with Save. Per-field version stamps merge independent card edits; changes to the same field resolve by newest stamp (device ID breaks ties). To-do text and check states merge as one unit. Board deletion tombstones prevent stale devices from restoring deleted boards. Pulls defer while a text field or dialog is open so typing is never interrupted. Offline edits stay local and retry on reconnect. Existing Saved devices backups remain available for manual recovery. No shared cloud document is overwritten by competing devices.
 
 ## Deployment
 
@@ -26,7 +26,7 @@ All 853 Vitest tests passed, including editor migration/movement/CSV behavior an
 
 The cell editor has a top-right trash button. Return saves and closes; Shift + Return adds a newline. IME composition confirmation does not submit.
 
-New boards default to today’s date in the device’s locale; the title remains editable and existing boards are not renamed at midnight. Cloud backups wait for 60 seconds without content edits while local saves remain immediate. Save and Back up now flush immediately. Unchanged renders do not restart the timer or repeatedly upload the same content.
+New boards default to today’s date in the device’s locale; the title remains editable and existing boards are not renamed at midnight. Cloud saves wait for one second without content edits while local saves remain immediate. Save and Back up now flush immediately. Unchanged renders do not restart the timer or repeatedly upload the same content.
 
 The main top-left area is permanently a To Do checklist for both students and teachers, with one checkbox per line and the existing 15px editor text size. Existing plain notes are converted without losing their text. Return adds a task; Backspace on an empty task removes it. Completion strikes through the full task, persists per board, survives reopening the board, and appears in the A4 PDF.
 

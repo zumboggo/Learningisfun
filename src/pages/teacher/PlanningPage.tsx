@@ -5,6 +5,7 @@ import { functions } from '@/lib/appwrite';
 import markup from '@/features/planning/editor.html?raw';
 import styles from '@/features/planning/editor.css?raw';
 import editor from '@/features/planning/editor.js?raw';
+import merge from '@/features/planning/merge.js?raw';
 import sync from '@/features/planning/sync.js?raw';
 
 // Keep the established editor's styles and print layout isolated from app chrome.
@@ -16,7 +17,7 @@ export function PlanningPage() {
   const canPlan = !!user && ['student', 'teacher', 'admin'].includes(user.role);
   const document = useMemo(() => {
     if (!userId || !canPlan) return '';
-    const script = `window.PLANNING_USER=${JSON.stringify(userId)};window.PLANNING_ORIGIN=${JSON.stringify(window.location.origin)};\n${editor}\n${sync}`.replace(/<\/script/gi, '<\\/script');
+    const script = `window.PLANNING_USER=${JSON.stringify(userId)};window.PLANNING_ORIGIN=${JSON.stringify(window.location.origin)};\n${editor}\n${merge}\n${sync}`.replace(/<\/script/gi, '<\\/script');
     return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Planning</title><style>${styles}</style></head><body>${isTeacher ? markup : markup.replace(' brainstorming', ' planner')}<script>${script}</script></body></html>`;
   }, [userId, canPlan, isTeacher]);
 
