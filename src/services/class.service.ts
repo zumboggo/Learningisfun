@@ -112,7 +112,7 @@ export async function findClassByJoinCode(joinCode: string): Promise<Class | nul
       joinCodeActive: doc.joinCodeActive,
       parentCode: doc.parentCode || '',
       parentCodeActive: Boolean(doc.parentCodeActive),
-      linksJson: (doc.linksJson as string) || '[]',
+      bannerJson: doc.bannerJson, linksJson: (doc.linksJson as string) || '[]',
       status: doc.status,
       createdAt: doc.createdAt,
     };
@@ -130,7 +130,7 @@ export async function findClassByParentCode(parentCode: string): Promise<Class |
     const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.classes, [Query.equal('parentCode', parentCode), Query.equal('parentCodeActive', true), Query.equal('status', 'active')]);
     if (!result.documents.length) return null;
     const doc = result.documents[0];
-    const cls: Class = { $id:doc.$id,name:doc.name,courseName:doc.courseName,canvasCourseId:doc.canvasCourseId||'',schoolYear:doc.schoolYear,teacherId:doc.teacherId,joinCode:doc.joinCode,joinCodeActive:doc.joinCodeActive,parentCode:doc.parentCode,parentCodeActive:doc.parentCodeActive,linksJson:(doc.linksJson as string)||'[]',status:doc.status,createdAt:doc.createdAt };
+    const cls: Class = { $id:doc.$id,name:doc.name,courseName:doc.courseName,canvasCourseId:doc.canvasCourseId||'',schoolYear:doc.schoolYear,teacherId:doc.teacherId,joinCode:doc.joinCode,joinCodeActive:doc.joinCodeActive,parentCode:doc.parentCode,parentCodeActive:doc.parentCodeActive,bannerJson:doc.bannerJson,linksJson:(doc.linksJson as string)||'[]',status:doc.status,createdAt:doc.createdAt };
     await db.classes.put(cls); return cls;
   } catch { return null; }
 }
@@ -143,7 +143,7 @@ export async function findClassBySubstituteCode(substituteCode: string): Promise
     const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.classes, [Query.equal('substituteCode', substituteCode), Query.equal('substituteCodeActive', true), Query.equal('status', 'active')]);
     const doc = result.documents.find(row => row.substituteExpiresAt && new Date(row.substituteExpiresAt).getTime() > Date.now());
     if (!doc) return null;
-    const cls: Class = { $id:doc.$id,name:doc.name,courseName:doc.courseName,canvasCourseId:doc.canvasCourseId||'',schoolYear:doc.schoolYear,teacherId:doc.teacherId,joinCode:doc.joinCode,joinCodeActive:doc.joinCodeActive,parentCode:doc.parentCode||'',parentCodeActive:Boolean(doc.parentCodeActive),substituteCode:doc.substituteCode||'',substituteCodeActive:Boolean(doc.substituteCodeActive),substituteExpiresAt:doc.substituteExpiresAt||null,linksJson:(doc.linksJson as string)||'[]',status:doc.status,createdAt:doc.createdAt };
+    const cls: Class = { $id:doc.$id,name:doc.name,courseName:doc.courseName,canvasCourseId:doc.canvasCourseId||'',schoolYear:doc.schoolYear,teacherId:doc.teacherId,joinCode:doc.joinCode,joinCodeActive:doc.joinCodeActive,parentCode:doc.parentCode||'',parentCodeActive:Boolean(doc.parentCodeActive),substituteCode:doc.substituteCode||'',substituteCodeActive:Boolean(doc.substituteCodeActive),substituteExpiresAt:doc.substituteExpiresAt||null,bannerJson:doc.bannerJson,linksJson:(doc.linksJson as string)||'[]',status:doc.status,createdAt:doc.createdAt };
     await db.classes.put(cls); return cls;
   } catch { return null; }
 }
@@ -365,7 +365,7 @@ export async function syncClassesFromServer(userId: string): Promise<boolean> {
         joinCode: classDoc.joinCode, joinCodeActive: classDoc.joinCodeActive,
         parentCode: (classDoc.parentCode as string) || '', parentCodeActive: Boolean(classDoc.parentCodeActive),
         substituteCode: (classDoc.substituteCode as string) || '', substituteCodeActive: Boolean(classDoc.substituteCodeActive), substituteExpiresAt: (classDoc.substituteExpiresAt as string) || null,
-        linksJson: (classDoc.linksJson as string) || '[]', status: classDoc.status, createdAt: classDoc.createdAt,
+        bannerJson: classDoc.bannerJson, linksJson: (classDoc.linksJson as string) || '[]', status: classDoc.status, createdAt: classDoc.createdAt,
       });
     }
 
@@ -395,7 +395,7 @@ export async function syncClassesFromServer(userId: string): Promise<boolean> {
           substituteCode: (classDoc.substituteCode as string) || '',
           substituteCodeActive: Boolean(classDoc.substituteCodeActive),
           substituteExpiresAt: (classDoc.substituteExpiresAt as string) || null,
-          linksJson: (classDoc.linksJson as string) || '[]',
+          bannerJson: classDoc.bannerJson, linksJson: (classDoc.linksJson as string) || '[]',
           status: classDoc.status,
           createdAt: classDoc.createdAt,
         });

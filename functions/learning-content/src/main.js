@@ -1,3 +1,4 @@
+import { classBannerAction } from './class-banner.js';
 import {WORKSHOP_CLASS_ID} from './workshop-policy.js';
 import {canJoinWorkshop,workshopAccess,workshopRequestContext} from './workshop-access.js';
 import {authorizeContentMutation} from './content-ownership.js';
@@ -479,6 +480,8 @@ export default async ({ req, res, error }) => {
       for (const duplicate of sourceMemberships.slice(1)) await db.deleteDocument(databaseId, 'class_members', duplicate.$id);
       return res.json({ removedIds, membership: clean(membership) });
     }
+
+    if (['saveClassBanner','readClassBanner'].includes(body.action)) return res.json(await classBannerAction({body,profile,userId,memberClassIds,db,databaseId,storage:new Storage(client),tokens:new Tokens(client),endpoint:process.env.APPWRITE_ENDPOINT,projectId:process.env.APPWRITE_FUNCTION_PROJECT_ID}));
 
     if (body.action === 'updateClassDetails') {
       if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);

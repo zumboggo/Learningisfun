@@ -1,3 +1,4 @@
+import { ClassBanner } from '@/components/classes/ClassBanner';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -90,7 +91,7 @@ export function ClassesListPage() {
                 {groupedClasses.map(cls => (
                   <div key={cls.$id} className="group flex min-h-16 items-center gap-2 px-3 py-2 transition hover:bg-gray-50 sm:px-4">
                     <Link className="min-w-0 flex-1 rounded-lg px-1 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-950" to={`/classes/${cls.$id}`}>
-                      <h3 className="truncate font-semibold text-gray-950">{cls.name}</h3>
+                      <div className="flex items-center gap-3"><ClassBanner cls={cls} mini /><h3 className="truncate font-semibold text-gray-950">{cls.name}</h3></div>
                       <p className="truncate text-xs text-gray-500">{cls.schoolYear}{isTeacher && cls.joinCode ? ` · Code ${cls.joinCode}` : ''}</p>
                     </Link>
                     {isTeacher && cls.joinCode && <CopyButton text={cls.joinCode} label="Copy" copiedLabel="Copied" size="sm" variant="ghost" className="shrink-0 px-2" />}

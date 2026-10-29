@@ -13,6 +13,7 @@ export interface User {
 }
 
 export interface Class {
+  bannerJson?: string;
   canvasCourseId?: string;
   $id: string;
   name: string;
