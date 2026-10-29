@@ -11,6 +11,7 @@ const CastGalleryPage = lazy(() => import('@/pages/CastGalleryPage'));
 const ActingAnglesPage=lazy(()=>import('./pages/ActingAnglesPage'));
 const AnimationLabPage = lazy(() => import('@/pages/AnimationLabPage'));
 const ActingDemoPage = lazy(() => import('@/pages/ActingDemoPage'));
+const TeacherDataPage = lazy(() => import('@/pages/TeacherDataPage'));
 const AnimatedStudioPage = lazy(() => import('@/pages/AnimatedStudioPage'));
 const AnimatedEpisodePage = lazy(() => import('@/pages/AnimatedEpisodePage'));
 const GamePage = lazy(() => import('@/pages/GamePage'));
@@ -194,6 +195,7 @@ export default function App() {
           <Route path="/classes/:classId/timer" element={<FullscreenTeacherRoute><ClassTimerPage /></FullscreenTeacherRoute>} />
 
           <Route path="/teacher-access" element={<ProtectedRoute><TeacherAccessPage /></ProtectedRoute>} />
+          <Route path="/data" element={<ProtectedRoute><TeacherRoute><Suspense fallback={<p>Loading data…</p>}><TeacherDataPage /></Suspense></TeacherRoute></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><TeacherRoute><TeacherSettingsPage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/planner" element={<ProtectedRoute><TeacherRoute><PlannerAccess entry><PlannerPage /></PlannerAccess></TeacherRoute></ProtectedRoute>} />
           <Route path="/brainstorming" element={<ProtectedRoute><PlanningPage /></ProtectedRoute>} />

@@ -1,3 +1,4 @@
+import {teacherEpisodeRows} from './teacher-data-episodes.js';
 import {createHash} from 'node:crypto';
 import {Query} from 'node-appwrite';
 import {listAll, writingWorkspace} from './writing-discussion.js';
@@ -6,9 +7,11 @@ const readingWorkspace = (text, cls) => createHash('sha256').update(JSON.stringi
 const metricKeys = ['questions','replies','discussionStarters','writingResponses','annotations','flashcardReviews','studySeconds','episodeAttempts','episodeCompletions'];
 const empty = () => Object.fromEntries(metricKeys.map(key => [key,0]));
 
-// Server-only aggregation. Never return source records, student IDs, or writing.
-export async function usageSummary({body, profile, userId, db, databaseId, now = new Date()}) {
+// Aggregate summaries stay anonymous. The separate teacherData action returns
+// per-student metrics only after checking ownership of the selected class.
+export async function usageSummary({body, profile, userId, db, databaseId, storage, now = new Date()}) {
   if (!['teacher','admin'].includes(profile.role)) throw Object.assign(new Error('Teacher access required'), {code:403});
+  const detailed = body.action === 'teacherData';
   const days = body.days ?? 0;
   if (![0,7,30].includes(days)) throw Object.assign(new Error('Choose all time, 7 days, or 30 days'), {code:400});
   const since = days ? new Date(now.getTime() - days * 86400000).toISOString() : null;
@@ -23,7 +26,12 @@ export async function usageSummary({body, profile, userId, db, databaseId, now =
     for (let i=0;i<ids.length;i+=100) rows.push(...await list(collection,[Query.equal(field,ids.slice(i,i+100))]));
     return rows;
   };
-  const classes = await list('classes',[Query.equal('teacherId',userId)]);
+  const ownedClasses = await list('classes',[Query.equal('teacherId',userId)]);
+  if (detailed && body.classId && !ownedClasses.some(c=>c.$id===body.classId)) throw Object.assign(new Error('Only your own classes are available'),{code:403});
+  if (detailed && !body.classId) return {classes:ownedClasses.map(c=>({id:c.$id,name:c.name,courseName:c.courseName||''}))};
+  const classes = detailed ? ownedClasses.filter(c=>c.$id===body.classId) : ownedClasses;
+  let studentRows = [], episodeRows = [];
+
   const totals = empty(), enrolled = new Set(), active = new Set(), rows = [];
   // Bound concurrency so a teacher with many classes cannot flood the database.
   const summarizeClass = async cls => {
@@ -35,10 +43,13 @@ export async function usageSummary({body, profile, userId, db, databaseId, now =
     ]);
     const students = new Set(members.filter(m=>m.role==='student' && (!m.expiresAt || m.expiresAt>now.toISOString()) && m.userId!==cls.teacherId).map(m=>m.userId));
     students.forEach(id=>enrolled.add(id));
+    const details = new Map([...students].map(id=>[id,{userId:id,...empty(),lastActivity:null}]));
     const values = empty(), participants = new Set();
     const record = (key, id, date, amount=1) => {
       if (!students.has(id) || !inRange(date)) return;
       values[key] += amount; participants.add(id); active.add(id);
+      const student=details.get(id); student[key]+=amount;
+      if (!student.lastActivity || date>student.lastActivity) student.lastActivity=date;
     };
     const sessionMap = new Map(sessions.map(s=>[s.$id,s]));
     const questions = await byIds('discussion_questions','classSessionId',sessions.map(s=>s.$id));
@@ -72,6 +83,7 @@ export async function usageSummary({body, profile, userId, db, databaseId, now =
     };
     for (const q of questions) if (!q.isTeacherQuestion && q.moderationStatus==='visible' && sessionMap.get(q.classSessionId)?.discussionType!=='presentation') record('questions',q.authorId,q.createdAt);
     for (const a of answers) {
+      if (['hidden','removed'].includes(a.moderationStatus)) continue;
       const q = questionMap.get(a.questionId);
       if (!q || q.moderationStatus==='removed' || q.moderationStatus==='hidden') continue;
       if (threadPosts.has(a.$id) && !visible(threadPosts.get(a.$id))) continue;
@@ -96,7 +108,7 @@ export async function usageSummary({body, profile, userId, db, databaseId, now =
       if (!id) continue;
       const key=JSON.stringify([row.userId,a.assignmentId||a.episode,id]);
       const date=row.$createdAt||a.createdAt||a.updatedAt;
-      if (inRange(date)) { participants.add(row.userId); active.add(row.userId); }
+      if (inRange(date)) { participants.add(row.userId); active.add(row.userId); const detail=details.get(row.userId); if (!detail.lastActivity || date>detail.lastActivity) detail.lastActivity=date; }
       const complete=a.status==='complete'||a.complete===true;
       const old=attempts.get(key);
       if (!old) attempts.set(key,{userId:row.userId,startedAt:date,completedAt:complete?date:null});
@@ -109,10 +121,17 @@ export async function usageSummary({body, profile, userId, db, databaseId, now =
       record('episodeAttempts',a.userId,a.startedAt);
       if (a.completedAt) record('episodeCompletions',a.userId,a.completedAt);
     }
+    if (detailed) {
+      const profiles = await byIds('users','$id',[...students]);
+      const names = new Map(profiles.map(p=>[p.$id,p.name||p.nickname||'Unnamed student']));
+      studentRows = [...details.values()].map(s=>({...s,name:names.get(s.userId)||'Unavailable student profile'})).sort((a,b)=>a.name.localeCompare(b.name));
+      const assignedEpisodes = await list('episode_records',[...scope,Query.equal('kind','animated-assignment')]);
+      episodeRows = await teacherEpisodeRows({records:episodes,assignments:assignedEpisodes,students,inRange,storage});
+    }
     for (const key of metricKeys) totals[key]+=values[key];
     rows.push({name:cls.name,students:students.size,activeStudents:participants.size,...values});
   }
   for (let i=0;i<classes.length;i+=4) await Promise.all(classes.slice(i,i+4).map(summarizeClass));
   rows.sort((a,b)=>a.name.localeCompare(b.name));
-  return {generatedAt:now.toISOString(),since,days,students:enrolled.size,activeStudents:active.size,classes:rows,totals,missingSources:[...missing]};
+  return {...(detailed?{studentRows,episodeRows}:{}),generatedAt:now.toISOString(),since,days,students:enrolled.size,activeStudents:active.size,classes:rows,totals,missingSources:[...missing]};
 }

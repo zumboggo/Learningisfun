@@ -1,0 +1,11 @@
+# Teacher Data
+
+The teacher navigation includes Data at `#/data`. The route requires teacher mode and the server requires a teacher/admin profile plus ownership of the selected class. Student, parent, substitute and other teachers' classes are rejected. The class picker is fetched from the server. The page does not persist report data in browser storage.
+
+Participation shows all currently enrolled students, including those with no activity: visible questions, replies, other discussion posts, writing responses, shared annotations, flashcard reviews, active study minutes, episode plays started and completed, and last recorded activity. It reuses the existing usage aggregation, including reading-discussion and writing workspaces, pagination, membership expiry and deduplication. Missing collections produce an explicit partial-data warning; connection failures produce an error, not zero counts.
+
+Episode scores cover animated episodes, grouped by student and immutable assignment. First/latest/best MC scores, quiz tries, plays, completion and last activity are shown. The amber highlight and optional filter use first MC score strictly below 75. Unsubmitted quizzes display a dash, never a zero. No-quiz episodes are labelled. Immutable save revisions are deduplicated; quizzes across separate replays are retained. Batched offline retries are scored using the original published package when an individual score snapshot is absent. No private writing, quiz answers, answer keys or raw discussion text are returned to the browser.
+
+Periods are 7 days, 30 days (default), or all time. Participation counts events within the period. Episode rows require activity in the period, but retain the full first-score/retry history. Archived assigned versions remain addressable. Legacy episode formats contribute to participation counts, but are not presented as MC percentages. Episode completion remains the existing rule; this report does not change grades or student progression.
+
+Validation: backend tests cover class ownership, zero-activity students, pagination, low-first/high-final retries, replay deduplication, batched offline retries, no-quiz attempts and date filtering. UI tests cover teacher-only navigation, score filters, period changes and service errors.

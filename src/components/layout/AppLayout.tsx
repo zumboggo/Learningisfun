@@ -58,6 +58,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         { to: '/writing', label: 'Writing', icon: 'W' },
         { to: '/teacher-access', label: 'Teacher access', icon: 'T' },
         { to: '/game', label: 'The Game', icon: 'G' },
+        { to: '/data', label: 'Data', icon: 'D' },
         { to: '/settings', label: 'Settings', icon: '?' },
       ]
     : isParent ? [

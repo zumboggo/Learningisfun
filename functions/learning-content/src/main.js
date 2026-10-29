@@ -153,8 +153,8 @@ export default async ({ req, res, error }) => {
     if(['generateTeacherAI','reconcileAIUsage','readAIAllowance','manageAIAllowance','listAIAllowances'].includes(body.action)){try{return res.json(await teacherAIAction({body,profile,userId,db,databaseId}));}catch(e){return res.json({error:e.message},e.code||500);}}
     if(['redeemTeacherInvitation','readTeacherPreferences','saveTeacherPreferences','manageTeacherInvitation','readTeacherInvitation'].includes(body.action)) {try{return res.json(await teacherWorkspaceAction({body,profile,userId,db,databaseId}));}catch(e){return res.json({error:e.message},e.code||500);}}
     if(['readFamilyContacts','saveFamilyContacts'].includes(body.action))return res.json({error:'The family contact form has been retired.'},410);
-    if (body.action === 'usageSummary') {
-      try { return res.json(await usageSummary({body,profile,userId,db,databaseId})); }
+    if (['usageSummary','teacherData'].includes(body.action)) {
+      try { return res.json(await usageSummary({body,profile,userId,db,databaseId,storage:new Storage(client)})); }
       catch (cause) { if ([400,403].includes(cause.code)) return res.json({error:cause.message},cause.code); throw cause; }
     }
     if (body.action === 'readUserProfile') {

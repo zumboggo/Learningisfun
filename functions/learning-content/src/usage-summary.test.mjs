@@ -62,3 +62,19 @@ test('missing sources are explicit; service errors never become zero counts',asy
   ctx.db.listDocuments=async()=>{throw {code:503};};
   await expect(usageSummary(ctx)).rejects.toMatchObject({code:503});
 });
+
+test('teacher Data lists owned classes and rejects another teacher’s class before student reads',async()=>{
+  const ctx=fixture();
+  expect((await usageSummary({...ctx,body:{action:'teacherData'}})).classes.map(c=>c.id)).toEqual(['c','c2']);
+  ctx.db.listDocuments.mockClear();
+  await expect(usageSummary({...ctx,body:{action:'teacherData',classId:'foreign'}})).rejects.toMatchObject({code:403});
+  expect(ctx.db.listDocuments.mock.calls.every(c=>c[1]==='classes')).toBe(true);
+});
+test('teacher Data includes zero-activity students and scoped participation without private writing',async()=>{
+  const ctx=fixture({users:[{$id:'s',name:'Sam',email:'private@example.test'},{$id:'inactive',name:'Lee'}]});
+  const r=await usageSummary({...ctx,body:{action:'teacherData',classId:'c',days:7}});
+  expect(r.studentRows).toHaveLength(2);
+  expect(r.studentRows.find(s=>s.name==='Sam')).toMatchObject({questions:1,replies:1});
+  expect(r.studentRows.find(s=>s.name==='Lee')).toMatchObject({questions:0,replies:0,lastActivity:null});
+  expect(JSON.stringify(r)).not.toMatch(/private@example|answerText|questionText/);
+});
