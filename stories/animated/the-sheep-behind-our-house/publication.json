@@ -1,0 +1,25 @@
+{
+  "id": "the-sheep-behind-our-house",
+  "title": "The Sheep Behind Our House",
+  "status": "published-assigned",
+  "version": 1,
+  "versionId": "476401179ee8c39efb09b9f7fae8a005",
+  "bytes": 852312,
+  "privateMediaVerified": true,
+  "teacherReadVerified": true,
+  "studentReadVerified": true,
+  "studentAttemptsCreated": false,
+  "existingAssignmentsPreserved": true,
+  "previewUrl": "https://zumboggo.github.io/Learningisfun/#/game/story-preview/the-sheep-behind-our-house",
+  "assignments": [
+    {
+      "classId": "e24ec8d9-21d7-4c32-a30e-08655c2f4e65",
+      "className": "Section 1",
+      "courseName": "Ethics and Leadership",
+      "date": "2026-11-05",
+      "releaseAt": "2026-10-30T00:00:00.000Z",
+      "assignmentId": "4d41acf22bed424112a67e5d7b3a79f0",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/4d41acf22bed424112a67e5d7b3a79f0"
+    }
+  ]
+}
