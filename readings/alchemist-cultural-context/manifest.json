@@ -1,0 +1,27 @@
+{
+  "id": "wl-alchemist-context-202611",
+  "title": "The World Behind The Alchemist: Gold, God, and the Desert",
+  "file": "reading.md",
+  "voice": "A",
+  "wordCount": 1531,
+  "estimatedReadingMinutes": "15\u201320",
+  "sha256": "9c73248dc8af7362f4161045045a59d5a3a7124f3be428af4962d7f4c517c171",
+  "images": [
+    "images/01-furnace.png",
+    "images/02-strait.png",
+    "images/03-translation.png",
+    "images/04-oasis.png"
+  ],
+  "assignments": [
+    {
+      "classId": "09d7f0a7-4c29-462c-820f-e11ea914d375",
+      "section": "Red - Sect. 1",
+      "date": "2026-11-02"
+    },
+    {
+      "classId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c",
+      "section": "Blue Sect. 2",
+      "date": "2026-11-03"
+    }
+  ]
+}

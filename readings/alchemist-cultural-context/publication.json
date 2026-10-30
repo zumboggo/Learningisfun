@@ -1,0 +1,32 @@
+{
+  "className": "World Literature",
+  "verifiedAt": "2026-10-30T01:42:19.461Z",
+  "readings": [
+    {
+      "part": 1,
+      "title": "The World Behind The Alchemist: Gold, God, and the Desert",
+      "textId": "wl-alchemist-context-202611",
+      "date": "2026-11-02",
+      "section": "Red - Sect. 1",
+      "classId": "09d7f0a7-4c29-462c-820f-e11ea914d375",
+      "voice": "A",
+      "wordCount": 1531,
+      "images": 4,
+      "paragraphs": 40,
+      "url": "https://zumboggo.github.io/Learningisfun/#/texts/wl-alchemist-context-202611?classId=09d7f0a7-4c29-462c-820f-e11ea914d375"
+    },
+    {
+      "part": 1,
+      "title": "The World Behind The Alchemist: Gold, God, and the Desert",
+      "textId": "wl-alchemist-context-202611",
+      "date": "2026-11-03",
+      "section": "Blue Sect. 2",
+      "classId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c",
+      "voice": "A",
+      "wordCount": 1531,
+      "images": 4,
+      "paragraphs": 40,
+      "url": "https://zumboggo.github.io/Learningisfun/#/texts/wl-alchemist-context-202611?classId=b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c"
+    }
+  ]
+}

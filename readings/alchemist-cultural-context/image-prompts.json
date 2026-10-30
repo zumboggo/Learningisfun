@@ -1,0 +1,26 @@
+[
+  {
+    "file": "images/01-furnace.png",
+    "prompt": "Close interior scene of a seventeenth-century European alchemical workshop. An absorbed natural philosopher tending a small charcoal furnace, earthenware crucible, handwritten notebook with no readable writing, copper and glass distillation apparatus. No gold magically forming. Amber furnace glow against indigo night. Human curiosity and patient labor.",
+    "mode": "built-in ImageGen",
+    "common": "historical-scene; illustrated nonfiction, textured gouache and ink, ochre, deep teal and warm ivory; no text or watermark; interpretation, not archival evidence"
+  },
+  {
+    "file": "images/02-strait.png",
+    "prompt": "Wide landscape view from a low hill beside Tarifa in southern Spain looking across the Strait of Gibraltar toward the distant mountains of Morocco. Foreground young shepherd with a few sheep, olive vegetation and a modest cloth pack, small sailboat on blue water. Evoke Santiago's departure without claiming a historical portrait. Clear geographic feeling of two shores close yet different.",
+    "mode": "built-in ImageGen",
+    "common": "historical-scene; illustrated nonfiction, textured gouache and ink, ochre, deep teal and warm ivory; no text or watermark; interpretation, not archival evidence"
+  },
+  {
+    "file": "images/03-translation.png",
+    "prompt": "Medieval Arabic-language scholarly workshop, around twelfth century Mediterranean. Two adult scholars at a wooden table compare bound manuscripts, one studying and one demonstrating glass distillation equipment with a pottery furnace. Pages angled away so no invented lettering is visible. Diverse Mediterranean human features, plain robes, daylight, copper, clay, glass. Convey knowledge being worked on and passed between people; no fantasy magic.",
+    "mode": "built-in ImageGen",
+    "common": "historical-scene; illustrated nonfiction, textured gouache and ink, ochre, deep teal and warm ivory; no text or watermark; interpretation, not archival evidence"
+  },
+  {
+    "file": "images/04-oasis.png",
+    "prompt": "Panoramic imagined desert caravan arriving at the cultivated edge of Egypt's Fayoum oasis: date palms, a narrow irrigation canal, fields, low earthen buildings, rocky desert in distance, travelers and loaded camels small in the landscape. Late afternoon. Emphasize water, work and settlement, not an empty exotic fantasy. No pyramids visible here.",
+    "mode": "built-in ImageGen",
+    "common": "historical-scene; illustrated nonfiction, textured gouache and ink, ochre, deep teal and warm ivory; no text or watermark; interpretation, not archival evidence"
+  }
+]

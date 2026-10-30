@@ -1,0 +1,22 @@
+{
+  "textId": "wl-alchemist-context-202611",
+  "uploads": [
+    {
+      "relative": "images/01-furnace.png",
+      "fileId": "img_596c2b2f7f_237e67ae61c3520a7525"
+    },
+    {
+      "relative": "images/02-strait.png",
+      "fileId": "img_596c2b2f7f_84c6e25389fe4abf82d1"
+    },
+    {
+      "relative": "images/03-translation.png",
+      "fileId": "img_596c2b2f7f_88acd4e9ca14e15ecce1"
+    },
+    {
+      "relative": "images/04-oasis.png",
+      "fileId": "img_596c2b2f7f_94141836937b5909ff44"
+    }
+  ],
+  "stage": "verified"
+}
