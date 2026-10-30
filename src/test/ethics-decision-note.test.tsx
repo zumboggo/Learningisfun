@@ -41,10 +41,10 @@ async function expandNotebook(){
  fireEvent.click(await screen.findByRole('button',{name:'Notebook'}));
  return await screen.findByRole('region',{name:'Episode principles answers'});
 }
-it.each([false,true])('offers five editable questions after either saved story route (%s)',async last=>{
+it.each([false,true])('offers three editable questions after either saved story route (%s)',async last=>{
  open(route(last),[]);
  const notebook=await expandNotebook();
- expect(await within(notebook).findAllByRole('textbox')).toHaveLength(5);
+ expect(await within(notebook).findAllByRole('textbox')).toHaveLength(3);
  expect(screen.getAllByRole('radio')).toHaveLength(16);
  expect(api.animatedCall).toHaveBeenCalledTimes(1);
 });
@@ -58,7 +58,7 @@ it('keeps completed quiz progress while opening the notebook',async()=>{
 it('opens and collapses the notebook before completion without resetting story progress',async()=>{
  open([null],[]);await screen.findByRole('button',{name:'Next →'});
  const before=api.saveStoryCache.mock.lastCall?.[1].current;
- const notebook=await expandNotebook();expect(await within(notebook).findAllByRole('textbox')).toHaveLength(5);
+ const notebook=await expandNotebook();expect(await within(notebook).findAllByRole('textbox')).toHaveLength(3);
  fireEvent.click(screen.getByRole('button',{name:'Close Notebook'}));
  expect(screen.getByRole('button',{name:'Next →'})).toBeInTheDocument();
  expect(api.saveStoryCache.mock.lastCall?.[1].current).toEqual(before);
@@ -66,6 +66,6 @@ it('opens and collapses the notebook before completion without resetting story p
 });
 it('offers the notebook before accepting the introduction',async()=>{
  open([],[]);const notebook=await expandNotebook();
- expect(await within(notebook).findAllByRole('textbox')).toHaveLength(5);
+ expect(await within(notebook).findAllByRole('textbox')).toHaveLength(3);
  expect(screen.getByRole('button',{name:'Accept'})).toBeInTheDocument();
 });

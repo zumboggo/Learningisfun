@@ -69,3 +69,7 @@ Released Twine episodes retain their original saves, scoring and writing. Read r
 ## Shared video model
 
 For every generated episode clip, use the same Replicate model as Chinese episodes: `prunaai/p-video-2-pro`, normally 480p, six seconds, `mode="cost"`, `prompt_upsampler="off"`. Do not substitute another model unless David explicitly requests it. Verify the live input schema and billing configuration in a separate read-only check before submission; record the maximum charge and enforce the $0.15 total per requested clip including retries. Unknown or over-cap pricing blocks submission. With authentic archival audio, request silent mouth movement, replace the generated soundtrack offline, and label the visuals as a reconstruction.
+
+## Ethics reflection questions
+
+For Ethics classroom episodes only, follow [the Ethics reflection guidance](references/ethics-and-leadership.md): two fixed questions and three episode-specific dropdown options for the third. Author and register the options for every new Ethics episode; preserve question sets attached to existing answers. Other classes keep their own formats.

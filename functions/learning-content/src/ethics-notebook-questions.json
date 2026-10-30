@@ -1,0 +1,52 @@
+{
+  "legacyEpisodes": [
+    "second-ship-ethics",
+    "king-would-not-listen-ethics"
+  ],
+  "fixedQuestions": [
+    "What should the character do? Why?",
+    "Why might someone choose differently?"
+  ],
+  "options": {
+    "grain-we-keep": [
+      "What if there were enough grain for everyone today, but no seed left for next year? Would your choice change? Why?",
+      "Does giving every household the same amount of grain make the decision fair? Why?",
+      "What would you need to know about the households before deciding how to share the grain?"
+    ],
+    "grain-we-keep-animated": [
+      "What if there were enough grain for everyone today, but no seed left for next year? Would your choice change? Why?",
+      "Does giving every household the same amount of grain make the decision fair? Why?",
+      "What would you need to know about the households before deciding how to share the grain?"
+    ],
+    "measure-that-changed-ethics": [
+      "What if the person asking for extra grain were a stranger rather than a friend? Would your choice change? Why?",
+      "Can giving different amounts of grain to different households be fair? Why?",
+      "Which matters more here: following the agreed rule or meeting an urgent need? Why?"
+    ],
+    "price-of-peace-ethics": [
+      "What if returning Aruna would put him in danger? Would your advice change? Why?",
+      "Can an agreement between rulers be fair if the people affected have no say? Why?",
+      "What would you need to know before advising whether Aruna should be returned?"
+    ],
+    "dinner-with-the-tyrant": [
+      "What if accepting the meal meant promising never to criticise the ruler? Would your choice change? Why?",
+      "Can someone accept a ruler’s help and still be independent? Why?",
+      "Which matters more here: staying free from the ruler or gaining a chance to help someone? Why?"
+    ],
+    "one-more-step-toward-peace": [
+      "What if helping one patient put the other patients at greater risk? Would your choice change? Why?",
+      "Can caring for one person conflict with caring for a whole hospital? Explain using the episode.",
+      "What would you need to know before deciding how much risk the hospital should take?"
+    ],
+    "courage-without-applause": [
+      "What if nobody would ever know who helped with the rescue? Would your choice change? Why?",
+      "Can someone feel afraid and still be brave? Explain using the rescue.",
+      "If a risky rescue succeeds through luck, does that make it a wise choice? Why?"
+    ]
+  },
+  "defaultOptions": [
+    "What if nobody else would know about the character’s choice? Would your answer change? Why?",
+    "Can the character mean well and still make a wrong choice? Explain using the episode.",
+    "What would you need to know before deciding what the character should do?"
+  ]
+}

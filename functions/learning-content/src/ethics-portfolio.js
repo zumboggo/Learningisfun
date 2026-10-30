@@ -1,6 +1,7 @@
 import {requireEpisode} from './episode-catalog.js';
 import {Query} from 'node-appwrite';
 import {createHash} from 'node:crypto';
+import notebookQuestions from './ethics-notebook-questions.json' with {type:'json'};
 import egypt from './ethics-egypt-context.json' with {type:'json'};
 import {assess,EPISODE,VERSION,STONE_CLASS_ID} from './stone-engine.js';
 export const PORTFOLIO_COLLECTION='ethics_portfolio';
@@ -21,7 +22,14 @@ export function cleanEntry(input,previous,settings){
   if(!idOK(source.episode)||!['animated','classic','stone'].includes(source.format)||!Number.isInteger(source.version)||source.version<1)fail('Invalid episode.');
   cleanSource={kind:'episode-notes',episode:source.episode,format:source.format,version:source.version,title:short(source.title,255),...(source.assignmentId?{assignmentId:source.assignmentId}:{})};
   if(previous&&JSON.stringify(previous.source)!==JSON.stringify(cleanSource))fail('This notebook belongs to another episode.',409);
-  return {id:input.id,source:cleanSource,answers:Array.from({length:5},(_,i)=>short(input.answers?.[i],6000)),submitted:!!input.submitted,submittedAt:input.submitted?(previous?.submittedAt||new Date().toISOString()):null,reconsideration:'',reconsideredAt:null};
+  let notebook;
+  if(input.notebook){
+   if(notebookQuestions.legacyEpisodes.includes(source.episode)||(!previous?.notebook&&(previous?.submitted||previous?.answers?.some(a=>a.trim()))))fail('Keep the original questions for existing answers.',409);
+   const n=input.notebook,options=previous?.notebook?.options||notebookQuestions.options[source.episode]||notebookQuestions.defaultOptions;
+   if(n.version!==1||!Number.isInteger(n.selected)||n.selected<0||n.selected>=3||JSON.stringify(n.options)!==JSON.stringify(options))fail('Invalid notebook questions.');
+   notebook={version:1,options:[...options],selected:n.selected};
+  }else if(previous?.notebook)fail('Keep the saved notebook questions.',409);
+  return {id:input.id,source:cleanSource,...(notebook?{notebook}:{}),answers:Array.from({length:notebook?3:5},(_,i)=>short(input.answers?.[i],6000)),submitted:!!input.submitted,submittedAt:input.submitted?(previous?.submittedAt||new Date().toISOString()):null,reconsideration:'',reconsideredAt:null};
  }else if(source?.kind==='episode'){
   if(source.episode!==EPISODE||source.version!==VERSION||!idOK(source.attemptId))fail('Unknown episode version.');
   cleanSource={kind:'episode',attemptId:source.attemptId,choices:source.choices,index:source.index,...choiceContext(source.choices,source.index)};

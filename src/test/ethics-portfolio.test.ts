@@ -74,3 +74,31 @@ it('persists notebook submission across devices and still permits later revision
  const revised=cleanEntry({...saved,answers:['A stronger reason']},saved,{open:false});
  expect(revised.answers[0]).toBe('A stronger reason');expect(revised.submittedAt).toBe(saved.submittedAt);
 });
+
+it('validates the three-question snapshot and preserves its wording across revisions',async()=>{
+ const {episodeNotesEntry,questionsForEntry}=await import('@/services/ethics-portfolio.service');
+ const source={kind:'episode-notes' as const,format:'stone' as const,episode:'grain-we-keep',version:1,title:'The Grain We Keep'};
+ const e=await episodeNotesEntry('alice',STONE_CLASS_ID,source);
+ const saved=cleanEntry({...e,answers:['Share fairly','Needs differ','Ask about households'],notebook:{...e.notebook,selected:2}},null,{});
+ expect(saved.answers).toHaveLength(3);expect(questionsForEntry(saved)[2]).toContain('households');
+ expect(cleanEntry({...saved,answers:['Revised','Needs differ','Ask about households']},saved,{}).notebook).toEqual(saved.notebook);
+ expect(()=>cleanEntry({...saved,notebook:undefined},saved,{})).toThrow('saved notebook');
+ expect(()=>cleanEntry({...saved,notebook:{...saved.notebook,selected:3}},saved,{})).toThrow('Invalid notebook');
+ expect(()=>cleanEntry({...saved,notebook:{...saved.notebook,options:['Forged','x','y']}},saved,{})).toThrow('Invalid notebook');
+ const legacy=cleanEntry({...e,notebook:undefined,answers:['Old answer']},null,{});
+ expect(()=>cleanEntry(e,legacy,{})).toThrow('original questions');
+ const empty=cleanEntry({...e,notebook:undefined,answers:[]},null,{});
+ expect(cleanEntry(e,empty,{}).answers).toHaveLength(3);
+ expect(()=>cleanEntry({...e,source:{...source,episode:'second-ship-ethics'}},null,{})).toThrow('original questions');
+});
+it('exports the saved third prompt with its answer',async()=>{
+ const {episodeNotesEntry,exportEntries}=await import('@/services/ethics-portfolio.service');
+ const e=await episodeNotesEntry('alice',STONE_CLASS_ID,{kind:'episode-notes',format:'stone',episode:'grain-we-keep',version:1,title:'Grain'});
+ e.notebook!.selected=1;e.answers=['Share','Need','Equal is not always fair'];
+ let blob:Blob|undefined;
+ vi.stubGlobal('URL',Object.assign(URL,{createObjectURL:vi.fn((b:Blob)=>{blob=b;return 'blob:export';}),revokeObjectURL:vi.fn()}));
+ const click=vi.spyOn(HTMLAnchorElement.prototype,'click').mockImplementation(()=>{});
+ exportEntries([e]);const text=await blob!.text();
+ expect(text).toContain(e.notebook!.options[1]);expect(text).toContain(e.answers[2]);expect(text).not.toContain('undefined');
+ click.mockRestore();vi.unstubAllGlobals();
+});

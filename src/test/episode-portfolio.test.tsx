@@ -69,7 +69,7 @@ it('submits without deleting answers, stays collapsed on return, and opens them 
  await screen.findByText('Submitted. You can read your answers in See all answers.');
  expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
  expect(screen.getByRole('link',{name:'See all answers'})).toHaveAttribute('href',`/classes/${STONE_CLASS_ID}/principles`);
- expect((await localEntries('alice',STONE_CLASS_ID))[0]).toMatchObject({submitted:true,answers:['Protect the vulnerable.','','','','']});
+ expect((await localEntries('alice',STONE_CLASS_ID))[0]).toMatchObject({submitted:true,answers:['Protect the vulnerable.','','']});
  view.unmount();const reopened=mount();await screen.findByText(/Your answers have been submitted/);
  expect(screen.queryByRole('textbox')).not.toBeInTheDocument();reopened.unmount();
  render(<MemoryRouter><EpisodeNotebook userId="alice" classId={STONE_CLASS_ID} source={source} showSubmitted/></MemoryRouter>);
@@ -81,4 +81,28 @@ it('keeps Second Ship questions while using the requested five prompts for other
  expect(questionsForEpisode({...source,episode:'second-ship-ethics'})).toEqual(secondShipQuestions);
  expect(questionsForEpisode(source)).toEqual(principleQuestions);
  expect(principleQuestions[0]).toBe('Choose: What should the person do? Why?');
+});
+it('saves the selected third question across sync and reopening, and prevents accidental relabeling',async()=>{
+ const view=mount();await screen.findAllByRole('textbox');
+ const select=screen.getByRole('combobox');expect(screen.getAllByRole('option')).toHaveLength(3);
+ fireEvent.change(select,{target:{value:'2'}});
+ fireEvent.change(screen.getAllByRole('textbox')[2],{target:{value:'I need to know who is at risk.'}});
+ await waitFor(async()=>expect((await localEntries('alice',STONE_CLASS_ID))[0]).toMatchObject({notebook:{selected:2},answers:['','','I need to know who is at risk.']}));
+ expect(select).toBeDisabled();
+ fireEvent.click(screen.getByRole('button',{name:'Submit'}));await screen.findByText('Submitted. You can read your answers in See all answers.');
+ expect(call.mock.calls.filter(c=>c[0].action==='saveEthicsPortfolio').at(-1)?.[0].entry).toMatchObject({notebook:{selected:2}});
+ view.unmount();render(<MemoryRouter><EpisodeNotebook userId="alice" classId={STONE_CLASS_ID} source={source} showSubmitted/></MemoryRouter>);
+ expect(await screen.findByRole('combobox')).toHaveValue('2');expect(screen.getAllByRole('textbox')[2]).toHaveValue('I need to know who is at risk.');
+ fireEvent.change(screen.getAllByRole('textbox')[2],{target:{value:''}});expect(screen.getByRole('combobox')).not.toBeDisabled();
+});
+it.each(['second-ship-ethics','king-would-not-listen-ethics'])('keeps the original five questions class-wide for %s',async episode=>{
+ render(<MemoryRouter><EpisodeNotebook userId="new-student" classId={STONE_CLASS_ID} source={{...source,episode}}/></MemoryRouter>);
+ expect(await screen.findAllByRole('textbox')).toHaveLength(5);expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+});
+it('preserves device-only legacy answers and upgrades an empty legacy draft',async()=>{
+ const modern=await episodeNotesEntry('alice',STONE_CLASS_ID,source);
+ const {notebook,...legacy}=modern;
+ await portfolioDb.entries.put({...legacy,answers:['An older answer','','','','']});
+ const view=mount();expect(await screen.findAllByRole('textbox')).toHaveLength(5);expect(screen.getAllByRole('textbox')[0]).toHaveValue('An older answer');view.unmount();
+ await portfolioDb.entries.put({...legacy,answers:['','','','','']});mount();expect(await screen.findAllByRole('textbox')).toHaveLength(3);expect(screen.getByRole('combobox')).toBeInTheDocument();
 });
