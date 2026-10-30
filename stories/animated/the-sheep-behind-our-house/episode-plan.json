@@ -1,0 +1,189 @@
+{
+  "id": "the-sheep-behind-our-house",
+  "title": "The Sheep Behind Our House",
+  "date": "2026-11-05",
+  "voice": "Intimate character drama",
+  "reason": "Jun loves a caring father whose request for silence turns their trust into pressure. Small acts at the gate carry the change.",
+  "description": "Help Jun respond when his father steals a neighbour’s sheep. Six choices explore family loyalty, truth, privacy and repair; returning the animal does not end every harm. Approximately 10–12 minutes plus a four-question knowledge check; story choices are unscored.",
+  "context": [
+    "Eastern China, fourth century BCE. Households depend on neighbours, family labour and trust. Confucius’s teachings give family relationships serious moral weight, including the difficult question of what a child owes a parent who has done wrong. Roles bring obligations that can collide.",
+    "Behind a household gate, a sheep is calling for its owner. Jun wants to protect the father who once carried him home. The neighbour wants her animal back—and needs tomorrow to be different from today. You arrive before anyone has agreed what keeping faith will cost."
+  ],
+  "choices": [
+    [
+      "first_words",
+      "Jun’s first reply to his father"
+    ],
+    [
+      "hear_shen",
+      "How the neighbour is heard"
+    ],
+    [
+      "next_action",
+      "Private agreement, report or time"
+    ],
+    [
+      "repair_cost",
+      "Who bears the cost of repair?"
+    ],
+    [
+      "hard_question",
+      "The difficult question"
+    ],
+    [
+      "tomorrow",
+      "A promise that can be checked"
+    ]
+  ],
+  "characters": [
+    {
+      "id": "Jun",
+      "name": "Jun · Bo’s son",
+      "palette": {
+        "skin": "#d5a27e",
+        "hair": "#2d2926",
+        "shirt": "#6d8c89",
+        "trim": "#c5bd9b"
+      },
+      "appearance": {
+        "age": "teen",
+        "hair": "tousled",
+        "face": "spirited",
+        "eyes": "gentle",
+        "outfit": "tunic"
+      }
+    },
+    {
+      "id": "Bo",
+      "name": "Bo · Jun’s father",
+      "palette": {
+        "skin": "#bd8c69",
+        "hair": "#51453a",
+        "shirt": "#8a7660",
+        "trim": "#b9a585"
+      },
+      "appearance": {
+        "age": "adult",
+        "hair": "bun",
+        "face": "broad",
+        "eyes": "gentle",
+        "facialHair": "full",
+        "outfit": "tunic"
+      }
+    },
+    {
+      "id": "Shen",
+      "name": "Shen · sheep’s owner",
+      "palette": {
+        "skin": "#c79673",
+        "hair": "#423b34",
+        "shirt": "#9b675a",
+        "trim": "#cbbd96"
+      },
+      "appearance": {
+        "age": "adult",
+        "hair": "bun",
+        "face": "angular",
+        "eyes": "keen",
+        "outfit": "robe"
+      }
+    },
+    {
+      "id": "Clerk",
+      "name": "Village clerk",
+      "palette": {
+        "skin": "#c49372",
+        "hair": "#59534b",
+        "shirt": "#68717b",
+        "trim": "#c3b49b"
+      },
+      "appearance": {
+        "age": "elder",
+        "hair": "bun",
+        "face": "lean",
+        "eyes": "keen",
+        "outfit": "robe"
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "prompt": "What makes the sheep passage in Analects 13.18 difficult?",
+      "options": [
+        "Confucius says that the sheep has no owner.",
+        "It proves that families never disagree.",
+        "It gives family protection moral weight even where it conflicts with reporting a parent’s wrongdoing.",
+        "It describes a complete system of compensation."
+      ],
+      "answer": 2,
+      "explanation": "The governor praises a son who reports his father. Confucius responds by valuing mutual concealment between fathers and sons. The passage does not resolve the owner’s claim or describe the repair in this new story."
+    },
+    {
+      "prompt": "Which statement fits the reading’s account of xiao, or filial piety?",
+      "options": [
+        "It includes care and respect; the tradition also discusses correcting a parent rather than treating every demand as right.",
+        "It means accepting any demand without thinking.",
+        "It means providing food without any concern for manner or respect.",
+        "It means treating parents as strangers."
+      ],
+      "answer": 0,
+      "explanation": "The reading connects filial piety with respectful care and notes remonstration. Analects 4.18 discusses gentle correction; these ideas do not remove every tension with 13.18."
+    },
+    {
+      "prompt": "Why does the story ask students to hear Shen’s perspective?",
+      "options": [
+        "Her view must automatically defeat every other claim.",
+        "Family relationships have no moral significance.",
+        "The perspective of the person who took the sheep is the only relevant one.",
+        "A family’s account can miss the owner’s losses; attending to another position can reveal what an initial judgement overlooks."
+      ],
+      "answer": 3,
+      "explanation": "The episode extends attention to the owner absent from the short Analects exchange, and connects with Part 2’s challenge to a single supposedly complete perspective. It does not imply every judgement is equally good."
+    },
+    {
+      "prompt": "What remains unresolved after the sheep is returned in this episode?",
+      "options": [
+        "Whether the sheep is alive.",
+        "Lost market time, trust, and the terms and completion of repair.",
+        "Whether Shen ever owned the animal.",
+        "Whether Jun personally took it."
+      ],
+      "answer": 1,
+      "explanation": "Returning the animal ends one loss. Shen still lost a market morning and has reason to question future promises. The case distinguishes restitution from the whole process of repairing a relationship."
+    }
+  ],
+  "options": [
+    "Can Jun refuse his father’s request and still show filial care? Explain why.",
+    "What if the sheep’s owner were a stranger to Jun? Would his responsibility change? Why?",
+    "Does returning the sheep repair all the harm? What else should count, and why?"
+  ],
+  "standard": "1b.1",
+  "objective": "Explain and evaluate how a studied worldview can lead people to different responses to wrongdoing.",
+  "criterion": "Represent the Confucian claim of family loyalty accurately, explain a serious competing claim, and evaluate a response using a specific detail; no preferred answer about reporting is graded.",
+  "sources": [
+    "Primary text: Analects 13.18, 2.7, 4.18 and 15.24, https://www.gutenberg.org/cache/epub/3330/pg3330-images.html . In 13.18 a governor praises a son for witnessing against a father who stole a sheep; Confucius values fathers and sons concealing each other. The passage does not tell us what happened to the sheep’s owner. Our return, witness, debt and repair are new case details, not an explanation that makes the original passage say something more comfortable.",
+    "Interpretation boundary: respectful correction (Analects 4.18) is discussed alongside 13.18 without claiming that this resolves their tension. Compare https://plato.stanford.edu/entries/ethics-chinese/ . Family attachment is represented as a serious claim, not merely a bias to be defeated; the owner’s loss is also not erased.",
+    "Part 2 connection: Zhuangzi’s shift of perspective and attention to circumstances, not a purported Daoist verdict on theft. https://plato.stanford.edu/entries/zhuangzi/ . The local debt, stolen sheep, missed market and informal/recorded remedies are authored, with no invented penalty presented as historical Chinese law."
+  ],
+  "signatures": {
+    "Kevin": "Gentle, concrete questions; avoids completing others’ answers; offers a listening role rather than pronouncing the moral.",
+    "Jun": "Short loyal promises become questions with boundaries; wraps a gate tie for his father and later puts it beside the unfinished basket.",
+    "Bo": "Begins by invoking past care, then names his own manipulation; lowered hands and a held listener beat show what an apology cannot return.",
+    "Shen": "Names the missing thing, lost time and terms; refuses praise-seeking shortcuts without denying Jun’s love.",
+    "Clerk": "Precise about what he can record and what he cannot guarantee; no invented law or sentence."
+  },
+  "directing": [
+    "Bo recalls carrying Jun home → listener Jun looks at the gate tie → hold a concrete observation → return to father/son pair.",
+    "Shen says prior trust mattered → listener Bo lowers empty hands → a separate observation holds the loss → widen to include Jun.",
+    "Bo admits buying silence with past care → listener Bo receives Jun’s continued care → gate tie returned beside basket → shared frame and new promise."
+  ],
+  "callback": "The chosen privacy/report/delay route returns in the final father-son conversation. Each path returns the sheep, preserves Shen’s continuing claim and gives Jun a concrete next commitment. Kevin returns safely.",
+  "costs": [
+    "Private settlement protects family privacy but asks Shen to risk trusting a witnessed promise.",
+    "A record can protect the agreement while exposing the household to lasting stigma and an uncertain hearing.",
+    "A day’s delay gives time to repair but asks Shen to bear uncertainty.",
+    "Work, family assets and community aid each move costs to different people; none buys forgiveness."
+  ],
+  "misconception": "Filial care always means obedience, or returning property automatically restores trust.",
+  "feedback": "How does your answer preserve the strongest reason for family loyalty while facing the owner’s claim?"
+}

@@ -1,0 +1,21 @@
+{
+  "source": "/private/tmp/ethics-china-media/the-sheep-behind-our-house-native.mp4",
+  "output": "/Users/david.hepting/Documents/ChatGPT/Learning is Fun/implementation/stories/animated/the-sheep-behind-our-house/media/opening-v1.mp4",
+  "dimensions": [
+    854,
+    480
+  ],
+  "fps": 24,
+  "hold_seconds": 3.0,
+  "motion_seconds": 5.0,
+  "reaction_hold_seconds": 0.0,
+  "total_seconds": 8.0,
+  "decoded_audio_seconds": 8.0,
+  "audio_non_silent": true,
+  "audio_starts_after_hold": true,
+  "hold_mean_pixel_difference": 0.008062548790007807,
+  "sha256": "788961fd96f7911c57fadb8b6809e676cbf05de9ad5385f491b55309e5f552b6",
+  "expected_dialogue": "",
+  "speech_check": "not run",
+  "review": "One visual/listening review remains; automated checks do not prove natural acting or lip sync."
+}

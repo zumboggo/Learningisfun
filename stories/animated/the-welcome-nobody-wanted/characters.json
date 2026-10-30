@@ -1,0 +1,82 @@
+[
+  {
+    "id": "Lan",
+    "name": "Lan · village organiser",
+    "palette": {
+      "skin": "#d4a17c",
+      "hair": "#302a24",
+      "shirt": "#a65f53",
+      "trim": "#d5bf80"
+    },
+    "appearance": {
+      "age": "teen",
+      "hair": "ponytail",
+      "face": "spirited",
+      "eyes": "keen",
+      "outfit": "robe"
+    },
+    "version": 1,
+    "finish": "polished",
+    "provenance": "Original stylised supporting character in an authored Warring States village case; no personal likeness or documentary costume claim."
+  },
+  {
+    "id": "Auntie",
+    "name": "Auntie Rong · farmer",
+    "palette": {
+      "skin": "#c4936c",
+      "hair": "#79716a",
+      "shirt": "#829278",
+      "trim": "#b4c3a4"
+    },
+    "appearance": {
+      "age": "elder",
+      "hair": "bun",
+      "face": "round",
+      "eyes": "gentle",
+      "outfit": "robe"
+    },
+    "version": 1,
+    "finish": "polished",
+    "provenance": "Original stylised supporting character in an authored Warring States village case; no personal likeness or documentary costume claim."
+  },
+  {
+    "id": "Fang",
+    "name": "Fang · district official",
+    "palette": {
+      "skin": "#c79b77",
+      "hair": "#302c28",
+      "shirt": "#647e87",
+      "trim": "#c4b590"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "bun",
+      "face": "broad",
+      "eyes": "gentle",
+      "outfit": "robe"
+    },
+    "version": 1,
+    "finish": "polished",
+    "provenance": "Original stylised supporting character in an authored Warring States village case; no personal likeness or documentary costume claim."
+  },
+  {
+    "id": "Wei",
+    "name": "Wei · carpenter",
+    "palette": {
+      "skin": "#ba8967",
+      "hair": "#51463b",
+      "shirt": "#9a835d",
+      "trim": "#d2c5a6"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "cropped",
+      "face": "lean",
+      "eyes": "keen",
+      "outfit": "tunic"
+    },
+    "version": 1,
+    "finish": "polished",
+    "provenance": "Original stylised supporting character in an authored Warring States village case; no personal likeness or documentary costume claim."
+  }
+]

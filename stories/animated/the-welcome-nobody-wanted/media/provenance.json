@@ -1,0 +1,27 @@
+{
+  "model": "prunaai/p-video-2-pro",
+  "settings": {
+    "prompt": "Six-second 16:9 cinematic anime shot, clean graphic-novel linework, restrained cel shading, muted earth colours. An ordinary fourth-century-BCE eastern Chinese village square with rammed-earth walls and modest low roofs. Close view of a plain ceremonial cloth canopy at the edge of the square. A gust suddenly strains the cloth. One tied red ribbon pulls taut; a crooked wooden canopy support begins to shift. A woven basket below rattles. Camera slowly tightens on the taut knot and tilting support; stop before any collapse. An urgent, unresolved moment: a welcome prepared to show respect has become a danger. No people, no injuries, no modern objects, no writing. Native sound: wind, cloth flapping, wood creaking and basket rattling. Absolutely no speech, narration, singing, music or voices.",
+    "duration": 5,
+    "resolution": "480p",
+    "mode": "cost",
+    "prompt_upsampler": "off",
+    "aspect_ratio": "16:9"
+  },
+  "predictionId": "czysjm1dgsrmr0d1hwcaqmgs1w",
+  "originalPredictionId": "5wyp8ktwchrmw0d1hg3rs0b4cr",
+  "originalResult": "Expired before download; data_removed=true. No usable bytes recovered.",
+  "paidAttempts": 2,
+  "rateUsdPerOutputSecond": 0.01,
+  "firstBilledSeconds": 6,
+  "recoveryBilledSeconds": 5,
+  "totalBilledUsd": 0.11,
+  "hardCapUsd": 0.15,
+  "pricingVerifiedAt": "2026-10-30T23:14:48.108Z",
+  "pricingSource": "https://replicate.com/prunaai/p-video-2-pro",
+  "billingTier": "480p cost, $0.01 per output second; prompt_upsampler=off; native generated audio",
+  "holdSeconds": 3,
+  "motionSeconds": 5,
+  "dialogue": "None; action-only teaser with native ambient audio.",
+  "review": "Automated frame/audio checks passed. Human/model visual and audio review recorded separately."
+}

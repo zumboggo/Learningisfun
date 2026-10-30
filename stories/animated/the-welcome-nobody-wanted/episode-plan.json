@@ -1,0 +1,186 @@
+{
+  "id": "the-welcome-nobody-wanted",
+  "title": "The Welcome Nobody Wanted",
+  "date": "2026-11-03",
+  "voice": "Warm, self-questioning adolescent",
+  "reason": "Kevin’s wish to be helpful and Lan’s anxious ambition allow gentle humour to give way to attentive responsibility.",
+  "description": "Help Lan welcome a new official without turning care into control. Six choices test ritual, humaneness, listening and the limits of stepping back. Approximately 10–12 minutes plus a four-question knowledge check; story choices are unscored.",
+  "context": [
+    "Eastern China, fourth century BCE. Rival states compete for power, and village households depend on work that cannot always wait for an official visit. Confucius’s followers ask what humane conduct and proper roles require. Other thinkers question whether more orders and more effort always make life better.",
+    "A village is preparing to welcome a new official. Lan hopes the event will earn her steady work. The greeting grows more impressive as the workers grow more tired. Your taxi is approaching a square where one more improvement may be one too many."
+  ],
+  "choices": [
+    [
+      "first_task",
+      "Whose work comes first?"
+    ],
+    [
+      "greeting",
+      "What should the greeting express?"
+    ],
+    [
+      "ceremony",
+      "Advice for the official"
+    ],
+    [
+      "danger",
+      "When stepping back meets danger"
+    ],
+    [
+      "account",
+      "Who explains the costs?"
+    ],
+    [
+      "next_day",
+      "How to begin again"
+    ]
+  ],
+  "characters": [
+    {
+      "id": "Lan",
+      "name": "Lan · village organiser",
+      "palette": {
+        "skin": "#d4a17c",
+        "hair": "#302a24",
+        "shirt": "#a65f53",
+        "trim": "#d5bf80"
+      },
+      "appearance": {
+        "age": "teen",
+        "hair": "ponytail",
+        "face": "spirited",
+        "eyes": "keen",
+        "outfit": "robe"
+      }
+    },
+    {
+      "id": "Auntie",
+      "name": "Auntie Rong · farmer",
+      "palette": {
+        "skin": "#c4936c",
+        "hair": "#79716a",
+        "shirt": "#829278",
+        "trim": "#b4c3a4"
+      },
+      "appearance": {
+        "age": "elder",
+        "hair": "bun",
+        "face": "round",
+        "eyes": "gentle",
+        "outfit": "robe"
+      }
+    },
+    {
+      "id": "Fang",
+      "name": "Fang · district official",
+      "palette": {
+        "skin": "#c79b77",
+        "hair": "#302c28",
+        "shirt": "#647e87",
+        "trim": "#c4b590"
+      },
+      "appearance": {
+        "age": "adult",
+        "hair": "bun",
+        "face": "broad",
+        "eyes": "gentle",
+        "outfit": "robe"
+      }
+    },
+    {
+      "id": "Wei",
+      "name": "Wei · carpenter",
+      "palette": {
+        "skin": "#ba8967",
+        "hair": "#51463b",
+        "shirt": "#9a835d",
+        "trim": "#d2c5a6"
+      },
+      "appearance": {
+        "age": "adult",
+        "hair": "cropped",
+        "face": "lean",
+        "eyes": "keen",
+        "outfit": "tunic"
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "prompt": "What does ren mean in the teaching discussed in the episode?",
+      "options": [
+        "Making every visitor admire the village.",
+        "Humaneness: taking people and their needs seriously.",
+        "Following every instruction from someone powerful.",
+        "Avoiding all ceremonies."
+      ],
+      "answer": 1,
+      "explanation": "Ren concerns humane conduct toward people. A beautiful event or impressive reputation does not by itself show that concern."
+    },
+    {
+      "prompt": "Why can li, or ritual, matter even when a simpler welcome is chosen?",
+      "options": [
+        "A ritual guarantees that nobody is harmed.",
+        "Ritual means spending as much as possible.",
+        "Shared forms can express respect and train attention, when connected with care.",
+        "A ritual removes the need to hear residents."
+      ],
+      "answer": 2,
+      "explanation": "The Analects connects ritual with humaneness. The issue is how a form expresses care, not whether the longest ceremony wins."
+    },
+    {
+      "prompt": "Which explanation of wuwei fits the distinction explored here?",
+      "options": [
+        "Act responsively without unnecessary forcing; stepping back does not require ignoring danger.",
+        "Never act, even when someone needs help.",
+        "Do whatever is easiest for the official.",
+        "Let every accident decide the plan."
+      ],
+      "answer": 0,
+      "explanation": "The reading presents non-forcing as attentive, responsive action. It distinguishes restraint from neglect, without supplying an automatic rule for every case."
+    },
+    {
+      "prompt": "Why does calling Fang a leader not settle whether he is leading well?",
+      "options": [
+        "A leader must always control each task personally.",
+        "Leadership means never admitting an error.",
+        "Only villagers can make mistakes.",
+        "A role carries responsibilities that conduct must fulfil; the title alone cannot fulfil them."
+      ],
+      "answer": 3,
+      "explanation": "The rectification of names connects roles with their responsibilities. Fang’s title does not replace listening, accountability or care."
+    }
+  ],
+  "options": [
+    "What would make stepping back from the welcome become neglect? Explain using the canopy incident.",
+    "What if the official would never know who helped? Would Lan’s choices still show care? Why?",
+    "Which matters more in this welcome: keeping a shared ritual or returning people’s time? Why?"
+  ],
+  "standard": "3b.3",
+  "objective": "Compare two responses to a community need using their benefits and costs.",
+  "criterion": "Explain a benefit and a cost for two responses, using a specific episode detail; defend a judgement without assuming that more control or less action is always better.",
+  "sources": [
+    "Primary text: Analects 2.3, 3.3, 12.11 and 15.24, https://www.gutenberg.org/cache/epub/3330/pg3330-images.html . Government through virtue and ritual, humaneness, role responsibilities and reciprocity are paraphrased, not quoted. Lan’s welcome is an authored case, not a reported Confucius anecdote.",
+    "Primary text: Daodejing 17, 48, 57, 60 and 75, https://www.gutenberg.org/cache/epub/216/pg216-images.html . These passages challenge excessive intervention, demands and control. The story does not equate all Confucian practice with control or all Daoist thought with withdrawal. Both perspectives can demand attention to people."
+  ],
+  "signatures": {
+    "Kevin": "Self-questioning, short concrete questions; light humour gives way to firm warnings; reaches to help, then listens.",
+    "Lan": "Counts tasks and seeks approval; under pressure asks direct questions about losing her work; busy hands become still at Fang’s offer.",
+    "Auntie": "Practical, specific, dry humour; speaks about time, grain and a stool, not abstract slogans.",
+    "Fang": "Courteous confidence becomes patient admission; takes a supporting task rather than directing every hand.",
+    "Wei": "Brief descriptions of what he can see; gives limited, concrete instructions and accepts useful local information."
+  },
+  "directing": [
+    "Lan/Fang pair → Fang asks why residents are tired → listener Lan admits one more improvement → hold her stopped hand → return to pair.",
+    "After canopy response: Lan expects dismissal → Fang offers a different responsibility → listener Lan holds the basket → she asks whether he will listen publicly."
+  ],
+  "callback": "The first task returns in Lan’s last conversation; ceremony and danger choices yield distinct costs and consequences. All routes resolve the immediate hazard and safely return Kevin.",
+  "costs": [
+    "Paid full ceremony consumes Fang’s allowance and cannot return daylight.",
+    "Shortened ceremony disappoints performers and requires explanation.",
+    "Cancelled ceremony frees time but can discard valued preparation.",
+    "Delay in warning about the canopy blocks the gate; no injury is staged."
+  ],
+  "misconception": "Wuwei means never intervening, or Confucian li means caring only about appearances.",
+  "feedback": "Which person bears the cost of your preferred plan, and why is that cost justified?"
+}

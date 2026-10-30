@@ -1,0 +1,46 @@
+[
+  {
+    "prompt": "What makes the sheep passage in Analects 13.18 difficult?",
+    "options": [
+      "Confucius says that the sheep has no owner.",
+      "It proves that families never disagree.",
+      "It gives family protection moral weight even where it conflicts with reporting a parent’s wrongdoing.",
+      "It describes a complete system of compensation."
+    ],
+    "answer": 2,
+    "explanation": "The governor praises a son who reports his father. Confucius responds by valuing mutual concealment between fathers and sons. The passage does not resolve the owner’s claim or describe the repair in this new story."
+  },
+  {
+    "prompt": "Which statement fits the reading’s account of xiao, or filial piety?",
+    "options": [
+      "It includes care and respect; the tradition also discusses correcting a parent rather than treating every demand as right.",
+      "It means accepting any demand without thinking.",
+      "It means providing food without any concern for manner or respect.",
+      "It means treating parents as strangers."
+    ],
+    "answer": 0,
+    "explanation": "The reading connects filial piety with respectful care and notes remonstration. Analects 4.18 discusses gentle correction; these ideas do not remove every tension with 13.18."
+  },
+  {
+    "prompt": "Why does the story ask students to hear Shen’s perspective?",
+    "options": [
+      "Her view must automatically defeat every other claim.",
+      "Family relationships have no moral significance.",
+      "The perspective of the person who took the sheep is the only relevant one.",
+      "A family’s account can miss the owner’s losses; attending to another position can reveal what an initial judgement overlooks."
+    ],
+    "answer": 3,
+    "explanation": "The episode extends attention to the owner absent from the short Analects exchange, and connects with Part 2’s challenge to a single supposedly complete perspective. It does not imply every judgement is equally good."
+  },
+  {
+    "prompt": "What remains unresolved after the sheep is returned in this episode?",
+    "options": [
+      "Whether the sheep is alive.",
+      "Lost market time, trust, and the terms and completion of repair.",
+      "Whether Shen ever owned the animal.",
+      "Whether Jun personally took it."
+    ],
+    "answer": 1,
+    "explanation": "Returning the animal ends one loss. Shen still lost a market morning and has reason to question future promises. The case distinguishes restitution from the whole process of repairing a relationship."
+  }
+]

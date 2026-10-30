@@ -1,0 +1,83 @@
+[
+  {
+    "id": "Jun",
+    "name": "Jun · Bo’s son",
+    "palette": {
+      "skin": "#d5a27e",
+      "hair": "#2d2926",
+      "shirt": "#6d8c89",
+      "trim": "#c5bd9b"
+    },
+    "appearance": {
+      "age": "teen",
+      "hair": "tousled",
+      "face": "spirited",
+      "eyes": "gentle",
+      "outfit": "tunic"
+    },
+    "version": 1,
+    "finish": "polished",
+    "provenance": "Original stylised supporting character in an authored Warring States village case; no personal likeness or documentary costume claim."
+  },
+  {
+    "id": "Bo",
+    "name": "Bo · Jun’s father",
+    "palette": {
+      "skin": "#bd8c69",
+      "hair": "#51453a",
+      "shirt": "#8a7660",
+      "trim": "#b9a585"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "bun",
+      "face": "broad",
+      "eyes": "gentle",
+      "facialHair": "full",
+      "outfit": "tunic"
+    },
+    "version": 1,
+    "finish": "polished",
+    "provenance": "Original stylised supporting character in an authored Warring States village case; no personal likeness or documentary costume claim."
+  },
+  {
+    "id": "Shen",
+    "name": "Shen · sheep’s owner",
+    "palette": {
+      "skin": "#c79673",
+      "hair": "#423b34",
+      "shirt": "#9b675a",
+      "trim": "#cbbd96"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "bun",
+      "face": "angular",
+      "eyes": "keen",
+      "outfit": "robe"
+    },
+    "version": 1,
+    "finish": "polished",
+    "provenance": "Original stylised supporting character in an authored Warring States village case; no personal likeness or documentary costume claim."
+  },
+  {
+    "id": "Clerk",
+    "name": "Village clerk",
+    "palette": {
+      "skin": "#c49372",
+      "hair": "#59534b",
+      "shirt": "#68717b",
+      "trim": "#c3b49b"
+    },
+    "appearance": {
+      "age": "elder",
+      "hair": "bun",
+      "face": "lean",
+      "eyes": "keen",
+      "outfit": "robe"
+    },
+    "version": 1,
+    "finish": "polished",
+    "provenance": "Original stylised supporting character in an authored Warring States village case; no personal likeness or documentary costume claim."
+  }
+]

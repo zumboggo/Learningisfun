@@ -1,0 +1,39 @@
+{
+  "voice": "Intimate character drama",
+  "voiceReason": "Jun loves a caring father whose request for silence turns their trust into pressure. Small acts at the gate carry the change.",
+  "primaryStandard": "1b.1",
+  "objective": "Explain and evaluate how a studied worldview can lead people to different responses to wrongdoing.",
+  "successCriterion": "Represent the Confucian claim of family loyalty accurately, explain a serious competing claim, and evaluate a response using a specific detail; no preferred answer about reporting is graded.",
+  "characterSignatures": {
+    "Kevin": "Gentle, concrete questions; avoids completing others’ answers; offers a listening role rather than pronouncing the moral.",
+    "Jun": "Short loyal promises become questions with boundaries; wraps a gate tie for his father and later puts it beside the unfinished basket.",
+    "Bo": "Begins by invoking past care, then names his own manipulation; lowered hands and a held listener beat show what an apology cannot return.",
+    "Shen": "Names the missing thing, lost time and terms; refuses praise-seeking shortcuts without denying Jun’s love.",
+    "Clerk": "Precise about what he can record and what he cannot guarantee; no invented law or sentence."
+  },
+  "directing": [
+    "Bo recalls carrying Jun home → listener Jun looks at the gate tie → hold a concrete observation → return to father/son pair.",
+    "Shen says prior trust mattered → listener Bo lowers empty hands → a separate observation holds the loss → widen to include Jun.",
+    "Bo admits buying silence with past care → listener Bo receives Jun’s continued care → gate tie returned beside basket → shared frame and new promise."
+  ],
+  "sceneActivities": [],
+  "physicalWork": "Supported reach/give/bow gestures accompany grain carrying, gate work, ribbon sorting or basket work; unnamed objects are narrated/mimed rather than claimed visible props. Ordinary exchanges use two-shots.",
+  "storyCircle": {
+    "want": "Jun wants to protect a loved father and keep their trust.",
+    "pressure": "His father has taken a neighbour’s sheep and wants silence.",
+    "change": "Jun distinguishes standing beside his father from surrendering his judgement.",
+    "payoff": "The chosen privacy/report/delay route returns in the final father-son conversation. Each path returns the sheep, preserves Shen’s continuing claim and gives Jun a concrete next commitment. Kevin returns safely.",
+    "freshQuestion": "How will tomorrow’s promises be checked once the visitor is gone?"
+  },
+  "teaser": {
+    "label": "sheep_opening_v1",
+    "moment": "The stolen sheep calls from behind the household gate.",
+    "actionOnly": true,
+    "nativeAudio": true,
+    "holdSeconds": 3,
+    "generatedSeconds": 5,
+    "maximumUsd": 0.15
+  },
+  "branches": "Six choices, three options each, forward rejoins, distinct replies, no moral score.",
+  "presentationSuitability": "Concrete details, competing values and costs appear on every route; optional synthesis can compare these two cases."
+}

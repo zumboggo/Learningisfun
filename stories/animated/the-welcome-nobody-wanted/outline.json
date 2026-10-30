@@ -1,0 +1,38 @@
+{
+  "voice": "Warm, self-questioning adolescent",
+  "voiceReason": "Kevin’s wish to be helpful and Lan’s anxious ambition allow gentle humour to give way to attentive responsibility.",
+  "primaryStandard": "3b.3",
+  "objective": "Compare two responses to a community need using their benefits and costs.",
+  "successCriterion": "Explain a benefit and a cost for two responses, using a specific episode detail; defend a judgement without assuming that more control or less action is always better.",
+  "characterSignatures": {
+    "Kevin": "Self-questioning, short concrete questions; light humour gives way to firm warnings; reaches to help, then listens.",
+    "Lan": "Counts tasks and seeks approval; under pressure asks direct questions about losing her work; busy hands become still at Fang’s offer.",
+    "Auntie": "Practical, specific, dry humour; speaks about time, grain and a stool, not abstract slogans.",
+    "Fang": "Courteous confidence becomes patient admission; takes a supporting task rather than directing every hand.",
+    "Wei": "Brief descriptions of what he can see; gives limited, concrete instructions and accepts useful local information."
+  },
+  "directing": [
+    "Lan/Fang pair → Fang asks why residents are tired → listener Lan admits one more improvement → hold her stopped hand → return to pair.",
+    "After canopy response: Lan expects dismissal → Fang offers a different responsibility → listener Lan holds the basket → she asks whether he will listen publicly."
+  ],
+  "sceneActivities": [],
+  "physicalWork": "Supported reach/give/bow gestures accompany grain carrying, gate work, ribbon sorting or basket work; unnamed objects are narrated/mimed rather than claimed visible props. Ordinary exchanges use two-shots.",
+  "storyCircle": {
+    "want": "Lan wants secure employment through a successful welcome.",
+    "pressure": "The plan’s growing demands harm the people it should welcome.",
+    "change": "Lan begins to ask what help is needed and whether others can refuse.",
+    "payoff": "The first task returns in Lan’s last conversation; ceremony and danger choices yield distinct costs and consequences. All routes resolve the immediate hazard and safely return Kevin.",
+    "freshQuestion": "How will tomorrow’s promises be checked once the visitor is gone?"
+  },
+  "teaser": {
+    "label": "welcome_opening_v1",
+    "moment": "The canopy support shifts as a ribbon pulls tight.",
+    "actionOnly": true,
+    "nativeAudio": true,
+    "holdSeconds": 3,
+    "generatedSeconds": 5,
+    "maximumUsd": 0.15
+  },
+  "branches": "Six choices, three options each, forward rejoins, distinct replies, no moral score.",
+  "presentationSuitability": "Concrete details, competing values and costs appear on every route; optional synthesis can compare these two cases."
+}

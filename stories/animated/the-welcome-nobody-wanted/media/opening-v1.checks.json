@@ -1,0 +1,21 @@
+{
+  "source": "/private/tmp/ethics-china-media/the-welcome-nobody-wanted-native.mp4",
+  "output": "/Users/david.hepting/Documents/ChatGPT/Learning is Fun/implementation/stories/animated/the-welcome-nobody-wanted/media/opening-v1.mp4",
+  "dimensions": [
+    854,
+    480
+  ],
+  "fps": 24,
+  "hold_seconds": 3.0,
+  "motion_seconds": 5.0,
+  "reaction_hold_seconds": 0.0,
+  "total_seconds": 8.0,
+  "decoded_audio_seconds": 8.0,
+  "audio_non_silent": true,
+  "audio_starts_after_hold": true,
+  "hold_mean_pixel_difference": 0.009684816549570648,
+  "sha256": "0926f8835beafb8ea71f3d17c6885ed5f1c60ebe78662adee909b06325b64c78",
+  "expected_dialogue": "",
+  "speech_check": "not run",
+  "review": "One visual/listening review remains; automated checks do not prove natural acting or lip sync."
+}

@@ -1,0 +1,7 @@
+import {expect,it,vi,afterEach} from 'vitest';import {cleanup,render,screen,fireEvent} from '@testing-library/react';import {readFileSync} from 'node:fs';import {MemoryRouter} from 'react-router-dom';import StoryPlayer from '@/components/animated/StoryPlayer';
+afterEach(cleanup);
+it.each(['the-welcome-nobody-wanted','the-sheep-behind-our-house'])('opens %s through notice, two-paragraph context and its own teaser',async id=>{
+ const pack=JSON.parse(readFileSync(`public/stories/animated/${id}/episode.json`,'utf8'));const progress=vi.fn();render(<MemoryRouter><StoryPlayer pack={pack} onProgress={progress}/></MemoryRouter>);
+ fireEvent.click(screen.getByRole('button',{name:'Accept'}));expect(screen.getByText(pack.context[0])).toBeInTheDocument();expect(screen.getByText(pack.context[1])).toBeInTheDocument();fireEvent.click(screen.getByRole('button',{name:'Show full text'}));expect(document.querySelector('.crawl-static')).not.toBeNull();fireEvent.click(screen.getByRole('button',{name:'Continue to the story →'}));
+ expect(screen.getByRole('button',{name:'Play opening with sound'})).toBeInTheDocument();expect(document.querySelector('video')).toHaveAttribute('poster',expect.stringContaining(id.includes('welcome')?'ethics-china-welcome':'ethics-china-sheep'));fireEvent.click(screen.getByRole('button',{name:'Continue without opening →'}));expect(progress.mock.lastCall?.[0].steps).toEqual([null]);expect(screen.getByRole('button',{name:'Next →'})).toBeInTheDocument();
+});

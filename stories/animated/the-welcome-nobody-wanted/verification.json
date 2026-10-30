@@ -1,0 +1,31 @@
+{
+  "automated": [
+    "729 complete routes; all six choices and eighteen choice edges reached",
+    "all nine combinations of the main two commitments reached",
+    "saved-stage and legal-step replay on first/middle/last routes",
+    "full ZIP import roundtrip",
+    "four-question quiz: 100 and 75 verified",
+    "notice → two-paragraph context → registered teaser → ordinary story advance",
+    "three-second identical-frame hold, five-second motion, eight-second decoded audio",
+    "native audio non-silent and begins after the hold"
+  ],
+  "visual": [
+    "Generated village backdrop and teaser midpoint frame inspected",
+    "Welcome: listener framing on Lan, held aftermath, then two-shot return inspected in actual browser",
+    "Sheep: father/son emotional turn inspected at desktop and 390-pixel container width",
+    "Sheep: actual teaser playback and automatic continuation inspected",
+    "Sheep: fixed two prompts plus three tailored dropdown choices inspected"
+  ],
+  "limits": [
+    "390-pixel container check is not a physical-phone test. Mobile viewport-specific controls were not independently exercised.",
+    "The execution environment could not provide audible playback to the model. Audio timing/non-silence verified; no speech-recognition pass was run. Teasers request no human speech and show no people.",
+    "Restored-stage tests cover motion-independent meaning; no separate operating-system reduced-motion device session."
+  ],
+  "sources": "Live assigned Parts 1 and 2 read in paragraph sortOrder; primary Analects/Daodejing checked; historical and authored additions separated in sources.json.",
+  "videoCost": {
+    "usdPerClip": 0.11,
+    "paidAttemptsPerClip": 2,
+    "capPerClip": 0.15,
+    "reasonForSecondAttempt": "First outputs expired at provider before retrieval; final attempt downloaded immediately."
+  }
+}

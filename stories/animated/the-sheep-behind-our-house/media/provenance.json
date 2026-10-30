@@ -1,0 +1,27 @@
+{
+  "model": "prunaai/p-video-2-pro",
+  "settings": {
+    "prompt": "Six-second 16:9 cinematic anime shot, clean graphic-novel linework, restrained cel shading, muted terracotta and olive colours. Modest farming household in fourth-century-BCE eastern China. Close low view of a small white sheep safely behind a partly open plain wooden courtyard gate. An identifying dark mark is visible on one ear. The sheep turns toward the village path and bleats once. Its loose rope gently slides over the packed earth, then becomes still; the camera holds on the gate opening, an unresolved discovery. The animal is healthy and unharmed, calm rather than distressed. No people, no modern objects, no writing, no palace. Native audio: one soft sheep bleat, light hoof sounds and a quiet wooden gate creak. Absolutely no speech, narration, singing, music or human voices.",
+    "duration": 5,
+    "resolution": "480p",
+    "mode": "cost",
+    "prompt_upsampler": "off",
+    "aspect_ratio": "16:9"
+  },
+  "predictionId": "ce3wvbv2d1rmy0d1hwc9595v1w",
+  "originalPredictionId": "w7tfraty1srmr0d1hg3t78cerr",
+  "originalResult": "Expired before download; data_removed=true. No usable bytes recovered.",
+  "paidAttempts": 2,
+  "rateUsdPerOutputSecond": 0.01,
+  "firstBilledSeconds": 6,
+  "recoveryBilledSeconds": 5,
+  "totalBilledUsd": 0.11,
+  "hardCapUsd": 0.15,
+  "pricingVerifiedAt": "2026-10-30T23:15:01.931Z",
+  "pricingSource": "https://replicate.com/prunaai/p-video-2-pro",
+  "billingTier": "480p cost, $0.01 per output second; prompt_upsampler=off; native generated audio",
+  "holdSeconds": 3,
+  "motionSeconds": 5,
+  "dialogue": "None; action-only teaser with native ambient audio.",
+  "review": "Automated frame/audio checks passed. Human/model visual and audio review recorded separately."
+}

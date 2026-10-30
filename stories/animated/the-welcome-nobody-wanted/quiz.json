@@ -1,0 +1,46 @@
+[
+  {
+    "prompt": "What does ren mean in the teaching discussed in the episode?",
+    "options": [
+      "Making every visitor admire the village.",
+      "Humaneness: taking people and their needs seriously.",
+      "Following every instruction from someone powerful.",
+      "Avoiding all ceremonies."
+    ],
+    "answer": 1,
+    "explanation": "Ren concerns humane conduct toward people. A beautiful event or impressive reputation does not by itself show that concern."
+  },
+  {
+    "prompt": "Why can li, or ritual, matter even when a simpler welcome is chosen?",
+    "options": [
+      "A ritual guarantees that nobody is harmed.",
+      "Ritual means spending as much as possible.",
+      "Shared forms can express respect and train attention, when connected with care.",
+      "A ritual removes the need to hear residents."
+    ],
+    "answer": 2,
+    "explanation": "The Analects connects ritual with humaneness. The issue is how a form expresses care, not whether the longest ceremony wins."
+  },
+  {
+    "prompt": "Which explanation of wuwei fits the distinction explored here?",
+    "options": [
+      "Act responsively without unnecessary forcing; stepping back does not require ignoring danger.",
+      "Never act, even when someone needs help.",
+      "Do whatever is easiest for the official.",
+      "Let every accident decide the plan."
+    ],
+    "answer": 0,
+    "explanation": "The reading presents non-forcing as attentive, responsive action. It distinguishes restraint from neglect, without supplying an automatic rule for every case."
+  },
+  {
+    "prompt": "Why does calling Fang a leader not settle whether he is leading well?",
+    "options": [
+      "A leader must always control each task personally.",
+      "Leadership means never admitting an error.",
+      "Only villagers can make mistakes.",
+      "A role carries responsibilities that conduct must fulfil; the title alone cannot fulfil them."
+    ],
+    "answer": 3,
+    "explanation": "The rectification of names connects roles with their responsibilities. Fang’s title does not replace listening, accountability or care."
+  }
+]
