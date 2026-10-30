@@ -1,0 +1,65 @@
+[
+  {
+    "name": "world-literature-red",
+    "classId": "09d7f0a7-4c29-462c-820f-e11ea914d375",
+    "banner": {
+      "fileId": "wc26_world-literature-red",
+      "x": 50,
+      "y": 65
+    }
+  },
+  {
+    "name": "world-literature-blue",
+    "classId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c",
+    "banner": {
+      "fileId": "wc26_world-literature-blue",
+      "x": 50,
+      "y": 65
+    }
+  },
+  {
+    "name": "ethics-leadership",
+    "classId": "e24ec8d9-21d7-4c32-a30e-08655c2f4e65",
+    "banner": {
+      "fileId": "wc26_ethics-leadership",
+      "x": 50,
+      "y": 65
+    }
+  },
+  {
+    "name": "ap-english",
+    "classId": "88421c66-9cda-4002-8e15-086312b7805e",
+    "banner": {
+      "fileId": "wc26_ap-english",
+      "x": 50,
+      "y": 65
+    }
+  },
+  {
+    "name": "boys-advisory",
+    "classId": "585406db-6bcf-4fc7-b42f-1f5e4bc8a540",
+    "banner": {
+      "fileId": "wc26_boys-advisory",
+      "x": 50,
+      "y": 65
+    }
+  },
+  {
+    "name": "english-corner",
+    "classId": "7e5810c3-dfac-4595-ba51-0e20e645e727",
+    "banner": {
+      "fileId": "wc26_english-corner",
+      "x": 50,
+      "y": 65
+    }
+  },
+  {
+    "name": "lifeplus-workshop",
+    "classId": "5a726282-4771-4774-8213-d9329c124bbc",
+    "banner": {
+      "fileId": "wc26_lifeplus-workshop",
+      "x": 50,
+      "y": 65
+    }
+  }
+]
