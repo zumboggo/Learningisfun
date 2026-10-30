@@ -1,0 +1,88 @@
+[
+  {
+    "id": "Guide",
+    "name": "The young stranger",
+    "version": 1,
+    "finish": "polished",
+    "palette": {
+      "skin": "#bc8c65",
+      "hair": "#312a28",
+      "shirt": "#526f7e",
+      "trim": "#d1b184"
+    },
+    "appearance": {
+      "age": "teen",
+      "hair": "swept",
+      "face": "spirited",
+      "eyes": "keen",
+      "outfit": "tunic"
+    },
+    "provenance": "Stylized source character, the Spanish-speaking young stranger in Tangier. Original vector design, no real-person likeness. Clothing is a stage approximation, not an ethnographic claim."
+  },
+  {
+    "id": "Owner",
+    "name": "The caf\u00e9 owner",
+    "version": 1,
+    "finish": "polished",
+    "palette": {
+      "skin": "#b57f5b",
+      "hair": "#40312b",
+      "shirt": "#8b6f50",
+      "trim": "#d8c7a4",
+      "beard": "#40312b"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "swept",
+      "face": "broad",
+      "eyes": "keen",
+      "facialHair": "full",
+      "outfit": "robe"
+    },
+    "provenance": "Stylized source character, the Tangier caf\u00e9 owner who tries to warn Santiago. His Arabic is represented through narration; his words are not falsely translated before Santiago understands the event."
+  },
+  {
+    "id": "Candy",
+    "name": "The candy seller",
+    "version": 1,
+    "finish": "polished",
+    "palette": {
+      "skin": "#bc8c65",
+      "hair": "#49392d",
+      "shirt": "#6e8267",
+      "trim": "#ead3aa",
+      "beard": "#49392d"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "swept",
+      "face": "broad",
+      "eyes": "gentle",
+      "facialHair": "full",
+      "outfit": "tunic"
+    },
+    "provenance": "Stylized source character, the candy seller whom Santiago helps after the theft. His one-word offer is a readable adaptation of the handoff, not a claim that he speaks Spanish or English."
+  },
+  {
+    "id": "Merchant",
+    "name": "The crystal merchant",
+    "version": 1,
+    "finish": "polished",
+    "palette": {
+      "skin": "#bd8c68",
+      "hair": "#b1a391",
+      "shirt": "#687a7c",
+      "trim": "#ded0b1",
+      "beard": "#a79987"
+    },
+    "appearance": {
+      "age": "elder",
+      "hair": "swept",
+      "face": "lean",
+      "eyes": "gentle",
+      "facialHair": "full",
+      "outfit": "robe"
+    },
+    "provenance": "Stylized source character, the crystal merchant at his first encounter with Santiago. No later dialogue, dreams or business outcomes are disclosed."
+  }
+]

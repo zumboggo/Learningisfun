@@ -1,0 +1,455 @@
+{
+  "current_description": "<p>Add 1080p/2k/4k tiers (768p rate + upscale rate)</p>",
+  "current_tiers": [
+    {
+      "criteria": [
+        {
+          "description": "cost",
+          "subtype": "string",
+          "title": "model variant",
+          "type": "equals",
+          "value": "cost"
+        },
+        {
+          "description": "480p",
+          "subtype": "string",
+          "title": "target resolution",
+          "type": "equals",
+          "value": "480p"
+        }
+      ],
+      "description": "480p resolution, cost mode",
+      "prices": [
+        {
+          "description": "or 100 seconds for $1",
+          "metric": "video_output_duration_seconds",
+          "metric_display": "second of output video",
+          "price": "$0.01",
+          "title": "per second of output video",
+          "type": "per-unit"
+        }
+      ],
+      "title": "480p cost"
+    },
+    {
+      "criteria": [
+        {
+          "description": "cost",
+          "subtype": "string",
+          "title": "model variant",
+          "type": "equals",
+          "value": "cost"
+        },
+        {
+          "description": "768p",
+          "subtype": "string",
+          "title": "target resolution",
+          "type": "equals",
+          "value": "768p"
+        }
+      ],
+      "description": "768p resolution, cost mode",
+      "prices": [
+        {
+          "description": "or 40 seconds for $1",
+          "metric": "video_output_duration_seconds",
+          "metric_display": "second of output video",
+          "price": "$0.025",
+          "title": "per second of output video",
+          "type": "per-unit"
+        }
+      ],
+      "title": "768p cost"
+    },
+    {
+      "criteria": [
+        {
+          "description": "cost",
+          "subtype": "string",
+          "title": "model variant",
+          "type": "equals",
+          "value": "cost"
+        },
+        {
+          "description": "1080p",
+          "subtype": "string",
+          "title": "target resolution",
+          "type": "equals",
+          "value": "1080p"
+        }
+      ],
+      "description": "1080p resolution (upscaled from 768p), cost mode",
+      "prices": [
+        {
+          "description": "or around 22 seconds for $1",
+          "metric": "video_output_duration_seconds",
+          "metric_display": "second of output video",
+          "price": "$0.045",
+          "title": "per second of output video",
+          "type": "per-unit"
+        }
+      ],
+      "title": "1080p cost"
+    },
+    {
+      "criteria": [
+        {
+          "description": "cost",
+          "subtype": "string",
+          "title": "model variant",
+          "type": "equals",
+          "value": "cost"
+        },
+        {
+          "description": "2k",
+          "subtype": "string",
+          "title": "target resolution",
+          "type": "equals",
+          "value": "2k"
+        }
+      ],
+      "description": "2k resolution (upscaled from 768p), cost mode",
+      "prices": [
+        {
+          "description": "or around 15 seconds for $1",
+          "metric": "video_output_duration_seconds",
+          "metric_display": "second of output video",
+          "price": "$0.065",
+          "title": "per second of output video",
+          "type": "per-unit"
+        }
+      ],
+      "title": "2k cost"
+    },
+    {
+      "criteria": [
+        {
+          "description": "cost",
+          "subtype": "string",
+          "title": "model variant",
+          "type": "equals",
+          "value": "cost"
+        },
+        {
+          "description": "4k",
+          "subtype": "string",
+          "title": "target resolution",
+          "type": "equals",
+          "value": "4k"
+        }
+      ],
+      "description": "4k resolution (upscaled from 768p), cost mode",
+      "prices": [
+        {
+          "description": "or around 95 seconds for $10",
+          "metric": "video_output_duration_seconds",
+          "metric_display": "second of output video",
+          "price": "$0.105",
+          "title": "per second of output video",
+          "type": "per-unit"
+        }
+      ],
+      "title": "4k cost"
+    },
+    {
+      "criteria": [
+        {
+          "description": "speed",
+          "subtype": "string",
+          "title": "model variant",
+          "type": "equals",
+          "value": "speed"
+        },
+        {
+          "description": "480p",
+          "subtype": "string",
+          "title": "target resolution",
+          "type": "equals",
+          "value": "480p"
+        }
+      ],
+      "description": "480p resolution, speed mode",
+      "prices": [
+        {
+          "description": "or 50 seconds for $1",
+          "metric": "video_output_duration_seconds",
+          "metric_display": "second of output video",
+          "price": "$0.02",
+          "title": "per second of output video",
+          "type": "per-unit"
+        }
+      ],
+      "title": "480p speed"
+    },
+    {
+      "criteria": [
+        {
+          "description": "speed",
+          "subtype": "string",
+          "title": "model variant",
+          "type": "equals",
+          "value": "speed"
+        },
+        {
+          "description": "768p",
+          "subtype": "string",
+          "title": "target resolution",
+          "type": "equals",
+          "value": "768p"
+        }
+      ],
+      "description": "768p resolution, speed mode",
+      "prices": [
+        {
+          "description": "or around 28 seconds for $1",
+          "metric": "video_output_duration_seconds",
+          "metric_display": "second of output video",
+          "price": "$0.035",
+          "title": "per second of output video",
+          "type": "per-unit"
+        }
+      ],
+      "title": "768p speed"
+    },
+    {
+      "criteria": [
+        {
+          "description": "speed",
+          "subtype": "string",
+          "title": "model variant",
+          "type": "equals",
+          "value": "speed"
+        },
+        {
+          "description": "1080p",
+          "subtype": "string",
+          "title": "target resolution",
+          "type": "equals",
+          "value": "1080p"
+        }
+      ],
+      "description": "1080p resolution (upscaled from 768p), speed mode",
+      "prices": [
+        {
+          "description": "or around 18 seconds for $1",
+          "metric": "video_output_duration_seconds",
+          "metric_display": "second of output video",
+          "price": "$0.055",
+          "title": "per second of output video",
+          "type": "per-unit"
+        }
+      ],
+      "title": "1080p speed"
+    },
+    {
+      "criteria": [
+        {
+          "description": "speed",
+          "subtype": "string",
+          "title": "model variant",
+          "type": "equals",
+          "value": "speed"
+        },
+        {
+          "description": "2k",
+          "subtype": "string",
+          "title": "target resolution",
+          "type": "equals",
+          "value": "2k"
+        }
+      ],
+      "description": "2k resolution (upscaled from 768p), speed mode",
+      "prices": [
+        {
+          "description": "or around 13 seconds for $1",
+          "metric": "video_output_duration_seconds",
+          "metric_display": "second of output video",
+          "price": "$0.075",
+          "title": "per second of output video",
+          "type": "per-unit"
+        }
+      ],
+      "title": "2k speed"
+    },
+    {
+      "criteria": [
+        {
+          "description": "speed",
+          "subtype": "string",
+          "title": "model variant",
+          "type": "equals",
+          "value": "speed"
+        },
+        {
+          "description": "4k",
+          "subtype": "string",
+          "title": "target resolution",
+          "type": "equals",
+          "value": "4k"
+        }
+      ],
+      "description": "4k resolution (upscaled from 768p), speed mode",
+      "prices": [
+        {
+          "description": "or around 86 seconds for $10",
+          "metric": "video_output_duration_seconds",
+          "metric_display": "second of output video",
+          "price": "$0.115",
+          "title": "per second of output video",
+          "type": "per-unit"
+        }
+      ],
+      "title": "4k speed"
+    },
+    {
+      "criteria": [
+        {
+          "description": "quality",
+          "subtype": "string",
+          "title": "model variant",
+          "type": "equals",
+          "value": "quality"
+        },
+        {
+          "description": "480p",
+          "subtype": "string",
+          "title": "target resolution",
+          "type": "equals",
+          "value": "480p"
+        }
+      ],
+      "description": "480p resolution, quality mode",
+      "prices": [
+        {
+          "description": "or 25 seconds for $1",
+          "metric": "video_output_duration_seconds",
+          "metric_display": "second of output video",
+          "price": "$0.04",
+          "title": "per second of output video",
+          "type": "per-unit"
+        }
+      ],
+      "title": "480p quality"
+    },
+    {
+      "criteria": [
+        {
+          "description": "quality",
+          "subtype": "string",
+          "title": "model variant",
+          "type": "equals",
+          "value": "quality"
+        },
+        {
+          "description": "768p",
+          "subtype": "string",
+          "title": "target resolution",
+          "type": "equals",
+          "value": "768p"
+        }
+      ],
+      "description": "768p resolution, quality mode",
+      "prices": [
+        {
+          "description": "or around 13 seconds for $1",
+          "metric": "video_output_duration_seconds",
+          "metric_display": "second of output video",
+          "price": "$0.075",
+          "title": "per second of output video",
+          "type": "per-unit"
+        }
+      ],
+      "title": "768p quality"
+    },
+    {
+      "criteria": [
+        {
+          "description": "quality",
+          "subtype": "string",
+          "title": "model variant",
+          "type": "equals",
+          "value": "quality"
+        },
+        {
+          "description": "1080p",
+          "subtype": "string",
+          "title": "target resolution",
+          "type": "equals",
+          "value": "1080p"
+        }
+      ],
+      "description": "1080p resolution (upscaled from 768p), quality mode",
+      "prices": [
+        {
+          "description": "or around 10 seconds for $1",
+          "metric": "video_output_duration_seconds",
+          "metric_display": "second of output video",
+          "price": "$0.095",
+          "title": "per second of output video",
+          "type": "per-unit"
+        }
+      ],
+      "title": "1080p quality"
+    },
+    {
+      "criteria": [
+        {
+          "description": "quality",
+          "subtype": "string",
+          "title": "model variant",
+          "type": "equals",
+          "value": "quality"
+        },
+        {
+          "description": "2k",
+          "subtype": "string",
+          "title": "target resolution",
+          "type": "equals",
+          "value": "2k"
+        }
+      ],
+      "description": "2k resolution (upscaled from 768p), quality mode",
+      "prices": [
+        {
+          "description": "or around 86 seconds for $10",
+          "metric": "video_output_duration_seconds",
+          "metric_display": "second of output video",
+          "price": "$0.115",
+          "title": "per second of output video",
+          "type": "per-unit"
+        }
+      ],
+      "title": "2k quality"
+    },
+    {
+      "criteria": [
+        {
+          "description": "quality",
+          "subtype": "string",
+          "title": "model variant",
+          "type": "equals",
+          "value": "quality"
+        },
+        {
+          "description": "4k",
+          "subtype": "string",
+          "title": "target resolution",
+          "type": "equals",
+          "value": "4k"
+        }
+      ],
+      "description": "4k resolution (upscaled from 768p), quality mode",
+      "prices": [
+        {
+          "description": "or around 64 seconds for $10",
+          "metric": "video_output_duration_seconds",
+          "metric_display": "second of output video",
+          "price": "$0.155",
+          "title": "per second of output video",
+          "type": "per-unit"
+        }
+      ],
+      "title": "4k quality"
+    }
+  ]
+}

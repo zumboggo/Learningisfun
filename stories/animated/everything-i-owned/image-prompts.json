@@ -1,0 +1,14 @@
+{
+  "tool": "built-in imagegen",
+  "background": {
+    "file": "public/stories/animated/everything-i-owned/assets/tangier-v1.webp",
+    "source": "exec-53cf7e23-9746-4bbe-8978-8c0040879473.png",
+    "prompt": "Use case: illustration-story. Asset type: 16:9 visual-novel background for The Alchemist. Create an empty Tangier marketplace in Morocco, period-neutral old port city: whitewashed buildings, modest arched doorways, closed wooden market stalls at the edges, a narrow steep street visible rising between buildings at the right, distant slender minaret. Warm late-afternoon amber light, teal shadows, clean dark slate outlines, restrained flat cel-shaded graphic-novel style. Broad unobstructed foreground for two animated characters; eye-level view. No people, no animals, no text or lettering, no logos or watermark, no modern objects. Place furniture only near back and edges. Subtle lived-in atmosphere, neither exotic fantasy nor photorealism."
+  },
+  "teaser": {
+    "file": "stories/animated/everything-i-owned/teaser-reference.png",
+    "source": "exec-93d08b8d-4502-4ecd-81a4-513c26ad9a54.png",
+    "reference": "tangier-v1.webp",
+    "prompt": "Use case: illustration-story. Create a wide 16:9 cinematic graphic-novel still for a teaser adapting The Alchemist. In the same Tangier marketplace as the reference, now almost empty at dusk, Santiago, a slim teenage Andalusian shepherd with warm tan skin, tousled short brown hair, keen brown eyes, a simple ochre-brown tunic with muted olive trim and dark trousers, stands alone at centre-left. Medium shot from the waist up. He looks down anxiously into a small open leather pouch held in both hands, realizing his money is gone. His shoulders have lost their confidence, his mouth closed; make the vulnerability quiet and believable. The pouch and his hands are clearly visible. Keep the marketplace recognisable. Clean dark outlines, cel-shaded graphic novel animation, restrained warm amber and teal palette, expressive face, no photorealism, no text, no captions, no watermarks, no other people. This is Santiago, not a modern school student."
+  }
+}

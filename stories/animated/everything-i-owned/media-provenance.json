@@ -1,0 +1,84 @@
+{
+  "model": "prunaai/p-video-2-pro",
+  "version": "049a34850148c774973507d98f0be2fced95721c35c5358b9754523891d4e87e",
+  "verifiedDate": "2026-10-30",
+  "pricingSource": "https://replicate.com/prunaai/p-video-2-pro",
+  "billingTier": {
+    "criteria": [
+      {
+        "description": "cost",
+        "subtype": "string",
+        "title": "model variant",
+        "type": "equals",
+        "value": "cost"
+      },
+      {
+        "description": "480p",
+        "subtype": "string",
+        "title": "target resolution",
+        "type": "equals",
+        "value": "480p"
+      }
+    ],
+    "description": "480p resolution, cost mode",
+    "prices": [
+      {
+        "description": "or 100 seconds for $1",
+        "metric": "video_output_duration_seconds",
+        "metric_display": "second of output video",
+        "price": "$0.01",
+        "title": "per second of output video",
+        "type": "per-unit"
+      }
+    ],
+    "title": "480p cost"
+  },
+  "maximumChargeUsd": 0.06,
+  "paidAttempts": 1,
+  "settings": {
+    "duration": 6,
+    "resolution": "480p",
+    "mode": "cost",
+    "prompt_upsampler": "off",
+    "nativeAudio": true,
+    "aspect_ratio": "16:9",
+    "enable_safety_filter": true
+  },
+  "prompt": "Animate this exact graphic-novel scene, preserving Santiago’s face, ochre tunic, pouch, and the Tangier marketplace. Fixed camera. Santiago holds his small leather pouch in both hands, opens it wider, and gently searches it with one hand. It contains no coins. He stops searching as his shoulders sink and he looks into the empty pouch. One quiet meaningful action of realizing his money is gone. Natural cloth rustle and faint evening wind only. No speech, no voices, no words, no humming, no lyrics, no music, no text. His mouth remains closed. No other people appear, no objects are added, no camera cuts. Restrained cel-shaded graphic novel animation.",
+  "openingMoment": "Santiago searches his pouch after the theft. Action only, no spoken line.",
+  "imageTool": "built-in imagegen",
+  "imageReference": "stories/animated/everything-i-owned/teaser-reference.png",
+  "status": "succeeded",
+  "predictionId": "tcg1nff0kdrmt0d1hb09d19spc",
+  "error": null,
+  "output": "https://replicate.delivery/xezq/pDDGKs4QaeXbPiqcWZQ8PRexaE8JcwI0Bn74aUSefZGUnuxdB/a0d474cb-69b0-44cd-b3b2-4eec50d8b1c8.mp4",
+  "metrics": {
+    "billing": {
+      "fps": 24,
+      "mode": "cost",
+      "model_variant": "cost",
+      "resolution_target": "480p",
+      "turbo": true,
+      "video_output_duration_seconds": 6
+    },
+    "fps": 24,
+    "inference_provider": "modal",
+    "metadata": {
+      "execution_time": {
+        "model_execution_time": 4.779,
+        "prompt_upsampler_execution_time": 0,
+        "total_execution_time": 10.636
+      }
+    },
+    "mode": "cost",
+    "model_variant": "cost",
+    "predict_time": 11.675892186,
+    "prompt_upsampler": "off",
+    "prompt_upsampler_fallback": false,
+    "resolution_target": "480p",
+    "total_time": 11.905774815000001,
+    "turbo": true,
+    "video_output_count": 1,
+    "video_output_duration_seconds": 6
+  }
+}

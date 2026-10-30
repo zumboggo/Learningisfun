@@ -1,0 +1,93 @@
+{
+  "voice": "Intimate character drama",
+  "reason": "Santiago\u2019s familiar competence, shame, hunger and need for others make the risks emotionally concrete. First-person Santiago overrides the default helper role at David\u2019s explicit request.",
+  "promise": "As Santiago, leave a valued shepherd life, lose financial security in Tangier, and make a useful next offer without knowing its result.",
+  "canonicalBoundary": "First offer to clean crystal for food; no reply or later events.",
+  "payoff": "The vulnerable offer at the shop demonstrates a changed way of acting. The unknown reply opens the question of how to judge that action without its outcome.",
+  "teaser": {
+    "scene": "loss",
+    "action": "Santiago searches his pouch and stops when he realizes no money remains.",
+    "speech": "None. Native cloth rustle and wind.",
+    "holdSeconds": 3,
+    "motionSeconds": 6
+  },
+  "choiceMap": [
+    [
+      "values-before",
+      "Security / freedom / connection",
+      "Distinct thought/action",
+      "before; compare after loss",
+      "dream"
+    ],
+    [
+      "price",
+      "Evidence / terms",
+      "Different exchange with Melchizedek",
+      "keepsake",
+      "sand"
+    ],
+    [
+      "departure-plan",
+      "Reconsiderable experiment / serious commitment",
+      "Different risk and uncertainty framed",
+      "keepsake",
+      "payment"
+    ],
+    [
+      "guide-question",
+      "Route / language / affordability",
+      "Distinct question and stranger response",
+      "basis; callback before theft",
+      "money"
+    ],
+    [
+      "warning",
+      "Accept / acknowledge uncertainty / ask next step",
+      "Distinct reply and motivated stranger response",
+      "keepsake",
+      "market-walk"
+    ],
+    [
+      "values-after",
+      "Same security / freedom / connection options",
+      "Distinct immediate priority",
+      "after; all nine comparisons",
+      "compare"
+    ],
+    [
+      "verdict",
+      "Bad outcome condemns / separate processes / eventual treasure validates",
+      "Distinct counterfactual/process reflection",
+      "judgment; classroom callback",
+      "stones"
+    ],
+    [
+      "work",
+      "Admit hunger / name ability / take one step",
+      "Distinct intention acknowledged before same canonical request",
+      "keepsake",
+      "request"
+    ]
+  ],
+  "directing": [
+    "Melchizedek pair \u2192 real fee \u2192 Santiago worried \u2192 own beat \u2192 pair",
+    "Caf\u00e9 pair \u2192 familiar Spanish \u2192 Santiago relief \u2192 held observation \u2192 pair",
+    "Owner warning \u2192 Santiago fear \u2192 uncertainty beat \u2192 Guide pair",
+    "Merchant pair \u2192 vulnerable request \u2192 Merchant curious \u2192 silence held until Continue"
+  ],
+  "signatures": {
+    "Santiago": "Concrete sheep/work imagery; curiosity becomes clipped uncertainty and guarded hands; shame quieter than certainty.",
+    "Melchizedek": "Short assured claims, patient open gestures; no invented guarantee supplied by narrator.",
+    "Guide": "Practical-sounding short answers; redirects doubt toward next action; quiet reassuring posture without villain caricature.",
+    "Owner": "Urgency through reach and expression; words remain uncomprehended.",
+    "Candy": "Task and handoff rather than explanatory speech.",
+    "Merchant": "Silent appraisal at stopping boundary; no later motives imported."
+  },
+  "assets": {
+    "backgroundImage": "exec-53cf7e23-9746-4bbe-8978-8c0040879473.png",
+    "teaserImage": "exec-93d08b8d-4502-4ecd-81a4-513c26ad9a54.png",
+    "tool": "built-in imagegen",
+    "prompts": "Recorded in image-prompts.json"
+  },
+  "assessment": "Four knowledge questions, 25 points each; 75 to complete with retry. Narrative values unscored. Optional spoken/written reflection only."
+}

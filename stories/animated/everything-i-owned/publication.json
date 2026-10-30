@@ -1,0 +1,37 @@
+{
+  "id": "everything-i-owned",
+  "title": "Everything I Owned",
+  "status": "published-assigned",
+  "version": 2,
+  "versionId": "a82916477aceffbfc097c21060557671",
+  "bytes": 1487758,
+  "activeMembershipsVerified": true,
+  "liveTeacherReadVerified": true,
+  "publishedBytesVerified": true,
+  "privateMediaVerified": true,
+  "privatePreviewVerified": true,
+  "studentRelease": "Friday 2026-10-30 08:00 Asia/Shanghai",
+  "studioUrl": "https://zumboggo.github.io/Learningisfun/#/game/create?draft=everything-i-owned",
+  "previewUrl": "https://zumboggo.github.io/Learningisfun/#/game/story-preview/everything-i-owned",
+  "assignments": [
+    {
+      "classId": "09d7f0a7-4c29-462c-820f-e11ea914d375",
+      "className": "Red - Sect. 1",
+      "date": "2026-11-02",
+      "releaseAt": "2026-10-30T00:00:00.000Z",
+      "assignmentId": "214123e93b92d664d1587bd0feb90e5c",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/214123e93b92d664d1587bd0feb90e5c"
+    },
+    {
+      "classId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c",
+      "className": "Blue Sect. 2",
+      "date": "2026-11-02",
+      "releaseAt": "2026-10-30T00:00:00.000Z",
+      "assignmentId": "f1e8eaee2a424fb61462f3eee2cf4efe",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/f1e8eaee2a424fb61462f3eee2cf4efe"
+    }
+  ],
+  "studentReadVerified": true,
+  "studentMediaVerified": true,
+  "studentAttemptsCreated": false
+}
