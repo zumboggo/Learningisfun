@@ -17,7 +17,7 @@ export function ReadingParticipationExport({ classId, className, students }: { c
   };
   return <section className="rounded-xl border border-blue-200 bg-white p-4">
     <h2 className="font-semibold text-gray-950">Text participation for grading</h2>
-    <p className="mt-1 text-sm text-gray-600">Export question and reply counts for each student, with totals and a breakdown by assigned text. Includes students with no posts and all dates.</p>
+    <p className="mt-1 text-sm text-gray-600">Export question and reply counts, saved requirements, quoted replies, and completion for each assigned text, plus student totals. Includes students with no posts and all dates.</p>
     <p className="mt-1 text-xs text-gray-500">Counts posted work, including moderated posts; excludes withdrawn questions and private drafts. Filter “Row type” in the CSV to view totals or text breakdowns.</p>
     <Button className="mt-3" size="sm" loading={busy} onClick={() => void run()}>Export text participation CSV</Button>
     {message && <p role="status" className="mt-2 text-sm text-green-800">{message}</p>}

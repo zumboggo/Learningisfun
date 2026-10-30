@@ -1,3 +1,4 @@
+import {ClassReadingRequirements} from '@/components/texts/ReadingRequirements';
 import {useEffect, useState, type ReactNode} from 'react';
 import {Link} from 'react-router-dom';
 import {useAuth} from '@/contexts/AuthContext';
@@ -44,6 +45,7 @@ export default function TeacherDataPage() {
       {report.missingSources.length>0&&<p role="alert" className="rounded-lg bg-amber-50 p-3">Some sources are unavailable ({report.missingSources.join(', ')}). Counts may be incomplete.</p>}
       <div className="grid gap-3 sm:grid-cols-3"><div className="rounded-xl bg-slate-100 p-4"><strong className="text-2xl">{report.studentRows.length}</strong><p>Currently enrolled students</p></div><button className="rounded-xl bg-amber-50 p-4 text-left" onClick={()=>{setSection('episodes');setLowOnly(true);setSearch('');}}><strong className="text-2xl">{lowStudents.size}</strong><p>Students with a first MC score below 75%</p></button><div className="rounded-xl bg-slate-100 p-4"><strong className="text-2xl">{noDiscussion}</strong><p>No recorded discussion contributions in this period</p></div></div>
       <div className="flex flex-wrap items-center gap-3"><div className="flex gap-2" role="group" aria-label="Data views">{(['participation','episodes'] as const).map(s=><button key={s} aria-pressed={section===s} className={`rounded-lg px-4 py-2 ${section===s?'bg-teal-900 text-white':'border bg-white'}`} onClick={()=>setSection(s)}>{s==='participation'?'Participation':'Episode scores'}</button>)}</div><label className="sm:ml-auto"><span className="sr-only">Search students or episodes</span><input className="rounded-lg border p-2" placeholder="Search students or episodes" value={search} onChange={e=>setSearch(e.target.value)}/></label></div>
+      <ClassReadingRequirements key={classId} classId={classId}/>
       {section==='participation'?<>
         <p className="text-sm text-slate-600">Counts include recorded class discussions and reading discussions. Writing responses are separate. Zero means no recorded activity in this period, not a judgment of effort.</p>
         <Table headers={['Student','Questions','Replies','Other posts','Writing responses','Shared annotations','Card reviews','Study minutes','Episode plays started','Plays completed','Last activity']}>

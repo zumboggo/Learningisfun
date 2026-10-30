@@ -92,6 +92,8 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
   try { settings = await db.getDocument(databaseId,'reading_settings',workspaceId); }
   catch (error) { if(error.code!==404)throw error; }
   const savedSettings=settings?JSON.parse(settings.dataJson):{};
+  const requirements = savedSettings.requirements || null;
+  const questionLimit = Math.max(3, requirements?.questions || 0);
   const showStudentNames = !writing && savedSettings.showStudentNames===true;
   if(body.action==='setWritingDiscussionSettings'){
     const next={...config};
@@ -100,10 +102,19 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
     await db.updateDocument(databaseId,'class_sessions',writing.$id,{notesMarkdown:JSON.stringify(next),publishedNotesMarkdown:writing.status==='published'?writingArchive(writing):'',updatedAt:new Date().toISOString()});
     return {ok:true};
   }
+  if(body.action==='setReadingRequirements') {
+    if(!teacher||writing)fail('Only the class teacher may set reading requirements');
+    const r=body.requirements;
+    if(!r||!Number.isInteger(r.questions)||r.questions<0||r.questions>100||!Number.isInteger(r.replies)||r.replies<0||r.replies>100||typeof r.replyQuoteRequired!=='boolean')fail('Choose 0–100 questions and replies and a quote setting');
+    const data={workspaceId,dataJson:JSON.stringify({...savedSettings,requirements:{questions:r.questions,replies:r.replies,replyQuoteRequired:r.replyQuoteRequired},updatedBy:userId,updatedAt:new Date().toISOString()})};
+    if(settings)await db.updateDocument(databaseId,'reading_settings',workspaceId,data);
+    else await db.createDocument(databaseId,'reading_settings',workspaceId,data,[]);
+    return {ok:true};
+  }
   if(body.action==='setReadingDiscussionIdentity') {
     if(!teacher)fail('Only the class teacher may change name visibility');
     if(typeof body.showStudentNames!=='boolean')fail('Choose a name visibility setting');
-    const data={workspaceId,dataJson:JSON.stringify({showStudentNames:body.showStudentNames,updatedBy:userId,updatedAt:new Date().toISOString()})};
+    const data={workspaceId,dataJson:JSON.stringify({...savedSettings,showStudentNames:body.showStudentNames,updatedBy:userId,updatedAt:new Date().toISOString()})};
     if(settings)await db.updateDocument(databaseId,'reading_settings',workspaceId,data);
     else {
       try { await db.createDocument(databaseId,'reading_settings',workspaceId,data,[]); }
@@ -249,9 +260,9 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
     if(body.action==='deleteReadingQuestionDraft'){const draft=drafts.find(d=>d.id===body.draftId);if(!draft||draft.publishedId)fail('Private draft is not available');await db.deleteDocument(databaseId,'reading_question_drafts',draft.id);return {ok:true};}
     if(body.action==='publishReadingQuestions'){
       const ids=[...new Set(Array.isArray(body.draftIds)?body.draftIds:[])];
-      if(!ids.length||ids.length>3)fail('Choose up to three saved drafts');
+      if(!ids.length||ids.length>questionLimit)fail(`Choose up to ${questionLimit} saved drafts`);
       const chosen=ids.map(id=>drafts.find(d=>d.id===id));if(chosen.some(d=>!d))fail('Private draft is not available');
-      const fresh=chosen.filter(d=>!d.publishedId);if(fresh.length&&publishedCount+fresh.length>3)fail('You can publish at most three questions per text discussion');
+      const fresh=chosen.filter(d=>!d.publishedId);if(fresh.length&&publishedCount+fresh.length>questionLimit)fail(`You can publish at most ${questionLimit===3?'three':questionLimit} questions per text discussion`);
       for(const draft of fresh){
         const id=key(workspaceId,userId,'published',draft.id);
         const data={parentId:null,category:'question',content:draft.content,quotation:'',paragraph:null,label:`Reader ${key(workspaceId,userId).slice(0,6).toUpperCase()}`,teacher:false,createdAt:new Date().toISOString(),hidden:false,locked:false,pinned:false};
@@ -288,8 +299,9 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
     return {
       ...(writing?{discussionMode:config.discussionMode,studentsCanView:config.studentsCanView,canSubmit:eligible&&Boolean(writing.assignmentId)&&profile.role==='student',canReply:eligible&&config.discussionMode&&(teacher||config.studentsCanView)}:{}),
       ...(voting?{voting}:{}),
-      curatedReady:true, ...(profile.role==='student'?{notebook:drafts.filter(d=>!d.publishedId).map(({id,content,draftId,updatedAt})=>({id,content,draftId,updatedAt})),publishedCount,remainingSpaces:Math.max(0,3-publishedCount),assignments:(writing&&!config.studentsCanView?[]:rounds).flatMap(r=>r.assignments.filter(a=>a.studentId===userId).map(a=>({...a,roundId:r.id,createdAt:r.createdAt})))}:{}),
+      curatedReady:true, ...(profile.role==='student'?{notebook:drafts.filter(d=>!d.publishedId).map(({id,content,draftId,updatedAt})=>({id,content,draftId,updatedAt})),publishedCount,remainingSpaces:Math.max(0,questionLimit-publishedCount),assignments:(writing&&!config.studentsCanView?[]:rounds).flatMap(r=>r.assignments.filter(a=>a.studentId===userId).map(a=>({...a,roundId:r.id,createdAt:r.createdAt})))}:{}),
       ...(teacher?{rounds:rounds.map(round=>({...round,assignments:round.assignments.map(a=>a.status==='pending'&&!studentIds.includes(a.studentId)?{...a,status:'cancelled',cancelledReason:'Student left class'}:a)})),awaitingReplies:posts.filter(p=>!p.parentId&&p.category==='question'&&!p.withdrawn&&!p.hidden&&!posts.some(r=>r.parentId===p.id)).map(p=>p.id)}:{}),
+      requirements,
       title: text.title, className: `${cls.courseName || ''} · ${cls.name}`, teacher, showStudentNames, canWrite: eligible && (teacher || profile.role === 'student') && (!writing || (config.discussionMode && (teacher||config.studentsCanView))),
       posts: posts.filter(visible).map(p => {
         const { authorId, ...safe } = p;
@@ -300,7 +312,8 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
       }),
       participation: people.filter(person=>studentIds.includes(person.$id)).map(person => ({ id: person.$id, name: person.name,
         ...Object.fromEntries(categories.map(category => [category, posts.filter(p => p.authorId === person.$id && !p.withdrawn && !p.parentId && p.category === category).length])),
-        replies: posts.filter(p => p.authorId === person.$id && p.parentId).length })),
+        replies: posts.filter(p => p.authorId === person.$id && p.parentId && ancestors(p).every(a=>!a.withdrawn)).length,
+        quotedReplies: posts.filter(p => p.authorId === person.$id && p.parentId && ancestors(p).every(a=>!a.withdrawn) && p.quotation?.trim()).length })),
     };
   }
   if (!teacher && profile.role !== 'student') fail('This account is read-only');
@@ -316,7 +329,7 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
     if (parent && ancestors(parent).length >= 4) fail('Replies may be nested three levels');
     const category = parent?.category || body.category;
     if (!categories.includes(category)) fail('Choose a contribution category');
-    if(!teacher&&!parent&&category==='question'&&publishedCount>=3)fail('You can publish at most three questions per text discussion');
+    if(!teacher&&!parent&&category==='question'&&publishedCount>=questionLimit)fail(`You can publish at most ${questionLimit===3?'three':questionLimit} questions per text discussion`);
     const paragraph = body.paragraph === '' || body.paragraph == null ? null : Number(body.paragraph);
     if (paragraph !== null && (!Number.isInteger(paragraph) || paragraph < 1 || paragraph > 10000)) fail('Use a paragraph number between 1 and 10000');
     const data = { parentId: parent?.id || null, category, content, quotation: quotationText(body.quotation), paragraph,

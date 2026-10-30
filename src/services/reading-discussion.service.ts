@@ -13,12 +13,14 @@ export interface QuestionVoting {
   choices?: string[]; questionIds?: string[];
   progress?: {studentId:string;completedRounds:number;totalRounds:number;completed:boolean}[];
 }
+export interface ReadingRequirements { questions:number; replies:number; replyQuoteRequired:boolean }
 export interface ReadingDiscussion {
+  requirements?:ReadingRequirements|null;
   discussionMode?:boolean; studentsCanView?:boolean; canSubmit?:boolean; canReply?:boolean;
   voting?: QuestionVoting;
   curatedReady?:boolean;notebook?:{id:string;draftId:string;content:string;updatedAt:string}[];publishedCount?:number;remainingSpaces?:number;assignments?:ReplyAssignment[];rounds?:{id:string;createdAt:string;assignments:ReplyAssignment[]}[];awaitingReplies?:string[];
   title:string; className:string; teacher:boolean; showStudentNames?:boolean; canWrite:boolean; posts:ReadingDiscussionPost[];
-  participation:{id:string;name:string;thought:number;question:number;connection:number;replies:number}[];
+  participation:{id:string;name:string;thought:number;question:number;connection:number;replies:number;quotedReplies?:number}[];
 }
 export interface ReadingDiscussionListing { id:string;textId:string;classId:string;title:string;className:string;date:string;available:boolean;questionCount?:number;replyCount?:number }
 export const readingDiscussion = <T>(action:string, textId:string, classId:string, fields:Record<string,unknown>={}) => executeLearningContent<T>({action,textId,classId,...fields});
@@ -49,3 +51,7 @@ export type DiscussionTarget = {kind:'text';textId:string;classId:string}|{kind:
 export const discussionCall = <T>(action:string,target:DiscussionTarget,fields:Record<string,unknown>={}) => target.kind==='text'
   ? readingDiscussion<T>(action,target.textId,target.classId,fields)
   : executeLearningContent<T>({action,...fields,writingSessionId:target.sessionId});
+
+export function readingCompletion(counts:ReadingDiscussion['participation'][number], requirements:ReadingRequirements) {
+  return counts.question>=requirements.questions && (requirements.replyQuoteRequired?(counts.quotedReplies||0):counts.replies)>=requirements.replies;
+}

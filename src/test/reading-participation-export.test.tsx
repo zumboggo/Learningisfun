@@ -4,7 +4,7 @@ import { readingDiscussion } from '@/services/reading-discussion.service';
 import { buildReadingParticipationCsv, exportReadingParticipation } from '@/services/reading-participation-export';
 import { ReadingParticipationExport } from '@/components/reports/ReadingParticipationExport';
 import { downloadCsv } from '@/services/report.service';
-vi.mock('@/services/reading-discussion.service', () => ({ readingDiscussion: vi.fn() }));
+vi.mock('@/services/reading-discussion.service', async importOriginal => ({ ...await importOriginal<typeof import('@/services/reading-discussion.service')>(), readingDiscussion: vi.fn() }));
 vi.mock('@/services/report.service', () => ({ downloadCsv: vi.fn() }));
 const read = vi.mocked(readingDiscussion);
 const counts = (id: string, name: string, question: number, replies: number) => ({ id, name, question, replies, thought: 7, connection: 4 });
@@ -59,4 +59,9 @@ it('keeps account emails on totals and text rows when server participation repla
   expect(csv).toContain('Student,Email,Student ID');
   expect(csv).toContain('Nickname,student@example.com,s,Student total');
   expect(csv).toContain('Nickname,student@example.com,s,Text breakdown');
+});
+
+it('exports saved requirements and quote-based completion',()=>{
+ const csv=buildReadingParticipationCsv('c','Ethics',[{id:'s',name:'Student'}],[{textId:'t',title:'Story',requirements:{questions:1,replies:2,replyQuoteRequired:true},students:[{...counts('s','Student',1,3),quotedReplies:1}]}]);
+ expect(csv).toContain('1,3,4,1,2,Yes,1,Incomplete');
 });
