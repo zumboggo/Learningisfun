@@ -12,7 +12,7 @@ vi.mock('@/services/sync.service', () => ({ setupSyncListeners: vi.fn() }));
 vi.mock('@/services/class.service', () => ({ syncClassesFromServer: vi.fn() }));
 vi.mock('@/services/class-material-refresh.service', () => ({ syncClassMaterials: mocks.sync }));
 vi.mock('@/services/learning-content.service', () => ({ executeLearningContent: mocks.request }));
-vi.mock('@/services/flashcard-cache', () => ({ invalidateDeckCards: vi.fn() }));
+vi.mock('@/services/flashcard-cache', () => ({ invalidateDeckCards: vi.fn(), refreshDueDeckCards: vi.fn(async () => {}) }));
 vi.mock('@/services/private-episode-content', () => ({ clearPrivateEpisodeMemory: vi.fn() }));
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { db } from '@/db/schema';
