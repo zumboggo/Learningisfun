@@ -35,3 +35,29 @@ html,body{margin:0;min-height:100%;}main{padding-top:20px;}
 @media(max-width:760px){.planning-sheet{display:flex;flex-direction:column;padding:12px}.notes-column,.topics-column{width:100%}.main-notes{max-height:170px}.planning-sheet #title{font-size:16px}.calendar-toolbar input{width:145px}#calendar{grid-template-columns:1fr}.calendar-panel{height:250px;border-left:0;border-top:1px solid #dce6ed;padding:12px 0 0}.row{min-width:0;height:160px}.row-label textarea{font-size:11px}.card{font-size:10px}.calendar-day{height:67px}}
 @media print{.planning-sheet{width:100%;height:auto}.calendar-panel{overflow:visible}.calendar-entries{overflow:visible}.retained-rows:not([open]){display:none}}
 @media(min-width:761px){.calendar-day{height:54px;padding:3px;gap:1px}.calendar-preview{line-height:11px}.calendar-panel{height:393px}}
+
+/* Compact brainstorming header: working space comes first. */
+.compact-header{height:auto;min-height:88px;gap:22px;padding:14px 0;margin-bottom:16px;border-bottom:1px solid #d4e1e8;flex-wrap:wrap}
+.compact-header .brand{font-size:22px;white-space:nowrap}
+.compact-header .board-picker{border-left:1px solid #cbdce1;padding-left:22px}
+.compact-header #boards-toggle{padding:5px 0;border:0;background:transparent;font-size:18px;font-weight:700;gap:16px;max-width:290px}
+.compact-header #current-board-name{color:#243b32;max-width:240px}
+.compact-header #count{font-size:12px;color:#61736c}
+.compact-actions{display:flex;align-items:center;gap:10px;margin-left:auto}
+.compact-actions #save-board{font-size:14px;padding:11px 20px}
+.compact-actions #cloud-status{max-width:200px;font-size:12px;color:#526d60}
+#help-toggle{width:42px;padding:10px;font-weight:700}
+#options-toggle[aria-expanded=true]{background:#e1eee6;border-color:#94b6a3}
+.options-panel{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;background:#ffffffed;border:1px solid #d3e0e8;border-radius:12px;padding:20px 24px;margin-bottom:20px}
+.options-panel[hidden],.planning-help[hidden]{display:none}
+.option-group{display:flex;flex-direction:column;gap:6px;min-width:0}
+.option-group+.option-group{border-left:1px solid #e3eae7;padding-left:24px}
+.option-group h2{font-family:inherit;font-size:15px;letter-spacing:0;color:#326b56;margin:0 0 5px}
+.option-group button{font-size:13px!important;text-align:left;padding:8px 12px;min-height:38px;background:#fff;border-color:#dce5e1}
+.option-group button:hover{background:#edf5ef}
+.option-group small{display:block;color:#61736c;font-size:11px;margin-top:4px}
+.options-status{grid-column:1/-1;display:flex;gap:16px;font-size:11px;color:#61736c}
+.planning-help{background:#fff;border:1px solid #d3e0e8;border-radius:10px;padding:16px 20px;margin-bottom:16px;font-size:13px;color:#42594d}
+.planning-help p{margin:7px 0;line-height:1.5}
+@media(max-width:760px){.compact-header{gap:12px;padding:16px 0;min-height:0}.compact-header .brand{font-size:18px}.compact-header .mark{font-size:25px}.compact-header .board-picker{padding-left:12px}.compact-header #boards-toggle{max-width:160px;font-size:16px}.compact-actions{width:100%;margin-left:0;gap:8px}.compact-actions #cloud-status{margin-right:auto;max-width:120px}.compact-actions button{padding:10px 12px}.options-panel{grid-template-columns:1fr;padding:16px;gap:16px}.option-group+.option-group{border-left:0;border-top:1px solid #e3eae7;padding:14px 0 0}.option-group button{min-height:44px}.compact-header #boards-menu{left:auto;right:0;max-width:calc(100vw - 40px)}}
+@media print{.compact-header,.options-panel,.planning-help{display:none}}

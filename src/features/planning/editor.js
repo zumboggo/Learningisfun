@@ -322,3 +322,11 @@ function renderCalendar(){
 }
 
 $('#pdf').onclick=exportPDF;render();
+
+// Disclosure panels leave all existing action handlers and board data intact.
+for (const [trigger, panel] of [['options-toggle','planning-options'],['help-toggle','planning-help']]) {
+  const button = $('#'+trigger), content = $('#'+panel);
+  button.onclick = () => { content.hidden = !content.hidden; button.setAttribute('aria-expanded', String(!content.hidden)); };
+  content.addEventListener('keydown', event => { if(event.key === 'Escape') { content.hidden = true; button.setAttribute('aria-expanded','false'); button.focus(); } });
+  button.addEventListener('keydown', event => { if(event.key === 'Escape') { content.hidden = true; button.setAttribute('aria-expanded','false'); } });
+}
