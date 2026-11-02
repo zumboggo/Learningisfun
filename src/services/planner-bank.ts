@@ -1,3 +1,4 @@
+import { removeRetiredActivities } from './planner-retired-activities';
 import { mergePlannerQuizzes } from './planner-quizzes';
 import { isTextDiscussion } from './planner-routines';
 import type { WeeklyPlanData } from './planner.service';
@@ -17,7 +18,7 @@ function signature(slot: LessonSlot) {
 
 /** One bank per course/week. Existing divergent edits remain distinct resources. */
 export function prepareWeeklyBank(data: WeeklyPlanData): WeeklyPlanData {
-  const next = mergePlannerQuizzes(data);
+  const next = removeRetiredActivities(mergePlannerQuizzes(data));
   next.weeklyResources ||= [];
   // Keep legacy IDs and lesson completion while updating the reusable label.
   for (const slot of [...next.weeklyResources, ...next.lessons.flatMap(lesson => [...(lesson.slots || []), ...(lesson.overflow || [])])]) {

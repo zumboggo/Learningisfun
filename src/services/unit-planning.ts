@@ -1,3 +1,4 @@
+import { removeRetiredActivities } from './planner-retired-activities';
 import { parseCsvRows } from '@/utils/csv-parser';
 import { executeLearningContent } from './learning-content.service';
 import type { PlannerWeekSource } from './planner-parser';
@@ -118,7 +119,7 @@ export function applyUnitPublication(data:WeeklyPlanData,units:UnitPlan[]):Weekl
 }
 /** Only initialize a lesson once. Subsequent unit edits cannot overwrite manual placements. */
 export function populateSlots(data: WeeklyPlanData, units: UnitPlan[]): WeeklyPlanData {
-  const next = structuredClone(data);
+  const next = removeRetiredActivities(structuredClone(data));
   next.unitSnapshot ||= structuredClone(units);
   for (const lesson of next.lessons) {
     if (lesson.slots) continue;
