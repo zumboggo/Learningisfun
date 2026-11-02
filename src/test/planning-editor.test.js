@@ -229,10 +229,11 @@ test('task handles support keyboard reordering and cancelled drags leave tasks i
   dom.window.close();
 });
 
-test('calendar starts blank and retains first rows separately from six board rows', () => {
+test('calendar starts closed and all eight planning rows preserve their contents', () => {
  const dom=evaluate('calendar', `state.cards[0]='Keep original thought';state.rows[0]='Old topic';render();window.snapshot=JSON.parse(localStorage.getItem(LIBRARY_KEY));`);
- expect(dom.window.document.querySelectorAll('#board .row')).toHaveLength(6);
- expect(dom.window.document.querySelectorAll('#retained .row')).toHaveLength(2);
+ expect(dom.window.document.querySelectorAll('#board .row')).toHaveLength(8);
+ expect(dom.window.document.querySelector('.calendar-disclosure').open).toBe(false);
+ expect(dom.window.document.querySelector('#board .card').textContent).toContain('Keep original thought');
  expect(dom.window.document.querySelectorAll('.calendar-preview')).toHaveLength(0);
  expect(dom.window.snapshot.boards[0].data.cards[0]).toBe('Keep original thought');
  dom.window.close();

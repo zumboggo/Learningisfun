@@ -68,3 +68,11 @@ html,body{margin:0;min-height:100%;}main{padding-top:20px;}
 .notes-column .main-notes{flex:1;max-height:none;overflow:visible}
 .notes-column #todo-list{min-height:240px;overflow:visible}
 @media(max-width:760px){.notes-column .main-notes{flex:initial}.notes-column #todo-list{min-height:0}}
+
+.calendar-disclosure{border:1px solid #d3e0e8;border-radius:9px;background:#f8fbfd}
+.calendar-disclosure>summary{cursor:pointer;padding:12px 14px;font-size:14px;font-weight:600;color:#326b56}
+.calendar-disclosure>summary span{font-size:12px;font-weight:400;color:#607587;margin-left:12px}
+.calendar-disclosure>summary:focus-visible{outline:3px solid #638f7b;outline-offset:2px}
+.calendar-disclosure[open]>summary{border-bottom:1px solid #d3e0e8;margin-bottom:12px}
+.calendar-disclosure #calendar{padding:0 12px 12px}
+@media(max-width:760px){.calendar-disclosure>summary span{display:none}}
