@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import { WeeklyMaterialRow } from './classes/WeeklyMaterialRow';
+import thumbnails from './classes/episode-thumbnails.json';
 import EpisodePublicSharing from '@/components/animated/EpisodePublicSharing';
 import type {ReactNode} from 'react';
 import {EpisodeTopicBank,type TopicEntry} from './EpisodeTopicBank';
@@ -7,7 +10,7 @@ import {GameLaunchLink} from '@/components/GameLaunchLink';
 import {useLiveQuery} from 'dexie-react-hooks';
 import {assignedEpisodes} from '../../functions/learning-content/src/episode-catalog.js';
 import {attemptsFor} from '@/services/episodes.service';
-export function EpisodeCards({classId,userId,preview=false,week,groupByTopic=false,extra}:{classId:string;userId:string;preview?:boolean;week?:string;groupByTopic?:boolean;extra?:ReactNode}){
+export function EpisodeCards({classId,userId,preview=false,week,groupByTopic=false,extra,compact=false}:{classId:string;userId:string;preview?:boolean;week?:string;groupByTopic?:boolean;extra?:ReactNode;compact?:boolean}){
  const native=useAnimatedLibrary(userId)?.assignments.filter((a:any)=>a.classId===classId&&(!week||episodeWeek(a.date)===week))||[];
  const rows=useLiveQuery(()=>attemptsFor(userId,classId),[userId,classId],[]);
 
@@ -16,6 +19,23 @@ export function EpisodeCards({classId,userId,preview=false,week,groupByTopic=fal
  const nativeCards=native.map((a:any)=>{const meta=episodeTopic(a);return {id:a.assignmentId,...meta,content:<article className="h-full rounded-xl border border-orange-200 p-4"><p className="text-sm text-orange-900">{meta.chapter||"Game episode"}</p><GameLaunchLink className="mt-2 block rounded-lg bg-orange-900 px-4 py-3 font-semibold text-white" to={"/game/play/"+a.assignmentId}>{a.title}</GameLaunchLink><p className="mt-3 text-sm">{preview?"Teacher preview":a.completed&&a.assessmentMode==='none'?"Story complete":a.best==null?"No completed attempt yet":`Highest score: ${a.best}/100`}</p>{preview&&a.versionId&&<EpisodePublicSharing versionId={a.versionId}/>}</article>};});
  const legacyCards:TopicEntry[]=catalog.map(e=>{const attempts=rows.filter(a=>a.episode===e.id&&a.version===e.version&&a.status==='complete'&&!a.preview);const scores:number[]=attempts.map(a=>a.score).filter((n):n is number=>typeof n==='number');return {id:e.assignmentId,...episodeTopic(e),content:<article className="rounded-xl border border-orange-200 p-4"><GameLaunchLink className="block rounded-lg bg-orange-900 px-4 py-3 font-semibold text-white" to={`/classes/${classId}/episodes/${e.id}`}>{e.title}</GameLaunchLink><p className="mt-3 text-sm">{e.description}</p><p className="mt-3 text-sm">{preview?"Teacher preview · excluded from rankings":scores.length?`Your highest score: ${Math.max(...scores)}/100`:attempts.length?"Story complete · open to review":"No completed attempt yet"}</p></article>};});
  if(groupByTopic)return <EpisodeTopicBank entries={[...(extra?[{id:"teaching-stone",topic:"The Teaching Stone",order:0,content:extra}]:[]),...nativeCards,...legacyCards]}/>;
+ if(compact){
+  const cards = [
+   ...native.map((a:any)=>({key:a.assignmentId,id:a.id,title:a.title,date:a.date,to:'/game/play/'+a.assignmentId,versionId:a.versionId,status:a.completed&&a.assessmentMode==='none'?'Story complete':a.best==null?'Not started':`Highest score: ${a.best}/100`})),
+   ...catalog.map(e=>{const completed=rows.filter(a=>a.episode===e.id&&a.version===e.version&&a.status==='complete'&&!a.preview);const scores=completed.map(a=>a.score).filter((n):n is number=>typeof n==='number');return {key:e.assignmentId,id:e.id,title:e.title,date:e.assignedDate||'',to:`/classes/${classId}/episodes/${e.id}`,versionId:undefined,status:scores.length?`Highest score: ${Math.max(...scores)}/100`:completed.length?'Story complete':'Not started'};})
+  ].sort((a,b)=>a.date.localeCompare(b.date)||a.title.localeCompare(b.title));
+  return <WeeklyMaterialRow title="Episodes" count={cards.length} color="orange" columns={3}>{cards.map(card=><article className="weekly-episode" key={card.key}>
+   <EpisodeThumbnail id={card.id}/>
+   <div className="weekly-episode-copy"><p className="weekly-episode-date">{card.date?new Date(card.date+'T12:00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}):'Game episode'}</p><h4 className="weekly-episode-title">{card.title}</h4><GameLaunchLink aria-label={`${preview ? 'Preview' : 'Play / replay'} ${card.title}`} className="weekly-episode-launch" to={card.to}><span aria-hidden="true">▶</span>{preview?'Preview':'Play / replay'}<span className="sr-only"> {card.title}</span></GameLaunchLink>{!preview&&<p className="weekly-episode-status">{card.status}</p>}</div>
+   {preview&&card.versionId&&<details className="weekly-episode-menu"><summary aria-label={`Sharing options for ${card.title}`}>⋮</summary><div><EpisodePublicSharing versionId={card.versionId}/></div></details>}
+  </article>)}</WeeklyMaterialRow>;
+ }
  return <section className="space-y-3" aria-label="Game episodes">{native.map((a:any)=><article key={a.assignmentId} className="rounded-xl border border-orange-300 bg-orange-50 p-5"><p>Game episode · {a.date}</p><h2 className="text-xl font-bold">{a.title}</h2><p>{a.assessmentMode==='none'?'Story-only episode · unlimited replays':'Four knowledge questions · unlimited replays'}</p>{!preview&&<p>{a.completed&&a.assessmentMode==='none'?"Story complete":a.best==null?"No completed attempt yet":`Highest score: ${a.best}/100`}</p>}<GameLaunchLink className="inline-block py-3 underline" to={"/game/play/"+a.assignmentId}>{preview?"Preview":"Play / replay"}</GameLaunchLink>{preview&&a.versionId&&<EpisodePublicSharing versionId={a.versionId}/>}</article>)}{catalog.map(e=>{const attempts=rows.filter(a=>a.episode===e.id&&a.version===e.version&&a.status==='complete'&&!a.preview);const scores:number[]=attempts.map(a=>a.score).filter((n):n is number=>typeof n==='number');return <article key={e.assignmentId} className="rounded-xl border border-orange-300 bg-orange-50 p-5 text-orange-950"><p className="text-xs font-semibold uppercase">Game episode · {e.assignedDate}</p><h2 className="my-2 text-xl font-bold">{e.title}</h2><p>{e.description}</p><p className="mt-2 text-sm">{e.profile==='world-literature'?'Evidence · Interpretation · Language & Form · Connections · 25 points each':'Story choices · teacher-reviewed writing'}</p><p className="my-3 text-sm">{preview?'Teacher preview · excluded from rankings':scores.length?'Your highest score: '+Math.max(...scores)+'/100':attempts.length?'Story complete · open to review your work':'No completed attempt yet'}</p><GameLaunchLink className="inline-block rounded bg-orange-900 px-4 py-3 font-semibold text-white" to={`/classes/${classId}/episodes/${e.id}`}>{preview?'Preview episode':'Play / replay'}</GameLaunchLink></article>;})}</section>;
 }
 export function episodeWeek(date:string){const d=new Date(date+'T00:00:00Z');d.setUTCDate(d.getUTCDate()-(d.getUTCDay()+6)%7);return d.toISOString().slice(0,10);}
+
+function EpisodeThumbnail({id}:{id:string}) {
+ const [failed,setFailed]=useState(false);
+ const path=(thumbnails as Record<string,string>)[id];
+ return path&&!failed?<img className="weekly-episode-art" src={import.meta.env.BASE_URL+path} alt="" loading="lazy" width={64} height={64} onError={()=>setFailed(true)}/>:<span className="weekly-episode-art" aria-hidden="true">▶</span>;
+}
