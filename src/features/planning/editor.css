@@ -61,3 +61,10 @@ html,body{margin:0;min-height:100%;}main{padding-top:20px;}
 .planning-help p{margin:7px 0;line-height:1.5}
 @media(max-width:760px){.compact-header{gap:12px;padding:16px 0;min-height:0}.compact-header .brand{font-size:18px}.compact-header .mark{font-size:25px}.compact-header .board-picker{padding-left:12px}.compact-header #boards-toggle{max-width:160px;font-size:16px}.compact-actions{width:100%;margin-left:0;gap:8px}.compact-actions #cloud-status{margin-right:auto;max-width:120px}.compact-actions button{padding:10px 12px}.options-panel{grid-template-columns:1fr;padding:16px;gap:16px}.option-group+.option-group{border-left:0;border-top:1px solid #e3eae7;padding:14px 0 0}.option-group button{min-height:44px}.compact-header #boards-menu{left:auto;right:0;max-width:calc(100vw - 40px)}}
 @media print{.compact-header,.options-panel,.planning-help{display:none}}
+
+/* Keep the board title first and let tasks use the remaining left column. */
+.notes-column{display:flex;flex-direction:column;gap:16px;align-self:stretch}
+.planning-sheet .notes-column #title{margin-top:0;flex:0 0 76px;height:76px;min-height:76px}
+.notes-column .main-notes{flex:1;max-height:none;overflow:visible}
+.notes-column #todo-list{min-height:240px;overflow:visible}
+@media(max-width:760px){.notes-column .main-notes{flex:initial}.notes-column #todo-list{min-height:0}}
