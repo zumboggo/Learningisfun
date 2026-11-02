@@ -6,9 +6,9 @@ from pathlib import Path
 from PIL import Image, ImageOps
 
 root = Path(__file__).resolve().parents[1]
-output = root / 'public/stories/thumbnails'
+output = root / 'src/assets/episode-thumbnails'
 output.mkdir(parents=True, exist_ok=True)
-manifest = {}
+built = 0
 preferred = {'dinner-with-the-tyrant': 'palace', 'the-sheep-behind-our-house': 'yard', 'the-welcome-nobody-wanted': 'square'}
 for source in sorted((root / 'public/stories/animated').glob('*/episode.json')):
     pack = json.loads(source.read_text())
@@ -23,6 +23,5 @@ for source in sorted((root / 'public/stories/animated').glob('*/episode.json')):
         continue
     image = Image.open(io.BytesIO(base64.b64decode(src.split(',', 1)[1]))).convert('RGB')
     ImageOps.fit(image, (160, 160)).save(output / f'{source.parent.name}.webp', quality=78)
-    manifest[source.parent.name] = f'stories/thumbnails/{source.parent.name}.webp'
-(root / 'src/components/classes/episode-thumbnails.json').write_text(json.dumps(manifest, indent=2) + '\n')
-print(f'Built {len(manifest)} lightweight episode thumbnails')
+    built += 1
+print(f'Built {built} lightweight episode thumbnails')

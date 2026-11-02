@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { WeeklyMaterialRow } from './classes/WeeklyMaterialRow';
-import thumbnails from './classes/episode-thumbnails.json';
+const thumbnailAssets = import.meta.glob<string>('../assets/episode-thumbnails/*.webp', { eager: true, query: '?url', import: 'default' });
 import EpisodePublicSharing from '@/components/animated/EpisodePublicSharing';
 import type {ReactNode} from 'react';
 import {EpisodeTopicBank,type TopicEntry} from './EpisodeTopicBank';
@@ -36,6 +36,6 @@ export function episodeWeek(date:string){const d=new Date(date+'T00:00:00Z');d.s
 
 function EpisodeThumbnail({id}:{id:string}) {
  const [failed,setFailed]=useState(false);
- const path=(thumbnails as Record<string,string>)[id];
- return path&&!failed?<img className="weekly-episode-art" src={import.meta.env.BASE_URL+path} alt="" loading="lazy" width={64} height={64} onError={()=>setFailed(true)}/>:<span className="weekly-episode-art" aria-hidden="true">▶</span>;
+ const path=thumbnailAssets[`../assets/episode-thumbnails/${id}.webp`];
+ return path&&!failed?<img className="weekly-episode-art" src={path} alt="" loading="lazy" width={64} height={64} onError={()=>setFailed(true)}/>:<span className="weekly-episode-art" aria-hidden="true">▶</span>;
 }
