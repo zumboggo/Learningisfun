@@ -228,3 +228,31 @@ test('task handles support keyboard reordering and cancelled drags leave tasks i
   expect([...doc.querySelectorAll('.todo-row textarea')].map(input=>input.value)).toEqual(['Second','First','Third']);
   dom.window.close();
 });
+
+test('calendar starts blank and retains first rows separately from six board rows', () => {
+ const dom=evaluate('calendar', `state.cards[0]='Keep original thought';state.rows[0]='Old topic';render();window.snapshot=JSON.parse(localStorage.getItem(LIBRARY_KEY));`);
+ expect(dom.window.document.querySelectorAll('#board .row')).toHaveLength(6);
+ expect(dom.window.document.querySelectorAll('#retained .row')).toHaveLength(2);
+ expect(dom.window.document.querySelectorAll('.calendar-preview')).toHaveLength(0);
+ expect(dom.window.snapshot.boards[0].data.cards[0]).toBe('Keep original thought');
+ dom.window.close();
+});
+test('calendar saves full notes, limits previews, navigates years, and restores entries', () => {
+ const dom=evaluate('calendar', `calendarMonth='2026-12';calendarDay='2026-12-31';renderCalendar();`);
+ const doc=dom.window.document;
+ for(let i=0;i<4;i++){
+   doc.querySelector('[aria-label="Add calendar item"]').click();
+   const note=doc.querySelector('#calendar-note');note.value='Important words with all the longer details '+i;note.dispatchEvent(new dom.window.Event('input'));
+   doc.querySelector('[aria-label="Close calendar note"]').click();
+ }
+ expect(doc.querySelector('[data-date="2026-12-31"] .calendar-count').textContent).toBe('4');
+ expect(doc.querySelectorAll('[data-date="2026-12-31"] .calendar-preview')).toHaveLength(3);
+ expect(doc.querySelector('.calendar-preview').textContent).toBe('Important words');
+ const saved=dom.window.localStorage.getItem('learning-planning:calendar');
+ const restored=open('calendar',{'learning-planning:calendar':saved});
+ expect(Object.values(JSON.parse(saved).boards[0].data.calendar)[0].text).toContain('all the longer details');
+ doc.querySelector('[aria-label="Next month"]').click();
+ expect(doc.querySelector('[aria-label="Calendar month"]').value).toBe('2027-01');
+ expect(JSON.parse(restored.win.localStorage.getItem('learning-planning:calendar')).boards[0].data.calendar).toEqual(JSON.parse(saved).boards[0].data.calendar);
+ restored.dom.window.close();dom.window.close();
+});

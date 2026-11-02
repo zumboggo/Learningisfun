@@ -19,7 +19,7 @@ function device(cloud, saved) {
     queueMicrotask(() => win.dispatchEvent(new win.MessageEvent('message', { origin: win.PLANNING_ORIGIN, source: win,
       data: { type: 'planning-response', id: request.id, data } })));
   });
-  win.eval(editor + '\n' + merge + '\n' + sync + '\nwindow.edit = (i,value) => { state.cards[i] = value; save(); }; window.snapshot = () => JSON.parse(JSON.stringify(library)); window.remove = () => {window.confirm=()=>true;deleteBoard(currentId)};');
+  win.eval(editor + '\n' + merge + '\n' + sync + '\nwindow.calendarEdit = (id,value) => {state.calendar ||= {};state.calendar[id]=value;save()}; window.edit = (i,value) => { state.cards[i] = value; save(); }; window.snapshot = () => JSON.parse(JSON.stringify(library)); window.remove = () => {window.confirm=()=>true;deleteBoard(currentId)};');
   return win;
 }
 
@@ -57,4 +57,21 @@ test('versioned account import wins over stale local content and offline edits u
     b.dispatchEvent(new b.Event('online')); await vi.advanceTimersByTimeAsync(21000);
     expect(a.snapshot().boards[0].data.cards[2]).toBe('Offline idea');
   } finally {windows.forEach(w=>w.close());vi.clearAllTimers();vi.useRealTimers();}
+});
+
+
+test('calendar independently merges entries and keeps removals across devices', async () => {
+ vi.useFakeTimers();const cloud=new Map();const windows=[];
+ try {
+  const a=device(cloud);windows.push(a);await vi.advanceTimersByTimeAsync(1100);
+  const b=device(cloud,a.snapshot());windows.push(b);await vi.advanceTimersByTimeAsync(10);
+  a.calendarEdit('one',{date:'2026-12-31',text:'Laptop note'});
+  b.calendarEdit('two',{date:'2027-01-01',text:'Phone note'});
+  await vi.advanceTimersByTimeAsync(21000);
+  expect(a.snapshot().boards[0].data.calendar).toEqual(b.snapshot().boards[0].data.calendar);
+  expect(Object.keys(a.snapshot().boards[0].data.calendar)).toHaveLength(2);
+  a.calendarEdit('one',null);await vi.advanceTimersByTimeAsync(21000);
+  expect(b.snapshot().boards[0].data.calendar.one).toBeNull();
+  expect(b.snapshot().boards[0].data.calendar.two.text).toBe('Phone note');
+ }finally{windows.forEach(w=>w.close());vi.clearAllTimers();vi.useRealTimers()}
 });

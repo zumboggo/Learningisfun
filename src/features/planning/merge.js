@@ -4,6 +4,7 @@ function planningFields(data) {
   const fields = {};
   for (const [key, value] of Object.entries(data)) {
     if (['cards', 'cardDone', 'rows'].includes(key)) value.forEach((item, i) => { fields[key + '.' + i] = item; });
+    else if (key === 'calendar') Object.entries(value || {}).forEach(([id, item]) => { fields['calendar.' + id] = item; });
     else if (!['notes', 'todoChecked'].includes(key)) fields[key] = value;
   }
   fields.todo = { notes: data.notes, checked: data.todoChecked };
@@ -11,6 +12,7 @@ function planningFields(data) {
 }
 function planningSet(data, key, value) {
   if (key === 'todo') { data.notes = value.notes; data.todoChecked = value.checked; }
+  else if (key.startsWith('calendar.')) { data.calendar ||= {}; data.calendar[key.slice(9)] = value; }
   else if (/^(cards|cardDone|rows)\.\d+$/.test(key)) { const [name, i] = key.split('.'); data[name][Number(i)] = value; }
   else data[key] = value;
 }
