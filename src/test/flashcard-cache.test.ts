@@ -25,3 +25,36 @@ it('keeps an invalidated download available offline only to its account',async()
  vi.spyOn(navigator,'onLine','get').mockReturnValue(false);await ensureDeckCards('a','d');
  await expect(ensureDeckCards('b','d')).rejects.toThrow('online');expect(request).not.toHaveBeenCalled();
 });
+
+it('reuses weekly content while checking access, and refreshes on Friday 09:00 China time',async()=>{
+ const now=vi.spyOn(Date,'now').mockReturnValue(Date.parse('2026-11-06T00:59:59Z'));
+ request.mockResolvedValue({deck,cards:[card],revision:'r1',unchanged:false});
+ await ensureDeckCards('a','d');
+ request.mockResolvedValue({deck,unchanged:true});await ensureDeckCards('a','d');
+ expect(request.mock.lastCall?.[0].accessOnly).toBe(true);
+ now.mockReturnValue(Date.parse('2026-11-06T01:00:00Z'));
+ request.mockResolvedValue({deck,revision:'r1',unchanged:true});await ensureDeckCards('a','d');
+ expect(request.mock.lastCall?.[0].accessOnly).toBe(false);
+ await ensureDeckCards('a','d');expect(request.mock.lastCall?.[0].accessOnly).toBe(true);
+ await ensureDeckCards('a','d',true);expect(request.mock.lastCall?.[0].accessOnly).toBe(false);
+ now.mockRestore();
+});
+it('a failed refresh remains due and access revocation removes offline entitlement',async()=>{
+ request.mockResolvedValue({deck,cards:[card],revision:'r1',unchanged:false});await ensureDeckCards('a','d');
+ request.mockRejectedValueOnce(Error('Network'));await expect(ensureDeckCards('a','d',true)).rejects.toThrow('Network');
+ request.mockRejectedValueOnce(Object.assign(Error('Unavailable'),{code:403}));await expect(ensureDeckCards('a','d')).rejects.toThrow();
+ expect(await db.app_metadata.get(deckCacheKey('a','d'))).toBeUndefined();
+ vi.spyOn(navigator,'onLine','get').mockReturnValue(false);await expect(ensureDeckCards('a','d')).rejects.toThrow('online');
+});
+it('discards a download completed after logout',async()=>{
+ await db.app_metadata.put({key:'currentUserId',value:'a'});
+ request.mockImplementation(async()=>{await db.app_metadata.delete('currentUserId');return {deck,cards:[card],revision:'r1',unchanged:false};});
+ await expect(ensureDeckCards('a','d')).rejects.toThrow('Account changed');
+ expect(await db.app_metadata.get(deckCacheKey('a','d'))).toBeUndefined();
+});
+it('redownloads when local card rows are missing even if a revision marker remains',async()=>{
+ request.mockResolvedValue({deck,cards:[card],revision:'r1',unchanged:false});await ensureDeckCards('a','d');
+ await db.flashcard_cards.clear();await ensureDeckCards('a','d');
+ expect(request.mock.lastCall?.[0]).toMatchObject({accessOnly:false,revision:undefined});
+ expect(await db.flashcard_cards.get('card')).toBeDefined();
+});

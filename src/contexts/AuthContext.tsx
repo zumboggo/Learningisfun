@@ -1,3 +1,4 @@
+import {refreshDueDeckCards} from '@/services/flashcard-cache';
 import {useLocation} from 'react-router-dom';
 import {executeLearningContent} from '@/services/learning-content.service';
 import {isWorkshopPath,workshopLocation,WORKSHOP_CLASS_ID,type WorkshopAccess} from '@/services/workshop-context';
@@ -81,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const cachedUser = await authService.getCachedUser();
     const isTeacher = !workshopLocation()&&(cachedUser?.role === 'teacher' || cachedUser?.role === 'admin');
     await syncClassMaterials(classIds, userId, isTeacher, force, [...domains].filter((domain): domain is ContentDomain => domain !== 'account'));
+    await refreshDueDeckCards(userId);
   }, []);
 
   useEffect(() => {

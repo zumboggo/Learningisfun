@@ -5,6 +5,6 @@ export async function executeLearningContent<T>(payload: Record<string, unknown>
   const execution = await functions.createExecution(FUNCTION_IDS.learningContent, JSON.stringify(payload));
   if (execution.status === 'failed') throw new Error(execution.errors || 'Secure content request failed');
   const body = JSON.parse(execution.responseBody || '{}') as T & { error?: string };
-  if (body.error) throw new Error(body.error);
+  if (body.error) throw Object.assign(new Error(body.error), { code: execution.responseStatusCode });
   return body;
 }

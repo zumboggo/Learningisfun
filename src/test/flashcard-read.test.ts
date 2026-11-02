@@ -26,3 +26,10 @@ it('copywork-only queries never read decks, assignments, or cards',async()=>{
  expect(db.listDocuments).toHaveBeenCalledTimes(1);
  expect(db.listDocuments.mock.calls[0][1]).toBe('planning_materials');
 });
+it('weekly content reuse still checks access and does not fetch card rows',async()=>{
+ const {args,db}=setup();
+ expect((await readFlashcardDeck({...args,body:{deckId:'d',accessOnly:true}})).unchanged).toBe(true);
+ expect(db.listDocuments.mock.calls.map(c=>c[1])).toEqual(['deck_assignments']);
+ db.listDocuments.mockResolvedValue({documents:[]});
+ await expect(readFlashcardDeck({...args,body:{deckId:'d',accessOnly:true}})).rejects.toThrow('unavailable');
+});

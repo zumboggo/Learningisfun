@@ -9,6 +9,8 @@ export async function readFlashcardDeck({body,userId,memberClassIds,db,databaseI
     if(deck.status!=='published'||!assignments.documents.length)throw Object.assign(new Error('Deck unavailable for this account'),{code:403});
   }
   const revision=deck.updatedAt;
+  // Access is always checked above, even when the client retains weekly content.
+  if(body.accessOnly===true)return {deck,unchanged:true};
   if(typeof revision==='string'&&body.revision===revision)return {deck,revision,unchanged:true};
   const cards=await listAll(db,databaseId,'flashcard_cards',[Query.equal('deckId',deck.$id)]);
   const latest=await db.getDocument(databaseId,'flashcard_decks',deck.$id);

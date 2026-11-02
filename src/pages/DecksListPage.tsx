@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
-import { DEFAULT_DECK_STUDY_SETTINGS, deletePersonalDeck, getDeckCards, getDeckProgress, getDeckStudySettings, getStudentDecks, saveDeckStudySettings, setCardStudyPreference, updateEntireDeck, type DeckStudySettings, type EditableDeckCard } from '@/services/flashcard.service';
+import { syncDecksFromServer, DEFAULT_DECK_STUDY_SETTINGS, deletePersonalDeck, getDeckCards, getDeckProgress, getDeckStudySettings, getStudentDecks, saveDeckStudySettings, setCardStudyPreference, updateEntireDeck, type DeckStudySettings, type EditableDeckCard } from '@/services/flashcard.service';
 import { buildFlashcardDeckCsv } from '@/utils/csv-parser';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
@@ -35,6 +35,23 @@ export function DecksListPage() {
   const [openingEditorId, setOpeningEditorId] = useState('');
   const [exportingDeckId, setExportingDeckId] = useState('');
   const [actionError, setActionError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshMessage, setRefreshMessage] = useState('');
+  const refreshDecks = async () => {
+    if (!user || refreshing) return;
+    setRefreshing(true); setActionError(''); setRefreshMessage('');
+    try {
+      if (!navigator.onLine) throw new Error('Reconnect to refresh decks. Your downloaded cards remain available.');
+      const memberships = await db.class_members.where('userId').equals(user.$id).toArray();
+      const owned = await db.classes.where('teacherId').equals(user.$id).toArray();
+      const classIds = [...new Set([...memberships.map(m => m.classId), ...owned.map(c => c.$id)])];
+      if (!await syncDecksFromServer(classIds, user.$id)) throw new Error('Could not refresh decks. Please retry.');
+      const current = isTeacher ? await db.flashcard_decks.where('creatorId').equals(user.$id).toArray() : await getStudentDecks(user.$id);
+      for (const deck of current) await ensureDeckCards(user.$id, deck.$id, true);
+      setRefreshMessage('Decks refreshed.');
+    } catch (error) { setActionError(error instanceof Error ? error.message : 'Could not refresh decks. Please retry.'); }
+    finally { setRefreshing(false); }
+  };
   const [deletingDeckId, setDeletingDeckId] = useState('');
   const [selectedDeckIds, setSelectedDeckIds] = useState<Set<string> | null>(null);
   const [sessionSize, setSessionSize] = useState(30);
@@ -257,6 +274,7 @@ export function DecksListPage() {
         )}
       </div>
 
+      <div className="mb-4 flex flex-wrap items-center gap-3"><Button variant="secondary" size="sm" disabled={refreshing} onClick={() => void refreshDecks()}>{refreshing ? 'Refreshing…' : 'Refresh decks'}</Button><span className="text-sm text-slate-500">Words update Fridays after 09:00 China time, or when you next come online.</span>{refreshMessage && <span role="status" className="text-sm">{refreshMessage}</span>}</div>
       {actionError && <p className="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{actionError}</p>}
 
       {!isTeacher && user && decks && <StudentVocabularyChooser userId={user.$id} decks={decks} limit={sessionSize}/>}
