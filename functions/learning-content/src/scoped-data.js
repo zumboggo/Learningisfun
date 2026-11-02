@@ -6,9 +6,15 @@ export async function scopedDataAction({body,profile,userId,db,databaseId}){
  const {collection,operation,id}=body;if(!allowed.has(collection))fail('Use the dedicated classroom controls for this data.',403);
  const teacher=['teacher','admin'].includes(profile.role),members=await allRows(db,databaseId,'class_members',[Query.equal('userId',userId)]),owned=teacher?await allRows(db,databaseId,'classes',[Query.equal('teacherId',userId)]):[],ownedIds=new Set(owned.map(c=>c.$id)),classIds=new Set([...ownedIds,...members.filter(m=>m.role!=='substitute'||m.expiresAt&&Date.parse(m.expiresAt)>Date.now()).map(m=>m.classId)]);
  const ownClass=async classId=>{if(!teacher||!ownedIds.has(classId))fail('Class ownership required',403)};
- const assigned=classIds.size?await allRows(db,databaseId,'deck_assignments',[Query.equal('classId',[...classIds])]):[];
- const decks=await allRows(db,databaseId,'flashcard_decks',[Query.equal('creatorId',userId)]),deckIds=new Set(decks.map(d=>d.$id));
- for(const assignment of assigned){const deck=await db.getDocument(databaseId,'flashcard_decks',assignment.deckId);if(deck.status==='published')deckIds.add(deck.$id);}
+ // Resolve deck access only for operations that need it. Keep the promise
+ // inside this request: permissions must never be reused across users/requests.
+ let accessibleDecks;
+ const readDeckIds=()=>accessibleDecks??=(async()=>{
+  const assigned=classIds.size?await allRows(db,databaseId,'deck_assignments',[Query.equal('classId',[...classIds])]):[];
+  const decks=await allRows(db,databaseId,'flashcard_decks',[Query.equal('creatorId',userId)]),ids=new Set(decks.map(d=>d.$id));
+  for(const deckId of new Set(assigned.map(a=>a.deckId))){const deck=await db.getDocument(databaseId,'flashcard_decks',deckId);if(deck.status==='published')ids.add(deck.$id);}
+  return ids;
+ })();
  const ownDeck=async deckId=>{const deck=await db.getDocument(databaseId,'flashcard_decks',deckId);if(deck.creatorId!==userId)fail('Deck ownership required',403);return deck};
  const readScope=async()=>{
   if(collection==='classes')return Query.equal('$id',[...classIds,'__none__']);
@@ -16,8 +22,8 @@ export async function scopedDataAction({body,profile,userId,db,databaseId}){
   if(collection==='class_sessions')return Query.or([Query.equal('classId',[...ownedIds,'__none__']),Query.and([Query.equal('classId',[...classIds,'__none__']),Query.notEqual('status','draft')])]);
   if(collection==='deck_assignments')return Query.equal('classId',[...classIds,'__none__']);
   if(collection==='class_session_items'){const sessions=classIds.size?await allRows(db,databaseId,'class_sessions',[Query.equal('classId',[...classIds])]):[];return Query.equal('classSessionId',[...sessions.filter(s=>ownedIds.has(s.classId)||s.status==='published').map(s=>s.$id),'__none__']);}
-  if(collection==='flashcard_decks')return Query.equal('$id',[...deckIds,'__none__']);
-  if(collection==='flashcard_cards')return Query.equal('deckId',[...deckIds,'__none__']);
+  if(collection==='flashcard_decks')return Query.equal('$id',[...await readDeckIds(),'__none__']);
+  if(collection==='flashcard_cards')return Query.equal('deckId',[...await readDeckIds(),'__none__']);
   return Query.equal('userId',userId);
  };
  const sanitize=row=>collection==='class_sessions'&&!ownedIds.has(row.classId)?{...row,notesMarkdown:''}:collection==='classes'&&!ownedIds.has(row.$id)?{...row,joinCode:'',parentCode:'',parentCodeActive:false,substituteCode:'',substituteCodeActive:false}:row;
@@ -37,7 +43,7 @@ export async function scopedDataAction({body,profile,userId,db,databaseId}){
  else if(collection==='flashcard_decks'){if(prior&&prior.creatorId!==userId||next.creatorId!==userId)fail('Deck ownership required',403);if(!teacher&&next.type!=='personal')fail('Students can create only personal decks',403);}
  else if(collection==='flashcard_cards'){if(prior)await ownDeck(prior.deckId);await ownDeck(next.deckId);}
  else if(collection==='deck_assignments'){if(prior)await ownClass(prior.classId);await ownClass(next.classId);await ownDeck(next.deckId);}
- else if(ownUserCollections.has(collection)){if(prior?.userId&&prior.userId!==userId||next.userId!==userId)fail('Only your own study data is available',403);if(next.deckId&&!deckIds.has(next.deckId))fail('Deck unavailable',403);}
+ else if(ownUserCollections.has(collection)){if(prior?.userId&&prior.userId!==userId||next.userId!==userId)fail('Only your own study data is available',403);if(next.deckId&&!(await readDeckIds()).has(next.deckId))fail('Deck unavailable',403);}
  else if(collection==='class_session_items'){const session=await db.getDocument(databaseId,'class_sessions',next.classSessionId);await ownClass(session.classId);if(prior&&prior.classSessionId!==next.classSessionId)fail('Cannot move session items');}
  else fail('Use the dedicated lesson controls',403);
  if(operation==='create')return db.createDocument(databaseId,collection,id,data,[]);

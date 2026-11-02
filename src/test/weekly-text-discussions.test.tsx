@@ -57,3 +57,13 @@ it('discards stale results when changing classes', async () => {
   resolveBlue({ readings: [reading] });
   await waitFor(() => expect(screen.queryByRole('link', { name: 'Discussion for Essay' })).not.toBeInTheDocument());
 });
+
+it('scopes the request and polls at most once per five minutes while mounted', async () => {
+  const interval = vi.spyOn(window, 'setInterval');
+  execute.mockResolvedValue({ readings: [reading] });
+  render(<WeeklyTexts />);
+  await screen.findByRole('link', { name: 'Discussion for Essay' });
+  expect(execute).toHaveBeenCalledWith({ action: 'listReadingDiscussions', listingClassId: 'blue' });
+  expect(interval).toHaveBeenCalledWith(expect.any(Function), 300_000);
+  interval.mockRestore();
+});

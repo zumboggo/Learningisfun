@@ -25,9 +25,11 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
     return documents;
   };
   if (body.action === 'listReadingDiscussions') {
-    const classes = profile.role === 'teacher'
+    const accessibleClasses = profile.role === 'teacher'
       ? await list('classes', [Query.equal('teacherId', userId)])
       : memberClassIds.size ? await list('classes', [Query.equal('$id', [...memberClassIds])]) : [];
+    // Intersect the requested view with authorized classes before reading posts.
+    const classes = body.listingClassId === undefined ? accessibleClasses : accessibleClasses.filter(c => c.$id === body.listingClassId);
     if (!classes.length) return { readings: [] };
     const assignments = await list('text_assignments', [Query.equal('classId', classes.map(c => c.$id))]);
     const available = assignments.filter(a => a.isAssignedReading === true && (profile.role === 'teacher' || textAssignmentAvailable(a)));

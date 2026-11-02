@@ -167,3 +167,15 @@ test('listing counts beyond a page of contributions and ignores unassigned works
  storage.reading_posts.push({$id:'other',workspaceId:discussionKey('other-text','blue'),authorId:'student',dataJson:JSON.stringify({category:'question'})});
  expect((await call({action:'listReadingDiscussions'})).readings[0].questionCount).toBe(105);
 });
+
+test('class listings read only the requested authorized workspace',async()=>{
+ const {call,db,teacher}=harness();
+ const listing=await call({action:'listReadingDiscussions',listingClassId:'red'},teacher);
+ expect(listing.readings.map(r=>r.classId)).toEqual(['red']);
+ const calls=db.listDocuments.mock.calls.filter(c=>c[1]==='reading_posts');
+ expect(calls).toHaveLength(1);
+ expect(JSON.parse(calls[0][2][0]).values).toEqual([discussionKey('text','red')]);
+ db.listDocuments.mockClear();
+ expect((await call({action:'listReadingDiscussions',listingClassId:'red'})).readings).toEqual([]);
+ expect(db.listDocuments.mock.calls.some(c=>['reading_posts','texts','text_assignments'].includes(c[1]))).toBe(false);
+});
