@@ -7,12 +7,12 @@ import type { QuestionVoting } from '@/services/reading-discussion.service';
 import { ReadingDiscussionPage } from '@/pages/ReadingDiscussionPage';
 const fixture=vi.hoisted(()=>({teacher:false,canWrite:true,score:2,showStudentNames:false,curatedReady:false,voting:undefined as QuestionVoting|undefined}));
 vi.mock('@/contexts/AuthContext',()=>({useAuth:()=>({user:{$id:'student'}})}));
-vi.mock('@/services/learning-content.service',()=>({executeLearningContent:vi.fn(async(request)=>request.action==='readTexts'?{texts:[{$id:'text',title:'Reading example',author:'Author',contentMode:'full'}],paragraphs:[]}:({
+vi.mock('@/services/learning-content.service',()=>({executeLearningContent:vi.fn(async(request)=>request.action==='readRhetoricalSituation'?{responses:{writer:'',audience:'',purpose:'',exigence:'',context:'',message:''},updatedAt:null}:request.action==='readTexts'?{texts:[{$id:'text',title:'Reading example',author:'Author',contentMode:'full'}],paragraphs:[]}:({
   title:'Reading example',className:'Literature · Blue',teacher:fixture.teacher,canWrite:fixture.canWrite,showStudentNames:fixture.showStudentNames,curatedReady:fixture.curatedReady,voting:fixture.voting,
   posts:[{id:'q',parentId:null,category:'question',content:'Why does the narrator change?',quotation:'The world changed.',paragraph:3,username:'Student name',label:'Reader 123ABC',teacher:false,mine:false,createdAt:'2026-09-15T01:00:00Z',hidden:false,locked:false,pinned:false,score:fixture.score,voted:false}],participation:[],
 }))}));
 beforeEach(()=>{fixture.teacher=false;fixture.canWrite=true;fixture.score=2;fixture.showStudentNames=false;fixture.curatedReady=false;fixture.voting=undefined;localStorage.clear();});afterEach(()=>{cleanup();vi.useRealTimers();});
-const mount=()=>render(<MemoryRouter initialEntries={['/discussions/texts/text/blue']}><Routes><Route path="/discussions/texts/:textId/:classId" element={<ReadingDiscussionPage/>}/></Routes></MemoryRouter>);
+const mount=(classId='blue')=>render(<MemoryRouter initialEntries={[`/discussions/texts/text/${classId}`]}><Routes><Route path="/discussions/texts/:textId/:classId" element={<ReadingDiscussionPage/>}/></Routes></MemoryRouter>);
 it('student sees peer questions immediately with upvotes and replies, but no teacher controls',async()=>{
   mount();await screen.findByRole('heading',{name:'Reading example',level:1});
   expect(screen.getByRole('button',{name:'Present Questions'})).toBeInTheDocument();
@@ -90,4 +90,21 @@ it.each(['question','reply'])('accepts a %s quote passed from the Texts reader',
  await waitFor(()=>expect(form.querySelector('textarea[aria-label="Quotation"]')).toHaveValue('A selected passage.'));
  expect(form.querySelector('blockquote')).toHaveClass('reading-quote');
  expect(form.querySelector('input[type="number"]')).toHaveValue(4);
+});
+
+const apClassId='88421c66-9cda-4002-8e15-086312b7805e';
+it('opens rhetorical practice in an AP text discussion using the same text and class as the reader',async()=>{
+ mount(apClassId);
+ const button=await screen.findByRole('button',{name:/Rhetorical Situation/});
+ expect(button).toHaveAttribute('aria-expanded','false');
+ fireEvent.click(button);
+ await waitFor(()=>expect(executeLearningContent).toHaveBeenCalledWith({action:'readRhetoricalSituation',textId:'text',classId:apClassId}));
+ fireEvent.click(screen.getByRole('button',{name:'Discussion only'}));
+ expect(button).toBeVisible();
+});
+it('does not offer rhetorical practice in other courses or read-only discussions',async()=>{
+ const first=mount();await screen.findByRole('heading',{name:'Reading example',level:1});
+ expect(screen.queryByRole('button',{name:/Rhetorical Situation/})).not.toBeInTheDocument();first.unmount();
+ fixture.canWrite=false;mount(apClassId);await screen.findByRole('heading',{name:'Reading example',level:1});
+ expect(screen.queryByRole('button',{name:/Rhetorical Situation/})).not.toBeInTheDocument();
 });
