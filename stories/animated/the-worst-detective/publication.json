@@ -1,0 +1,22 @@
+{
+  "id": "the-worst-detective",
+  "title": "The Worst Detective in the Book Club",
+  "status": "published-assigned",
+  "classId": "7e5810c3-dfac-4595-ba51-0e20e645e727",
+  "className": "English Corner",
+  "date": "2026-11-04",
+  "timezone": "Asia/Shanghai",
+  "releaseAt": "2026-11-03T00:00:00.000Z",
+  "version": 1,
+  "versionId": "c3e768dd374c24454a1ff8f1ba62c747",
+  "assignmentId": "b04a9eab3e79d7bb7692502a8ceb1573",
+  "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/b04a9eab3e79d7bb7692502a8ceb1573",
+  "studioUrl": "https://zumboggo.github.io/Learningisfun/#/game/create?draft=the-worst-detective",
+  "bytes": 963213,
+  "activeStudentMemberships": 12,
+  "liveTeacherReadVerified": true,
+  "publishedBytesVerified": true,
+  "signedMediaVerified": true,
+  "studentReadVerified": true,
+  "studentAttemptsCreated": 0
+}

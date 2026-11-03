@@ -1,0 +1,22 @@
+{
+  "source": "/Users/david.hepting/Documents/ChatGPT/Learning is Fun/implementation/stories/animated/the-worst-detective/teaser-native.mp4",
+  "output": "/Users/david.hepting/Documents/ChatGPT/Learning is Fun/implementation/public/stories/shared/hamster-mystery/opening-v1.mp4",
+  "dimensions": [
+    854,
+    480
+  ],
+  "fps": 24,
+  "hold_seconds": 3.0,
+  "motion_seconds": 6.0,
+  "reaction_hold_seconds": 0.0,
+  "total_seconds": 9.0,
+  "decoded_audio_seconds": 9.00275,
+  "audio_non_silent": true,
+  "audio_starts_after_hold": true,
+  "hold_mean_pixel_difference": 0.0039544301327088215,
+  "sha256": "88307d60a1680645786b009f03b57cd4222618c700bb9c2fa64ffbbbc00fa059",
+  "expected_dialogue": "",
+  "speech_check": "Cached base.en VAD transcription found no speech in action-only clip.",
+  "review": "One visual/listening review remains; automated checks do not prove natural acting or lip sync.",
+  "visualReview": "Reference, motion frame and browser playback inspected; no hamster revealed before deduction."
+}

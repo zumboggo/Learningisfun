@@ -1,0 +1,27 @@
+{
+  "imageTool": "built-in imagegen",
+  "imagePrompt": "Use case: illustration-story. Create one cinematic 16:9 opening still for a warm comic school mystery, in beautifully tactile layered cut-paper collage with subtle paper grain, slate outlines, warm cream/teal/rust palette, soft shadow depth. Use the attached approved Kevin design as identity reference: teenage Chinese boy, tousled black hair, warm tan skin, white polo, narrow neck, dark trousers. Preserve recognizable face, hair and costume but express him in cut-paper medium. Kevin crouches beside a LOW CLOSED TEAL LIBRARY CUPBOARD at the right, holding an open slim illustrated mystery paperback. He has just noticed a few small triangular yellow paper scraps on the floor leading to the dark gap underneath the cupboard, expression of quiet dawning curiosity. A closed empty transparent hamster travel carrier sits on a small side table in the distant left background. Library bookshelves and warm reading room. NO hamster visible, no other people, no readable text, no speech bubbles, no logos or watermark. Clear suspenseful yet gentle composition, Kevin and cupboard both comfortably in frame, no threat or harm. This is the exact late-story action of noticing the scrap trail, before the reveal.",
+  "reference": "public/stories/animated/characters/kevin/approved-design.svg",
+  "videoModel": "prunaai/p-video-2-pro",
+  "videoPrompt": "Animate this exact layered cut-paper library scene, preserving Kevin and all objects. Fixed camera. Kevin stops reading, slowly lowers his open book a little, follows the yellow scraps with his eyes, then leans slightly closer to listen at the dark gap beneath the closed teal cupboard. A tiny faint paper rustle comes from the gap. Keep the hamster unseen and cupboard doors closed. Six seconds, warm subtle suspense. Native audio: quiet room tone, soft page movement and one faint paper rustle only. Absolutely no speech, words, voices, singing, humming or music. Preserve the tactile cut-paper medium, no cuts, no new objects.",
+  "settings": {
+    "duration": 6,
+    "resolution": "480p",
+    "mode": "cost",
+    "prompt_upsampler": "off",
+    "aspect_ratio": "16:9",
+    "enable_safety_filter": true
+  },
+  "predictionId": "pgdg4at3dxrmr0d1m15tk6syec",
+  "maximumChargeUsd": 0.06,
+  "paidAttempts": 1,
+  "verifiedDate": "2026-11-03",
+  "pricingSource": "https://replicate.com/prunaai/p-video-2-pro",
+  "firstFrameHoldSeconds": 3,
+  "motionSeconds": 6,
+  "background": {
+    "tool": "built-in imagegen",
+    "output": "stories/animated/the-worst-detective/library.webp",
+    "prompt": "Create a 16:9 visual-novel background of a cozy contemporary school library book-club room. No people, no animals, no text. Match simple manga-inspired vector characters: clean dark slate outlines, flat muted teal, warm cream and terracotta colours, restrained two-tone cel shadows, simplified geometric scenery, no photorealistic surfaces or painterly texture. Eye-level camera, clear central foreground floor for standing characters. Bookshelves at back, a low closed teal cupboard on short legs at far right, a glass door at far left showing a garden path outside, a small side table far left with an EMPTY hamster travel carrier. A red gardening hat hangs by the door. No visible paper trail or seeds, avoid revealing clues before narration. Keep useful objects at edges and lower contrast than foreground actors. Welcoming afternoon light, polished understated school mystery setting."
+  }
+}
