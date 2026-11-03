@@ -1,3 +1,4 @@
+import {rhetoricalSituationAction} from './rhetorical-situation.js';
 import { classBannerAction } from './class-banner.js';
 import {WORKSHOP_CLASS_ID} from './workshop-policy.js';
 import {canJoinWorkshop,workshopAccess,workshopRequestContext} from './workshop-access.js';
@@ -171,6 +172,11 @@ export default async ({ req, res, error }) => {
     const memberships = {documents:(await allRows(db,databaseId,'class_members',[Query.equal('userId',userId)])).filter(m=>!workshop.learner||(m.classId===WORKSHOP_CLASS_ID&&m.role==='student'&&(!m.expiresAt||Date.parse(m.expiresAt)>Date.now())))};
     const nowTime = Date.now();
     const memberClassIds = new Set(memberships.documents.filter(row => row.role !== 'substitute' || (row.expiresAt && new Date(row.expiresAt).getTime() > nowTime)).map(row => row.classId));
+    if(['readRhetoricalSituation','saveRhetoricalSituation'].includes(body.action)) {
+      const validMembers=new Set(memberships.documents.filter(row=>row.role==='student'&&(!row.expiresAt||Date.parse(row.expiresAt)>nowTime)).map(row=>row.classId));
+      try{return res.json(await rhetoricalSituationAction({body,profile,userId,memberClassIds:validMembers,db,databaseId}));}
+      catch(e){return res.json({error:e.message},e.code||500);}
+    }
     if(body.action==='readPrivateAnimatedPreview'){try{return res.json(await privateAnimatedPreviewAction({body,userId,db,databaseId,storage:new Storage(client),tokens:new Tokens(client),endpoint:process.env.APPWRITE_ENDPOINT,projectId:process.env.APPWRITE_FUNCTION_PROJECT_ID}));}catch(e){return res.json({error:e.message},e.code||500);}}
     if(body.action==='readPrivateEpisode'){try{return res.json(await privateEpisodeAction({body,profile,userId,memberClassIds:new Set(memberships.documents.filter(r=>r.role==='student').map(r=>r.classId)),db,databaseId,storage:new Storage(client)}));}catch(e){return res.json({error:e.message},e.code||500);}}
     if(['animatedLibrary','animatedSaveDraft','animatedReadDraft','animatedPublish','animatedAssign','animatedArchiveAssignment','animatedRead','animatedSaveAttempt'].includes(body.action)){const validMembers=new Set(memberships.documents.filter(r=>r.role==='student'&&(!r.expiresAt||Date.parse(r.expiresAt)>nowTime)).map(r=>r.classId));try{return res.json(await animatedEpisodeAction({body,profile,userId,memberClassIds:validMembers,db,databaseId,storage:new Storage(client),tokens:new Tokens(client),endpoint:process.env.APPWRITE_ENDPOINT,projectId:process.env.APPWRITE_FUNCTION_PROJECT_ID}));}catch(cause){if([400,403,404,409].includes(cause.code))return res.json({error:cause.message},cause.code);throw cause;}}
