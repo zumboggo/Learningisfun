@@ -1,6 +1,6 @@
 [
   {
-    "id": "world-lit-bibliography-v2",
+    "id": "world-lit-bibliography-v3",
     "title": "Build one annotated bibliography entry",
     "objective": "Give a reader a trail back to a source, explain what it says, and show why it earns a place in your research paper.",
     "classIds": [
@@ -47,13 +47,13 @@
             "hint": "Whose idea shaped the sentence?",
             "explanation": "Cite borrowed ideas as well as borrowed words.",
             "alternate": {
-              "prompt": "What should a reader be able to do with your citation?",
+              "prompt": "You describe an interviewer’s discovery in new words. Why credit the interview?",
               "options": [
-                "Find the source and check its context.",
-                "Know that every reader agrees with you."
+                "The discovery is borrowed, and readers should be able to check it.",
+                "Only copied sentences need a source."
               ],
               "answers": [
-                "Find the source and check its context."
+                "The discovery is borrowed, and readers should be able to check it."
               ]
             }
           },
@@ -86,16 +86,24 @@
       {
         "title": "Put the pieces in MLA order",
         "shortTitle": "Build citations",
-        "explanation": "Learn the pattern before you try it: author → title of source → title of container → other contributors → version → number → publisher → publication date → location. A container is the larger work that holds a source, such as a website or journal. Use only the elements that apply.",
+        "explanation": "Start with one common case: a signed essay on a website. Name the writer, identify the essay, name the website that carries it, then give the publication date and direct URL. Try this pattern first. In the book example, notice which pieces change.",
         "model": "Signed web essay: author → essay title → website → date → URL. Unsigned translated book: title → translator and editor → publisher → year.",
         "modelRows": [
           [
-            "Signed web essay",
-            "Author → “Essay title.” → Website → Date → URL. Quotation marks signal the shorter work; italics mark the website title."
+            "Spar, Ira.",
+            "The named writer comes first, family name first."
           ],
           [
-            "Translated book",
-            "Book title → Translator → Editor → Publisher → Year. When a book has no named author, start with its title. The translator is a contributor, not the original author."
+            "“Gilgamesh.”",
+            "Quotation marks identify this particular essay."
+          ],
+          [
+            "The Metropolitan Museum of Art",
+            "The italicized website name identifies the container."
+          ],
+          [
+            "1 Apr. 2009 → direct URL",
+            "The date identifies when the essay appeared; the link takes the reader to that page."
           ],
           [
             "Source or outside source?",
@@ -122,24 +130,24 @@
             "hint": "Begin with the writer, then the essay title. The URL comes last.",
             "explanation": "Signed essay: author → essay title → website → date → URL.",
             "alternate": {
-              "prompt": "Try again with the full order guide: Build the MLA entry for Ira Spar’s museum essay.",
+              "prompt": "Practice-only source (invented): Assemble Mira Chen’s web essay about epic endings.",
               "pieces": [
-                "1 Apr. 2009,",
-                "Spar, Ira.",
-                "“Gilgamesh.”",
-                "www.metmuseum.org/essays/gilgamesh.",
-                "The Metropolitan Museum of Art,"
+                "Epic Reader,",
+                "Chen, Mira.",
+                "example.org/coming-home.",
+                "“Coming Home.”",
+                "5 May 2024,"
               ],
               "italicPieces": [
-                "The Metropolitan Museum of Art,"
+                "Epic Reader,"
               ],
               "answers": [
-                "Spar, Ira. “Gilgamesh.” The Metropolitan Museum of Art, 1 Apr. 2009, www.metmuseum.org/essays/gilgamesh."
+                "Chen, Mira. “Coming Home.” Epic Reader, 5 May 2024, example.org/coming-home."
               ]
             }
           },
           {
-            "prompt": "Build the MLA entry for this translated and edited edition of Beowulf. Credit the translators before the editor in this exercise.",
+            "prompt": "Build the MLA entry for this translated and edited edition of Beowulf. Credit the translators before the editor in this exercise. With no named author, begin with the book title. A book has a publisher rather than a website and URL.",
             "pieces": [
               "2004.",
               "edited by Sarah Anderson,",
@@ -154,26 +162,31 @@
               "Beowulf. Translated by Alan Sullivan and Timothy Murphy, edited by Sarah Anderson, Pearson, 2004."
             ],
             "hint": "With no named author, start with the book title. Keep the publication year last.",
-            "explanation": "Unsigned book: title → contributors → publisher → year.",
+            "explanation": "Unsigned book: title → contributors → publisher → year. In the full MLA pattern, use the elements your source has: author, source title, container, other contributors, version, number, publisher, date, location.",
             "alternate": {
-              "prompt": "Try again with the full order guide: Build the MLA entry for this translated and edited edition of Beowulf. Credit the translators before the editor in this exercise.",
+              "prompt": "Practice-only source (invented): Assemble this unsigned translated book; credit the translator before the editor.",
               "pieces": [
-                "Translated by Alan Sullivan and Timothy Murphy,",
-                "Pearson,",
-                "Beowulf.",
-                "edited by Sarah Anderson,",
-                "2004."
+                "edited by Mei Sun,",
+                "Songs of the River.",
+                "2022.",
+                "Translated by Lin Yu,",
+                "North Bank Press,"
               ],
               "italicPieces": [
-                "Beowulf."
+                "Songs of the River."
               ],
               "answers": [
-                "Beowulf. Translated by Alan Sullivan and Timothy Murphy, edited by Sarah Anderson, Pearson, 2004."
+                "Songs of the River. Translated by Lin Yu, edited by Mei Sun, North Bank Press, 2022."
               ]
             }
           }
         ],
-        "teachFirst": true
+        "teachFirst": true,
+        "image": {
+          "path": "lessons/mla-web-entry.jpg",
+          "alt": "Signed web essay: author (who wrote it), essay title (which page), website (where published), date (when), URL (where to find it).",
+          "caption": "Follow a reader’s questions from left to right. The essay title finds the particular work; the website name identifies its container."
+        }
       },
       {
         "title": "Say what the source contributes",
@@ -188,24 +201,8 @@
             "Spar reads the return to Uruk as a change in the king’s ambition: what he builds can endure even though he cannot. Spar writes for the museum’s Department of Ancient Near Eastern Art and names the translations behind his account. I could compare his reading of the walls with the passage where Gilgamesh returns home."
           ],
           [
-            "Research question",
-            "How might Santiago’s journey dramatize the difference between following instructions and choosing a path?"
-          ],
-          [
-            "Summary",
-            "In Krista Tippett’s interview, Paulo Coelho describes a pilgrimage that helped him choose a spiritual life for himself."
-          ],
-          [
-            "Weak assessment",
-            "He is famous, so this is useful."
-          ],
-          [
-            "Credibility",
-            "Coelho can speak firsthand about his own pilgrimage."
-          ],
-          [
-            "Usefulness",
-            "I could compare his account of choice with Santiago’s decision to leave. I still need evidence from the novel to interpret that scene."
+            "Your next source",
+            "In an On Being interview, Paulo Coelho describes how a pilgrimage helped him choose his spiritual path. He speaks about his own experience; the interview does not analyze the novel’s dialogue."
           ]
         ],
         "explanation": "A summary reports the source's idea in your words. Credibility asks why you can rely on this source for a particular claim. Usefulness asks what you could do with that claim in your own paper. Even a reliable source can be a poor fit for your question.",
@@ -234,6 +231,10 @@
               "answers": [
                 "Spar connects the king's return to what can outlast a human life."
               ]
+            },
+            "rehearsal": {
+              "prompt": "Supply the missing summary. Citation and assessment are already handled: the interview is firsthand evidence about Coelho’s life. In one sentence, summarize what he says about pilgrimage without evaluating him.",
+              "sample": "Coelho describes his pilgrimage as a turning point in how he chose to live out his faith. Does your sentence report an idea rather than praise the speaker?"
             }
           },
           {
@@ -249,15 +250,18 @@
             "hint": "Ask what this particular interview actually discusses. Does a new question change the author's experience or the evidence you need?",
             "explanation": "For rhythm, you need lines of dialogue and evidence about their language. Author expertise alone cannot supply that evidence.",
             "alternate": {
-              "prompt": "Which plan gives the interview a specific use without claiming too much?",
+              "prompt": "A museum conservator explains how a Beowulf manuscript was repaired. Is that account useful for a question about the poem’s rhythm?",
               "options": [
-                "Use Coelho's experience as a point of comparison and test the comparison against Santiago's choices.",
-                "Treat Coelho and Santiago as the same person.",
-                "Use the interview to prove how every reader feels."
+                "Its expertise is relevant to the repairs, but the rhythm question needs evidence about the verse.",
+                "Any credible source about Beowulf answers every question about the poem."
               ],
               "answers": [
-                "Use Coelho's experience as a point of comparison and test the comparison against Santiago's choices."
+                "Its expertise is relevant to the repairs, but the rhythm question needs evidence about the verse."
               ]
+            },
+            "rehearsal": {
+              "prompt": "Now supply both assessment moves. Question: How does Santiago learn to choose his own path? Write why Coelho can speak credibly about pilgrimage, then name one specific comparison you could test in the novel.",
+              "sample": "Coelho experienced the pilgrimage himself. I could compare his choice of a spiritual path with Santiago’s decision to leave home, checking the novel before claiming that their motives match."
             }
           }
         ]
@@ -276,7 +280,9 @@
         "Usefulness: Connects a specific source detail to the question and identifies the limit of what the evidence can establish about earlier storytelling."
       ],
       "delayedCheck": "When you next work on your bibliography, cover your notes. For a different outside source, reconstruct its MLA entry from the publication details, name its main idea, and explain one reason to trust it and one specific use for your own question."
-    }
+    },
+    "progressId": "world-lit-bibliography-v2",
+    "assignedOn": "2026-11-04"
   },
   {
     "id": "nested-quotes-evidence-v2",
