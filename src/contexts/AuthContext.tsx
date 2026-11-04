@@ -12,7 +12,7 @@ import * as syncService from '@/services/sync.service';
 import * as classService from '@/services/class.service';
 
 import { client, DATABASE_ID, COLLECTIONS } from '@/lib/appwrite';
-import { db } from '@/db/schema';
+import { db, SIGN_OUT_LOCK } from '@/db/schema';
 import { runCachedSync, SYNC_WINDOWS } from '@/services/sync-policy';
 
 type SyncDomain = 'account' | 'sessions' | 'flashcards' | 'quizzes' | 'writing' | 'texts' | 'presentations';
@@ -64,7 +64,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => { active = false; window.removeEventListener('workshop-enrollment-changed', load); };
   }, [accountId, actualTeacher]);
 
-  useEffect(()=>{const switched=(event:StorageEvent)=>{if(event.key==='learning-account-scope'&&event.oldValue!==event.newValue)window.location.reload()};window.addEventListener('storage',switched);return()=>window.removeEventListener('storage',switched)},[]);
+  useEffect(() => {
+    const switched = (event: StorageEvent) => {
+      if (event.oldValue === event.newValue) return;
+      if (event.key === SIGN_OUT_LOCK ||
+          (event.key === 'learning-account-scope' && !localStorage.getItem(SIGN_OUT_LOCK))) {
+        window.location.reload();
+      }
+    };
+    const restored = (event: PageTransitionEvent) => {
+      if (event.persisted) window.location.reload();
+    };
+    window.addEventListener('storage', switched);
+    window.addEventListener('pageshow', restored);
+    return () => {
+      window.removeEventListener('storage', switched);
+      window.removeEventListener('pageshow', restored);
+    };
+  }, []);
+
 
   const effectiveRole = user ? (viewAsStudent||workshopMode ? 'student' : user.role) : null;
   const isTeacher = effectiveRole === 'teacher' || effectiveRole === 'admin';
@@ -202,10 +220,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutHandler = useCallback(async () => {
     clearPrivateEpisodeMemory();
-    await authService.logout();
     setUser(null);
+    setLoading(true);
     setViewAsStudent(false);setWorkshopState(null);
-    if(import.meta.env.MODE!=='test')window.location.replace(import.meta.env.BASE_URL+'#/login');
+    try {
+      await authService.logout();
+    } finally {
+      setLoading(false);
+      if (import.meta.env.MODE !== 'test') {
+        window.history.replaceState(null, '', import.meta.env.BASE_URL + '#/login');
+        window.location.reload();
+      }
+    }
   }, []);
 
   return (

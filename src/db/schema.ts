@@ -341,7 +341,17 @@ db.version(13).stores({
 
 return db;
 }
-function initialDatabaseName(){try{const id=localStorage.getItem('learning-account-scope');return id?'LearningIsFunDB:'+id:'LearningIsFunDB';}catch{return 'LearningIsFunDB';}}
+export const SIGN_OUT_LOCK = 'learning-sign-out-lock';
+
+function initialDatabaseName() {
+  try {
+    if (localStorage.getItem(SIGN_OUT_LOCK)) return 'LearningIsFunDB:guest';
+    const id = localStorage.getItem('learning-account-scope');
+    return id ? 'LearningIsFunDB:' + id : 'LearningIsFunDB';
+  } catch {
+    return 'LearningIsFunDB';
+  }
+}
 let db=createAccountDatabase(initialDatabaseName());
 export async function selectAccountDatabase(userId:string){
  const name='LearningIsFunDB:'+userId;if(db.name===name){await db.app_metadata.delete('openrouter_api_key');return;}

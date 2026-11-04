@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/common/Button';
+import { UNCONFIRMED_SIGN_OUT } from '@/services/auth.service';
+import { SIGN_OUT_LOCK } from '@/db/schema';
 import { getLastPage } from '@/utils/last-page';
 
 export function LoginPage() {
@@ -41,6 +43,11 @@ export function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
+          {localStorage.getItem(SIGN_OUT_LOCK) && sessionStorage.getItem(UNCONFIRMED_SIGN_OUT) && (
+            <p role="status" className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">
+              This device is locked. The server could not confirm sign-out. Reconnect and sign in to continue.
+            </p>
+          )}
           {error && <div role="alert" className="space-y-2 rounded-lg bg-red-50 p-3 text-sm text-red-700"><p>{error}</p><Link to={recoveryUrl} className="inline-block font-semibold underline">Send me a password-reset link</Link></div>}
 
           <div>

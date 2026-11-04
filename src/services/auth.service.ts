@@ -1,20 +1,34 @@
 import { account } from '@/lib/appwrite';
 import { executeLearningContent } from './learning-content.service';
-import { db,selectAccountDatabase,selectGuestDatabase } from '@/db/schema';
+import { db, selectAccountDatabase, selectGuestDatabase, SIGN_OUT_LOCK } from '@/db/schema';
 import { generateDeviceId, getTimestamp } from '@/utils/helpers';
 import type { User, UserRole } from '@/types';
 import { ID } from 'appwrite';
 
+export const UNCONFIRMED_SIGN_OUT = 'learning-unconfirmed-sign-out';
+
 export async function register(email: string, password: string, name: string, role: UserRole = 'student'): Promise<User> {
   if (role !== 'student') throw new Error('Teacher accounts must be provisioned by an administrator.');
+  const lock = localStorage.getItem(SIGN_OUT_LOCK);
   await clearAnyExistingSession();
   await account.create(ID.unique(), email, password, name);
-  await account.createEmailPasswordSession(email, password);
-  return loadSelfProfile();
+  const session = await account.createEmailPasswordSession(email, password);
+  return completeSignIn(session.userId, lock);
 }
 
-async function loadSelfProfile(): Promise<User> {
+async function completeSignIn(userId: string, lock: string | null): Promise<User> {
+  const profile = await loadSelfProfile(userId, lock);
+  if (localStorage.getItem(SIGN_OUT_LOCK) !== lock) throw new Error('Please sign in again.');
+  localStorage.removeItem(SIGN_OUT_LOCK);
+  sessionStorage.removeItem(UNCONFIRMED_SIGN_OUT);
+  return profile;
+}
+
+async function loadSelfProfile(expectedUserId: string, lock: string | null): Promise<User> {
   const { profile } = await executeLearningContent<{ profile: User }>({ action: 'selfProfile' });
+  if (profile.$id !== expectedUserId || localStorage.getItem(SIGN_OUT_LOCK) !== lock) {
+    throw new Error('The account changed. Please sign in again.');
+  }
   await selectAccountDatabase(profile.$id);
   await db.users.put(profile);
   await db.app_metadata.put({ key: 'currentUserId', value: profile.$id });
@@ -22,26 +36,32 @@ async function loadSelfProfile(): Promise<User> {
 }
 
 /** Drop whatever session the browser is holding, if any. Never throws. */
-async function clearAnyExistingSession(): Promise<void> {
+async function clearAnyExistingSession(): Promise<boolean> {
   try {
     await account.deleteSession('current');
-  } catch {
-    // No session to clear, or offline.
+    return true;
+  } catch (error) {
+    return !!error && typeof error === 'object' && 'code' in error && error.code === 401;
   }
 }
 
 export async function login(email: string, password: string): Promise<User> {
   // Signing in as someone else on a shared device fails while the previous
   // student's session is still attached to the browser.
+  const lock = localStorage.getItem(SIGN_OUT_LOCK);
   await clearAnyExistingSession();
+  let session;
   try {
-    await account.createEmailPasswordSession(email, password);
+    session = await account.createEmailPasswordSession(email, password);
   } catch (err) {
     const localTeacher = await loginLocalDevelopmentTeacher(email, password);
-    if (localTeacher) return localTeacher;
+    if (localTeacher && localStorage.getItem(SIGN_OUT_LOCK) === lock) {
+      localStorage.removeItem(SIGN_OUT_LOCK);
+      return localTeacher;
+    }
     throw err;
   }
-  return loadSelfProfile();
+  return completeSignIn(session.userId, lock);
 }
 
 export function passwordRecoveryRedirectUrl(origin = window.location.origin, baseUrl = import.meta.env.BASE_URL): string {
@@ -121,19 +141,21 @@ function getLocalDevelopmentLogin(
 }
 
 export async function logout(): Promise<void> {
-  try {
-    await account.deleteSession('current');
-  } catch {
-    // Session may already be invalid
-  }
+  // Persist the local lock before the first await, even if the tab closes mid-request.
+  localStorage.setItem(SIGN_OUT_LOCK, crypto.randomUUID());
+  sessionStorage.setItem(UNCONFIRMED_SIGN_OUT, '1');
+  const revoke = clearAnyExistingSession();
   await db.app_metadata.delete('currentUserId');
   await selectGuestDatabase();
+  if (await revoke) sessionStorage.removeItem(UNCONFIRMED_SIGN_OUT);
 }
 
 export async function getCurrentUser(): Promise<User | null> {
+  if (localStorage.getItem(SIGN_OUT_LOCK)) return null;
   try {
-    await account.get();
-    return await loadSelfProfile();
+    const identity = await account.get();
+    const profile = await loadSelfProfile(identity.$id, null);
+    return localStorage.getItem(SIGN_OUT_LOCK) ? null : profile;
   } catch (error) {
     if (error && typeof error === 'object' && 'code' in error && (error.code === 401 || error.code === 403)) {
       await db.app_metadata.delete('currentUserId');
@@ -145,9 +167,11 @@ export async function getCurrentUser(): Promise<User | null> {
 }
 
 export async function getCachedUser(): Promise<User | null> {
+  if (localStorage.getItem(SIGN_OUT_LOCK)) return null;
   const meta = await db.app_metadata.get('currentUserId');
   if (!meta?.value) return null;
-  return (await db.users.get(meta.value)) || null;
+  const user = await db.users.get(meta.value);
+  return localStorage.getItem(SIGN_OUT_LOCK) ? null : user || null;
 }
 
 export async function fetchClassStudents(classId: string): Promise<User[]> {
