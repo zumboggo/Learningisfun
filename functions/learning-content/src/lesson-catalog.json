@@ -8,6 +8,14 @@
     "stages": [
       {
         "title": "Leave a trail a reader can follow",
+        "shortTitle": "Cite a source",
+        "modelRows": [
+          ["Research question", "How does loss change what Gilgamesh values?"],
+          ["Citation", "Spar, Ira. “Gilgamesh.” The Metropolitan Museum of Art, 1 Apr. 2009, www.metmuseum.org/essays/gilgamesh."],
+          ["Summary", "Spar reads the return to Uruk as a change in the king’s ambition: what he builds can endure even though he cannot."],
+          ["Credibility", "Spar writes for the museum’s Department of Ancient Near Eastern Art and names the translations behind his account."],
+          ["Usefulness", "I could compare his reading of the walls with the passage where Gilgamesh returns home."]
+        ],
         "explanation": "Your 25-point semester assignment asks for 2–3 outside sources. Today, rehearse one entry without a grade. An outside source is something beyond the literary work itself. Use the MLA entry to lead readers to exactly what you read: for a signed museum essay, give the author, essay title, website, date, and URL. Put the essay title in quotation marks; italicize the website name in your paper.",
         "model": "Research question: How does loss change what Gilgamesh values?\n\nSpar, Ira. “Gilgamesh.” The Metropolitan Museum of Art, 1 Apr. 2009, www.metmuseum.org/essays/gilgamesh.\n\nSpar reads the return to Uruk as a change in the king’s ambition: what he builds can endure even though he cannot. Spar writes for the museum’s Department of Ancient Near Eastern Art and names the translations behind his account. I could compare his reading of the walls with the passage where Gilgamesh returns home.\n\nNotice the jobs: the first line locates the essay. The paragraph summarizes one idea, gives a reason for trust, and names a use. In this plain-text example, website italics are omitted.",
         "sourceUrl": "https://www.metmuseum.org/essays/gilgamesh",
@@ -39,6 +47,14 @@
       },
       {
         "title": "Say what the source contributes",
+        "shortTitle": "Evaluate a source",
+        "modelRows": [
+          ["Research question", "How might Santiago’s journey dramatize the difference between following instructions and choosing a path?"],
+          ["Summary", "In Krista Tippett’s interview, Paulo Coelho describes a pilgrimage that helped him choose a spiritual life for himself."],
+          ["Weak assessment", "He is famous, so this is useful."],
+          ["Credibility", "Coelho can speak firsthand about his own pilgrimage."],
+          ["Usefulness", "I could compare his account of choice with Santiago’s decision to leave. I still need evidence from the novel to interpret that scene."]
+        ],
         "explanation": "A summary reports the source's idea in your words. Credibility asks why you can rely on this source for a particular claim. Usefulness asks what you could do with that claim in your own paper. Even a reliable source can be a poor fit for your question.",
         "model": "In Krista Tippett's On Being interview “The Alchemy of Pilgrimage,” Paulo Coelho describes a pilgrimage that helped him choose a spiritual life for himself. This is a first-person account of his experience. Imagine asking: How might Santiago's journey in The Alchemist dramatize the difference between following instructions and choosing a path?\n\nWeak: “He is famous, so this is useful.”\nStronger: “Coelho can speak firsthand about his own pilgrimage. I could compare his account of choice with Santiago's decision to leave; I still need evidence from the novel to interpret that scene.”",
         "sourceUrl": "https://onbeing.org/programs/paulo-coelho-the-alchemy-of-pilgrimage/",
@@ -71,6 +87,7 @@
       }
     ],
     "final": {
+      "shortTitle": "Write your entry",
       "title": "Your turn: Can we date a story from its surviving pages?",
       "prompt": "Research question: What can the surviving manuscript tell us—and not tell us—about when Beowulf's story was told? Using only the source card, write one full MLA entry, then a 3–4 sentence annotation in your own words. Summarize the source, give a concrete reason to trust it for this question, and explain which evidence you would use and what it cannot prove. Plain text is fine; no special typing is needed for italics. The practice source is provided; for the real assignment, select 2–3 outside sources for your own question on any semester text.",
       "source": "Page title: Hwæt! Beowulf online\nWebsite: British Library\nPublished: 11 February 2013\nNo individual byline is shown. For an unsigned page, start the entry with the page title.\nURL: https://www.bl.uk/stories/blogs/posts/beowulf-online\n\nFrom the page: “Made around the year 1000” describes the manuscript. The article says some scholars think storytellers had shared the tale for centuries before that copy was made. The library cares for the manuscript and reproduces photographs of its pages. It identifies the opening page as Cotton MS Vitellius A XV, folio 132r. Apart from the short quotation, this card paraphrases the article.",

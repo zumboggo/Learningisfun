@@ -17,3 +17,17 @@ it('lets a teacher inspect original and revised evidence for their section',asyn
  auth.isTeacher=true;request.mockResolvedValueOnce({items:[item]}).mockResolvedValueOnce({rubric:['Summary'],rows:[{name:'Example learner',studentId:'1',revision:3,state:{outcome:'Demonstrated with support',checks:[],step:4,submissions:[{text:'First draft'},{text:'Second draft',feedback:'Improved summary',criteria:[true]}]}}]});
  render(<LessonsPage/>);fireEvent.click(await screen.findByText('Student progress'));fireEvent.click(await screen.findByText(/Example learner/));expect(screen.getByText('First draft')).toBeVisible();expect(screen.getByText('Second draft')).toBeVisible();expect(screen.getByText('Improved summary')).toBeVisible();
 });
+
+it('shows the labeled model for teaching and folds it for the next recall question',async()=>{
+ auth.isTeacher=false;
+ const stage={title:'Leave a trail',shortTitle:'Cite a source',modelRows:[['Citation','Spar, Ira.']],questions:[{prompt:'First check'},{prompt:'Fresh check'}]};
+ const lesson={...item,stages:[stage],final:{shortTitle:'Write your entry'}};
+ const state={step:0,misses:0,checks:[],draft:'',submissions:[],outcome:'',notice:''};
+ request.mockResolvedValueOnce({items:[item]}).mockResolvedValueOnce({lesson,state,revision:0}).mockResolvedValueOnce({lesson,state:{...state,step:1},revision:1});
+ render(<LessonsPage/>);fireEvent.click(await screen.findByText('Open lesson'));
+ const model=(await screen.findByText('Worked example')).closest('details');
+ expect(model).toHaveAttribute('open');expect(screen.getByText('Spar, Ira.')).toBeVisible();
+ fireEvent.change(screen.getByLabelText('Your answer'),{target:{value:'Spar'}});fireEvent.click(screen.getByText('Check answer'));
+ await screen.findByText('Fresh check');expect(screen.getByText('Worked example').closest('details')).not.toHaveAttribute('open');
+ fireEvent.click(screen.getByText('Worked example'));expect(screen.getByText('Spar, Ira.')).toBeVisible();
+});
