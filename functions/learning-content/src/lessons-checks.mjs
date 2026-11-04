@@ -46,3 +46,11 @@ test('nested quotes can be previewed by the teacher, then open at Shanghai midni
  const read=await act('lessonRead',{lessonId});assert.equal(read.lesson.final.rubric.length,4);
  await assert.rejects(act('lessonRead',{lessonId},{memberClassIds:new Set()}),/unavailable/);
 });
+test('the argument assignment names only AP Lang and its due date follows release',()=>{
+ const catalog=JSON.parse(readFileSync(new URL('./lesson-catalog.json',import.meta.url)));
+ const task=catalog.find(l=>l.id==='ap-lang-making-an-argument-v1');
+ assert.deepEqual(task.classIds,['88421c66-9cda-4002-8e15-086312b7805e']);
+ assert.equal(task.dueOn,'2026-11-13');
+ assert.ok(Date.parse(task.dueOn+'T23:59:59+08:00')>Date.parse(task.releaseAt));
+ for(const s of task.stages)for(const q of s.questions)for(const item of [q,q.alternate])assert.ok(item.answers.every(a=>item.options.includes(a)));
+});

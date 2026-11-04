@@ -13,7 +13,7 @@ for(const lesson of catalog)for(const classId of lesson.classIds){
  const lib=await functions.createExecution({functionId:'learning-content',body:JSON.stringify({action:'lessonLibrary'})});
  assert.equal(lib.responseStatusCode,200);
  const items=JSON.parse(lib.responseBody).items;
- const item=items.find(item=>item.id===lesson.id&&item.classId===classId);assert.ok(item);assert.equal(item.releaseAt,lesson.releaseAt||null);assert.equal(item.assignedOn,lesson.assignedOn||null);assert.equal(item.courseName,cls.courseName||'');
+ const item=items.find(item=>item.id===lesson.id&&item.classId===classId);assert.ok(item);assert.equal(item.releaseAt,lesson.releaseAt||null);assert.equal(item.dueOn,lesson.dueOn||null);assert.equal(item.assignedOn,lesson.assignedOn||null);assert.equal(item.courseName,cls.courseName||'');
  assert.ok(!items.some(item=>item.id==='world-lit-bibliography'));
  }
  const exec=await functions.createExecution({functionId:'learning-content',body:JSON.stringify({action:'lessonRead',citationBuilder:true,classId,lessonId:lesson.id})});

@@ -34,7 +34,7 @@ export async function lessonAction(args){
  const classes=(await Promise.all(classIds.map(async id=>{try{return await db.getDocument(databaseId,'classes',id);}catch(e){if(e.code!==404)throw e;return null;}}))).filter(c=>c?.status==='active'&&(!teacher||c.teacherId===userId));
  if(body.action==='lessonLibrary'){
  const items=[];for(const c of classes)for(const l of available.filter(l=>l.classIds.includes(c.$id))){
- items.push({id:l.id,progressId:l.progressId||l.id,title:l.title,objective:l.objective,releaseAt:l.releaseAt||null,assignedOn:l.assignedOn||null,courseName:c.courseName||'',minutes:l.minutes,classId:c.$id,className:c.name||c.courseName});}return {items};}
+ items.push({id:l.id,progressId:l.progressId||l.id,title:l.title,objective:l.objective,releaseAt:l.releaseAt||null,dueOn:l.dueOn||null,assignedOn:l.assignedOn||null,courseName:c.courseName||'',minutes:l.minutes,classId:c.$id,className:c.name||c.courseName});}return {items};}
  const cls=classes.find(c=>c.$id===body.classId),l=available.find(l=>l.id===body.lessonId&&l.classIds.includes(body.classId));
  if(!cls||!l)fail('This lesson is unavailable for your class.',403);
  const key='lesson:'+cls.$id+':'+(l.progressId||l.id);

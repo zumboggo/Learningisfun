@@ -461,5 +461,196 @@
       ],
       "delayedCheck": "In your next essay, cover your commentary and reread the quotation. Without looking, explain what one word contributes and how it supports your thesis."
     }
+  },
+  {
+    "id": "ap-lang-making-an-argument-v1",
+    "classIds": [
+      "88421c66-9cda-4002-8e15-086312b7805e"
+    ],
+    "title": "Making an Argument: Should School Start Later?",
+    "objective": "Make a defensible claim, support it with evidence, explain the reasoning, and address a fair objection.",
+    "minutes": 15,
+    "releaseAt": "2026-11-09T00:00:00+08:00",
+    "dueOn": "2026-11-13",
+    "stages": [
+      {
+        "title": "Give the reader a reason to agree",
+        "shortTitle": "Claim & evidence",
+        "teachFirst": true,
+        "explanation": "An argument asks a particular audience to accept a debatable claim for a reason. Evidence gives the reader something concrete to consider. Reasoning explains why that evidence supports your claim. Start with one claim and one well-explained detail.",
+        "image": {
+          "path": "lessons/argument-bridge.jpg",
+          "alt": "Evidence and claim stand on opposite banks. Reasoning bridges them by answering why the evidence matters.",
+          "caption": "Cover the bridge: a fact beside an opinion still leaves the reader asking “So what?”"
+        },
+        "modelRows": [
+          [
+            "Model · fictional school",
+            "At Willow School, 12 of 20 students at an optional first-period review said their bus arrived before the doors opened."
+          ],
+          [
+            "Claim + reason",
+            "Willow should test a later review session because its current timing may discourage students who ride the early bus."
+          ],
+          [
+            "12 of 20 → evidence",
+            "These students reported a particular obstacle. The count is more useful than saying mornings are bad."
+          ],
+          [
+            "Waiting outside → reasoning",
+            "Even a motivated student pays a cost in waiting time. Removing that cost could make the review easier to attend."
+          ],
+          [
+            "Scope",
+            "The survey supports testing a change to this session. It cannot tell us what every student needs."
+          ]
+        ],
+        "questions": [
+          {
+            "prompt": "Which statement could the school council actually debate?",
+            "options": [
+              "Willow has a first period.",
+              "Willow should try a later review session because the current time makes access harder for bus riders.",
+              "This paragraph is about mornings."
+            ],
+            "answers": [
+              "Willow should try a later review session because the current time makes access harder for bus riders."
+            ],
+            "hint": "Look for a position someone could reasonably challenge.",
+            "explanation": "A defensible claim makes a specific judgment and gives a reason.",
+            "alternate": {
+              "prompt": "Which is a claim about the lunch timetable rather than a topic or a fact?",
+              "options": [
+                "There are two lunch periods.",
+                "Lunch schedules.",
+                "The school should stagger lunch because a shorter line would leave more time to eat."
+              ],
+              "answers": [
+                "The school should stagger lunch because a shorter line would leave more time to eat."
+              ]
+            }
+          },
+          {
+            "prompt": "Which evidence would best test a claim about first-period attention?",
+            "options": [
+              "A tally of students staying on task during comparable first-period activities before and after a change.",
+              "The school mascot’s popularity.",
+              "A count of people who like the idea of starting later."
+            ],
+            "answers": [
+              "A tally of students staying on task during comparable first-period activities before and after a change."
+            ],
+            "hint": "What exactly is the proposed benefit: preference or attention?",
+            "explanation": "Match the observation to what the claim predicts. Liking a change and paying attention are different outcomes.",
+            "alternate": {
+              "prompt": "A club says moving practice will increase attendance. What should it compare?",
+              "options": [
+                "The number who attend comparable sessions at each time.",
+                "The number who like the new poster."
+              ],
+              "answers": [
+                "The number who attend comparable sessions at each time."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "Write one sentence for your principal: should your school start later? Choose yes, no, or a limited trial. Give a reason someone could challenge.",
+              "sample": "Example: Keep the present start until we know whether buses can also move; otherwise early riders may still have to wake at the same hour. Your position can differ."
+            }
+          }
+        ],
+        "model": "Model · fictional school: At Willow School, 12 of 20 students at an optional first-period review said their bus arrived before the doors opened.\nClaim + reason: Willow should test a later review session because its current timing may discourage students who ride the early bus.\n12 of 20 → evidence: These students reported a particular obstacle. The count is more useful than saying mornings are bad.\nWaiting outside → reasoning: Even a motivated student pays a cost in waiting time. Removing that cost could make the review easier to attend.\nScope: The survey supports testing a change to this session. It cannot tell us what every student needs."
+      },
+      {
+        "title": "Build the bridge and answer an objection",
+        "shortTitle": "Reason & qualify",
+        "teachFirst": true,
+        "explanation": "After a fact, name what it suggests and why that matters for your decision. Then consider the best objection. You can answer it, narrow the claim, or change the proposal. You do not have to pretend your evidence proves more than it does.",
+        "modelRows": [
+          [
+            "Evidence · fictional example",
+            "During a two-day 9:00 review trial, 8 of 10 students completed the opening problem; previously 5 of those 10 had completed a similar problem at 8:00."
+          ],
+          [
+            "Interpret the change",
+            "More students finished a comparable task. That is consistent with better concentration, but a different problem or teacher could also explain it."
+          ],
+          [
+            "Qualify the claim",
+            "Try a longer comparison before permanently changing the review time."
+          ]
+        ],
+        "questions": [
+          {
+            "prompt": "Which move turns an observation into reasoning?",
+            "options": [
+              "Repeat the number with an exclamation point.",
+              "Explain why the observed change would matter for the proposed policy.",
+              "Call the evidence obvious."
+            ],
+            "answers": [
+              "Explain why the observed change would matter for the proposed policy."
+            ],
+            "hint": "Think about the bridge in the diagram.",
+            "explanation": "The reader needs your explanation of how a detail bears on the decision.",
+            "alternate": {
+              "prompt": "Attendance rose after a choir rehearsal moved. Which sentence supplies the missing reasoning?",
+              "options": [
+                "More singers came.",
+                "If fewer singers miss rehearsal, the group can practice harmonies with all parts present."
+              ],
+              "answers": [
+                "If fewer singers miss rehearsal, the group can practice harmonies with all parts present."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "Supply only the missing bridge. Claim: test a later bell. Evidence: in a fictional first-period trial, fewer students asked for the opening directions to be repeated. Explain why that observation might matter and what it cannot establish.",
+              "sample": "Following the first explanation could mean students were ready to focus sooner. Clearer directions could produce the same pattern, so the observation supports a trial rather than a guarantee."
+            }
+          },
+          {
+            "prompt": "Which response takes the bus objection seriously?",
+            "options": [
+              "Anyone who disagrees dislikes sleep.",
+              "Ignore buses; only the bell matters.",
+              "Check whether pickups can move too, since an unchanged early pickup limits the chance for extra sleep."
+            ],
+            "answers": [
+              "Check whether pickups can move too, since an unchanged early pickup limits the chance for extra sleep."
+            ],
+            "hint": "Which answer changes or defends the proposal in light of the objection?",
+            "explanation": "A meaningful qualification names a condition under which the policy would or would not work.",
+            "alternate": {
+              "prompt": "A later dismissal might disrupt childcare. Which reply addresses that trade-off?",
+              "options": [
+                "Compare childcare options and their cost before extending a pilot.",
+                "Everybody will get used to it."
+              ],
+              "answers": [
+                "Compare childcare options and their cost before extending a pilot."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "A teammate worries that a later dismissal would cut practice short. In your own words, acknowledge that concern and defend, modify, or reconsider your claim.",
+              "sample": "A shorter practice would cost teams preparation time. I would support a pilot only if the school can move practice or protect its length."
+            }
+          }
+        ],
+        "model": "Evidence · fictional example: During a two-day 9:00 review trial, 8 of 10 students completed the opening problem; previously 5 of those 10 had completed a similar problem at 8:00.\nInterpret the change: More students finished a comparable task. That is consistent with better concentration, but a different problem or teacher could also explain it.\nQualify the claim: Try a longer comparison before permanently changing the review time."
+      }
+    ],
+    "final": {
+      "shortTitle": "Make your case",
+      "title": "Advise the school council",
+      "prompt": "Should your school start later so students can be more attentive in class? Write a 4–6 sentence argument to the council. Support, oppose, or qualify the change. Use a specific detail from the source card, explain how far it supports your position, and respond to one reasonable objection. Your position is yours; the quality of the argument is what matters.",
+      "source": "Research evidence: In a 2018 Seattle study, Dunster and colleagues compared students before and after secondary schools moved the bell from 7:50 to 8:45 a.m. Median sleep duration on school days was 34 minutes longer after the change. This figure measures sleep, not classroom attention; it also does not promise the same result here.\n\nLocal decision scenario (fictional): The council can run a four-week pilot, but one shared bus route cannot change its morning pickup during that month. You may use this constraint for either side.",
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6291308/",
+      "rubric": [
+        "Claim: Takes a specific defensible position on a later start for this school, including a conditional position if desired.",
+        "Evidence: Accurately uses at least one specific source-card detail, distinguishing hypothetical local constraints from real Seattle findings.",
+        "Reasoning: Explains why the evidence supports the position in relation to attention; does not represent measured sleep as proof of increased attention.",
+        "Counterargument: Fairly considers a relevant objection and responds with reasoning, a limitation, or a practical condition."
+      ],
+      "delayedCheck": "At the next class, argue for or against rotating who chooses the film-club screening. Write a claim, supply a concrete example, and underline the sentence that connects them."
+    }
   }
 ]

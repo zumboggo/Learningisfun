@@ -4,7 +4,7 @@ import {useEffect,useState} from 'react';
 import {useAuth} from '@/contexts/AuthContext';
 import {executeLearningContent as call} from '@/services/learning-content.service';
 
-type Item={id:string;assignedOn?:string|null;progressId?:string;releaseAt?:string|null;courseName?:string;classId:string;title:string;objective:string;minutes:number|string;className:string};
+type Item={id:string;dueOn?:string|null;assignedOn?:string|null;progressId?:string;releaseAt?:string|null;courseName?:string;classId:string;title:string;objective:string;minutes:number|string;className:string};
 type Question={rehearsal?:{prompt:string;sample:string};pieces?:string[];italicPieces?:string[];prompt:string;options?:string[]};
 type Stage={image?:{path:string;alt:string;caption:string};teachFirst?:boolean;shortTitle?:string;modelRows?:[string,string][];title:string;explanation:string;model:string;sourceUrl?:string;questions:Question[]};
 type Attempt={text:string;feedback?:string;criteria?:boolean[]};
@@ -18,6 +18,7 @@ const btn='rounded-lg bg-teal-800 px-4 py-2 font-semibold text-white disabled:op
 const secondary='rounded-lg border border-teal-700 px-4 py-2 font-semibold text-teal-900 disabled:opacity-50';
 const label='text-xs font-bold uppercase tracking-wider text-teal-800';
 const message=(e:unknown)=>e instanceof Error?e.message:'Something went wrong. Please try again.';
+function dueLabel(item:Item){return item.dueOn?' · Due '+new Intl.DateTimeFormat('en-US',{weekday:'short',month:'short',day:'numeric',timeZone:'Asia/Shanghai'}).format(new Date(item.dueOn+'T12:00:00+08:00')):'';}
 function TeacherLibrary({items,onChoose}:{items:Item[];onChoose:(selection:{item:Item;report:boolean})=>void}){
  const groups=new Map<string,Item[]>();
  for(const item of items){const sections=groups.get(item.id)||[];sections.push(item);groups.set(item.id,sections);}
@@ -26,7 +27,7 @@ function TeacherLibrary({items,onChoose}:{items:Item[];onChoose:(selection:{item
  const first=sections[0];
  return <details key={first.id} className="rounded-xl border border-slate-200 bg-white p-4"><summary className="cursor-pointer font-bold text-teal-950">{first.title} <span className="ml-2 text-sm font-normal text-slate-600">{sections.length} {sections.length===1?'section':'sections'} · {first.minutes} min</span></summary>
  <p className="my-3 text-slate-700">{first.objective}</p><ul>{sections.map(item=><li key={item.classId} className="flex flex-wrap items-center justify-between gap-3 border-t py-3">
- <div><strong>{[item.courseName,item.className].filter((v,i,a)=>v&&a.indexOf(v)===i).join(' · ')}</strong><p className="text-sm text-slate-600">{item.releaseAt?'Release: '+date.format(new Date(item.releaseAt)):item.assignedOn?'Assigned: '+date.format(new Date(item.assignedOn+'T12:00:00+08:00')):'Available now · No scheduled release date'}</p></div>
+ <div><strong>{[item.courseName,item.className].filter((v,i,a)=>v&&a.indexOf(v)===i).join(' · ')}</strong><p className="text-sm text-slate-600">{item.releaseAt?'Release: '+date.format(new Date(item.releaseAt)):item.assignedOn?'Assigned: '+date.format(new Date(item.assignedOn+'T12:00:00+08:00')):'Available now · No scheduled release date'}{dueLabel(item)}</p></div>
  <div className="flex flex-wrap gap-2"><button className={secondary} onClick={()=>onChoose({item,report:false})}>Preview lesson</button><button className={btn} onClick={()=>onChoose({item,report:true})}>Student progress</button></div></li>)}</ul></details>})}</section>
 }
 function Library({teacher}:{teacher:boolean}){
@@ -38,7 +39,7 @@ function Library({teacher}:{teacher:boolean}){
  {!choice&&<header className="lesson-library-head"><p className="text-xs font-bold uppercase tracking-widest text-teal-800">Learning is Fun · Practice studio</p><h1 className="my-2 text-3xl font-bold">Lessons</h1><p>{teacher?'Expand a lesson to see its class assignments, release dates, and student progress.':'Study a model, try it yourself, and put feedback to work.'}</p></header>}
  {error&&<p role="alert">{error} <button onClick={()=>{setError('');setLoad(load+1)}}>Retry</button></p>}
  {choice&&item?<><button className={secondary} onClick={()=>choose(null)}>← All lessons</button>{choice.report?<Report item={item}/>:<Practice item={item}/>}</>:
- !items?(!error&&<p>Loading lessons…</p>):items.length===0?<p className={panel}>No lessons are available for your classes yet.</p>:teacher?<TeacherLibrary items={items} onChoose={choose}/>:items.map(i=><article className={panel} key={i.id+i.classId}><p className={label}>{i.className} · {i.minutes} min</p><h2 className="text-xl font-bold">{i.title}</h2><p>{i.objective}</p><div className="flex flex-wrap gap-3"><button className={btn} onClick={()=>choose({item:i,report:false})}>{teacher?'Preview lesson':'Open lesson'}</button>{teacher&&<button className={secondary} onClick={()=>choose({item:i,report:true})}>Student progress</button>}</div></article>)}</div>
+ !items?(!error&&<p>Loading lessons…</p>):items.length===0?<p className={panel}>No lessons are available for your classes yet.</p>:teacher?<TeacherLibrary items={items} onChoose={choose}/>:items.map(i=><article className={panel} key={i.id+i.classId}><p className={label}>{i.className} · {i.minutes} min{dueLabel(i)}</p><h2 className="text-xl font-bold">{i.title}</h2><p>{i.objective}</p><div className="flex flex-wrap gap-3"><button className={btn} onClick={()=>choose({item:i,report:false})}>{teacher?'Preview lesson':'Open lesson'}</button>{teacher&&<button className={secondary} onClick={()=>choose({item:i,report:true})}>Student progress</button>}</div></article>)}</div>
 }
 export function LessonsPage(){const {user,isTeacher}=useAuth();return <Library key={user?.$id+String(isTeacher)} teacher={isTeacher}/>;}
 const scope=(i:Item)=>({citationBuilder:true,classId:i.classId,lessonId:i.id});
@@ -53,7 +54,7 @@ function Practice({item}:{item:Item}){
  const states=data?.lesson.stages.flatMap((stage,si)=>stage.questions.map((q,qi)=>({q,stage,si,qi}))),current=states?.[data?.state.step??0],final=data?.lesson.final,last=data?.state.submissions.at(-1);
  const rehearsal=current?.q.rehearsal;const practiceText=practice.key===rehearsal?.prompt?practice.text:'';const compared=!!practiceText.trim()&&practice.compared;
  return <div className="space-y-4">{error&&<p className={panel} role="alert">{error} <button className={secondary} onClick={()=>{setError('');setReload(reload+1)}}>Reload saved work</button></p>}{!data?<p>Opening lesson…</p>:<>
- <header className="lesson-intro"><p className={label}>Lessons · Practice studio</p><h1>{item.title}</h1><p>{item.className} <span aria-hidden="true">·</span> {item.minutes} min</p></header>
+ <header className="lesson-intro"><p className={label}>Lessons · Practice studio</p><h1>{item.title}</h1><p>{item.className} <span aria-hidden="true">·</span> {item.minutes} min{dueLabel(item)}</p></header>
  <ol className="lesson-trail" aria-label="Lesson stages">{[...data.lesson.stages.map(s=>s.shortTitle||s.title),final?.shortTitle||'Independent application'].map((title,i)=>{
  const active=current?.si??data.lesson.stages.length;return <li key={i} aria-current={i===active?'step':undefined} className={i<active?'done':''}><b aria-hidden="true">{i<active?'✓':i+1}</b>{title}</li>})}</ol>
  {data.state.notice&&<p role="status" className="rounded-xl bg-teal-50 p-4">{data.state.notice}</p>}
