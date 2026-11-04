@@ -471,7 +471,7 @@
     "objective": "Make a defensible claim, support it with evidence, explain the reasoning, and address a fair objection.",
     "minutes": 15,
     "releaseAt": "2026-11-09T00:00:00+08:00",
-    "dueOn": "2026-11-13",
+    "dueOn": "2026-11-10",
     "stages": [
       {
         "title": "Give the reader a reason to agree",
@@ -820,7 +820,7 @@
       ],
       "delayedCheck": "Next class, underline one inference in an editorial and circle the words that support it."
     },
-    "dueOn": "2026-11-17"
+    "dueOn": "2026-11-13"
   },
   {
     "id": "ap-lang-advertising-objection-v1",
@@ -990,7 +990,7 @@
       ],
       "delayedCheck": "In your next argument, underline the part of your thesis that would change if a reasonable objection disappeared."
     },
-    "dueOn": "2026-11-20"
+    "dueOn": "2026-11-17"
   },
   {
     "id": "ap-lang-advertising-audience-v1",
@@ -1155,6 +1155,6 @@
       ],
       "delayedCheck": "Next class, rewrite the first sentence of your argument for a reader who shares your goal but worries about a different cost."
     },
-    "dueOn": "2026-11-24"
+    "dueOn": "2026-11-20"
   }
 ]
