@@ -30,7 +30,7 @@ function Library({teacher}:{teacher:boolean}){
  !items?(!error&&<p>Loading lessons…</p>):items.length===0?<p className={panel}>No lessons are available for your classes yet.</p>:items.map(i=><article className={panel} key={i.id+i.classId}><p className={label}>{i.className} · {i.minutes} min</p><h2 className="text-xl font-bold">{i.title}</h2><p>{i.objective}</p><div className="flex flex-wrap gap-3"><button className={btn} onClick={()=>choose({item:i,report:false})}>{teacher?'Preview lesson':'Open lesson'}</button>{teacher&&<button className={secondary} onClick={()=>choose({item:i,report:true})}>Student progress</button>}</div></article>)}</div>
 }
 export function LessonsPage(){const {user,isTeacher}=useAuth();return <Library key={user?.$id+String(isTeacher)} teacher={isTeacher}/>;}
-const scope=(i:Item)=>({classId:i.classId,lessonId:i.id});
+const scope=(i:Item)=>({citationBuilder:true,classId:i.classId,lessonId:i.id});
 function Practice({item}:{item:Item}){
  const [data,setData]=useState<Player>(),[answer,setAnswer]=useState(''),[draft,setDraft]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[reload,setReload]=useState(0);
  const {user}=useAuth(),cache='lesson-draft:'+user?.$id+':'+item.classId+':'+item.id;

@@ -43,3 +43,5 @@
 .citation-builder button{margin:0;padding:.5rem .7rem;background:white;border:1px solid #8fa69b;border-radius:.45rem;cursor:pointer;overflow-wrap:anywhere;text-align:left}
 .citation-builder button[aria-pressed=true]{background:#164f47;color:white;border-color:#164f47}
 .piece-slots{margin:.8rem 0;display:grid;gap:.35rem}.piece-slots button{width:100%;display:flex;align-items:center;gap:.7rem}.piece-slots b{color:#20725d;background:#e6f2eb;border-radius:.25rem;padding:.1rem .45rem}
+
+.citation-builder .piece-heading{margin:.85rem 0 .35rem;font-size:.9rem;font-weight:750;color:#254b40}

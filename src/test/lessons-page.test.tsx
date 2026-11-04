@@ -31,3 +31,24 @@ it('shows the labeled model for teaching and folds it for the next recall questi
  await screen.findByText('Fresh check');expect(screen.getByText('Worked example').closest('details')).not.toHaveAttribute('open');
  fireEvent.click(screen.getByText('Worked example'));expect(screen.getByText('Spar, Ira.')).toBeVisible();
 });
+
+it('renders both real citation banks in sequence and advances after ordering each',async()=>{
+ const {default:catalog}=await import('../../functions/learning-content/src/lesson-catalog.json');
+ const l=catalog[0],questions=l.stages[1].questions;
+ let step=2;
+ const player=()=>({lesson:l,state:{step,misses:0,checks:[],draft:'',submissions:[],outcome:'',notice:''},revision:step});
+ auth.isTeacher=false;
+ request.mockImplementation(async b=>{if(b.action==='lessonLibrary')return {items:[{...item,id:l.id}]};if(b.action==='lessonAnswer'){expect(b.answer).toBe(questions[step-2].answers[0]);step++;}return player()});
+ render(<LessonsPage/>);fireEvent.click(await screen.findByText('Open lesson'));
+ for(const [i,q] of questions.entries()){
+ await screen.findByText(q.prompt);expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+ if(!('pieces' in q))throw Error('Missing citation pieces');const pieces=q.pieces;
+ const order=i===0?[3,2,0,4,1]:[2,4,1,3,0];
+ for(const [pos,idx] of order.entries()){
+ const piece=screen.getByRole('button',{name:pieces[idx]});
+ const slot=screen.getByRole('button',{name:(pos+1)+' Place piece here'});
+ if(i===0){fireEvent.click(piece);fireEvent.click(slot);}else{const dt={setData:vi.fn(),getData:()=>String(idx)};fireEvent.dragStart(piece,{dataTransfer:dt});fireEvent.drop(slot,{dataTransfer:dt});}}
+ fireEvent.click(screen.getByText('Check answer'));
+ }
+ await screen.findByText(l.stages[2].questions[0].prompt);
+});
