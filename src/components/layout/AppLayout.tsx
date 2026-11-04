@@ -55,6 +55,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         { to: '/discussions', label: 'Discussions', icon: 'Q' },
         { to: '/decks', label: 'Cards', icon: 'V' },
         { to: '/texts', label: 'Texts', icon: 'T' },
+        { to: '/lessons', label: 'Lessons', icon: 'L' },
         { to: '/writing', label: 'Writing', icon: 'W' },
         { to: '/teacher-access', label: 'Teacher access', icon: 'T' },
         { to: '/game', label: 'The Game', icon: 'G' },
@@ -71,6 +72,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         { to: '/classes', label: 'Classes', icon: 'classes' },
         { to: '/decks', label: 'Cards', icon: 'cards' },
         { to: '/texts', label: 'Texts', icon: 'read' },
+        { to: '/lessons', label: 'Lessons', icon: 'quiz' },
         { to: '/game', label: 'The Game', icon: 'game' },
         { to: '/brainstorming', label: 'Planner', icon: 'write' },
       ];

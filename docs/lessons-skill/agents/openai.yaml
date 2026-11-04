@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lessons"
+  short_description: "Create interactive Learning is Fun lessons with coached revision"
+  default_prompt: "Use $lessons to create a 10–15 minute Learning is Fun lesson for my class."

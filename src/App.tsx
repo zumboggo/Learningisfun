@@ -37,6 +37,7 @@ import { DiscussionsListPage } from '@/pages/DiscussionsListPage';
 import { DiscussionPage } from '@/pages/DiscussionPage';
 import { QuizzesPage } from '@/pages/QuizzesPage';
 import { QuizTakingPage } from '@/pages/QuizTakingPage';
+import { LessonsPage } from '@/pages/LessonsPage';
 import { WritingPage } from '@/pages/WritingPage';
 import { LivePresentationPage } from '@/pages/LivePresentationPage';
 import { TextsPage } from '@/pages/TextsPage';
@@ -161,6 +162,7 @@ export default function App() {
           <Route path="/quizzes" element={<ProtectedRoute><QuizzesPage /></ProtectedRoute>} />
           <Route path="/quizzes/:quizId/take" element={<ProtectedRoute><QuizTakingPage /></ProtectedRoute>} />
 
+          <Route path="/lessons" element={<ProtectedRoute><LessonsPage /></ProtectedRoute>} />
           <Route path="/writing" element={<ProtectedRoute><WritingPage /></ProtectedRoute>} />
           <Route path="/presentations/:sessionId/live" element={<ProtectedRoute><LivePresentationPage /></ProtectedRoute>} />
           <Route path="/texts" element={<ProtectedRoute><TextsPage /></ProtectedRoute>} />

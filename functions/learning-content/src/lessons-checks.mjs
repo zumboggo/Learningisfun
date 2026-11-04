@@ -1,0 +1,29 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {lessonAction} from './lessons.js';
+const [lesson]=JSON.parse(readFileSync(new URL('./lesson-catalog.json',import.meta.url)));
+const classId=lesson.classIds[0];
+function fixture(){
+ const rows=new Map();const db={createTransaction:async()=>({$id:'tx'}),updateTransaction:async()=>{},getDocument:async(_,c,id)=>{const row=rows.get(c+id);if(!row)throw Object.assign(Error(),{code:404});return structuredClone(row);},createDocument:async(_,c,id,row)=>rows.set(c+id,{$id:id,...row}),updateDocument:async(_,c,id,row)=>rows.set(c+id,{$id:id,...rows.get(c+id),...row}),listDocuments:async()=>({documents:[{userId:'learner'}]})};
+ rows.set('classes'+classId,{$id:classId,status:'active',teacherId:'teacher',name:'World Lit'});let revision=0;
+ async function invoke(action,extra={},identity={}){const r=await lessonAction({db,databaseId:'main',profile:{role:'student'},userId:'learner',memberClassIds:new Set([classId]),body:{action,classId,lessonId:lesson.id,revision,...extra},...identity});if(r.revision!==undefined)revision=r.revision;return r;}
+ return invoke;
+}
+test('class access and answer gate cannot be bypassed',async()=>{const act=fixture();assert.equal((await act('lessonLibrary',{}, {memberClassIds:new Set()})).items.length,0);await assert.rejects(act('lessonRead',{}, {memberClassIds:new Set()}),/unavailable/);await assert.rejects(act('lessonRoster'),/teacher/);await assert.rejects(act('lessonSubmit',{draft:'skip practice'}),/Finish practice/);});
+test('practice help, independent and revised outcomes, outage, and teacher override',async t=>{
+ const act=fixture();const q=lesson.stages.flatMap(s=>s.questions);
+ let r=await act('lessonAnswer',{answer:'wrong'});assert.equal(r.state.step,0);r=await act('lessonAnswer',{answer:'wrong'});assert.equal(r.lesson.stages[0].questions[0].prompt,q[0].alternate.prompt);
+ r=await act('lessonAnswer',{answer:q[0].alternate.answers[0]});assert.equal(r.state.step,1);
+ for(const item of q.slice(1))await act('lessonAnswer',{answer:item.answers[0]});
+ const key=process.env.OPENROUTER_API_KEY;process.env.OPENROUTER_API_KEY='fixture';t.after(()=>{if(key===undefined)delete process.env.OPENROUTER_API_KEY;else process.env.OPENROUTER_API_KEY=key;});
+ let pass=true,online=false;
+ t.mock.method(globalThis,'fetch',async()=>({ok:online,json:async()=>({usage:{cost:0},choices:[{message:{content:JSON.stringify({criteria:lesson.final.rubric.map(()=>pass),feedback:'Specific next step.'})}}]})}));
+ r=await act('lessonSubmit',{draft:'Original entry'});assert.equal(r.state.outcome,'Completed');assert.equal(r.state.draft,'Original entry');
+ online=true;r=await act('lessonSubmit',{draft:'Original entry'});assert.equal(r.state.outcome,'Demonstrated independently');
+ pass=false;r=await act('lessonSubmit',{draft:'Another entry'});assert.equal(r.state.outcome,'Needs another attempt');
+ pass=true;r=await act('lessonSubmit',{draft:'Revised entry'});assert.equal(r.state.outcome,'Demonstrated with support');
+ const teacher={userId:'teacher',profile:{role:'teacher'}};const {rows}=await act('lessonRoster',{},teacher);assert.equal(rows[0].state.submissions.length,3);
+ await act('lessonReview',{studentId:'learner',outcome:'Completed',revision:rows[0].revision},teacher);
+ assert.equal((await act('lessonRead')).state.outcome,'Completed');
+});
