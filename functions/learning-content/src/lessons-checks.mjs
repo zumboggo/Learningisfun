@@ -36,7 +36,7 @@ test('both differently ordered source types must be assembled before independent
  await assert.rejects(act('lessonSubmit',{draft:'unfinished'}),/Finish practice/);
 });
 test('nested quotes can be previewed by the teacher, then open at Shanghai midnight',async t=>{
- const act=fixture(),lessonId='nested-quotes-evidence-v1',release=Date.parse('2026-11-09T00:00:00+08:00');
+ const act=fixture(),lessonId='nested-quotes-evidence-v2',release=Date.parse('2026-11-09T00:00:00+08:00');
  const now=t.mock.method(Date,'now',()=>release-1);
  assert.ok(!(await act('lessonLibrary')).items.some(l=>l.id===lessonId));
  await assert.rejects(act('lessonRead',{lessonId}),/unavailable/);

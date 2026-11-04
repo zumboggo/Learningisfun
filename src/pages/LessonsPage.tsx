@@ -5,8 +5,8 @@ import {useAuth} from '@/contexts/AuthContext';
 import {executeLearningContent as call} from '@/services/learning-content.service';
 
 type Item={id:string;classId:string;title:string;objective:string;minutes:number|string;className:string};
-type Question={pieces?:string[];italicPieces?:string[];prompt:string;options?:string[]};
-type Stage={teachFirst?:boolean;shortTitle?:string;modelRows?:[string,string][];title:string;explanation:string;model:string;sourceUrl?:string;questions:Question[]};
+type Question={rehearsal?:{prompt:string;sample:string};pieces?:string[];italicPieces?:string[];prompt:string;options?:string[]};
+type Stage={image?:{path:string;alt:string;caption:string};teachFirst?:boolean;shortTitle?:string;modelRows?:[string,string][];title:string;explanation:string;model:string;sourceUrl?:string;questions:Question[]};
 type Attempt={text:string;feedback?:string;criteria?:boolean[]};
 type Progress={step:number;misses:number;checks:{step:number;correct:boolean;answer:string}[];draft:string;submissions:Attempt[];outcome:string;notice:string;reviewed?:boolean};
 type Task={shortTitle?:string;title:string;prompt:string;source:string;sourceUrl:string;rubric:string[];delayedCheck:string};
@@ -32,6 +32,7 @@ function Library({teacher}:{teacher:boolean}){
 export function LessonsPage(){const {user,isTeacher}=useAuth();return <Library key={user?.$id+String(isTeacher)} teacher={isTeacher}/>;}
 const scope=(i:Item)=>({citationBuilder:true,classId:i.classId,lessonId:i.id});
 function Practice({item}:{item:Item}){
+ const [practice,setPractice]=useState({key:'',text:'',compared:false});
  const [data,setData]=useState<Player>(),[answer,setAnswer]=useState(''),[draft,setDraft]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[reload,setReload]=useState(0);
  const {user}=useAuth(),cache='lesson-draft:'+user?.$id+':'+item.classId+':'+item.id;
  useEffect(()=>{let live=true;call<Player>({action:'lessonRead',...scope(item)}).then(r=>{if(live){setData(r);let d=r.state.draft;try{d=localStorage.getItem(cache)??d}catch{/* storage unavailable */}setDraft(d)}}).catch(e=>{if(live)setError(message(e))});return()=>{live=false}},[item,cache,reload]);
@@ -39,6 +40,7 @@ function Practice({item}:{item:Item}){
  if(!data||busy)return;setBusy(true);setError('');
  try{const r=await call<Player>({action,...scope(item),revision:data.revision,...(action==='lessonAnswer'?{answer}:{draft})});setData(r);if(!current?.q.pieces||r.state.step!==data.state.step||(r.state.misses>=2)!==(data.state.misses>=2))setAnswer('');if(action!=='lessonAnswer'){try{localStorage.removeItem(cache)}catch{/* already saved remotely */}}}catch(e){setError(message(e))}finally{setBusy(false)}}
  const states=data?.lesson.stages.flatMap((stage,si)=>stage.questions.map((q,qi)=>({q,stage,si,qi}))),current=states?.[data?.state.step??0],final=data?.lesson.final,last=data?.state.submissions.at(-1);
+ const rehearsal=current?.q.rehearsal;const practiceText=practice.key===rehearsal?.prompt?practice.text:'';const compared=!!practiceText.trim()&&practice.compared;
  return <div className="space-y-4">{error&&<p className={panel} role="alert">{error} <button className={secondary} onClick={()=>{setError('');setReload(reload+1)}}>Reload saved work</button></p>}{!data?<p>Opening lesson…</p>:<>
  <header className="lesson-intro"><p className={label}>Lessons · Practice studio</p><h1>{item.title}</h1><p>{item.className} <span aria-hidden="true">·</span> {item.minutes} min</p></header>
  <ol className="lesson-trail" aria-label="Lesson stages">{[...data.lesson.stages.map(s=>s.shortTitle||s.title),final?.shortTitle||'Independent application'].map((title,i)=>{
@@ -46,7 +48,10 @@ function Practice({item}:{item:Item}){
  {data.state.notice&&<p role="status" className="rounded-xl bg-teal-50 p-4">{data.state.notice}</p>}
  {current?<><section className="lesson-practice"><p className="lesson-band">Stage {current.si+1} · Check {data.state.step+1} of {states?.length}</p><div className="lesson-question"><h2>{current.stage.title}</h2>
  {current.stage.teachFirst&&<p className="lesson-mini">{current.stage.explanation}</p>}
- <fieldset disabled={busy} className="space-y-2"><legend className="mb-2 font-semibold">{current.q.prompt}</legend>{current.q.pieces?<CitationBuilder key={data.state.step+':'+(data.state.misses>=2)} pieces={current.q.pieces} italicPieces={current.q.italicPieces} onChange={setAnswer}/>:current.q.options?current.q.options.map(o=><label key={o} className="flex items-start gap-3 rounded-lg border p-3"><input type="radio" className="mt-1" name="choice" checked={answer===o} onChange={()=>setAnswer(o)}/>{o}</label>):<input aria-label="Your answer" className="w-full rounded-lg border p-3" value={answer} maxLength={600} onChange={e=>setAnswer(e.target.value)}/>}</fieldset><button className={btn} disabled={busy||!answer.trim()} onClick={()=>void send('lessonAnswer')}>Check answer</button></div></section>
+ {current.stage.image&&current.qi===0&&<figure className="my-4"><img className="w-full max-w-2xl rounded-lg" src={import.meta.env.BASE_URL+current.stage.image.path} alt={current.stage.image.alt}/><figcaption className="mt-1 text-sm">{current.stage.image.caption}</figcaption></figure>}
+ {rehearsal&&<div className="lesson-mini"><label className="block">{rehearsal.prompt}<textarea rows={2} maxLength={1500} className="my-2 block w-full rounded border bg-white p-2" aria-label="Practice in your own words" value={practiceText} onChange={e=>setPractice({key:rehearsal.prompt,text:e.target.value,compared:false})}/></label>
+ <button type="button" disabled={!practiceText.trim()} className={secondary} onClick={()=>setPractice({...practice,compared:true})}>Compare with a model</button>{compared&&<p role="status" className="mt-3">{rehearsal.sample}</p>}</div>}
+ <fieldset disabled={busy||!!rehearsal&&!compared} className="space-y-2"><legend className="mb-2 font-semibold">{current.q.prompt}</legend>{current.q.pieces?<CitationBuilder key={data.state.step+':'+(data.state.misses>=2)} pieces={current.q.pieces} italicPieces={current.q.italicPieces} onChange={setAnswer}/>:current.q.options?current.q.options.map(o=><label key={o} className="flex items-start gap-3 rounded-lg border p-3"><input type="radio" className="mt-1" name="choice" checked={answer===o} onChange={()=>setAnswer(o)}/>{o}</label>):<input aria-label="Your answer" className="w-full rounded-lg border p-3" value={answer} maxLength={600} onChange={e=>setAnswer(e.target.value)}/>}</fieldset><button className={btn} disabled={busy||!answer.trim()||!!rehearsal&&!compared} onClick={()=>void send('lessonAnswer')}>Check answer</button></div></section>
  <details className="lesson-model" key={data.state.step+':'+(data.state.misses>=2)} open={current.qi===0||data.state.misses>=2}>
  <summary>Worked example <span>Study the model</span></summary>
  <div className="lesson-model-body">{current.stage.modelRows?<dl>{current.stage.modelRows.map(([name,text])=><div key={name}><dt>{name}</dt><dd>{text}</dd></div>)}</dl>:<p className="whitespace-pre-line">{current.stage.model}</p>}

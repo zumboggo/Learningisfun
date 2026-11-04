@@ -52,3 +52,17 @@ it('renders both real citation banks in sequence and advances after ordering eac
  }
  await screen.findByText(l.stages[2].questions[0].prompt);
 });
+
+it('places the diagram with the model and makes room for original writing before comparison',async()=>{
+ const {default:catalog}=await import('../../functions/learning-content/src/lesson-catalog.json');
+ const lesson=catalog.find(l=>l.id==='nested-quotes-evidence-v2')!;
+ const question=lesson.stages[0].questions[1];if(!('rehearsal' in question)||!question.rehearsal)throw Error('Missing rehearsal');
+ const state={step:0,misses:0,checks:[],draft:'',submissions:[],outcome:'',notice:''};
+ auth.isTeacher=false;
+ request.mockResolvedValueOnce({items:[{...item,id:lesson.id}]}).mockResolvedValueOnce({lesson,state,revision:0}).mockResolvedValueOnce({lesson,state:{...state,step:1},revision:1});
+ render(<LessonsPage/>);fireEvent.click(await screen.findByText('Open lesson'));
+ expect(await screen.findByRole('img',{name:/writer’s words/i})).toHaveAttribute('src',expect.stringContaining('nested-quote-seam.jpg'));
+ fireEvent.change(screen.getByLabelText('Your answer'),{target:{value:'a wall'}});fireEvent.click(screen.getByText('Check answer'));
+ const compare=await screen.findByText('Compare with a model');expect(compare).toBeDisabled();expect(screen.queryByText(question.rehearsal.sample)).toBeNull();
+ fireEvent.change(screen.getByLabelText('Practice in your own words'),{target:{value:'The editor calls the paper “a window” into the school.'}});fireEvent.click(compare);expect(screen.getByText(question.rehearsal.sample)).toBeVisible();
+});

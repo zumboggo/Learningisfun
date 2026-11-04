@@ -279,7 +279,7 @@
     }
   },
   {
-    "id": "nested-quotes-evidence-v1",
+    "id": "nested-quotes-evidence-v2",
     "title": "Nested quotes: make evidence part of your argument",
     "objective": "Introduce and embed a short quotation, explain its wording, and connect that insight to your thesis.",
     "classIds": [
@@ -288,157 +288,154 @@
       "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c"
     ],
     "releaseAt": "2026-11-09T00:00:00+08:00",
-    "minutes": 13,
+    "minutes": 15,
     "stages": [
       {
-        "title": "Give the quotation a job in your sentence",
+        "title": "Let borrowed words finish your sentence",
         "shortTitle": "Introduce & embed",
         "teachFirst": true,
-        "explanation": "A nested quotation is a short piece of the source woven into your own sentence. Give readers just enough context to know who is speaking and why. Choose the exact words you will analyze. Read the whole sentence aloud: your words and the quoted words should fit together.",
-        "model": "Original practice speech: At a school council meeting, a student asks the school to keep its library open after practice. She says, “The doors are open, but the clock keeps us out.”",
-        "modelRows": [
-          [
-            "Source",
-            "Original practice speech: At a school council meeting, a student asks the school to keep its library open after practice. She says, “The doors are open, but the clock keeps us out.”"
-          ],
-          [
-            "Working thesis",
-            "The speaker persuades the council to judge access by students’ schedules rather than by the sign on the door."
-          ],
-          [
-            "Dropped quotation",
-            "The student asks for longer hours. “The clock keeps us out.” The reader has to supply the connection."
-          ],
-          [
-            "Nested quotation",
-            "Asking the council to extend library hours, the student argues that even open doors offer little access when “the clock keeps us out.”"
-          ],
-          [
-            "Why it fits",
-            "The opening identifies the speaker and situation. The word when makes the borrowed phrase part of the writer’s sentence."
-          ]
-        ],
-        "questions": [
-          {
-            "prompt": "Which introduction gives a reader useful context for the quotation?",
-            "options": [
-              "Asking the council to extend library hours, the student argues that…",
-              "A very important person once said…",
-              "In this quote, there is a quote that says…"
-            ],
-            "answers": [
-              "Asking the council to extend library hours, the student argues that…"
-            ],
-            "hint": "What does the reader need to know about the speaker and the occasion?",
-            "explanation": "The request for longer hours makes the reference to a clock meaningful.",
-            "alternate": {
-              "prompt": "Which detail belongs in a short lead-in here?",
-              "options": [
-                "The speaker’s favorite book",
-                "The change the speaker wants the council to make",
-                "The number of people in the room"
-              ],
-              "answers": [
-                "The change the speaker wants the council to make"
-              ]
-            }
-          },
-          {
-            "prompt": "Which sentence nests the speaker’s exact words and reads smoothly?",
-            "options": [
-              "The student calls the schedule unfair. “The clock keeps us out.”",
-              "The student argues that the library is effectively closed when “the clock keeps us out.”",
-              "The student argues that “the clock locks every door.”"
-            ],
-            "answers": [
-              "The student argues that the library is effectively closed when “the clock keeps us out.”"
-            ],
-            "hint": "Read across the quotation marks. Is the result one grammatical sentence, and are the quoted words exact?",
-            "explanation": "The word when makes the exact phrase do grammatical work. The other versions drop the quote or change it.",
-            "alternate": {
-              "prompt": "Complete this sentence using the speaker’s exact words: The student concedes that “the doors are open” but insists that ___.",
-              "options": [
-                "“the clock keeps us out”",
-                "“time always locks us out”",
-                "says, a clock."
-              ],
-              "answers": [
-                "“the clock keeps us out”"
-              ]
-            }
-          }
-        ]
-      },
-      {
-        "title": "Explain the words, then return to the thesis",
-        "shortTitle": "Explain & connect",
-        "teachFirst": true,
-        "explanation": "Zoom in on a word or image: what does it make the reader picture, notice, or reconsider? Then zoom out: explain how that effect supports your specific thesis. “This proves my point” leaves the reasoning for the reader to do.",
-        "model": "Original practice speech: At a school council meeting, a student asks the school to keep its library open after practice. She says, “The doors are open, but the clock keeps us out.”",
+        "explanation": "Start small: name the speaker, add a verb, and let a few exact words complete your thought. In this original practice speech, a student asking for later library hours says, “For anyone coming from practice, the clock is a locked gate.”",
+        "model": "Library access depends on when students can arrive. Asking for later library hours, the speaker calls the clock “a locked gate.” A clock normally measures time. Here it becomes a barrier that keeps athletes out, even if the door itself is open. The council should therefore judge access by whether students can actually get there after practice.",
         "modelRows": [
           [
             "Thesis",
-            "The speaker persuades the council to judge access by students’ schedules rather than by the sign on the door."
+            "Library access depends on when students can arrive."
           ],
           [
-            "Evidence in context",
-            "Asking for longer library hours, the student argues that open doors offer little access when “the clock keeps us out.”"
+            "Introduce + embed",
+            "Asking for later library hours, the speaker calls the clock “a locked gate.”"
           ],
           [
-            "Explain",
-            "The clock behaves like a guard. Nobody physically blocks the doorway, yet the timetable can exclude a student just as effectively."
+            "“locked gate”",
+            "A clock normally measures time. Here it becomes a barrier that keeps athletes out, even if the door itself is open."
           ],
           [
-            "Tie back",
-            "That image gives the council a different test for fairness: can students actually arrive in time to use the library?"
+            "Back to the thesis",
+            "The council should therefore judge access by whether students can actually get there after practice."
           ]
         ],
         "questions": [
           {
-            "prompt": "Which commentary explains how the wording works?",
-            "options": [
-              "The quotation is about a clock.",
-              "The speaker uses language to make her point.",
-              "Giving the clock a guard’s job makes an ordinary timetable feel like a barrier."
-            ],
+            "prompt": "A runner says, “The hill was a wall.” Keep the runner’s image: The runner describes the hill as “___.” Type just the two missing words.",
             "answers": [
-              "Giving the clock a guard’s job makes an ordinary timetable feel like a barrier."
+              "a wall"
             ],
-            "hint": "Look for a sentence that explains what keeps us out makes the clock seem to do.",
-            "explanation": "Calling the clock a guard interprets the wording; saying the passage mentions a clock only repeats it.",
+            "hint": "Take the two words that name what the hill seemed to be.",
+            "explanation": "The quoted noun phrase completes the writer’s sentence after as.",
             "alternate": {
-              "prompt": "What does the contrast between open doors and being kept out reveal?",
-              "options": [
-                "A place can be physically open but practically unreachable.",
-                "The student forgot her library card.",
-                "The council should buy a clock."
-              ],
+              "prompt": "A commuter says, “That bridge was a lifeline.” Complete the sentence with two exact words: The commuter calls the bridge “___.”",
               "answers": [
-                "A place can be physically open but practically unreachable."
+                "a lifeline"
               ]
             }
           },
           {
-            "prompt": "Which closing sentence connects this interpretation to the working thesis?",
+            "prompt": "What made the borrowed phrase fit into your own sentence?",
             "options": [
-              "In conclusion, this is a very powerful quote.",
-              "The council must therefore measure access by whether students can get there, not simply by whether the doors are unlocked.",
-              "Libraries also need better lighting."
+              "My own wording created a grammatical place for the phrase.",
+              "I put a period immediately before the phrase.",
+              "I used all the words from the source."
             ],
             "answers": [
-              "The council must therefore measure access by whether students can get there, not simply by whether the doors are unlocked."
+              "My own wording created a grammatical place for the phrase."
             ],
-            "hint": "Return to the decision the speaker wants the council to make.",
-            "explanation": "A strong tie-back explains why that image gives the audience a reason to accept the claim.",
+            "hint": "Read the sentence aloud without pausing at the quotation marks.",
+            "explanation": "The lead-in gives context and makes room for the borrowed words.",
             "alternate": {
-              "prompt": "Which revision would strengthen “This proves the thesis”?",
+              "prompt": "A cook calls salt “a spotlight.” Which lead-in gives the phrase a grammatical role?",
               "options": [
-                "Repeat the exact quotation twice.",
-                "Name the precise claim the image supports and explain the connection."
+                "Explaining how salt sharpens flavor, the cook calls it",
+                "The cook spoke. And said a quote."
               ],
               "answers": [
-                "Name the precise claim the image supports and explain the connection."
+                "Explaining how salt sharpens flavor, the cook calls it"
               ]
+            },
+            "rehearsal": {
+              "prompt": "A student editor says, “Our newspaper is a window on the school.” Write your own sentence introducing the editor and embedding “a window” without quoting the whole line.",
+              "sample": "Explaining why the paper matters, the student editor calls it “a window” on school life. Read yours aloud: does the phrase fit and is its speaker clear?"
+            }
+          }
+        ],
+        "image": {
+          "path": "lessons/nested-quote-seam.jpg",
+          "alt": "The writer’s words “The speaker calls the clock” join the quoted phrase “a locked gate” to form one sentence.",
+          "caption": "Read across the join: calls the clock what? The source’s words answer inside your sentence."
+        }
+      },
+      {
+        "title": "Explain one word, then show why it matters",
+        "shortTitle": "Explain & connect",
+        "teachFirst": true,
+        "explanation": "The commentary does two jobs: explain what the wording makes us picture, then show how that picture supports the thesis. Do each job once with support before writing the full paragraph.",
+        "model": "Opposing cuts to a bus route, a resident calls the last bus “a thread.” A thread joins separate things but snaps easily. The image makes a neighborhood’s connection to work sound fragile. If a single route is all that connects workers to their jobs, cutting it would isolate people rather than simply inconvenience them.",
+        "modelRows": [
+          [
+            "Context + evidence",
+            "Opposing cuts to a bus route, a resident calls the last bus “a thread.”"
+          ],
+          [
+            "“thread” → interpretation",
+            "A thread joins separate things but snaps easily. The image makes a neighborhood’s connection to work sound fragile."
+          ],
+          [
+            "Interpretation → thesis",
+            "If a single route is all that connects workers to their jobs, cutting it would isolate people rather than simply inconvenience them."
+          ]
+        ],
+        "questions": [
+          {
+            "prompt": "Which detail should your explanation account for?",
+            "options": [
+              "How much the coach paid for the team uniforms",
+              "What a hinge can do that a wall cannot",
+              "Whether hinges are made of brass"
+            ],
+            "answers": [
+              "What a hinge can do that a wall cannot"
+            ],
+            "hint": "Think about how each object moves.",
+            "explanation": "The word hinge suggests a turn or a new direction. A wall suggests a stop.",
+            "alternate": {
+              "prompt": "A gardener calls a seed “a promise.” Which question helps you interpret that word?",
+              "options": [
+                "What future possibility does promise suggest?",
+                "What is the dictionary spelling of seed?"
+              ],
+              "answers": [
+                "What future possibility does promise suggest?"
+              ]
+            },
+            "rehearsal": {
+              "prompt": "Supply only the missing commentary. Lead-in and quote: After a defeat, the coach calls the loss “a hinge.” Thesis link already supplied: The defeat can change the team’s direction rather than end its season. Write the sentence that explains the image between them.",
+              "sample": "A hinge is where something turns, so the loss becomes a pivot rather than a dead end. A different reading can work if it explains the word."
+            }
+          },
+          {
+            "prompt": "Which question tests whether your last sentence has done its job?",
+            "options": [
+              "Did I repeat the quote exactly a second time?",
+              "Did I explain why this reading gives the audience a reason to accept my thesis?",
+              "Did I use the phrase this proves?"
+            ],
+            "answers": [
+              "Did I explain why this reading gives the audience a reason to accept my thesis?"
+            ],
+            "hint": "Ask what your reader now has a reason to believe.",
+            "explanation": "A tie-back carries the interpretation to the specific claim at stake.",
+            "alternate": {
+              "prompt": "A poet calls a secret “a splinter.” Your interpretation: the hidden object keeps causing pain. Which claim does that reasoning support?",
+              "options": [
+                "Silence can prolong the harm it conceals.",
+                "The speaker knows woodworking."
+              ],
+              "answers": [
+                "Silence can prolong the harm it conceals."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "Now supply both reasoning moves without a frame. Evidence: Defending the school archive, a librarian calls it “our memory.” Thesis: Discarding the archive would cost the school more than storage space. Write two sentences: interpret one word, then connect your interpretation to the thesis.",
+              "sample": "“Our” makes remembering a shared act, not one person’s private hobby. Throwing out the archive would take away the records that let different generations tell a common story."
             }
           }
         ]

@@ -16,8 +16,8 @@ export function answerCheck(state,lesson,answer){
  return state;
 }
 function view(lesson,state,revision,canOrder){
- let index=0;const stages=lesson.stages.map(s=>({title:s.title,shortTitle:s.shortTitle,teachFirst:s.teachFirst,modelRows:s.modelRows,explanation:s.explanation,model:s.model,sourceUrl:s.sourceUrl,questions:s.questions.map(q=>{
- const item=index++===state.step&&state.misses>=2?q.alternate:q;return {prompt:item.prompt+(item.pieces&&!canOrder?' If you see a text box instead of movable pieces, reload the app to get the citation builder. Your saved checks will stay in place.':''),options:item.options,pieces:item.pieces,italicPieces:item.italicPieces};})}));
+ let index=0;const stages=lesson.stages.map(s=>({title:s.title,shortTitle:s.shortTitle,teachFirst:s.teachFirst,image:s.image,modelRows:s.modelRows,explanation:s.explanation,model:s.model,sourceUrl:s.sourceUrl,questions:s.questions.map(q=>{
+ const item=index++===state.step&&state.misses>=2?q.alternate:q;return {prompt:item.prompt+(item.pieces&&!canOrder?' If you see a text box instead of movable pieces, reload the app to get the citation builder. Your saved checks will stay in place.':''),rehearsal:item.rehearsal,options:item.options,pieces:item.pieces,italicPieces:item.italicPieces};})}));
  return {lesson:{id:lesson.id,title:lesson.title,objective:lesson.objective,minutes:lesson.minutes,stages,final:{...lesson.final,rubric:lesson.final.rubric.map(r=>r.split(':')[0])}},state,revision};
 }
 export function parseFeedback(raw,rubric){
