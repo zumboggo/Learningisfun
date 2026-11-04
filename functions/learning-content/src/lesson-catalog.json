@@ -819,7 +819,8 @@
         "Commentary: Connects the terms to a plausible editorial consequence and distinguishes a request from an established right or outcome."
       ],
       "delayedCheck": "Next class, underline one inference in an editorial and circle the words that support it."
-    }
+    },
+    "dueOn": "2026-11-17"
   },
   {
     "id": "ap-lang-advertising-objection-v1",
@@ -988,7 +989,8 @@
         "Reasoning: Explains the effect of the boundary and weighs the benefit of portraits; accept different defensible policies."
       ],
       "delayedCheck": "In your next argument, underline the part of your thesis that would change if a reasonable objection disappeared."
-    }
+    },
+    "dueOn": "2026-11-20"
   },
   {
     "id": "ap-lang-advertising-audience-v1",
@@ -1152,6 +1154,7 @@
         "Audience reasoning: Explains why the two readers need different opening details while maintaining the same policy."
       ],
       "delayedCheck": "Next class, rewrite the first sentence of your argument for a reader who shares your goal but worries about a different cost."
-    }
+    },
+    "dueOn": "2026-11-24"
   }
 ]
