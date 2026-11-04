@@ -13,6 +13,15 @@ interface AppLayoutProps {
   children: ReactNode;
 }
 
+const planningViews = [
+  { label: 'Brainstorming boards', to: '/brainstorming' },
+  { label: 'Weekly plans', to: '/planner' },
+];
+const settingsViews = [
+  { label: 'Settings', to: '/settings' },
+  { label: 'Data', to: '/data' },
+];
+
 export function AppLayout({ children }: AppLayoutProps) {
   const { user, logout, isTeacher, isParent, viewAsStudent, setViewAsStudent,workshopMode,workshopAccess,workshopError } = useAuth();
   const location = useLocation();
@@ -39,10 +48,19 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const isGameRoute=isGamePlayerRoute(location.pathname);
   const content=isGameRoute&&user?<GameDisplay key={user.$id+location.pathname} userId={user.$id}>{children}</GameDisplay>:children;
+  const path = location.pathname.replace(/\/$/, '');
+  const inPlanning = path === '/brainstorming' || path === '/planning' || path === '/planner' || path.startsWith('/planner/');
+  const inSettings = ['/settings', '/data', '/teacher-access'].includes(path);
+  const sectionViews = inPlanning ? planningViews : inSettings ? settingsViews : [];
+  const activeView = inPlanning
+    ? (path === '/brainstorming' ? '/brainstorming' : '/planner')
+    : (path === '/data' ? '/data' : '/settings');
+
   const navActive=(to:string)=>{
     if (isTeacher && location.pathname.startsWith('/discussions')) return to === '/texts';
-    if (isTeacher && location.pathname === '/teacher-access') return to === '/settings';
-    return to==='/game'?(location.pathname==='/game'||isGameRoute||/\/classes\/[^/]+\/game$/.test(location.pathname)):to==='/classes'?location.pathname.startsWith(to)&&!isGameRoute&&!/\/game$/.test(location.pathname):location.pathname.startsWith(to)||(to==='/planner'&&location.pathname==='/planning');
+    if (isTeacher && inPlanning) return to === '/brainstorming';
+    if (isTeacher && inSettings) return to === '/settings';
+    return to==='/game'?(location.pathname==='/game'||isGameRoute||/\/classes\/[^/]+\/game$/.test(location.pathname)):to==='/classes'?location.pathname.startsWith(to)&&!isGameRoute&&!/\/game$/.test(location.pathname):location.pathname.startsWith(to);
   };
   const isActualTeacher = user?.role === 'teacher' || user?.role === 'admin';
 
@@ -54,14 +72,12 @@ export function AppLayout({ children }: AppLayoutProps) {
   const navItems = isTeacher
     ? [
         { to: '/classes', label: 'Classes', icon: 'C' },
-        { to: '/brainstorming', label: 'Planner', icon: 'P' },
-        { to: '/planner', label: 'Weekly', icon: 'W' },
+        { to: '/brainstorming', label: 'Planning', icon: 'P' },
         { to: '/decks', label: 'Cards', icon: 'V' },
         { to: '/texts', label: 'Texts', icon: 'T' },
         { to: '/lessons', label: 'Lessons', icon: 'L' },
         { to: '/writing', label: 'Writing', icon: 'W' },
         { to: '/game', label: 'The Game', icon: 'G' },
-        { to: '/data', label: 'Data', icon: 'D' },
         { to: '/settings', label: 'Settings', icon: '?' },
       ]
     : isParent ? [
@@ -182,6 +198,21 @@ export function AppLayout({ children }: AppLayoutProps) {
       </header>
 
       <main className="flex-1 pb-20 md:pb-4">
+        {sectionViews.length > 0 && (
+          <nav aria-label={inPlanning ? 'Planning views' : 'Settings views'} data-app-chrome
+            className="mx-auto grid max-w-4xl grid-cols-2 gap-2 px-4 pt-4 print:hidden">
+            {sectionViews.map(view => (
+              <Link key={view.to} to={view.to} aria-current={view.to === activeView ? 'page' : undefined}
+                className={`flex min-h-16 items-center justify-center rounded-xl border-2 px-3 py-3 text-center text-lg font-bold leading-tight focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 sm:text-xl ${
+                  view.to === activeView
+                    ? 'border-blue-700 bg-blue-700 text-white'
+                    : 'border-slate-300 bg-white text-slate-700 hover:border-blue-500 hover:bg-blue-50'
+                }`}>
+                {view.label}
+              </Link>
+            ))}
+          </nav>
+        )}
         {content}
       </main>
 
