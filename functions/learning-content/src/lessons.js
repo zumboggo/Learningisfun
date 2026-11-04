@@ -29,12 +29,13 @@ export async function lessonAction(args){
  const {db,databaseId,userId,body,profile,memberClassIds}=args;
  const teacher=['teacher','admin'].includes(profile.role);
  if(!teacher&&profile.role!=='student')fail('Student or teacher account required.',403);
- const classIds=[...new Set(catalog.flatMap(l=>l.classIds))].filter(id=>teacher||memberClassIds.has(id));
+ const available=catalog.filter(l=>teacher||!l.releaseAt||Date.parse(l.releaseAt)<=Date.now());
+ const classIds=[...new Set(available.flatMap(l=>l.classIds))].filter(id=>teacher||memberClassIds.has(id));
  const classes=(await Promise.all(classIds.map(async id=>{try{return await db.getDocument(databaseId,'classes',id);}catch(e){if(e.code!==404)throw e;return null;}}))).filter(c=>c?.status==='active'&&(!teacher||c.teacherId===userId));
  if(body.action==='lessonLibrary'){
- const items=[];for(const c of classes)for(const l of catalog.filter(l=>l.classIds.includes(c.$id))){
- items.push({id:l.id,title:l.title,objective:l.objective,minutes:l.minutes,classId:c.$id,className:c.name||c.courseName});}return {items};}
- const cls=classes.find(c=>c.$id===body.classId),l=catalog.find(l=>l.id===body.lessonId&&l.classIds.includes(body.classId));
+ const items=[];for(const c of classes)for(const l of available.filter(l=>l.classIds.includes(c.$id))){
+ items.push({id:l.id,title:l.title,objective:(teacher&&Date.parse(l.releaseAt)>Date.now()?'Opens '+new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',timeZone:'Asia/Shanghai'}).format(new Date(l.releaseAt))+' · ':'')+l.objective,minutes:l.minutes,classId:c.$id,className:c.name||c.courseName});}return {items};}
+ const cls=classes.find(c=>c.$id===body.classId),l=available.find(l=>l.id===body.lessonId&&l.classIds.includes(body.classId));
  if(!cls||!l)fail('This lesson is unavailable for your class.',403);
  const key='lesson:'+cls.$id+':'+l.id;
  if(body.action==='lessonRoster'||body.action==='lessonReview'){

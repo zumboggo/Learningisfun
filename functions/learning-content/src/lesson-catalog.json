@@ -277,5 +277,186 @@
       ],
       "delayedCheck": "When you next work on your bibliography, cover your notes. For a different outside source, reconstruct its MLA entry from the publication details, name its main idea, and explain one reason to trust it and one specific use for your own question."
     }
+  },
+  {
+    "id": "nested-quotes-evidence-v1",
+    "title": "Nested quotes: make evidence part of your argument",
+    "objective": "Introduce and embed a short quotation, explain its wording, and connect that insight to your thesis.",
+    "classIds": [
+      "88421c66-9cda-4002-8e15-086312b7805e",
+      "09d7f0a7-4c29-462c-820f-e11ea914d375",
+      "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c"
+    ],
+    "releaseAt": "2026-11-09T00:00:00+08:00",
+    "minutes": 13,
+    "stages": [
+      {
+        "title": "Give the quotation a job in your sentence",
+        "shortTitle": "Introduce & embed",
+        "teachFirst": true,
+        "explanation": "A nested quotation is a short piece of the source woven into your own sentence. Give readers just enough context to know who is speaking and why. Choose the exact words you will analyze. Read the whole sentence aloud: your words and the quoted words should fit together.",
+        "model": "Original practice speech: At a school council meeting, a student asks the school to keep its library open after practice. She says, “The doors are open, but the clock keeps us out.”",
+        "modelRows": [
+          [
+            "Source",
+            "Original practice speech: At a school council meeting, a student asks the school to keep its library open after practice. She says, “The doors are open, but the clock keeps us out.”"
+          ],
+          [
+            "Working thesis",
+            "The speaker persuades the council to judge access by students’ schedules rather than by the sign on the door."
+          ],
+          [
+            "Dropped quotation",
+            "The student asks for longer hours. “The clock keeps us out.” The reader has to supply the connection."
+          ],
+          [
+            "Nested quotation",
+            "Asking the council to extend library hours, the student argues that even open doors offer little access when “the clock keeps us out.”"
+          ],
+          [
+            "Why it fits",
+            "The opening identifies the speaker and situation. The word when makes the borrowed phrase part of the writer’s sentence."
+          ]
+        ],
+        "questions": [
+          {
+            "prompt": "Which introduction gives a reader useful context for the quotation?",
+            "options": [
+              "Asking the council to extend library hours, the student argues that…",
+              "A very important person once said…",
+              "In this quote, there is a quote that says…"
+            ],
+            "answers": [
+              "Asking the council to extend library hours, the student argues that…"
+            ],
+            "hint": "What does the reader need to know about the speaker and the occasion?",
+            "explanation": "The request for longer hours makes the reference to a clock meaningful.",
+            "alternate": {
+              "prompt": "Which detail belongs in a short lead-in here?",
+              "options": [
+                "The speaker’s favorite book",
+                "The change the speaker wants the council to make",
+                "The number of people in the room"
+              ],
+              "answers": [
+                "The change the speaker wants the council to make"
+              ]
+            }
+          },
+          {
+            "prompt": "Which sentence nests the speaker’s exact words and reads smoothly?",
+            "options": [
+              "The student calls the schedule unfair. “The clock keeps us out.”",
+              "The student argues that the library is effectively closed when “the clock keeps us out.”",
+              "The student argues that “the clock locks every door.”"
+            ],
+            "answers": [
+              "The student argues that the library is effectively closed when “the clock keeps us out.”"
+            ],
+            "hint": "Read across the quotation marks. Is the result one grammatical sentence, and are the quoted words exact?",
+            "explanation": "The word when makes the exact phrase do grammatical work. The other versions drop the quote or change it.",
+            "alternate": {
+              "prompt": "Complete this sentence using the speaker’s exact words: The student concedes that “the doors are open” but insists that ___.",
+              "options": [
+                "“the clock keeps us out”",
+                "“time always locks us out”",
+                "says, a clock."
+              ],
+              "answers": [
+                "“the clock keeps us out”"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "title": "Explain the words, then return to the thesis",
+        "shortTitle": "Explain & connect",
+        "teachFirst": true,
+        "explanation": "Zoom in on a word or image: what does it make the reader picture, notice, or reconsider? Then zoom out: explain how that effect supports your specific thesis. “This proves my point” leaves the reasoning for the reader to do.",
+        "model": "Original practice speech: At a school council meeting, a student asks the school to keep its library open after practice. She says, “The doors are open, but the clock keeps us out.”",
+        "modelRows": [
+          [
+            "Thesis",
+            "The speaker persuades the council to judge access by students’ schedules rather than by the sign on the door."
+          ],
+          [
+            "Evidence in context",
+            "Asking for longer library hours, the student argues that open doors offer little access when “the clock keeps us out.”"
+          ],
+          [
+            "Explain",
+            "The clock behaves like a guard. Nobody physically blocks the doorway, yet the timetable can exclude a student just as effectively."
+          ],
+          [
+            "Tie back",
+            "That image gives the council a different test for fairness: can students actually arrive in time to use the library?"
+          ]
+        ],
+        "questions": [
+          {
+            "prompt": "Which commentary explains how the wording works?",
+            "options": [
+              "The quotation is about a clock.",
+              "The speaker uses language to make her point.",
+              "Giving the clock a guard’s job makes an ordinary timetable feel like a barrier."
+            ],
+            "answers": [
+              "Giving the clock a guard’s job makes an ordinary timetable feel like a barrier."
+            ],
+            "hint": "Look for a sentence that explains what keeps us out makes the clock seem to do.",
+            "explanation": "Calling the clock a guard interprets the wording; saying the passage mentions a clock only repeats it.",
+            "alternate": {
+              "prompt": "What does the contrast between open doors and being kept out reveal?",
+              "options": [
+                "A place can be physically open but practically unreachable.",
+                "The student forgot her library card.",
+                "The council should buy a clock."
+              ],
+              "answers": [
+                "A place can be physically open but practically unreachable."
+              ]
+            }
+          },
+          {
+            "prompt": "Which closing sentence connects this interpretation to the working thesis?",
+            "options": [
+              "In conclusion, this is a very powerful quote.",
+              "The council must therefore measure access by whether students can get there, not simply by whether the doors are unlocked.",
+              "Libraries also need better lighting."
+            ],
+            "answers": [
+              "The council must therefore measure access by whether students can get there, not simply by whether the doors are unlocked."
+            ],
+            "hint": "Return to the decision the speaker wants the council to make.",
+            "explanation": "A strong tie-back explains why that image gives the audience a reason to accept the claim.",
+            "alternate": {
+              "prompt": "Which revision would strengthen “This proves the thesis”?",
+              "options": [
+                "Repeat the exact quotation twice.",
+                "Name the precise claim the image supports and explain the connection."
+              ],
+              "answers": [
+                "Name the precise claim the image supports and explain the connection."
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "final": {
+      "title": "Your turn: give Dickinson’s words a job",
+      "shortTitle": "Write & revise",
+      "prompt": "Write one paragraph of 3–5 sentences. Develop this working thesis: Dickinson presents hope as a quiet presence that lives within a person. Introduce the speaker or poetic situation, weave in a short exact phrase, interpret a specific word or image, and show how that detail supports the thesis. You may sharpen the thesis if your reading fits the lines.",
+      "source": "Emily Dickinson, opening of “Hope is the thing with feathers” (254), Academy of American Poets. The speaker describes hope as a bird. Lines 2–3: “That perches in the soul, / And sings the tune without the words,” (slash marks the line break).",
+      "sourceUrl": "https://poets.org/poem/hope-thing-feathers-254",
+      "rubric": [
+        "Context: Identifies Dickinson, the speaker, or the poetic situation in a way that prepares the evidence. A brief lead-in suffices.",
+        "Integration: Embeds a short accurate phrase from the supplied lines grammatically in the student’s own sentence. Accept plain quotation marks and harmless punctuation differences.",
+        "Explanation: Interprets a particular word or image such as perches or the wordless tune; goes beyond paraphrasing. Accept other text-grounded readings.",
+        "Thesis connection: Explains how that interpretation supports the working thesis or a defensible refinement. Do not require a separate formulaic closing sentence."
+      ],
+      "delayedCheck": "In your next essay, cover your commentary and reread the quotation. Without looking, explain what one word contributes and how it supports your thesis."
+    }
   }
 ]

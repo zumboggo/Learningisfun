@@ -35,3 +35,14 @@ test('both differently ordered source types must be assembled before independent
  const good=await act('lessonAnswer',{answer:q.answers[0]});assert.equal(good.state.step,before.state.step+1);}
  await assert.rejects(act('lessonSubmit',{draft:'unfinished'}),/Finish practice/);
 });
+test('nested quotes can be previewed by the teacher, then open at Shanghai midnight',async t=>{
+ const act=fixture(),lessonId='nested-quotes-evidence-v1',release=Date.parse('2026-11-09T00:00:00+08:00');
+ const now=t.mock.method(Date,'now',()=>release-1);
+ assert.ok(!(await act('lessonLibrary')).items.some(l=>l.id===lessonId));
+ await assert.rejects(act('lessonRead',{lessonId}),/unavailable/);
+ assert.equal((await act('lessonRead',{lessonId},{profile:{role:'teacher'},userId:'teacher'})).lesson.id,lessonId);
+ now.mock.mockImplementation(()=>release);
+ assert.ok((await act('lessonLibrary')).items.some(l=>l.id===lessonId));
+ const read=await act('lessonRead',{lessonId});assert.equal(read.lesson.final.rubric.length,4);
+ await assert.rejects(act('lessonRead',{lessonId},{memberClassIds:new Set()}),/unavailable/);
+});
