@@ -27,6 +27,8 @@ export function AppLayout({ children }: AppLayoutProps) {
   const location = useLocation();
   const syncState = useSyncStatus(user?.$id);
   const online = useOnlineStatus();
+  const [planningViewsOpen, setPlanningViewsOpen] = useState(true);
+  const planningToggleLabel = planningViewsOpen ? 'Hide planning views' : 'Show planning views';
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     try {
       return localStorage.getItem('teacher-sidebar-collapsed') !== 'true';
@@ -199,8 +201,8 @@ export function AppLayout({ children }: AppLayoutProps) {
 
       <main className="flex-1 pb-20 md:pb-4">
         {sectionViews.length > 0 && (
-          <nav aria-label={inPlanning ? 'Planning views' : 'Settings views'} data-app-chrome
-            className="mx-auto grid max-w-4xl grid-cols-2 gap-2 px-4 pt-4 print:hidden">
+          <nav id={inPlanning ? 'planning-views' : undefined} hidden={inPlanning && !planningViewsOpen} aria-label={inPlanning ? 'Planning views' : 'Settings views'} data-app-chrome
+            className="mx-auto grid max-w-4xl grid-cols-2 gap-2 px-4 pt-4 [&[hidden]]:hidden print:hidden">
             {sectionViews.map(view => (
               <Link key={view.to} to={view.to} aria-current={view.to === activeView ? 'page' : undefined}
                 className={`flex min-h-16 items-center justify-center rounded-xl border-2 px-3 py-3 text-center text-lg font-bold leading-tight focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 sm:text-xl ${
@@ -212,6 +214,16 @@ export function AppLayout({ children }: AppLayoutProps) {
               </Link>
             ))}
           </nav>
+        )}
+        {inPlanning && (
+          <button type="button" data-app-chrome aria-controls="planning-views" aria-expanded={planningViewsOpen}
+            aria-label={planningToggleLabel} title={planningToggleLabel}
+            onClick={() => setPlanningViewsOpen(open => !open)}
+            className="mx-auto my-1 flex h-8 w-14 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-blue-700 print:hidden">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="size-5">
+              <path d={planningViewsOpen ? 'm6 15 6-6 6 6' : 'm6 9 6 6 6-6'}/>
+            </svg>
+          </button>
         )}
         {content}
       </main>
