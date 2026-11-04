@@ -652,5 +652,506 @@
       ],
       "delayedCheck": "At the next class, argue for or against rotating who chooses the film-club screening. Write a claim, supply a concrete example, and underline the sentence that connects them."
     }
+  },
+  {
+    "id": "ap-lang-advertising-evidence-v1",
+    "title": "Advertising 1 · What does the offer actually prove?",
+    "objective": "Evaluate a line of reasoning and write commentary that connects the wording of an offer to an editorial decision (AP Lang 5.A, 6.A).",
+    "classIds": [
+      "88421c66-9cda-4002-8e15-086312b7805e"
+    ],
+    "assignedOn": "2026-11-04",
+    "minutes": 12,
+    "stages": [
+      {
+        "title": "Read the promise",
+        "shortTitle": "Read the terms",
+        "teachFirst": true,
+        "explanation": "In this fictional newsroom, an advertiser offers to pay for the arts insert. Start with the verb. What action has the business actually promised?",
+        "modelRows": [
+          [
+            "“We will cover printing costs.”",
+            "Cover commits money to a specific expense. An editor could use that promise to budget for printing."
+          ],
+          [
+            "“They will choose the reviews.”",
+            "Choose describes a different action. The offer says nothing about who picks the stories."
+          ]
+        ],
+        "model": "“We will cover printing costs.” — Cover commits money to a specific expense. An editor could use that promise to budget for printing.\n“They will choose the reviews.” — Choose describes a different action. The offer says nothing about who picks the stories.",
+        "questions": [
+          {
+            "prompt": "“We will buy the back page.” Which claim follows?",
+            "options": [
+              "The shop can set the headline.",
+              "The shop offers to pay for space.",
+              "The editor endorses the shop."
+            ],
+            "answers": [
+              "The shop offers to pay for space."
+            ],
+            "hint": "What does buy take as its object?",
+            "explanation": "The purchase is of space. An editorial role would need a separate term.",
+            "alternate": {
+              "prompt": "“We will pay the photographer’s travel.” What has been offered?",
+              "options": [
+                "Control of the captions",
+                "Money for travel",
+                "Approval of each photo"
+              ],
+              "answers": [
+                "Money for travel"
+              ]
+            }
+          },
+          {
+            "prompt": "Which missing detail matters most before claiming the sponsor controls coverage?",
+            "options": [
+              "The number of copies",
+              "The cost of ink",
+              "Who has final say over stories"
+            ],
+            "answers": [
+              "Who has final say over stories"
+            ],
+            "hint": "Look for authority to make an editorial decision.",
+            "explanation": "Evidence about approval rights bears directly on control.",
+            "alternate": {
+              "prompt": "A bakery buys a banner in a food issue. What would support a claim that it controls reviews?",
+              "options": [
+                "A clause letting it veto reviews",
+                "A larger banner",
+                "A second payment"
+              ],
+              "answers": [
+                "A clause letting it veto reviews"
+              ]
+            }
+          }
+        ],
+        "image": {
+          "path": "lessons/advertising-evidence.jpg",
+          "alt": "A printing receipt sits beside an arts section. A separate review marked with a question mark asks who edits.",
+          "caption": "Follow the money to the printed issue. What evidence would let you follow it to the editor’s pencil?"
+        }
+      },
+      {
+        "title": "Write the missing reasoning",
+        "shortTitle": "Connect the detail",
+        "teachFirst": true,
+        "explanation": "Commentary explains why a detail changes the decision. Try the editor’s question: “Because this clause exists, what could happen to our reporting?”",
+        "modelRows": [
+          [
+            "Evidence",
+            "A cinema asks to see reviews “before publication.”"
+          ],
+          [
+            "Reasoning",
+            "Advance access gives the cinema time to ask for changes while the review can still be edited."
+          ],
+          [
+            "Decision and limit",
+            "Ask why it needs early access. Seeing a draft creates an opportunity to object, but the clause gives no veto."
+          ]
+        ],
+        "model": "Evidence — A cinema asks to see reviews “before publication.”\nReasoning — Advance access gives the cinema time to ask for changes while the review can still be edited.\nDecision and limit — Ask why it needs early access. Seeing a draft creates an opportunity to object, but the clause gives no veto.",
+        "questions": [
+          {
+            "prompt": "A theater asks for “advance notice of review dates.” Which interpretation respects the wording?",
+            "options": [
+              "The theater chooses the reviewer.",
+              "The theater can prepare for coverage but has no stated right to approve it."
+            ],
+            "answers": [
+              "The theater can prepare for coverage but has no stated right to approve it."
+            ],
+            "hint": "Separate information about timing from authority over wording.",
+            "explanation": "Knowing a date allows preparation. Approval would require an additional term.",
+            "alternate": {
+              "prompt": "A gallery requests a copy “after publication.” Which inference fits?",
+              "options": [
+                "It can block publication.",
+                "It can see what readers have already seen."
+              ],
+              "answers": [
+                "It can see what readers have already seen."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "A printer asks for “a copy of each issue for our window.” The editor would accept. Supply one sentence explaining why that request fits the decision.",
+              "sample": "Displaying a finished issue can give the paper new readers while leaving decisions about its contents with the editors."
+            }
+          },
+          {
+            "prompt": "Which sentence explains why a clause matters to a decision?",
+            "options": [
+              "The sponsor asks to choose the cover photo.",
+              "Choosing the cover would let the sponsor decide which performance gets the most attention."
+            ],
+            "answers": [
+              "Choosing the cover would let the sponsor decide which performance gets the most attention."
+            ],
+            "hint": "Look for the consequence of the choice.",
+            "explanation": "The consequence connects an editorial power to what readers will see.",
+            "alternate": {
+              "prompt": "Which sentence explains the effect of a right to delay publication?",
+              "options": [
+                "The shop can delay publication.",
+                "A delay could keep a critical review out of readers’ hands until ticket sales close."
+              ],
+              "answers": [
+                "A delay could keep a critical review out of readers’ hands until ticket sales close."
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "final": {
+      "title": "Advise the editors",
+      "shortTitle": "Your editorial desk",
+      "source": "Fictional newsroom file\nJuniper Music writes, “We will buy an ad in each concert issue. Please send us the paragraph naming our shop before it goes to print so we can check the spelling.” The editors have not agreed to any terms.",
+      "sourceUrl": "",
+      "prompt": "In 3–5 sentences recommend accepting, declining, or changing the offer. Use a precise phrase, explain its consequence for the paper, and identify one conclusion the wording cannot establish.",
+      "rubric": [
+        "Decision: Makes a defensible recommendation; accept any position.",
+        "Evidence: Accurately uses the specific terms of the music shop offer.",
+        "Commentary: Connects the terms to a plausible editorial consequence and distinguishes a request from an established right or outcome."
+      ],
+      "delayedCheck": "Next class, underline one inference in an editorial and circle the words that support it."
+    }
+  },
+  {
+    "id": "ap-lang-advertising-objection-v1",
+    "title": "Advertising 2 · Let an objection sharpen your policy",
+    "objective": "Explain how an objection qualifies a claim and write a policy that responds to it (AP Lang 3.C, 4.C).",
+    "classIds": [
+      "88421c66-9cda-4002-8e15-086312b7805e"
+    ],
+    "assignedOn": "2026-11-04",
+    "minutes": 12,
+    "stages": [
+      {
+        "title": "Find what changed",
+        "shortTitle": "Find the condition",
+        "teachFirst": true,
+        "explanation": "An objection is most useful when it names a cost someone will actually bear. Trace that concern to the exact words it changes in a policy.",
+        "modelRows": [
+          [
+            "Draft",
+            "“Sell ads anywhere in the arts section.”"
+          ],
+          [
+            "Reader’s objection",
+            "“If the theater’s ad sits beside its five-star review, how will I know the stars were earned?” The concern is the impression created by placement."
+          ],
+          [
+            "Revision",
+            "“Sell arts ads on a separate advertising page.” Separate changes where the ad can appear while preserving the sale."
+          ]
+        ],
+        "model": "Draft — “Sell ads anywhere in the arts section.”\nReader’s objection — “If the theater’s ad sits beside its five-star review, how will I know the stars were earned?” The concern is the impression created by placement.\nRevision — “Sell arts ads on a separate advertising page.” Separate changes where the ad can appear while preserving the sale.",
+        "questions": [
+          {
+            "prompt": "Which words answer the reader’s placement concern?",
+            "options": [
+              "Sell arts ads",
+              "On a separate advertising page",
+              "Five-star review"
+            ],
+            "answers": [
+              "On a separate advertising page"
+            ],
+            "hint": "Find the words a layout editor could act on.",
+            "explanation": "The new location directly addresses the side-by-side impression.",
+            "alternate": {
+              "prompt": "A critic wants free review tickets disclosed. Which addition answers that concern?",
+              "options": [
+                "Use experienced reviewers.",
+                "Name the ticket provider beneath the review."
+              ],
+              "answers": [
+                "Name the ticket provider beneath the review."
+              ]
+            }
+          },
+          {
+            "prompt": "Which objection is the strongest reason to revisit a blanket ban on arts ads?",
+            "options": [
+              "Ads sometimes use bright colors.",
+              "Without ad income, the print budget covers only one of three planned issues."
+            ],
+            "answers": [
+              "Without ad income, the print budget covers only one of three planned issues."
+            ],
+            "hint": "Which consequence bears directly on keeping the paper in print?",
+            "explanation": "The budget creates a concrete cost for readers and performers.",
+            "alternate": {
+              "prompt": "Which objection directly challenges a policy requiring full-page ads?",
+              "options": [
+                "Some ads use photos.",
+                "Small clubs can afford only a quarter page."
+              ],
+              "answers": [
+                "Small clubs can afford only a quarter page."
+              ]
+            }
+          }
+        ],
+        "image": {
+          "path": "lessons/advertising-objection.jpg",
+          "alt": "One layout puts a theater ad beside its glowing review. Another puts advertising and reviews on separate pages.",
+          "caption": "Look at the same review twice. Which layout would make you wonder who awarded the stars?"
+        }
+      },
+      {
+        "title": "Choose a workable boundary",
+        "shortTitle": "Revise the rule",
+        "teachFirst": true,
+        "explanation": "A qualification can change who, where, or under what conditions. A reader should be able to tell whether tomorrow’s proposed ad would pass your rule.",
+        "modelRows": [
+          [
+            "Proposal",
+            "“Let sponsors announce upcoming shows.”"
+          ],
+          [
+            "Objection",
+            "Readers may mistake a paid announcement for the editors’ pick."
+          ],
+          [
+            "One condition",
+            "“Run announcements only with a Paid advertisement label above the headline.” Where the label goes matters because readers encounter it before the pitch."
+          ]
+        ],
+        "model": "Proposal — “Let sponsors announce upcoming shows.”\nObjection — Readers may mistake a paid announcement for the editors’ pick.\nOne condition — “Run announcements only with a Paid advertisement label above the headline.” Where the label goes matters because readers encounter it before the pitch.",
+        "questions": [
+          {
+            "prompt": "A sponsor wants a quote from a critic inside its ad. Which restriction addresses misleading excerpts?",
+            "options": [
+              "Make ads shorter.",
+              "Require quoted words to preserve the critic’s judgment in context."
+            ],
+            "answers": [
+              "Require quoted words to preserve the critic’s judgment in context."
+            ],
+            "hint": "Ask what a selective quotation might hide.",
+            "explanation": "A negative review can look positive when a phrase is lifted out of context.",
+            "alternate": {
+              "prompt": "Students worry a sponsor logo looks like the paper’s signature. Which rule targets that concern?",
+              "options": [
+                "Keep sponsor logos out of the masthead.",
+                "Use fewer photographs."
+              ],
+              "answers": [
+                "Keep sponsor logos out of the masthead."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "The paper allows all businesses to sponsor awards. A finalist worries that a sponsor might also judge the competition. Add one condition to the policy.",
+              "sample": "Accept award funding only if the sponsor has no role in selecting the winner."
+            }
+          },
+          {
+            "prompt": "Which revision gives editors an enforceable rule?",
+            "options": [
+              "Respect independence whenever possible.",
+              "Reject contracts that give advertisers a vote on story selection."
+            ],
+            "answers": [
+              "Reject contracts that give advertisers a vote on story selection."
+            ],
+            "hint": "Could two editors apply the rule to the same contract?",
+            "explanation": "A voting right can be checked in the terms.",
+            "alternate": {
+              "prompt": "Which revision gives designers a usable boundary?",
+              "options": [
+                "Put the sponsor credit below the byline in a box marked Sponsor.",
+                "Keep funding tasteful."
+              ],
+              "answers": [
+                "Put the sponsor credit below the byline in a box marked Sponsor."
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "final": {
+      "title": "Set a policy for sponsored profiles",
+      "shortTitle": "Your editorial desk",
+      "source": "Fictional newsroom file\nDraft rule: “Accept a sponsor for any student-artist profile.” A drama student says the money could pay for portraits of backstage crews. A photographer objects that a costume shop wants the right to nominate every featured artist.",
+      "sourceUrl": "",
+      "prompt": "Write a revised policy and explain it in 3–5 sentences. Represent the strongest objection fairly, identify precisely what changes, and explain how your rule weighs the benefit of funding against the power to nominate.",
+      "rubric": [
+        "Objection: Accurately represents a concern about selection power.",
+        "Qualification: Writes a specific actionable policy boundary that responds to the objection.",
+        "Reasoning: Explains the effect of the boundary and weighs the benefit of portraits; accept different defensible policies."
+      ],
+      "delayedCheck": "In your next argument, underline the part of your thesis that would change if a reasonable objection disappeared."
+    }
+  },
+  {
+    "id": "ap-lang-advertising-audience-v1",
+    "title": "Advertising 3 · Same decision, different reader",
+    "objective": "Explain how an argument addresses a reader’s needs and defend one decision to two audiences (AP Lang 1.B, 2.B).",
+    "classIds": [
+      "88421c66-9cda-4002-8e15-086312b7805e"
+    ],
+    "assignedOn": "2026-11-04",
+    "minutes": 12,
+    "stages": [
+      {
+        "title": "Hear the reader’s question",
+        "shortTitle": "Read for audience",
+        "teachFirst": true,
+        "explanation": "The paper will run a labeled ad to fund two arts pages. The editor still picks the stories. Before drafting, imagine what each reader would ask first.",
+        "modelRows": [
+          [
+            "A subscriber asks, “Who chose the story?”",
+            "“Our editors chose every story on these pages.” Chose answers the question about independence."
+          ],
+          [
+            "A performer asks, “Will our play be covered?”",
+            "“The ad buys space for two more arts pages.” Space explains what funding makes possible without promising any group a review."
+          ]
+        ],
+        "model": "A subscriber asks, “Who chose the story?” — “Our editors chose every story on these pages.” Chose answers the question about independence.\nA performer asks, “Will our play be covered?” — “The ad buys space for two more arts pages.” Space explains what funding makes possible without promising any group a review.",
+        "questions": [
+          {
+            "prompt": "“Will paying buy a positive review?” Which fact should the editor lead with?",
+            "options": [
+              "Two pages will be added.",
+              "Only student editors choose and evaluate shows."
+            ],
+            "answers": [
+              "Only student editors choose and evaluate shows."
+            ],
+            "hint": "What power is this reader worried about?",
+            "explanation": "The question concerns who controls judgment.",
+            "alternate": {
+              "prompt": "A reader asks whether the paper recommends the advertised café. Which opening addresses that question?",
+              "options": [
+                "The café bought the space for its own message.",
+                "The café paid on time."
+              ],
+              "answers": [
+                "The café bought the space for its own message."
+              ]
+            }
+          },
+          {
+            "prompt": "A stage manager asks how a backstage crew can be considered for coverage. Which opening fits?",
+            "options": [
+              "Our contract lasts a month.",
+              "Crews can send pitches directly to the arts editor."
+            ],
+            "answers": [
+              "Crews can send pitches directly to the arts editor."
+            ],
+            "hint": "What action does the stage manager want to take?",
+            "explanation": "The submission route gives the crew an actionable answer.",
+            "alternate": {
+              "prompt": "The treasurer asks how the next issue will be printed. Which detail belongs first?",
+              "options": [
+                "The ad payment covers this issue’s printing invoice.",
+                "Reviews have student bylines."
+              ],
+              "answers": [
+                "The ad payment covers this issue’s printing invoice."
+              ]
+            }
+          }
+        ],
+        "image": {
+          "path": "lessons/advertising-audience.jpg",
+          "alt": "A reader asks who chose the story while a performer asks whether the play will be covered. Both are looking at the same newspaper.",
+          "caption": "Read each thought bubble as the first question your opening sentence has to answer."
+        }
+      },
+      {
+        "title": "Change the opening reason",
+        "shortTitle": "Write for a reader",
+        "teachFirst": true,
+        "explanation": "Keep the decision and facts fixed. Choose a reason that answers this reader’s question, then explain why that reason matters to them.",
+        "modelRows": [
+          [
+            "Shared facts",
+            "The paper will print a separately labeled festival insert. Vendors buy listings; students write reviews."
+          ],
+          [
+            "To a reader",
+            "“Look for the listing label when planning your visit: vendors describe themselves there. Student reviewers sign their own assessments.”"
+          ],
+          [
+            "To a vendor",
+            "“A listing gives visitors your booth details. Buying one reserves space for those details while reviewers make their own selections.”"
+          ]
+        ],
+        "model": "Shared facts — The paper will print a separately labeled festival insert. Vendors buy listings; students write reviews.\nTo a reader — “Look for the listing label when planning your visit: vendors describe themselves there. Student reviewers sign their own assessments.”\nTo a vendor — “A listing gives visitors your booth details. Buying one reserves space for those details while reviewers make their own selections.”",
+        "questions": [
+          {
+            "prompt": "Which change most directly adapts the reader’s opening for vendors?",
+            "options": [
+              "Use “Dear valued vendor.”",
+              "Explain what a paid listing lets a booth owner tell visitors."
+            ],
+            "answers": [
+              "Explain what a paid listing lets a booth owner tell visitors."
+            ],
+            "hint": "What does a vendor need to decide?",
+            "explanation": "Knowing what space buys helps a vendor decide whether to participate.",
+            "alternate": {
+              "prompt": "Adapt a note for families asking how to identify paid content. Which detail should lead?",
+              "options": [
+                "Thank them warmly.",
+                "Tell them where the paid label appears."
+              ],
+              "answers": [
+                "Tell them where the paid label appears."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "A student critic asks how the festival insert affects their review. Write an opening using the shared facts above.",
+              "sample": "You still choose the judgment you sign your name to. The vendor’s paid listing has its own label."
+            }
+          },
+          {
+            "prompt": "Which pitch keeps the facts accurate while appealing to a vendor?",
+            "options": [
+              "Paying secures a favorable review.",
+              "Your listing can help visitors find your booth."
+            ],
+            "answers": [
+              "Your listing can help visitors find your booth."
+            ],
+            "hint": "Compare each promise with what the vendor buys.",
+            "explanation": "A listing can supply directions. A review is a separate editorial decision.",
+            "alternate": {
+              "prompt": "A photographer asks what a sponsor-funded travel allowance guarantees. The editor still selects photos. Which pitch is accurate?",
+              "options": [
+                "Your trip can be funded even if no photo is selected.",
+                "Your photo is guaranteed a page."
+              ],
+              "answers": [
+                "Your trip can be funded even if no photo is selected."
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "final": {
+      "title": "Write two notes about one decision",
+      "shortTitle": "Your editorial desk",
+      "source": "Fictional newsroom file\nThe paper will accept a framing shop’s ad to pay for a photo spread of the student exhibition. The art editor alone selects six works. All exhibitors may submit one photo by Friday. The ad will be labeled and printed on the back page.",
+      "sourceUrl": "",
+      "prompt": "Write two brief notes of two sentences each. A subscriber asks whether the shop chooses the art. An exhibitor asks how to get their work considered. Explain the decision to each using the same newsroom facts. Add one sentence explaining why you led with different details.",
+      "rubric": [
+        "Subscriber: Addresses selection or independence with an accurate fact and explains its significance.",
+        "Exhibitor: Gives accurate actionable information about consideration without guaranteeing selection.",
+        "Audience reasoning: Explains why the two readers need different opening details while maintaining the same policy."
+      ],
+      "delayedCheck": "Next class, rewrite the first sentence of your argument for a reader who shares your goal but worries about a different cost."
+    }
   }
 ]
