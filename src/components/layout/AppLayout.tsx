@@ -39,7 +39,11 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const isGameRoute=isGamePlayerRoute(location.pathname);
   const content=isGameRoute&&user?<GameDisplay key={user.$id+location.pathname} userId={user.$id}>{children}</GameDisplay>:children;
-  const navActive=(to:string)=>to==='/game'?(location.pathname==='/game'||isGameRoute||/\/classes\/[^/]+\/game$/.test(location.pathname)):to==='/classes'?location.pathname.startsWith(to)&&!isGameRoute&&!/\/game$/.test(location.pathname):location.pathname.startsWith(to)||(to==='/planner'&&location.pathname==='/planning');
+  const navActive=(to:string)=>{
+    if (isTeacher && location.pathname.startsWith('/discussions')) return to === '/texts';
+    if (isTeacher && location.pathname === '/teacher-access') return to === '/settings';
+    return to==='/game'?(location.pathname==='/game'||isGameRoute||/\/classes\/[^/]+\/game$/.test(location.pathname)):to==='/classes'?location.pathname.startsWith(to)&&!isGameRoute&&!/\/game$/.test(location.pathname):location.pathname.startsWith(to)||(to==='/planner'&&location.pathname==='/planning');
+  };
   const isActualTeacher = user?.role === 'teacher' || user?.role === 'admin';
 
   useEffect(() => {
@@ -52,12 +56,10 @@ export function AppLayout({ children }: AppLayoutProps) {
         { to: '/classes', label: 'Classes', icon: 'C' },
         { to: '/brainstorming', label: 'Planner', icon: 'P' },
         { to: '/planner', label: 'Weekly', icon: 'W' },
-        { to: '/discussions', label: 'Discussions', icon: 'Q' },
         { to: '/decks', label: 'Cards', icon: 'V' },
         { to: '/texts', label: 'Texts', icon: 'T' },
         { to: '/lessons', label: 'Lessons', icon: 'L' },
         { to: '/writing', label: 'Writing', icon: 'W' },
-        { to: '/teacher-access', label: 'Teacher access', icon: 'T' },
         { to: '/game', label: 'The Game', icon: 'G' },
         { to: '/data', label: 'Data', icon: 'D' },
         { to: '/settings', label: 'Settings', icon: '?' },
