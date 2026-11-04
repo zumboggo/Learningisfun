@@ -27,3 +27,11 @@ test('practice help, independent and revised outcomes, outage, and teacher overr
  await act('lessonReview',{studentId:'learner',outcome:'Completed',revision:rows[0].revision},teacher);
  assert.equal((await act('lessonRead')).state.outcome,'Completed');
 });
+test('both differently ordered source types must be assembled before independent work',async()=>{
+ const act=fixture();for(const q of lesson.stages[0].questions)await act('lessonAnswer',{answer:q.answers[0]});
+ for(const q of lesson.stages[1].questions){
+ const before=await act('lessonRead');assert.ok(before.lesson.stages[1].questions.every(x=>x.pieces?.length===5&&!x.answers));
+ const wrong=await act('lessonAnswer',{answer:q.pieces.join(' ')});assert.equal(wrong.state.step,before.state.step);assert.equal(wrong.state.notice,q.hint);
+ const good=await act('lessonAnswer',{answer:q.answers[0]});assert.equal(good.state.step,before.state.step+1);}
+ await assert.rejects(act('lessonSubmit',{draft:'unfinished'}),/Finish practice/);
+});

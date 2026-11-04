@@ -1,11 +1,12 @@
 import './lessons.css';
+import {CitationBuilder} from './CitationBuilder';
 import {useEffect,useState} from 'react';
 import {useAuth} from '@/contexts/AuthContext';
 import {executeLearningContent as call} from '@/services/learning-content.service';
 
 type Item={id:string;classId:string;title:string;objective:string;minutes:number|string;className:string};
-type Question={prompt:string;options?:string[]};
-type Stage={shortTitle?:string;modelRows?:[string,string][];title:string;explanation:string;model:string;sourceUrl?:string;questions:Question[]};
+type Question={pieces?:string[];italicPieces?:string[];prompt:string;options?:string[]};
+type Stage={teachFirst?:boolean;shortTitle?:string;modelRows?:[string,string][];title:string;explanation:string;model:string;sourceUrl?:string;questions:Question[]};
 type Attempt={text:string;feedback?:string;criteria?:boolean[]};
 type Progress={step:number;misses:number;checks:{step:number;correct:boolean;answer:string}[];draft:string;submissions:Attempt[];outcome:string;notice:string;reviewed?:boolean};
 type Task={shortTitle?:string;title:string;prompt:string;source:string;sourceUrl:string;rubric:string[];delayedCheck:string};
@@ -36,7 +37,7 @@ function Practice({item}:{item:Item}){
  useEffect(()=>{let live=true;call<Player>({action:'lessonRead',...scope(item)}).then(r=>{if(live){setData(r);let d=r.state.draft;try{d=localStorage.getItem(cache)??d}catch{/* storage unavailable */}setDraft(d)}}).catch(e=>{if(live)setError(message(e))});return()=>{live=false}},[item,cache,reload]);
  async function send(action:string){
  if(!data||busy)return;setBusy(true);setError('');
- try{const r=await call<Player>({action,...scope(item),revision:data.revision,...(action==='lessonAnswer'?{answer}:{draft})});setData(r);setAnswer('');if(action!=='lessonAnswer'){try{localStorage.removeItem(cache)}catch{/* already saved remotely */}}}catch(e){setError(message(e))}finally{setBusy(false)}}
+ try{const r=await call<Player>({action,...scope(item),revision:data.revision,...(action==='lessonAnswer'?{answer}:{draft})});setData(r);if(!current?.q.pieces||r.state.step!==data.state.step||(r.state.misses>=2)!==(data.state.misses>=2))setAnswer('');if(action!=='lessonAnswer'){try{localStorage.removeItem(cache)}catch{/* already saved remotely */}}}catch(e){setError(message(e))}finally{setBusy(false)}}
  const states=data?.lesson.stages.flatMap((stage,si)=>stage.questions.map((q,qi)=>({q,stage,si,qi}))),current=states?.[data?.state.step??0],final=data?.lesson.final,last=data?.state.submissions.at(-1);
  return <div className="space-y-4">{error&&<p className={panel} role="alert">{error} <button className={secondary} onClick={()=>{setError('');setReload(reload+1)}}>Reload saved work</button></p>}{!data?<p>Opening lesson…</p>:<>
  <header className="lesson-intro"><p className={label}>Lessons · Practice studio</p><h1>{item.title}</h1><p>{item.className} <span aria-hidden="true">·</span> {item.minutes} min</p></header>
@@ -44,11 +45,12 @@ function Practice({item}:{item:Item}){
  const active=current?.si??data.lesson.stages.length;return <li key={i} aria-current={i===active?'step':undefined} className={i<active?'done':''}><b aria-hidden="true">{i<active?'✓':i+1}</b>{title}</li>})}</ol>
  {data.state.notice&&<p role="status" className="rounded-xl bg-teal-50 p-4">{data.state.notice}</p>}
  {current?<><section className="lesson-practice"><p className="lesson-band">Stage {current.si+1} · Check {data.state.step+1} of {states?.length}</p><div className="lesson-question"><h2>{current.stage.title}</h2>
- <fieldset disabled={busy} className="space-y-2"><legend className="mb-2 font-semibold">{current.q.prompt}</legend>{current.q.options?current.q.options.map(o=><label key={o} className="flex items-start gap-3 rounded-lg border p-3"><input type="radio" className="mt-1" name="choice" checked={answer===o} onChange={()=>setAnswer(o)}/>{o}</label>):<input aria-label="Your answer" className="w-full rounded-lg border p-3" value={answer} maxLength={600} onChange={e=>setAnswer(e.target.value)}/>}</fieldset><button className={btn} disabled={busy||!answer.trim()} onClick={()=>void send('lessonAnswer')}>Check answer</button></div></section>
+ {current.stage.teachFirst&&<p className="lesson-mini">{current.stage.explanation}</p>}
+ <fieldset disabled={busy} className="space-y-2"><legend className="mb-2 font-semibold">{current.q.prompt}</legend>{current.q.pieces?<CitationBuilder key={data.state.step+':'+(data.state.misses>=2)} pieces={current.q.pieces} italicPieces={current.q.italicPieces} onChange={setAnswer}/>:current.q.options?current.q.options.map(o=><label key={o} className="flex items-start gap-3 rounded-lg border p-3"><input type="radio" className="mt-1" name="choice" checked={answer===o} onChange={()=>setAnswer(o)}/>{o}</label>):<input aria-label="Your answer" className="w-full rounded-lg border p-3" value={answer} maxLength={600} onChange={e=>setAnswer(e.target.value)}/>}</fieldset><button className={btn} disabled={busy||!answer.trim()} onClick={()=>void send('lessonAnswer')}>Check answer</button></div></section>
  <details className="lesson-model" key={data.state.step+':'+(data.state.misses>=2)} open={current.qi===0||data.state.misses>=2}>
  <summary>Worked example <span>Study the model</span></summary>
  <div className="lesson-model-body">{current.stage.modelRows?<dl>{current.stage.modelRows.map(([name,text])=><div key={name}><dt>{name}</dt><dd>{text}</dd></div>)}</dl>:<p className="whitespace-pre-line">{current.stage.model}</p>}
- <p className="lesson-explanation">{current.stage.explanation}</p>{current.stage.sourceUrl&&<a href={current.stage.sourceUrl} target="_blank" rel="noreferrer">Read the source ↗</a>}</div></details></>:
+ {!current.stage.teachFirst&&<p className="lesson-explanation">{current.stage.explanation}</p>}{current.stage.sourceUrl&&<a href={current.stage.sourceUrl} target="_blank" rel="noreferrer">Read the source ↗</a>}</div></details></>:
  final&&<section className={panel}><p className={label}>Independent application</p><h3 className="text-xl font-bold">{final.title}</h3><p className="whitespace-pre-line">{final.prompt}</p><aside className="whitespace-pre-line rounded-xl bg-slate-50 p-4">{final.source}<br/><a className="text-teal-800 underline" href={final.sourceUrl} target="_blank" rel="noreferrer">Open original source ↗</a></aside><details><summary>Success criteria</summary><ul className="list-disc pl-6">{final.rubric.map(r=><li key={r}>{r}</li>)}</ul></details>
  <label className="block font-semibold">Your entry<textarea disabled={busy} rows={7} maxLength={4500} className="mt-2 w-full rounded-lg border p-3 font-normal" value={draft} onChange={e=>{setDraft(e.target.value);try{localStorage.setItem(cache,e.target.value)}catch{/* Save draft is also available */}}}/></label>
  <div className="flex flex-wrap gap-2"><button className={btn} disabled={busy||!draft.trim()||(!!last?.feedback&&last.text.trim()===draft.trim())||data.state.submissions.filter(a=>a.feedback).length>=5} onClick={()=>void send('lessonSubmit')}>{busy?'Saving…':last?'Submit for feedback again':'Submit for feedback'}</button><button className={secondary} disabled={busy||draft===data.state.draft} onClick={()=>void send('lessonDraft')}>Save draft</button></div>

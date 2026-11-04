@@ -1,59 +1,212 @@
 [
   {
-    "id": "world-lit-bibliography",
+    "id": "world-lit-bibliography-v2",
     "title": "Build one annotated bibliography entry",
     "objective": "Give a reader a trail back to a source, explain what it says, and show why it earns a place in your research paper.",
-    "classIds": ["09d7f0a7-4c29-462c-820f-e11ea914d375", "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c"],
-    "minutes": 13,
+    "classIds": [
+      "09d7f0a7-4c29-462c-820f-e11ea914d375",
+      "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c"
+    ],
+    "minutes": 15,
     "stages": [
       {
-        "title": "Leave a trail a reader can follow",
-        "shortTitle": "Cite a source",
+        "title": "Who said it, and how can I check?",
+        "shortTitle": "Why cite?",
+        "explanation": "A citation is a trail back to a source. It gives credit when you quote, paraphrase, or borrow an idea, and lets readers check the evidence for themselves. In an English paper, a brief in-text citation points to the full entry in Works Cited. An annotation comes after that entry: it explains and evaluates what you found.",
+        "model": "Imagine reading “The walls of Uruk change what Gilgamesh values.” Is that your interpretation or one you borrowed from Ira Spar? A citation lets your reader tell.",
         "modelRows": [
-          ["Research question", "How does loss change what Gilgamesh values?"],
-          ["Citation", "Spar, Ira. “Gilgamesh.” The Metropolitan Museum of Art, 1 Apr. 2009, www.metmuseum.org/essays/gilgamesh."],
-          ["Summary", "Spar reads the return to Uruk as a change in the king’s ambition: what he builds can endure even though he cannot."],
-          ["Credibility", "Spar writes for the museum’s Department of Ancient Near Eastern Art and names the translations behind his account."],
-          ["Usefulness", "I could compare his reading of the walls with the passage where Gilgamesh returns home."]
+          [
+            "Without a trail",
+            "“Someone online says the walls matter.” A reader cannot tell whose idea it is or check its context."
+          ],
+          [
+            "With a trail",
+            "“Ira Spar connects Gilgamesh’s return to Uruk with what a person can leave behind.” Naming Spar points to his full entry, where the reader can find his essay."
+          ],
+          [
+            "Why MLA in English?",
+            "English scholars often discuss specific passages and compare editions or translations. MLA (Modern Language Association) gives them a shared way to point from a passage to the exact work they used. Other fields may choose different styles."
+          ],
+          [
+            "Why the same order?",
+            "Imagine a class bibliography with thirty entries. If the date moves around, or the website is mistaken for the writer, every entry becomes a new puzzle. A shared order tells readers where to look; it does not mean all sources have the same pieces."
+          ]
         ],
-        "explanation": "Your 25-point semester assignment asks for 2–3 outside sources. Today, rehearse one entry without a grade. An outside source is something beyond the literary work itself. Use the MLA entry to lead readers to exactly what you read: for a signed museum essay, give the author, essay title, website, date, and URL. Put the essay title in quotation marks; italicize the website name in your paper.",
-        "model": "Research question: How does loss change what Gilgamesh values?\n\nSpar, Ira. “Gilgamesh.” The Metropolitan Museum of Art, 1 Apr. 2009, www.metmuseum.org/essays/gilgamesh.\n\nSpar reads the return to Uruk as a change in the king’s ambition: what he builds can endure even though he cannot. Spar writes for the museum’s Department of Ancient Near Eastern Art and names the translations behind his account. I could compare his reading of the walls with the passage where Gilgamesh returns home.\n\nNotice the jobs: the first line locates the essay. The paragraph summarizes one idea, gives a reason for trust, and names a use. In this plain-text example, website italics are omitted.",
-        "sourceUrl": "https://www.metmuseum.org/essays/gilgamesh",
+        "sourceUrl": "https://style.mla.org/works-cited/citations-by-format/",
         "questions": [
           {
-            "prompt": "Ira Spar wrote the museum essay. Complete the first element of its MLA entry: ___, Ira.",
-            "answers": ["Spar"],
-            "hint": "Start with the author's family name. The name of the museum belongs later.",
-            "explanation": "A named writer leads the entry in family-name-first order: Spar, Ira.",
+            "prompt": "You paraphrase Spar’s idea in your own words. Why still cite him?",
+            "options": [
+              "Only quotations need citations.",
+              "The wording is mine, but the idea is his; readers should be able to check it.",
+              "A citation proves his interpretation is correct."
+            ],
+            "answers": [
+              "The wording is mine, but the idea is his; readers should be able to check it."
+            ],
+            "hint": "Whose idea shaped the sentence?",
+            "explanation": "Cite borrowed ideas as well as borrowed words.",
             "alternate": {
-              "prompt": "The entry starts with “Spar, Ira.” What should come next?",
-              "options": ["The museum's street address", "The title of Spar's essay", "The title of your research paper"],
-              "answers": ["The title of Spar's essay"]
+              "prompt": "What should a reader be able to do with your citation?",
+              "options": [
+                "Find the source and check its context.",
+                "Know that every reader agrees with you."
+              ],
+              "answers": [
+                "Find the source and check its context."
+              ]
             }
           },
           {
-            "prompt": "A friend entered only “The Metropolitan Museum of Art.” What information would most directly guide a reader to the exact essay?",
-            "options": ["The name of your English course", "The museum's opening hours", "The essay title and its direct URL"],
-            "answers": ["The essay title and its direct URL"],
-            "hint": "Think about the difference between finding a museum's whole site and finding one page on it.",
-            "explanation": "A site's name identifies the collection; the page title and direct URL identify the particular work.",
+            "prompt": "Why does this English class use one MLA pattern?",
+            "options": [
+              "Every source has exactly the same information.",
+              "MLA makes sources more credible.",
+              "Readers of literature can recognize the parts and locate the edition or passage used."
+            ],
+            "answers": [
+              "Readers of literature can recognize the parts and locate the edition or passage used."
+            ],
+            "hint": "Think about the person trying to follow your evidence.",
+            "explanation": "Consistency makes sources easier to identify, compare and locate.",
             "alternate": {
-              "prompt": "Which link belongs at the end of the entry for Spar's essay?",
-              "options": ["The essay page you actually consulted", "A search-results page for Gilgamesh", "The museum's main ticket page"],
-              "answers": ["The essay page you actually consulted"]
+              "prompt": "A website names no author. What does consistency mean here?",
+              "options": [
+                "Invent an author to fill the slot.",
+                "Use the same order for the elements you actually have."
+              ],
+              "answers": [
+                "Use the same order for the elements you actually have."
+              ]
             }
           }
-        ]
+        ],
+        "teachFirst": true
+      },
+      {
+        "title": "Put the pieces in MLA order",
+        "shortTitle": "Build citations",
+        "explanation": "Learn the pattern before you try it: author → title of source → title of container → other contributors → version → number → publisher → publication date → location. A container is the larger work that holds a source, such as a website or journal. Use only the elements that apply.",
+        "model": "Signed web essay: author → essay title → website → date → URL. Unsigned translated book: title → translator and editor → publisher → year.",
+        "modelRows": [
+          [
+            "Signed web essay",
+            "Author → “Essay title.” → Website → Date → URL. Quotation marks signal the shorter work; italics mark the website title."
+          ],
+          [
+            "Translated book",
+            "Book title → Translator → Editor → Publisher → Year. When a book has no named author, start with its title. The translator is a contributor, not the original author."
+          ],
+          [
+            "Source or outside source?",
+            "The Beowulf book below is a primary text. Practice citing it here, but it does not count as one of the 2–3 outside sources for your paper."
+          ]
+        ],
+        "sourceUrl": "https://style.mla.org/works-cited/citations-by-format/",
+        "questions": [
+          {
+            "prompt": "Build the MLA entry for Ira Spar’s museum essay.",
+            "pieces": [
+              "The Metropolitan Museum of Art,",
+              "www.metmuseum.org/essays/gilgamesh.",
+              "“Gilgamesh.”",
+              "Spar, Ira.",
+              "1 Apr. 2009,"
+            ],
+            "italicPieces": [
+              "The Metropolitan Museum of Art,"
+            ],
+            "answers": [
+              "Spar, Ira. “Gilgamesh.” The Metropolitan Museum of Art, 1 Apr. 2009, www.metmuseum.org/essays/gilgamesh."
+            ],
+            "hint": "Begin with the writer, then the essay title. The URL comes last.",
+            "explanation": "Signed essay: author → essay title → website → date → URL.",
+            "alternate": {
+              "prompt": "Try again with the full order guide: Build the MLA entry for Ira Spar’s museum essay.",
+              "pieces": [
+                "1 Apr. 2009,",
+                "Spar, Ira.",
+                "“Gilgamesh.”",
+                "www.metmuseum.org/essays/gilgamesh.",
+                "The Metropolitan Museum of Art,"
+              ],
+              "italicPieces": [
+                "The Metropolitan Museum of Art,"
+              ],
+              "answers": [
+                "Spar, Ira. “Gilgamesh.” The Metropolitan Museum of Art, 1 Apr. 2009, www.metmuseum.org/essays/gilgamesh."
+              ]
+            }
+          },
+          {
+            "prompt": "Build the MLA entry for this translated and edited edition of Beowulf. Credit the translators before the editor in this exercise.",
+            "pieces": [
+              "2004.",
+              "edited by Sarah Anderson,",
+              "Beowulf.",
+              "Pearson,",
+              "Translated by Alan Sullivan and Timothy Murphy,"
+            ],
+            "italicPieces": [
+              "Beowulf."
+            ],
+            "answers": [
+              "Beowulf. Translated by Alan Sullivan and Timothy Murphy, edited by Sarah Anderson, Pearson, 2004."
+            ],
+            "hint": "With no named author, start with the book title. Keep the publication year last.",
+            "explanation": "Unsigned book: title → contributors → publisher → year.",
+            "alternate": {
+              "prompt": "Try again with the full order guide: Build the MLA entry for this translated and edited edition of Beowulf. Credit the translators before the editor in this exercise.",
+              "pieces": [
+                "Translated by Alan Sullivan and Timothy Murphy,",
+                "Pearson,",
+                "Beowulf.",
+                "edited by Sarah Anderson,",
+                "2004."
+              ],
+              "italicPieces": [
+                "Beowulf."
+              ],
+              "answers": [
+                "Beowulf. Translated by Alan Sullivan and Timothy Murphy, edited by Sarah Anderson, Pearson, 2004."
+              ]
+            }
+          }
+        ],
+        "teachFirst": true
       },
       {
         "title": "Say what the source contributes",
         "shortTitle": "Evaluate a source",
         "modelRows": [
-          ["Research question", "How might Santiago’s journey dramatize the difference between following instructions and choosing a path?"],
-          ["Summary", "In Krista Tippett’s interview, Paulo Coelho describes a pilgrimage that helped him choose a spiritual life for himself."],
-          ["Weak assessment", "He is famous, so this is useful."],
-          ["Credibility", "Coelho can speak firsthand about his own pilgrimage."],
-          ["Usefulness", "I could compare his account of choice with Santiago’s decision to leave. I still need evidence from the novel to interpret that scene."]
+          [
+            "Worked entry · Gilgamesh",
+            "Spar, Ira. “Gilgamesh.” The Metropolitan Museum of Art, 1 Apr. 2009, www.metmuseum.org/essays/gilgamesh."
+          ],
+          [
+            "Annotation",
+            "Spar reads the return to Uruk as a change in the king’s ambition: what he builds can endure even though he cannot. Spar writes for the museum’s Department of Ancient Near Eastern Art and names the translations behind his account. I could compare his reading of the walls with the passage where Gilgamesh returns home."
+          ],
+          [
+            "Research question",
+            "How might Santiago’s journey dramatize the difference between following instructions and choosing a path?"
+          ],
+          [
+            "Summary",
+            "In Krista Tippett’s interview, Paulo Coelho describes a pilgrimage that helped him choose a spiritual life for himself."
+          ],
+          [
+            "Weak assessment",
+            "He is famous, so this is useful."
+          ],
+          [
+            "Credibility",
+            "Coelho can speak firsthand about his own pilgrimage."
+          ],
+          [
+            "Usefulness",
+            "I could compare his account of choice with Santiago’s decision to leave. I still need evidence from the novel to interpret that scene."
+          ]
         ],
         "explanation": "A summary reports the source's idea in your words. Credibility asks why you can rely on this source for a particular claim. Usefulness asks what you could do with that claim in your own paper. Even a reliable source can be a poor fit for your question.",
         "model": "In Krista Tippett's On Being interview “The Alchemy of Pilgrimage,” Paulo Coelho describes a pilgrimage that helped him choose a spiritual life for himself. This is a first-person account of his experience. Imagine asking: How might Santiago's journey in The Alchemist dramatize the difference between following instructions and choosing a path?\n\nWeak: “He is famous, so this is useful.”\nStronger: “Coelho can speak firsthand about his own pilgrimage. I could compare his account of choice with Santiago's decision to leave; I still need evidence from the novel to interpret that scene.”",
@@ -61,26 +214,50 @@
         "questions": [
           {
             "prompt": "Which sentence summarizes an idea from the interview?",
-            "options": ["I plan to use the interview in paragraph two.", "Coelho describes pilgrimage as a turning point in how he approached faith.", "This interview is credible because Coelho was there."],
-            "answers": ["Coelho describes pilgrimage as a turning point in how he approached faith."],
+            "options": [
+              "I plan to use the interview in paragraph two.",
+              "Coelho describes pilgrimage as a turning point in how he approached faith.",
+              "This interview is credible because Coelho was there."
+            ],
+            "answers": [
+              "Coelho describes pilgrimage as a turning point in how he approached faith."
+            ],
             "hint": "Choose the sentence that tells what the speaker said, rather than your plan or your evaluation.",
             "explanation": "A summary names a particular idea in the source. A reason to trust it and a plan for using it do different jobs.",
             "alternate": {
               "prompt": "In Spar's Gilgamesh essay, which sentence reports the author's idea rather than rating or using the essay?",
-              "options": ["I could use this beside a line from the ending.", "The essay names translations I can check.", "Spar connects the king's return to what can outlast a human life."],
-              "answers": ["Spar connects the king's return to what can outlast a human life."]
+              "options": [
+                "I could use this beside a line from the ending.",
+                "The essay names translations I can check.",
+                "Spar connects the king's return to what can outlast a human life."
+              ],
+              "answers": [
+                "Spar connects the king's return to what can outlast a human life."
+              ]
             }
           },
           {
             "prompt": "Your question changes to “How does repetition shape the rhythm of Santiago's dialogue?” What should change in your evaluation of the interview?",
-            "options": ["The interview becomes dishonest.", "The interview remains credible about Coelho's experience but offers little evidence about sentence rhythm.", "The interview still proves the answer because Coelho wrote the novel."],
-            "answers": ["The interview remains credible about Coelho's experience but offers little evidence about sentence rhythm."],
+            "options": [
+              "The interview becomes dishonest.",
+              "The interview remains credible about Coelho's experience but offers little evidence about sentence rhythm.",
+              "The interview still proves the answer because Coelho wrote the novel."
+            ],
+            "answers": [
+              "The interview remains credible about Coelho's experience but offers little evidence about sentence rhythm."
+            ],
             "hint": "Ask what this particular interview actually discusses. Does a new question change the author's experience or the evidence you need?",
             "explanation": "For rhythm, you need lines of dialogue and evidence about their language. Author expertise alone cannot supply that evidence.",
             "alternate": {
               "prompt": "Which plan gives the interview a specific use without claiming too much?",
-              "options": ["Use Coelho's experience as a point of comparison and test the comparison against Santiago's choices.", "Treat Coelho and Santiago as the same person.", "Use the interview to prove how every reader feels."],
-              "answers": ["Use Coelho's experience as a point of comparison and test the comparison against Santiago's choices."]
+              "options": [
+                "Use Coelho's experience as a point of comparison and test the comparison against Santiago's choices.",
+                "Treat Coelho and Santiago as the same person.",
+                "Use the interview to prove how every reader feels."
+              ],
+              "answers": [
+                "Use Coelho's experience as a point of comparison and test the comparison against Santiago's choices."
+              ]
             }
           }
         ]
@@ -100,5 +277,185 @@
       ],
       "delayedCheck": "When you next work on your bibliography, cover your notes. For a different outside source, reconstruct its MLA entry from the publication details, name its main idea, and explain one reason to trust it and one specific use for your own question."
     }
+  },
+  {
+    "id": "world-lit-bibliography",
+    "title": "Build one annotated bibliography entry",
+    "objective": "Give a reader a trail back to a source, explain what it says, and show why it earns a place in your research paper.",
+    "classIds": [
+      "09d7f0a7-4c29-462c-820f-e11ea914d375",
+      "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c"
+    ],
+    "minutes": 13,
+    "stages": [
+      {
+        "title": "Leave a trail a reader can follow",
+        "shortTitle": "Cite a source",
+        "modelRows": [
+          [
+            "Research question",
+            "How does loss change what Gilgamesh values?"
+          ],
+          [
+            "Citation",
+            "Spar, Ira. “Gilgamesh.” The Metropolitan Museum of Art, 1 Apr. 2009, www.metmuseum.org/essays/gilgamesh."
+          ],
+          [
+            "Summary",
+            "Spar reads the return to Uruk as a change in the king’s ambition: what he builds can endure even though he cannot."
+          ],
+          [
+            "Credibility",
+            "Spar writes for the museum’s Department of Ancient Near Eastern Art and names the translations behind his account."
+          ],
+          [
+            "Usefulness",
+            "I could compare his reading of the walls with the passage where Gilgamesh returns home."
+          ]
+        ],
+        "explanation": "Your 25-point semester assignment asks for 2–3 outside sources. Today, rehearse one entry without a grade. An outside source is something beyond the literary work itself. Use the MLA entry to lead readers to exactly what you read: for a signed museum essay, give the author, essay title, website, date, and URL. Put the essay title in quotation marks; italicize the website name in your paper.",
+        "model": "Research question: How does loss change what Gilgamesh values?\n\nSpar, Ira. “Gilgamesh.” The Metropolitan Museum of Art, 1 Apr. 2009, www.metmuseum.org/essays/gilgamesh.\n\nSpar reads the return to Uruk as a change in the king’s ambition: what he builds can endure even though he cannot. Spar writes for the museum’s Department of Ancient Near Eastern Art and names the translations behind his account. I could compare his reading of the walls with the passage where Gilgamesh returns home.\n\nNotice the jobs: the first line locates the essay. The paragraph summarizes one idea, gives a reason for trust, and names a use. In this plain-text example, website italics are omitted.",
+        "sourceUrl": "https://www.metmuseum.org/essays/gilgamesh",
+        "questions": [
+          {
+            "prompt": "Ira Spar wrote the museum essay. Complete the first element of its MLA entry: ___, Ira.",
+            "answers": [
+              "Spar"
+            ],
+            "hint": "Start with the author's family name. The name of the museum belongs later.",
+            "explanation": "A named writer leads the entry in family-name-first order: Spar, Ira.",
+            "alternate": {
+              "prompt": "The entry starts with “Spar, Ira.” What should come next?",
+              "options": [
+                "The museum's street address",
+                "The title of Spar's essay",
+                "The title of your research paper"
+              ],
+              "answers": [
+                "The title of Spar's essay"
+              ]
+            }
+          },
+          {
+            "prompt": "A friend entered only “The Metropolitan Museum of Art.” What information would most directly guide a reader to the exact essay?",
+            "options": [
+              "The name of your English course",
+              "The museum's opening hours",
+              "The essay title and its direct URL"
+            ],
+            "answers": [
+              "The essay title and its direct URL"
+            ],
+            "hint": "Think about the difference between finding a museum's whole site and finding one page on it.",
+            "explanation": "A site's name identifies the collection; the page title and direct URL identify the particular work.",
+            "alternate": {
+              "prompt": "Which link belongs at the end of the entry for Spar's essay?",
+              "options": [
+                "The essay page you actually consulted",
+                "A search-results page for Gilgamesh",
+                "The museum's main ticket page"
+              ],
+              "answers": [
+                "The essay page you actually consulted"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "title": "Say what the source contributes",
+        "shortTitle": "Evaluate a source",
+        "modelRows": [
+          [
+            "Research question",
+            "How might Santiago’s journey dramatize the difference between following instructions and choosing a path?"
+          ],
+          [
+            "Summary",
+            "In Krista Tippett’s interview, Paulo Coelho describes a pilgrimage that helped him choose a spiritual life for himself."
+          ],
+          [
+            "Weak assessment",
+            "He is famous, so this is useful."
+          ],
+          [
+            "Credibility",
+            "Coelho can speak firsthand about his own pilgrimage."
+          ],
+          [
+            "Usefulness",
+            "I could compare his account of choice with Santiago’s decision to leave. I still need evidence from the novel to interpret that scene."
+          ]
+        ],
+        "explanation": "A summary reports the source's idea in your words. Credibility asks why you can rely on this source for a particular claim. Usefulness asks what you could do with that claim in your own paper. Even a reliable source can be a poor fit for your question.",
+        "model": "In Krista Tippett's On Being interview “The Alchemy of Pilgrimage,” Paulo Coelho describes a pilgrimage that helped him choose a spiritual life for himself. This is a first-person account of his experience. Imagine asking: How might Santiago's journey in The Alchemist dramatize the difference between following instructions and choosing a path?\n\nWeak: “He is famous, so this is useful.”\nStronger: “Coelho can speak firsthand about his own pilgrimage. I could compare his account of choice with Santiago's decision to leave; I still need evidence from the novel to interpret that scene.”",
+        "sourceUrl": "https://onbeing.org/programs/paulo-coelho-the-alchemy-of-pilgrimage/",
+        "questions": [
+          {
+            "prompt": "Which sentence summarizes an idea from the interview?",
+            "options": [
+              "I plan to use the interview in paragraph two.",
+              "Coelho describes pilgrimage as a turning point in how he approached faith.",
+              "This interview is credible because Coelho was there."
+            ],
+            "answers": [
+              "Coelho describes pilgrimage as a turning point in how he approached faith."
+            ],
+            "hint": "Choose the sentence that tells what the speaker said, rather than your plan or your evaluation.",
+            "explanation": "A summary names a particular idea in the source. A reason to trust it and a plan for using it do different jobs.",
+            "alternate": {
+              "prompt": "In Spar's Gilgamesh essay, which sentence reports the author's idea rather than rating or using the essay?",
+              "options": [
+                "I could use this beside a line from the ending.",
+                "The essay names translations I can check.",
+                "Spar connects the king's return to what can outlast a human life."
+              ],
+              "answers": [
+                "Spar connects the king's return to what can outlast a human life."
+              ]
+            }
+          },
+          {
+            "prompt": "Your question changes to “How does repetition shape the rhythm of Santiago's dialogue?” What should change in your evaluation of the interview?",
+            "options": [
+              "The interview becomes dishonest.",
+              "The interview remains credible about Coelho's experience but offers little evidence about sentence rhythm.",
+              "The interview still proves the answer because Coelho wrote the novel."
+            ],
+            "answers": [
+              "The interview remains credible about Coelho's experience but offers little evidence about sentence rhythm."
+            ],
+            "hint": "Ask what this particular interview actually discusses. Does a new question change the author's experience or the evidence you need?",
+            "explanation": "For rhythm, you need lines of dialogue and evidence about their language. Author expertise alone cannot supply that evidence.",
+            "alternate": {
+              "prompt": "Which plan gives the interview a specific use without claiming too much?",
+              "options": [
+                "Use Coelho's experience as a point of comparison and test the comparison against Santiago's choices.",
+                "Treat Coelho and Santiago as the same person.",
+                "Use the interview to prove how every reader feels."
+              ],
+              "answers": [
+                "Use Coelho's experience as a point of comparison and test the comparison against Santiago's choices."
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "final": {
+      "shortTitle": "Write your entry",
+      "title": "Your turn: Can we date a story from its surviving pages?",
+      "prompt": "Research question: What can the surviving manuscript tell us—and not tell us—about when Beowulf's story was told? Using only the source card, write one full MLA entry, then a 3–4 sentence annotation in your own words. Summarize the source, give a concrete reason to trust it for this question, and explain which evidence you would use and what it cannot prove. Plain text is fine; no special typing is needed for italics. The practice source is provided; for the real assignment, select 2–3 outside sources for your own question on any semester text.",
+      "source": "Page title: Hwæt! Beowulf online\nWebsite: British Library\nPublished: 11 February 2013\nNo individual byline is shown. For an unsigned page, start the entry with the page title.\nURL: https://www.bl.uk/stories/blogs/posts/beowulf-online\n\nFrom the page: “Made around the year 1000” describes the manuscript. The article says some scholars think storytellers had shared the tale for centuries before that copy was made. The library cares for the manuscript and reproduces photographs of its pages. It identifies the opening page as Cotton MS Vitellius A XV, folio 132r. Apart from the short quotation, this card paraphrases the article.",
+      "sourceUrl": "https://www.bl.uk/stories/blogs/posts/beowulf-online",
+      "rubric": [
+        "MLA citation: Identifies the page by title, the British Library website, the publication date (11 Feb. 2013), and the direct URL in recognizable MLA order. Accept MLA title capitalization, straight/curly quotes, optional protocol, and missing italics in plain text. Do not require a personal author or an access date.",
+        "Summary: Accurately distinguishes the manuscript's approximate date from the possibility of an older oral tradition; does not treat the copy date as the proven composition date.",
+        "Credibility: Gives grounded evidence such as the library's custody of the manuscript, the reproduced pages, or the precise catalogue reference, and explains its significance.",
+        "Usefulness: Connects a specific source detail to the question and identifies the limit of what the evidence can establish about earlier storytelling."
+      ],
+      "delayedCheck": "When you next work on your bibliography, cover your notes. For a different outside source, reconstruct its MLA entry from the publication details, name its main idea, and explain one reason to trust it and one specific use for your own question."
+    },
+    "legacy": true
   }
 ]

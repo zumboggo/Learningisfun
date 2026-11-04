@@ -37,3 +37,9 @@
 .lesson-intro{padding:0}.lesson-trail{margin:1rem 0}
 .lesson-question{padding:1.1rem 1.8rem}.lesson-question button{margin-top:.75rem}
 }
+.lesson-mini{background:#f0f6f2;border-left:3px solid #458777;padding:.85rem 1rem;margin-bottom:1rem;line-height:1.6}
+.citation-builder{color:#233e38}.citation-builder>p{font-size:.92rem;margin:.5rem 0}
+.piece-bank{display:flex;flex-wrap:wrap;gap:.4rem;border:1px dashed #a7bbb4;background:#fafbf8;border-radius:.75rem;min-height:3rem;padding:.7rem}
+.citation-builder button{margin:0;padding:.5rem .7rem;background:white;border:1px solid #8fa69b;border-radius:.45rem;cursor:pointer;overflow-wrap:anywhere;text-align:left}
+.citation-builder button[aria-pressed=true]{background:#164f47;color:white;border-color:#164f47}
+.piece-slots{margin:.8rem 0;display:grid;gap:.35rem}.piece-slots button{width:100%;display:flex;align-items:center;gap:.7rem}.piece-slots b{color:#20725d;background:#e6f2eb;border-radius:.25rem;padding:.1rem .45rem}

@@ -16,8 +16,8 @@ export function answerCheck(state,lesson,answer){
  return state;
 }
 function view(lesson,state,revision){
- let index=0;const stages=lesson.stages.map(s=>({title:s.title,shortTitle:s.shortTitle,modelRows:s.modelRows,explanation:s.explanation,model:s.model,sourceUrl:s.sourceUrl,questions:s.questions.map(q=>{
- const item=index++===state.step&&state.misses>=2?q.alternate:q;return {prompt:item.prompt,options:item.options};})}));
+ let index=0;const stages=lesson.stages.map(s=>({title:s.title,shortTitle:s.shortTitle,teachFirst:s.teachFirst,modelRows:s.modelRows,explanation:s.explanation,model:s.model,sourceUrl:s.sourceUrl,questions:s.questions.map(q=>{
+ const item=index++===state.step&&state.misses>=2?q.alternate:q;return {prompt:item.prompt,options:item.options,pieces:item.pieces,italicPieces:item.italicPieces};})}));
  return {lesson:{id:lesson.id,title:lesson.title,objective:lesson.objective,minutes:lesson.minutes,stages,final:{...lesson.final,rubric:lesson.final.rubric.map(r=>r.split(':')[0])}},state,revision};
 }
 export function parseFeedback(raw,rubric){
@@ -31,7 +31,12 @@ export async function lessonAction(args){
  if(!teacher&&profile.role!=='student')fail('Student or teacher account required.',403);
  const classIds=[...new Set(catalog.flatMap(l=>l.classIds))].filter(id=>teacher||memberClassIds.has(id));
  const classes=(await Promise.all(classIds.map(async id=>{try{return await db.getDocument(databaseId,'classes',id);}catch(e){if(e.code!==404)throw e;return null;}}))).filter(c=>c?.status==='active'&&(!teacher||c.teacherId===userId));
- if(body.action==='lessonLibrary')return {items:classes.flatMap(c=>catalog.filter(l=>l.classIds.includes(c.$id)).map(l=>({id:l.id,title:l.title,objective:l.objective,minutes:l.minutes,classId:c.$id,className:c.name||c.courseName})))};
+ if(body.action==='lessonLibrary'){
+ const items=[];for(const c of classes)for(const l of catalog.filter(l=>l.classIds.includes(c.$id))){
+ if(l.legacy){const key='lesson:'+c.$id+':'+l.id;
+ const exists=teacher?(await db.listDocuments(databaseId,'teacher_workspace',[Query.equal('kind',key),Query.limit(1)])).documents.length:(await readRecord(db,databaseId,userId,key)).revision;
+ if(!exists)continue;}
+ items.push({id:l.id,title:l.title+(l.legacy?' (previous version)':''),objective:l.objective,minutes:l.minutes,classId:c.$id,className:c.name||c.courseName});}return {items};}
  const cls=classes.find(c=>c.$id===body.classId),l=catalog.find(l=>l.id===body.lessonId&&l.classIds.includes(body.classId));
  if(!cls||!l)fail('This lesson is unavailable for your class.',403);
  const key='lesson:'+cls.$id+':'+l.id;
