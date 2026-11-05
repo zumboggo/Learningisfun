@@ -1,3 +1,4 @@
+import {readFlashcardCatalog} from './flashcard-catalog.js';
 import {lessonAction} from './lessons.js';
 import {rhetoricalSituationAction} from './rhetorical-situation.js';
 import { classBannerAction } from './class-banner.js';
@@ -183,6 +184,7 @@ export default async ({ req, res, error }) => {
     if(body.action==='readPrivateEpisode'){try{return res.json(await privateEpisodeAction({body,profile,userId,memberClassIds:new Set(memberships.documents.filter(r=>r.role==='student').map(r=>r.classId)),db,databaseId,storage:new Storage(client)}));}catch(e){return res.json({error:e.message},e.code||500);}}
     if(['animatedLibrary','animatedSaveDraft','animatedReadDraft','animatedPublish','animatedAssign','animatedArchiveAssignment','animatedRead','animatedSaveAttempt'].includes(body.action)){const validMembers=new Set(memberships.documents.filter(r=>r.role==='student'&&(!r.expiresAt||Date.parse(r.expiresAt)>nowTime)).map(r=>r.classId));try{return res.json(await animatedEpisodeAction({body,profile,userId,memberClassIds:validMembers,db,databaseId,storage:new Storage(client),tokens:new Tokens(client),endpoint:process.env.APPWRITE_ENDPOINT,projectId:process.env.APPWRITE_FUNCTION_PROJECT_ID}));}catch(cause){if([400,403,404,409].includes(cause.code))return res.json({error:cause.message},cause.code);throw cause;}}
     if(body.action==='saveFlashcardBatch'){if(!['student','teacher','admin'].includes(profile.role))return res.json({error:'Practice saving requires a student or teacher account'},403);return res.json(await saveFlashcardBatch({body,userId,memberClassIds,db,databaseId}));}
+    if(body.action==='readFlashcardCatalog'){try{return res.json(await readFlashcardCatalog({body,profile,userId,memberClassIds:new Set(memberships.documents.filter(m=>!m.expiresAt||Date.parse(m.expiresAt)>Date.now()).map(m=>m.classId)),db,databaseId,includeOwned:!workshop.learner}));}catch(cause){if(cause.code===403)return res.json({error:cause.message},403);throw cause;}}
     if(body.action==='readFlashcardDeck'){try{return res.json(await readFlashcardDeck({body,userId,memberClassIds,db,databaseId}));}catch(cause){if(cause.code===403)return res.json({error:cause.message},403);throw cause;}}
     if (['readEpisodeText','saveEpisodeText'].includes(body.action)) {
       try { const validMembers=new Set(memberships.documents.filter(row=>row.role==='student'&&(!row.expiresAt||Date.parse(row.expiresAt)>nowTime)).map(row=>row.classId)); return res.json(await episodeTextAction({body,profile,userId,memberClassIds:validMembers,db,databaseId})); }

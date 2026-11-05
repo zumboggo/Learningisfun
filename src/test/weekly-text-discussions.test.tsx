@@ -33,16 +33,16 @@ function WeeklyTexts({ classId = 'blue' }: { classId?: string }) {
   return <MemoryRouter>{discussions.map(row => <TextDiscussionButton key={row.id} discussion={row} />)}</MemoryRouter>;
 }
 
-it('uses only released discussions in this class and refreshes activity on return', async () => {
+it('uses only released discussions in this class and refreshes only on explicit class refresh', async () => {
   execute.mockResolvedValueOnce({ readings: [reading, { ...reading, id: 'red', classId: 'red', title: 'Other class' }, { ...reading, id: 'later', textId: 'later', title: 'Unreleased', available: false }] });
   render(<WeeklyTexts />);
   const link = await screen.findByRole('link', { name: 'Discussion for Essay' });
   expect(screen.getAllByRole('link')).toHaveLength(1);
   execute.mockResolvedValueOnce({ readings: [{ ...reading, replyCount: 1 }] });
-  fireEvent.focus(window);
+  window.dispatchEvent(new CustomEvent('class-materials-refreshed', {detail:'blue'}));
   await waitFor(() => expect(link).toHaveClass('bg-purple-800'));
   execute.mockRejectedValueOnce(Error('Offline'));
-  fireEvent.focus(window);
+  window.dispatchEvent(new CustomEvent('class-materials-refreshed', {detail:'blue'}));
   await waitFor(() => expect(execute).toHaveBeenCalledTimes(3));
   expect(link).toHaveClass('bg-purple-800');
 });
@@ -58,12 +58,14 @@ it('discards stale results when changing classes', async () => {
   await waitFor(() => expect(screen.queryByRole('link', { name: 'Discussion for Essay' })).not.toBeInTheDocument());
 });
 
-it('scopes the request and polls at most once per five minutes while mounted', async () => {
+it('scopes the request without automatic badge polling', async () => {
   const interval = vi.spyOn(window, 'setInterval');
   execute.mockResolvedValue({ readings: [reading] });
   render(<WeeklyTexts />);
   await screen.findByRole('link', { name: 'Discussion for Essay' });
-  expect(execute).toHaveBeenCalledWith({ action: 'listReadingDiscussions', listingClassId: 'blue' });
-  expect(interval).toHaveBeenCalledWith(expect.any(Function), 300_000);
+  expect(execute).toHaveBeenCalledWith({ action: 'listReadingDiscussions', listingClassId: 'blue', includeActivity: false });
+  expect(interval.mock.calls.some(([,ms])=>ms===300_000)).toBe(false);
+  fireEvent.focus(window);
+  expect(execute).toHaveBeenCalledTimes(1);
   interval.mockRestore();
 });

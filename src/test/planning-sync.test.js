@@ -9,7 +9,7 @@ function device(cloud, saved) {
   const dom = new JSDOM(markup, { url: 'https://example.test/', runScripts: 'outside-only', pretendToBeVisual: true });
   const win = dom.window;
   win.PLANNING_USER = 'teacher'; win.PLANNING_ORIGIN = 'https://example.test';
-  win.TextEncoder = TextEncoder;
+  win.TextEncoder = TextEncoder; win.Date = Date;
   win.setTimeout = (...args) => setTimeout(...args); win.clearTimeout = id => clearTimeout(id);
   win.setInterval = (...args) => setInterval(...args);
   if (saved) win.localStorage.setItem('learning-planning:teacher', JSON.stringify(saved));
@@ -32,14 +32,14 @@ test('two devices converge, retain independent edits, sync deletion and do not u
     const b = device(cloud, a.snapshot()); windows.push(b);
     await vi.advanceTimersByTimeAsync(10);
     a.edit(0, 'Laptop final'); b.edit(1, 'Phone idea');
-    await vi.advanceTimersByTimeAsync(21000);
+    await vi.advanceTimersByTimeAsync(310000);
     expect(a.snapshot().boards[0].data.cards.slice(0,2)).toEqual(['Laptop final','Phone idea']);
     expect(b.snapshot().boards[0].data.cards.slice(0,2)).toEqual(['Laptop final','Phone idea']);
     const saves = a.postMessage.mock.calls.filter(([r])=>r.action==='save').length;
-    await vi.advanceTimersByTimeAsync(21000);
+    await vi.advanceTimersByTimeAsync(310000);
     expect(a.postMessage.mock.calls.filter(([r])=>r.action==='save').length).toBe(saves);
     const old = a.snapshot().boards[0].id;
-    a.remove(); await vi.advanceTimersByTimeAsync(21000);
+    a.remove(); await vi.advanceTimersByTimeAsync(310000);
     expect(b.snapshot().boards.some(board=>board.id===old)).toBe(false);
   } finally { windows.forEach(w=>w.close()); vi.clearAllTimers(); vi.useRealTimers(); }
 });
@@ -54,7 +54,7 @@ test('versioned account import wins over stale local content and offline edits u
     Object.defineProperty(b.navigator,'onLine',{value:false,configurable:true});
     b.edit(2,'Offline idea'); await vi.advanceTimersByTimeAsync(1100);
     Object.defineProperty(b.navigator,'onLine',{value:true,configurable:true});
-    b.dispatchEvent(new b.Event('online')); await vi.advanceTimersByTimeAsync(21000);
+    b.dispatchEvent(new b.Event('online')); await vi.advanceTimersByTimeAsync(310000);
     expect(a.snapshot().boards[0].data.cards[2]).toBe('Offline idea');
   } finally {windows.forEach(w=>w.close());vi.clearAllTimers();vi.useRealTimers();}
 });
@@ -67,11 +67,24 @@ test('calendar independently merges entries and keeps removals across devices', 
   const b=device(cloud,a.snapshot());windows.push(b);await vi.advanceTimersByTimeAsync(10);
   a.calendarEdit('one',{date:'2026-12-31',text:'Laptop note'});
   b.calendarEdit('two',{date:'2027-01-01',text:'Phone note'});
-  await vi.advanceTimersByTimeAsync(21000);
+  await vi.advanceTimersByTimeAsync(310000);
   expect(a.snapshot().boards[0].data.calendar).toEqual(b.snapshot().boards[0].data.calendar);
   expect(Object.keys(a.snapshot().boards[0].data.calendar)).toHaveLength(2);
-  a.calendarEdit('one',null);await vi.advanceTimersByTimeAsync(21000);
+  a.calendarEdit('one',null);await vi.advanceTimersByTimeAsync(310000);
   expect(b.snapshot().boards[0].data.calendar.one).toBeNull();
   expect(b.snapshot().boards[0].data.calendar.two.text).toBe('Phone note');
  }finally{windows.forEach(w=>w.close());vi.clearAllTimers();vi.useRealTimers()}
+});
+
+
+test('idle focus avoids reads and manual Save checks immediately',async()=>{
+ vi.useFakeTimers();const cloud=new Map(),a=device(cloud);
+ try{
+  await vi.advanceTimersByTimeAsync(10);
+  const count=()=>a.postMessage.mock.calls.filter(([r])=>r.action==='list').length;
+  const initial=count();
+  for(let i=0;i<20;i++)a.dispatchEvent(new a.Event('focus'));
+  await vi.advanceTimersByTimeAsync(60000);expect(count()).toBe(initial);
+  a.document.querySelector('#save-board').click();await vi.advanceTimersByTimeAsync(10);expect(count()).toBe(initial+1);
+ }finally{a.close();vi.clearAllTimers();vi.useRealTimers();}
 });

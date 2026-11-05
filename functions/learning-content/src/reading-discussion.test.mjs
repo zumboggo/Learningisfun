@@ -179,3 +179,11 @@ test('class listings read only the requested authorized workspace',async()=>{
  expect((await call({action:'listReadingDiscussions',listingClassId:'red'})).readings).toEqual([]);
  expect(db.listDocuments.mock.calls.some(c=>['reading_posts','texts','text_assignments'].includes(c[1]))).toBe(false);
 });
+
+test('ordinary class discussion links never read post history',async()=>{
+ const {call,db}=harness();
+ const result=await call({action:'listReadingDiscussions',listingClassId:'blue',includeActivity:false});
+ expect(result.readings).toHaveLength(1);
+ expect(result.readings[0]).not.toHaveProperty('questionCount');
+ expect(db.listDocuments.mock.calls.some(c=>c[1]==='reading_posts')).toBe(false);
+});

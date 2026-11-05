@@ -22,6 +22,8 @@
   const status = $('#cloud-status');
   const BACKUP_DELAY = 1000;
   let timer, busy = false, applying = false;
+  const REMOTE_POLL_MS = 5 * 60 * 1000;
+  let lastRemoteCheck = 0;
   let observed = JSON.parse(JSON.stringify(library));
   let backedUp = '';
   let clock = Date.now();
@@ -49,12 +51,14 @@
       timer = setTimeout(backup, BACKUP_DELAY);
     }
   }
-  async function backup() {
+  async function backup(forceRemote = false) {
     clearTimeout(timer);
     if (busy || !navigator.onLine) return;
+    if (forceRemote !== true && content() === backedUp && Date.now() - lastRemoteCheck < REMOTE_POLL_MS) return;
     busy = true;
     try {
       const { documents } = await request('list');
+      lastRemoteCheck = Date.now();
       // Do not replace an open editor or a focused text input while typing.
       if (document.querySelector('dialog[open]') || ['TEXTAREA', 'INPUT'].includes(document.activeElement?.tagName)) {
         if (content() !== backedUp) await upload();
@@ -136,14 +140,14 @@
   window.brainstormingSaved = schedule;
   $('#device-name').onchange = event => { localStorage.setItem(prefix + ':name', event.target.value); schedule(); };
   $('#cloud-open').onclick = () => { $('#cloud-dialog').showModal(); void listBackups(); };
-  $('#cloud-save').onclick = backup;
-  $('#save-board').addEventListener('click', () => { void backup(); });
+  $('#cloud-save').onclick = () => backup(true);
+  $('#save-board').addEventListener('click', () => { void backup(true); });
   $('#cloud-list').onclick = listBackups;
   window.addEventListener('online', () => { void backup(); });
   window.addEventListener('offline', () => { status.textContent = 'Offline · saved on this device'; });
   window.addEventListener('focus', () => { void backup(); });
   document.addEventListener('visibilitychange', () => { if (!document.hidden) void backup(); });
   document.addEventListener('focusout', () => { clearTimeout(timer); timer = setTimeout(backup, BACKUP_DELAY); });
-  setInterval(() => { if (!document.hidden) void backup(); }, 10000);
+  setInterval(() => { if (!document.hidden) void backup(true); }, REMOTE_POLL_MS);
   void backup();
 })();

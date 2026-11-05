@@ -7,5 +7,5 @@ export const WORKSHOP_LEARNER_ACTIONS = [
  'readPresentationLinks','downloadPresentationFile','readLivePresentation','submitLiveAnswer',
  'readQuizzes','startQuizAttempt','submitQuizAttempt','readWriting','listPeerReviewActivities','readPeerReviewActivity','submitPresentationPeerReview','flagPresentationPeerReview',
  'animatedLibrary','animatedRead','animatedSaveAttempt','readEpisodes','readPlanningMaterials',
- 'readFlashcardDeck','saveFlashcardBatch','readFlashcardPreferences','setFlashcardPreference','reportFlashcard','mutate',
+ 'readFlashcardCatalog','readFlashcardDeck','saveFlashcardBatch','readFlashcardPreferences','setFlashcardPreference','reportFlashcard','mutate',
 ];

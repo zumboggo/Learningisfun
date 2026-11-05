@@ -1,10 +1,11 @@
+import {routeContentScope} from '@/services/route-content-scope';
 import {refreshDueDeckCards} from '@/services/flashcard-cache';
 import {useLocation} from 'react-router-dom';
 import {executeLearningContent} from '@/services/learning-content.service';
 import {isWorkshopPath,workshopLocation,WORKSHOP_CLASS_ID,type WorkshopAccess} from '@/services/workshop-context';
 import {clearPrivateEpisodeMemory} from '@/services/private-episode-content';
 import {invalidateDeckCards} from '@/services/flashcard-cache';
-import { syncClassMaterials, type ContentDomain } from '@/services/class-material-refresh.service';
+import { syncClassMaterials } from '@/services/class-material-refresh.service';
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { User, UserRole } from '@/types';
 import * as authService from '@/services/auth.service';
@@ -89,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = effectiveRole === 'admin';
   const isParent = effectiveRole === 'parent';
 
-  const syncUserData = useCallback(async (userId: string, force = false, requestedDomains: SyncDomain[] = ALL_SYNC_DOMAINS) => {
+  const syncUserData = useCallback(async (userId: string, force = false, requestedDomains: SyncDomain[] = ['account']) => {
     const domains = new Set(requestedDomains);
     if (domains.has('account')) {
       await runCachedSync(`account:${userId}`, SYNC_WINDOWS.account, () => classService.syncClassesFromServer(userId), force);
@@ -99,13 +100,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const classIds = workshopLocation()?[WORKSHOP_CLASS_ID]:[...new Set([...memberships.map(m => m.classId), ...taught.map(c => c.$id)])];
     const cachedUser = await authService.getCachedUser();
     const isTeacher = !workshopLocation()&&(cachedUser?.role === 'teacher' || cachedUser?.role === 'admin');
-    await syncClassMaterials(classIds, userId, isTeacher, force, [...domains].filter((domain): domain is ContentDomain => domain !== 'account'));
+    const scope=routeContentScope(window.location.hash.slice(1).split('?')[0],classIds);
+    const selected=scope.domains.filter(domain=>domains.has(domain));
+    if(selected.length)await syncClassMaterials(scope.classIds, userId, isTeacher, force, selected);
+
     await refreshDueDeckCards(userId);
   }, []);
 
   useEffect(() => {
-    if (workshopMode && user?.$id) void syncUserData(user.$id, true);
+    if (workshopMode && user?.$id) void syncUserData(user.$id, true, ALL_SYNC_DOMAINS);
   }, [workshopMode, user?.$id, syncUserData]);
+
+  // Content is fetched on navigation or explicit refresh, never on idle account polls.
+  useEffect(()=>{if(user?.$id)void syncUserData(user.$id,false,ALL_SYNC_DOMAINS);},[location.pathname,user?.$id,syncUserData]);
 
   const refreshUser = useCallback(async () => {
     try {
@@ -149,7 +156,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const pendingDomains = new Set<SyncDomain>();
     const runSync = async (force = false) => {
       if (disposed || document.visibilityState !== 'visible') return;
-      const domains = pendingDomains.size ? [...pendingDomains] : ALL_SYNC_DOMAINS;
+      // The catalog cache permits a weekly refresh on Cards/class pages, not idle full-content scans.
+      const domains: SyncDomain[] = pendingDomains.size ? [...pendingDomains] : ['account','flashcards'];
       pendingDomains.clear();
       await syncUserData(user.$id, force, domains);
     };

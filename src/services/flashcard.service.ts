@@ -1,6 +1,6 @@
 import {ensureDeckCards} from './flashcard-cache';
 import { databases, DATABASE_ID, COLLECTIONS } from '@/lib/appwrite';
-import { db } from '@/db/schema';
+import { db, SIGN_OUT_LOCK } from '@/db/schema';
 import { generateId, getTimestamp, parseTags } from '@/utils/helpers';
 import { addToQueue, processQueue } from './sync.service';
 import {
@@ -13,7 +13,6 @@ import {
   getCardReviewFields,
   toFsrsRating,
 } from '@/lib/fsrs';
-import { Query } from 'appwrite';
 import type {
   FlashcardDeck,
   FlashcardCard,
@@ -788,18 +787,14 @@ export async function getPersonalNote(userId: string, cardId: string): Promise<S
 
 export async function syncDecksFromServer(classIds: string[], userId: string): Promise<boolean> {
   try {
-    const planning = await executeLearningContent<{decks:FlashcardDeck[];cards:FlashcardCard[];assignments:DeckAssignment[]}>({action:'readPlanningMaterials',kind:'deck',includeCards:false});
-    const assignmentResult = classIds.length
-      ? await databases.listDocuments(DATABASE_ID, COLLECTIONS.deck_assignments, [Query.equal('classId', classIds), Query.limit(200)])
-      : { documents: [] };
-    const assignedDeckIds = [...new Set(assignmentResult.documents.map(doc => doc.deckId as string))];
-    const [assignedDecks, ownedDecks] = await Promise.all([
-      assignedDeckIds.length
-        ? databases.listDocuments(DATABASE_ID, COLLECTIONS.flashcard_decks, [Query.equal('$id', assignedDeckIds), Query.equal('status', 'published'), Query.limit(200)])
-        : Promise.resolve({ documents: [] }),
-      databases.listDocuments(DATABASE_ID, COLLECTIONS.flashcard_decks, [Query.equal('creatorId', userId), Query.limit(200)]),
-    ]);
-    const deckResult = { documents: [...new Map([...assignedDecks.documents, ...ownedDecks.documents, ...planning.decks].map(doc => [doc.$id, doc])).values()] };
+    const initialOwner=(await db.app_metadata.get('currentUserId'))?.value;
+    const signOutLock=localStorage.getItem(SIGN_OUT_LOCK);
+    if(initialOwner&&initialOwner!==userId)return false;
+    const catalog = await executeLearningContent<{decks:FlashcardDeck[];assignments:DeckAssignment[];preferences:StudentDeckNote[]}>({action:'readFlashcardCatalog',classIds});
+    return await db.transaction('rw',[db.app_metadata,db.flashcard_decks,db.deck_assignments,db.student_deck_notes,db.sync_queue],async()=>{
+    const owner=(await db.app_metadata.get('currentUserId'))?.value;
+    if(owner!==initialOwner||(owner&&owner!==userId)||localStorage.getItem(SIGN_OUT_LOCK)!==signOutLock)return false;
+    const assignmentResult={documents:catalog.assignments},deckResult={documents:catalog.decks};
     for (const doc of deckResult.documents) {
       await db.flashcard_decks.put({
         $id: doc.$id,
@@ -813,7 +808,6 @@ export async function syncDecksFromServer(classIds: string[], userId: string): P
       });
     }
 
-    assignmentResult.documents = [...new Map([...assignmentResult.documents, ...planning.assignments].map(doc=>[doc.$id,doc])).values()] as typeof assignmentResult.documents;
     // This is a catalog refresh. Card bodies are loaded only when requested.
     for (const doc of assignmentResult.documents) {
       await db.deck_assignments.put({
@@ -828,7 +822,7 @@ export async function syncDecksFromServer(classIds: string[], userId: string): P
     if (classIds.length) {
       const [localAssignments, queuedAssignmentChanges] = await Promise.all([
         db.deck_assignments.where('classId').anyOf(classIds).toArray(),
-        db.sync_queue.where('entityType').equals('deck_assignment').filter(op => op.syncStatus !== 'synced').toArray(),
+        db.sync_queue.where('entityType').equals('deck_assignment').filter(op => op.userId === userId && op.syncStatus !== 'synced').toArray(),
       ]);
       const remoteAssignmentIds = new Set(assignmentResult.documents.map(doc => doc.$id));
       const protectedAssignmentIds = new Set(queuedAssignmentChanges.map(op => op.entityId));
@@ -837,16 +831,8 @@ export async function syncDecksFromServer(classIds: string[], userId: string): P
         .map(assignment => assignment.$id);
       if (staleAssignmentIds.length) await db.deck_assignments.bulkDelete(staleAssignmentIds);
     }
-    try {
-      const result = await executeLearningContent<{ preferences: StudentDeckNote[] }>({
-        action: 'readFlashcardPreferences',
-      });
-      for (const preference of result.preferences) {
-        await db.student_deck_notes.put(preference);
-      }
-    } catch {
-      // Keep cached preferences available while offline.
-    }
+    for (const preference of catalog.preferences) await db.student_deck_notes.put(preference);
     return true;
+    });
   } catch { return false; }
 }

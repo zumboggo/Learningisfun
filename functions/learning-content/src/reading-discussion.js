@@ -43,6 +43,7 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
       seen.add(id);
       return [{ id, textId: text.$id, classId: cls.$id,       title: text.title, className: `${cls.courseName || ''} · ${cls.name}`, date: a.dueDate || a.assignedAt.slice(0, 10), available: text.status === 'published' && textAssignmentAvailable(a) }];
     });
+    if(body.includeActivity===false)return {readings};
     const activity = new Map();
     for(let offset=0;offset<readings.length;offset+=100) {
       const rows=await list('reading_posts',[Query.equal('workspaceId',readings.slice(offset,offset+100).map(row=>row.id))]);

@@ -1,3 +1,4 @@
+import {deckRefreshBoundary} from './deck-refresh-policy';
 import { syncClassSessionsFromServer } from '@/services/class-session.service';
 import { syncDecksFromServer } from '@/services/flashcard.service';
 import { syncPresentationLinks } from '@/services/presentation.service';
@@ -30,7 +31,7 @@ export async function syncClassMaterials(classIds: string[], userId: string, isT
   const scope = [...new Set(classIds)].sort().join(',');
   const outcomes = await Promise.allSettled(selected.map(([domain,, task]) => runCachedSync(
     `class-content:${userId}:${isTeacher?'teacher':'member'}:${scope}:${domain}`,
-    domain === 'flashcards' ? SYNC_WINDOWS.stableContent : SYNC_WINDOWS.catalog,
+    domain === 'flashcards' ? Math.max(1,Date.now()-deckRefreshBoundary()) : SYNC_WINDOWS.catalog,
     async () => { if (await task() === false) throw new Error('Content refresh failed'); }, force,
   )));
   const refreshed: string[] = [], failed: string[] = [];
@@ -42,7 +43,9 @@ export async function syncClassMaterials(classIds: string[], userId: string, isT
   return { refreshed, failed };
 }
 
-export function refreshClassMaterials(classId: string, userId: string, isTeacher: boolean) {
-  return syncClassMaterials([classId], userId, isTeacher, true);
+export async function refreshClassMaterials(classId: string, userId: string, isTeacher: boolean) {
+  const result = await syncClassMaterials([classId], userId, isTeacher, true);
+  window.dispatchEvent(new CustomEvent('class-materials-refreshed', {detail:classId}));
+  return result;
 }
 import { runCachedSync, SYNC_WINDOWS } from './sync-policy';
