@@ -66,3 +66,12 @@ it('places the diagram with the model and makes room for original writing before
  const compare=await screen.findByText('Compare with a model');expect(compare).toBeDisabled();expect(screen.queryByText(question.rehearsal.sample)).toBeNull();
  fireEvent.change(screen.getByLabelText('Practice in your own words'),{target:{value:'The editor calls the paper “a window” into the school.'}});fireEvent.click(compare);expect(screen.getByText(question.rehearsal.sample)).toBeVisible();
 });
+
+it('filters assigned lessons by class and title, and clears an empty search',async()=>{
+ auth.isTeacher=true;request.mockResolvedValueOnce({items:[{...item,classId:'blue',className:'Blue'},{...item,id:'argument',title:'Making an argument',classId:'red',className:'Red'}]});
+ render(<LessonsPage/>);await screen.findByText('Making an argument');fireEvent.change(screen.getByLabelText('Filter by class'),{target:{value:'blue'}});expect(screen.queryByText('Making an argument')).toBeNull();expect(screen.getByText('Annotated entry')).toBeVisible();fireEvent.change(screen.getByLabelText('Search lessons'),{target:{value:'no match'}});expect(screen.getByText('No matching lessons')).toBeVisible();fireEvent.click(screen.getByText('Clear filters'));expect(screen.getByText('Making an argument')).toBeVisible();
+});
+it('opens drafts directly without creating a record or requesting AI',async()=>{
+ auth.isTeacher=true;request.mockImplementation(async b=>b.action==='lessonLibrary'?{items:[]}:b.action==='lessonBuilderLibrary'?{drafts:[{id:'draft',title:'A saved idea'}],classes:[]}:Promise.reject(Error('Unexpected mutation')));
+ render(<LessonsPage/>);fireEvent.click(await screen.findByRole('button',{name:'Drafts'}));expect(await screen.findByText('A saved idea')).toBeVisible();expect(request.mock.calls.every(([b])=>['lessonLibrary','lessonBuilderLibrary'].includes(b.action))).toBe(true);
+});
