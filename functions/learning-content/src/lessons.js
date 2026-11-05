@@ -1,3 +1,4 @@
+import {authoredLessons,hydrateLessonImages} from './lesson-authoring.js';
 import catalog from './lesson-catalog.json' with {type:'json'};
 import {Query} from 'node-appwrite';
 import {atomic,allRows,fail,readRecord,writeRecord} from './teacher-workspace.js';
@@ -29,14 +30,17 @@ export async function lessonAction(args){
  const {db,databaseId,userId,body,profile,memberClassIds}=args;
  const teacher=['teacher','admin'].includes(profile.role);
  if(!teacher&&profile.role!=='student')fail('Student or teacher account required.',403);
- const available=catalog.filter(l=>teacher||!l.releaseAt||Date.parse(l.releaseAt)<=Date.now());
+ const combined=[...catalog,...await authoredLessons(args)];
+ const available=combined.filter(l=>teacher||!l.releaseAt||Date.parse(l.releaseAt)<=Date.now());
  const classIds=[...new Set(available.flatMap(l=>l.classIds))].filter(id=>teacher||memberClassIds.has(id));
  const classes=(await Promise.all(classIds.map(async id=>{try{return await db.getDocument(databaseId,'classes',id);}catch(e){if(e.code!==404)throw e;return null;}}))).filter(c=>c?.status==='active'&&(!teacher||c.teacherId===userId));
  if(body.action==='lessonLibrary'){
  const items=[];for(const c of classes)for(const l of available.filter(l=>l.classIds.includes(c.$id))){
  items.push({id:l.id,progressId:l.progressId||l.id,title:l.title,objective:l.objective,releaseAt:l.releaseAt||null,dueOn:l.dueOn||null,assignedOn:l.assignedOn||null,courseName:c.courseName||'',minutes:l.minutes,classId:c.$id,className:c.name||c.courseName});}return {items};}
- const cls=classes.find(c=>c.$id===body.classId),l=available.find(l=>l.id===body.lessonId&&l.classIds.includes(body.classId));
+ const cls=classes.find(c=>c.$id===body.classId);let l=available.find(l=>l.id===body.lessonId&&l.classIds.includes(body.classId));
  if(!cls||!l)fail('This lesson is unavailable for your class.',403);
+ l=await hydrateLessonImages(args,l);
+ if(teacher&&['lessonAnswer','lessonDraft','lessonSubmit'].includes(body.action))fail('Use the local teacher preview; it does not save attempts.',403);
  const key='lesson:'+cls.$id+':'+(l.progressId||l.id);
  if(body.action==='lessonRoster'||body.action==='lessonReview'){
  if(!teacher)fail('Class teacher required.',403);
@@ -48,7 +52,7 @@ export async function lessonAction(args){
  return {rubric:l.final.rubric,rows:await Promise.all(members.map(async m=>{const [r,p]=await Promise.all([readRecord(db,databaseId,m.userId,key),db.getDocument(databaseId,'users',m.userId).catch(()=>null)]);return {studentId:m.userId,name:p?.name||m.userId,state:r.value,revision:r.revision};}))};
  }
  const snapshot=()=>readRecord(db,databaseId,userId,key);
- if(body.action==='lessonRead'){const r=await snapshot();return view(l,r.value||initial(),r.revision,body.citationBuilder);}
+ if(body.action==='lessonRead'){if(teacher)return {...view(l,initial(),0,body.citationBuilder),previewDefinition:l};const r=await snapshot();return view(l,r.value||initial(),r.revision,body.citationBuilder);}
  const saved=await atomic(args,async({db})=>{const r=await readRecord(db,databaseId,userId,key),s=r.value||initial();
  if(body.revision!==r.revision)fail('Your lesson changed elsewhere. Reopen it to see the saved work.',409);
  if(body.action==='lessonAnswer'){if(typeof body.answer!=='string'||!body.answer.trim()||body.answer.length>600)fail('Enter a short answer.');answerCheck(s,l,body.answer.trim());}

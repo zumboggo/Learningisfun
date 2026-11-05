@@ -1,4 +1,5 @@
 import {readFlashcardCatalog} from './flashcard-catalog.js';
+import {lessonAuthoringAction} from './lesson-authoring.js';
 import {lessonAction} from './lessons.js';
 import {rhetoricalSituationAction} from './rhetorical-situation.js';
 import { classBannerAction } from './class-banner.js';
@@ -174,7 +175,8 @@ export default async ({ req, res, error }) => {
     const memberships = {documents:(await allRows(db,databaseId,'class_members',[Query.equal('userId',userId)])).filter(m=>!workshop.learner||(m.classId===WORKSHOP_CLASS_ID&&m.role==='student'&&(!m.expiresAt||Date.parse(m.expiresAt)>Date.now())))};
     const nowTime = Date.now();
     const memberClassIds = new Set(memberships.documents.filter(row => row.role !== 'substitute' || (row.expiresAt && new Date(row.expiresAt).getTime() > nowTime)).map(row => row.classId));
-    if(['lessonLibrary','lessonRead','lessonAnswer','lessonDraft','lessonSubmit','lessonRoster','lessonReview'].includes(body.action)){try{return res.json(await lessonAction({body,profile,userId,memberClassIds:new Set(memberships.documents.filter(m=>m.role==='student'&&(!m.expiresAt||Date.parse(m.expiresAt)>nowTime)).map(m=>m.classId)),db,databaseId}));}catch(e){return res.json({error:e.message},e.code||500);}}
+    if(['lessonBuilderLibrary','lessonReadBuilderDraft','lessonSaveBuilderDraft','lessonChat','lessonGenerate','lessonRefineStage','lessonPreview','lessonAssign','lessonUploadImage','lessonReadImage'].includes(body.action)){try{return res.json(await lessonAuthoringAction({body,profile,userId,db,databaseId,storage:new Storage(client),tokens:new Tokens(client),endpoint:process.env.APPWRITE_ENDPOINT,projectId:process.env.APPWRITE_FUNCTION_PROJECT_ID}));}catch(e){return res.json({error:e.message},e.code||500);}}
+    if(['lessonLibrary','lessonRead','lessonAnswer','lessonDraft','lessonSubmit','lessonRoster','lessonReview'].includes(body.action)){try{return res.json(await lessonAction({body,profile,userId,memberClassIds:new Set(memberships.documents.filter(m=>m.role==='student'&&(!m.expiresAt||Date.parse(m.expiresAt)>nowTime)).map(m=>m.classId)),db,databaseId,tokens:new Tokens(client),endpoint:process.env.APPWRITE_ENDPOINT,projectId:process.env.APPWRITE_FUNCTION_PROJECT_ID}));}catch(e){return res.json({error:e.message},e.code||500);}}
     if(['readRhetoricalSituation','saveRhetoricalSituation'].includes(body.action)) {
       const validMembers=new Set(memberships.documents.filter(row=>row.role==='student'&&(!row.expiresAt||Date.parse(row.expiresAt)>nowTime)).map(row=>row.classId));
       try{return res.json(await rhetoricalSituationAction({body,profile,userId,memberClassIds:validMembers,db,databaseId}));}

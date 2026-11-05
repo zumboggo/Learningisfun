@@ -1,0 +1,25 @@
+export type LessonImage={fileId?:string;path?:string;url?:string;alt:string;caption:string};
+export type LessonCheck={prompt:string;options?:string[];pieces?:string[];answers:string[];rehearsal?:{prompt:string;sample:string}};
+export type LessonQuestion=LessonCheck&{hint:string;explanation:string;alternate:LessonCheck};
+export type LessonStage={title:string;shortTitle:string;explanation:string;model:string;modelRows:[string,string][];sourceUrl?:string;image?:LessonImage;questions:LessonQuestion[]};
+export type LessonDefinition={title:string;objective:string;minutes:number;stages:LessonStage[];final:{title:string;shortTitle:string;prompt:string;source:string;sourceUrl:string;rubric:string[];delayedCheck:string}};
+export type LessonDraft={brief:Record<string,string>;messages:{role:'user'|'assistant';content:string}[];lesson:LessonDefinition|null;review:Record<string,string>;reviewed:boolean};
+export const reviewFields=[['commonCase','Common case','Where do students first try the typical example?'],['objectivePractice','Practice the objective','Where do students perform the objective’s verb?'],['evidenceExplanation','Evidence and explanation','Which model row pairs a detail with its explanation?'],['missingMove','Remove one support','Where do students supply one missing move?'],['freshRetry','Fresh equivalent retry','Which alternate tests the same decision on new material?']] as const;
+export const newDraft=():LessonDraft=>({brief:{audience:'Secondary students',topic:'',source:'',sourceUrl:'',attribution:'',objective:'',finalTask:''},messages:[],lesson:null,review:{},reviewed:false});
+const blankCheck=():LessonCheck=>({prompt:'',options:['',''],answers:['']});
+export const blankStage=():LessonStage=>({title:'',shortTitle:'',explanation:'',model:'',modelRows:[['','']],questions:Array.from({length:2},()=>({...blankCheck(),hint:'',explanation:'',alternate:blankCheck()}))});
+export const blankLesson=(v:LessonDraft):LessonDefinition=>({title:v.brief.topic,objective:v.brief.objective,minutes:12,stages:Array.from({length:3},blankStage),final:{title:'Independent application',shortTitle:'Apply independently',prompt:v.brief.finalTask,source:v.brief.source,sourceUrl:v.brief.sourceUrl,rubric:[''],delayedCheck:''}});
+export const previewState=()=>({step:0,misses:0,checks:[] as {step:number;correct:boolean;answer:string}[],draft:'',submissions:[],outcome:'',notice:''});
+export function previewView(lesson:LessonDefinition,state:ReturnType<typeof previewState>){let index=0;return {...lesson,stages:lesson.stages.map(s=>({...s,questions:s.questions.map(q=>index++===state.step&&state.misses>=2?q.alternate:q)})),final:{...lesson.final,rubric:lesson.final.rubric.map(r=>r.split(':')[0])}};}
+export function previewAnswer(lesson:LessonDefinition,state:ReturnType<typeof previewState>,answer:string){const s=structuredClone(state),q=lesson.stages.flatMap(s=>s.questions)[s.step];if(!q)return s;const norm=(v:string)=>v.normalize('NFKC').toLowerCase().trim().replace(/[’‘]/g,"'").replace(/\s+/g,' ');const alternate=s.misses>=2,correct=(alternate?q.alternate:q).answers.some(a=>norm(a)===norm(answer));s.checks.push({step:s.step,correct,answer});if(correct||alternate){s.step++;s.misses=0;s.notice=(correct?'Correct. ':'Continue with support. ')+q.explanation;}else{s.misses++;s.notice=s.misses===1?q.hint:q.explanation+' Try the new example.';}return s;}
+
+// Resize before transport so a 10 MB source image fits the function request limit.
+// The server independently decodes and validates the resulting bytes.
+export async function prepareLessonImage(file:File):Promise<string>{
+ if(file.size>10*1024*1024)throw Error('Choose an image up to 10 MB.');
+ const header=new Uint8Array(await file.slice(0,12).arrayBuffer());
+ const png=[137,80,78,71,13,10,26,10].every((v,i)=>header[i]===v),jpeg=header[0]===255&&header[1]===216&&header[2]===255,webp=String.fromCharCode(...header.slice(0,4))==='RIFF'&&String.fromCharCode(...header.slice(8,12))==='WEBP';
+ if(!png&&!jpeg&&!webp)throw Error('Choose a JPEG, PNG, or WebP image.');
+ let bitmap:ImageBitmap;try{bitmap=await createImageBitmap(file)}catch{throw Error('This image cannot be decoded. Try another image.')}
+ try{if(bitmap.width*bitmap.height>40000000)throw Error('Choose an image under 40 megapixels.');const ratio=Math.min(1,1800/bitmap.width,1800/bitmap.height),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(bitmap.width*ratio));canvas.height=Math.max(1,Math.round(bitmap.height*ratio));const context=canvas.getContext('2d');if(!context)throw Error('Image processing is unavailable in this browser.');context.drawImage(bitmap,0,0,canvas.width,canvas.height);const data=canvas.toDataURL('image/webp',.85);if(data.length>7000000)throw Error('Choose a smaller image.');return data;}finally{bitmap.close()}
+}
