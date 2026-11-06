@@ -55,13 +55,13 @@ it('renders both real citation banks in sequence and advances after ordering eac
 
 it('places the diagram with the model and makes room for original writing before comparison',async()=>{
  const {default:catalog}=await import('../../functions/learning-content/src/lesson-catalog.json');
- const lesson=catalog.find(l=>l.id==='nested-quotes-evidence-v2')!;
+ const lesson=catalog.find(l=>l.id==='nested-quotes-evidence-v3')!;
  const question=lesson.stages[0].questions[1];if(!('rehearsal' in question)||!question.rehearsal)throw Error('Missing rehearsal');
  const state={step:0,misses:0,checks:[],draft:'',submissions:[],outcome:'',notice:''};
  auth.isTeacher=false;
  request.mockResolvedValueOnce({items:[{...item,id:lesson.id}]}).mockResolvedValueOnce({lesson,state,revision:0}).mockResolvedValueOnce({lesson,state:{...state,step:1},revision:1});
  render(<LessonsPage/>);fireEvent.click(await screen.findByText('Open lesson'));
- expect(await screen.findByRole('img',{name:/writer’s words/i})).toHaveAttribute('src',expect.stringContaining('nested-quote-seam.jpg'));
+ expect(await screen.findByRole('img',{name:/quotation-mark characters/i})).toHaveAttribute('src',expect.stringContaining('engagement-quote.webp'));
  fireEvent.change(screen.getByLabelText('Your answer'),{target:{value:'a wall'}});fireEvent.click(screen.getByText('Check answer'));
  const compare=await screen.findByText('Compare with a model');expect(compare).toBeDisabled();expect(screen.queryByText(question.rehearsal.sample)).toBeNull();
  fireEvent.change(screen.getByLabelText('Practice in your own words'),{target:{value:'The editor calls the paper “a window” into the school.'}});fireEvent.click(compare);expect(screen.getByText(question.rehearsal.sample)).toBeVisible();
@@ -74,4 +74,12 @@ it('filters assigned lessons by class and title, and clears an empty search',asy
 it('opens drafts directly without creating a record or requesting AI',async()=>{
  auth.isTeacher=true;request.mockImplementation(async b=>b.action==='lessonLibrary'?{items:[]}:b.action==='lessonBuilderLibrary'?{drafts:[{id:'draft',title:'A saved idea'}],classes:[]}:Promise.reject(Error('Unexpected mutation')));
  render(<LessonsPage/>);fireEvent.click(await screen.findByRole('button',{name:'Drafts'}));expect(await screen.findByText('A saved idea')).toBeVisible();expect(request.mock.calls.every(([b])=>['lessonLibrary','lessonBuilderLibrary'].includes(b.action))).toBe(true);
+});
+
+it('opens previous lesson versions through a separate read-only library request',async()=>{
+ auth.isTeacher=true;request.mockImplementation(async b=>({items:[{...item,id:b.previousVersions?'old':'new',title:b.previousVersions?'Earlier lesson':'Current lesson'}]}));
+ render(<LessonsPage/>);await screen.findByText('Current lesson');
+ fireEvent.click(screen.getByLabelText(/Previous lesson versions/));
+ expect(await screen.findByText('Earlier lesson')).toBeVisible();expect(screen.queryByText('Current lesson')).toBeNull();
+ expect(request).toHaveBeenLastCalledWith({action:'lessonLibrary',previousVersions:true});
 });

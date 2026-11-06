@@ -15,9 +15,12 @@ for(const lesson of catalog)for(const classId of lesson.classIds){
  const items=JSON.parse(lib.responseBody).items;
  const item=items.find(item=>item.id===lesson.id&&item.classId===classId);assert.ok(item);assert.equal(item.releaseAt,lesson.releaseAt||null);assert.equal(item.dueOn,lesson.dueOn||null);assert.equal(item.assignedOn,lesson.assignedOn||null);assert.equal(item.courseName,cls.courseName||'');
  assert.ok(!items.some(item=>item.id==='world-lit-bibliography'));
+ const archived=await functions.createExecution({functionId:'learning-content',body:JSON.stringify({action:'lessonLibrary',previousVersions:true})});
+ assert.equal(archived.responseStatusCode,200);assert.ok(JSON.parse(archived.responseBody).items.some(x=>x.classId===classId));
  }
  const exec=await functions.createExecution({functionId:'learning-content',body:JSON.stringify({action:'lessonRead',citationBuilder:true,classId,lessonId:lesson.id})});
- assert.equal(exec.responseStatusCode,200);const {lesson:live}=JSON.parse(exec.responseBody);
+ assert.equal(exec.responseStatusCode,200);const {lesson:live,previewDefinition}=JSON.parse(exec.responseBody);
+ assert.deepEqual(previewDefinition,lesson);
  assert.equal(live.title,lesson.title);assert.equal(live.final.sourceUrl,lesson.final.sourceUrl);assert.equal(live.stages.length,lesson.stages.length);
  for(const [i,stage] of lesson.stages.entries()){if(stage.image){assert.deepEqual(live.stages[i].image,stage.image);assert.ok(readFileSync(new URL('../public/'+stage.image.path,import.meta.url)).length>0);}for(const [j,q] of stage.questions.entries())if(q.rehearsal)assert.deepEqual(live.stages[i].questions[j].rehearsal,q.rehearsal);}
  for(const [i,stage] of lesson.stages.entries())for(const [j,q] of stage.questions.entries())if(q.pieces)assert.deepEqual(live.stages[i].questions[j].pieces,q.pieces);

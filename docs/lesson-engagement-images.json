@@ -1,0 +1,79 @@
+[
+  {
+    "name": "bibliography",
+    "prompt": "Create one wide instructional editorial illustration for multilingual high-school students, warm ink-and-watercolor graphic novel style, cream teal coral palette. A student detective follows a continuous red thread from a quotation card on a desk, through a small author portrait and a book, to the exact page in an open archive book; a second vague card has a thread ending in a confused knot. Visual metaphor for a citation providing a checkable trail to a specific source. Wry gentle humour in the detective's raised eyebrow, dignified teen characters. Strong simple composition, no text, no letters, no numbers, no logos. This is an imagined teaching metaphor, not archival evidence.",
+    "path": "public/lessons/engagement-bibliography.webp",
+    "provider": "built-in ImageGen",
+    "originalAsset": "exec-45f56edc-a641-4cca-8d89-1f7827a32cac.png"
+  },
+  {
+    "name": "quote",
+    "prompt": "One wide instructional illustration for multilingual high-school students. Sophisticated ink-and-watercolor graphic novel style, cream teal coral palette, generous clear space, distinct simple compositions. Two-panel comic: left a tiny quotation-mark-shaped character stands awkwardly outside a student writer's sentence represented by interlocking blank paper strips; right the quotation character fits neatly between two strips, with a small lamp illuminating the joined seam. Teaching metaphor: embed short borrowed words grammatically within your sentence, then illuminate their meaning. Gentle humour, no actual words. No letters, words, logos, watermarks or decorative pseudo-writing. Imagined teaching scene, not documentary evidence.",
+    "path": "public/lessons/engagement-quote.webp",
+    "provider": "built-in ImageGen",
+    "originalAsset": "exec-980382eb-67ea-4f32-8bfa-b31d54388b74.png"
+  },
+  {
+    "name": "argument",
+    "prompt": "One wide instructional illustration for multilingual high-school students. Sophisticated ink-and-watercolor graphic novel style, cream teal coral palette, generous clear space, distinct simple compositions. Two-panel editorial diagram: left a student proudly places an evidence folder on one riverbank and a proposal flag on the other, looking puzzled at the gap. Right the same banks connected by a bridge assembled from explanation-shaped planks, the student safely walking over. The bridge must visibly connect the evidence folder to the proposal flag. Metaphor for reasoning linking evidence and claim, no text. No letters, words, logos, watermarks or decorative pseudo-writing. Imagined teaching scene, not documentary evidence.",
+    "path": "public/lessons/engagement-argument.webp",
+    "provider": "built-in ImageGen",
+    "originalAsset": "exec-f534a2e0-4394-4013-8285-24398f8d1998.png"
+  },
+  {
+    "name": "ad-evidence",
+    "prompt": "One wide instructional illustration for multilingual high-school students. Sophisticated ink-and-watercolor graphic novel style, cream teal coral palette, generous clear space, distinct simple compositions. Editorial cutaway of a school newspaper desk: one bright path connects a sponsor's coin to a printing press; a separate path toward an editor's pencil stops at a closed latch with a magnifying glass examining it. Teen editor with gently skeptical expression. Money can fund printing without automatically buying editorial control. No text, no fake newspaper writing. No letters, words, logos, watermarks or decorative pseudo-writing. Imagined teaching scene, not documentary evidence.",
+    "path": "public/lessons/engagement-ad-evidence.webp",
+    "provider": "built-in ImageGen",
+    "originalAsset": "exec-9038bfa9-575d-4e16-ac5f-450ac4d8ca54.png"
+  },
+  {
+    "name": "ad-objection",
+    "prompt": "One wide instructional illustration for multilingual high-school students. Sophisticated ink-and-watercolor graphic novel style, cream teal coral palette, generous clear space, distinct simple compositions. Before-and-after school newspaper layout diptych. Left a theater mask advertisement sits directly beside a star-rated theater review, a teen reader raises an eyebrow at the adjacency. Right the identical advertisement and review are on visibly separate pages, editor inserting a clear page divider. Visualize a boundary responding to conflict-of-interest concerns, not an automatic guarantee of independence. No text. No letters, words, logos, watermarks or decorative pseudo-writing. Imagined teaching scene, not documentary evidence.",
+    "path": "public/lessons/engagement-ad-objection.webp",
+    "provider": "built-in ImageGen",
+    "originalAsset": "exec-947703e9-f735-4330-894c-72fc3d1d27c0.png"
+  },
+  {
+    "name": "ad-audience",
+    "prompt": "One wide instructional illustration for multilingual high-school students. Sophisticated ink-and-watercolor graphic novel style, cream teal coral palette, generous clear space, distinct simple compositions. Two-perspective split scene of the same school art exhibition newspaper: left subscriber focuses through a magnifying glass on the editor selecting artworks; right student exhibitor focuses on a submission tray with a camera photo and a calendar icon. Central shared paper and consistent artworks connect both views. Same facts, different reader needs. No text or numerals. No letters, words, logos, watermarks or decorative pseudo-writing. Imagined teaching scene, not documentary evidence.",
+    "path": "public/lessons/engagement-ad-audience.webp",
+    "provider": "built-in ImageGen",
+    "originalAsset": "exec-08bf64e8-d9c6-4bba-9b88-9d4e4f7001e1.png"
+  },
+  {
+    "name": "reason",
+    "prompt": "One wide instructional illustration for multilingual high-school students. Sophisticated ink-and-watercolor graphic novel style, cream teal coral palette, generous clear space, distinct simple compositions. Two-panel gentle comic about causal reasoning: left a student athlete proudly credits one sunrise practice for a trophy, holding a tiny single data card; right the athlete investigates several comparable practice sessions with same players, ball and drill, noticing weather and opponents as possible factors. Curious rather than mocking, one result cannot establish a cause. No text or numbers. No letters, words, logos, watermarks or decorative pseudo-writing. Imagined teaching scene, not documentary evidence.",
+    "path": "public/lessons/engagement-reason.webp",
+    "provider": "built-in ImageGen",
+    "originalAsset": "exec-3e3dad62-d149-44c1-ae1b-661454f11473.png"
+  },
+  {
+    "name": "options",
+    "prompt": "One wide instructional illustration for multilingual high-school students. Sophisticated ink-and-watercolor graphic novel style, cream teal coral palette, generous clear space, distinct simple compositions. Two-panel humane editorial illustration in a school community library: left volunteer arrives carrying a comically tall stack of books while shelves already overflow and a child waits beside an empty reading-partner chair; right volunteer sits beside child reading together, donated stack set aside. Teach listening to the partner's actual need before choosing a project. Respectful child and volunteer, warm emotion, no text. No letters, words, logos, watermarks or decorative pseudo-writing. Imagined teaching scene, not documentary evidence.",
+    "path": "public/lessons/engagement-options.webp",
+    "provider": "built-in ImageGen",
+    "originalAsset": "exec-8c222c6f-67e9-484b-a592-4270a053cbd5.png"
+  },
+  {
+    "name": "perspective",
+    "prompt": "One wide instructional illustration for multilingual high-school students. Sophisticated ink-and-watercolor graphic novel style, cream teal coral palette, generous clear space, distinct simple compositions. Wide two-perspective relay-track illustration: same dropped baton at center, left coach notices reserve runner waiting for a chance, right current runner remembers practicing a changed hand signal. Both people shown thoughtfully, neither villainous. Two soft thought-picture insets show open selection and practice of the new signal; no thought-bubble text. Fairness can motivate competing reasons; don't assume private motives. No letters, words, logos, watermarks or decorative pseudo-writing. Imagined teaching scene, not documentary evidence.",
+    "path": "public/lessons/engagement-perspective.webp",
+    "provider": "built-in ImageGen",
+    "originalAsset": "exec-e1225835-875d-448f-9e44-9a7284163cf8.png"
+  },
+  {
+    "name": "repair",
+    "prompt": "One wide instructional illustration for multilingual high-school students. Sophisticated ink-and-watercolor graphic novel style, cream teal coral palette, generous clear space, distinct simple compositions. Three-panel comic: teen accidentally tears a school concert poster; teen starts a grand apologetic speech represented by a giant EMPTY speech bubble while poster remains torn; teen replaces poster then asks organizer to inspect it, organizer points at the repaired sheet. Gentle humour aimed at empty apology, not harm. Teach ownership, useful repair, affected person's check. Posters use simple musical icons, absolutely no text. No letters, words, logos, watermarks or decorative pseudo-writing. Imagined teaching scene, not documentary evidence.",
+    "path": "public/lessons/engagement-repair.webp",
+    "provider": "built-in ImageGen",
+    "originalAsset": "exec-5e743c08-a88f-454a-ab9b-9e0fce34a826.png"
+  },
+  {
+    "name": "lead",
+    "prompt": "One wide instructional illustration for multilingual high-school students. Sophisticated ink-and-watercolor graphic novel style, cream teal coral palette, generous clear space, distinct simple compositions. Before-and-after school planning table scene: left leader cheerfully collects three idea cards then casts a vote while two cards remain visibly face down; right all three cards are face up, teammates examine them, final poster incorporates a distinctive spiral from previously unread card. Teach that inviting ideas matters only if they can influence the decision. Warm subtle irony, no text. No letters, words, logos, watermarks or decorative pseudo-writing. Imagined teaching scene, not documentary evidence.",
+    "path": "public/lessons/engagement-lead.webp",
+    "provider": "built-in ImageGen",
+    "originalAsset": "exec-bd4039b8-cb96-49c9-a482-e4450957b4ae.png"
+  }
+]

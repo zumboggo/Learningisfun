@@ -36,7 +36,7 @@ test('both differently ordered source types must be assembled before independent
  await assert.rejects(act('lessonSubmit',{draft:'unfinished'}),/Finish practice/);
 });
 test('nested quotes can be previewed by the teacher, then open at Shanghai midnight',async t=>{
- const act=fixture(),lessonId='nested-quotes-evidence-v2',release=Date.parse('2026-11-09T00:00:00+08:00');
+ const act=fixture(),lessonId='nested-quotes-evidence-v3',release=Date.parse('2026-11-09T00:00:00+08:00');
  const now=t.mock.method(Date,'now',()=>release-1);
  assert.ok(!(await act('lessonLibrary')).items.some(l=>l.id===lessonId));
  await assert.rejects(act('lessonRead',{lessonId}),/unavailable/);
@@ -48,9 +48,35 @@ test('nested quotes can be previewed by the teacher, then open at Shanghai midni
 });
 test('the argument assignment names only AP Lang and its due date follows release',()=>{
  const catalog=JSON.parse(readFileSync(new URL('./lesson-catalog.json',import.meta.url)));
- const task=catalog.find(l=>l.id==='ap-lang-making-an-argument-v1');
+ const task=catalog.find(l=>l.id==='ap-lang-making-an-argument-v2');
  assert.deepEqual(task.classIds,['88421c66-9cda-4002-8e15-086312b7805e']);
  assert.equal(task.dueOn,'2026-11-10');
  assert.ok(Date.parse(task.dueOn+'T23:59:59+08:00')>Date.parse(task.releaseAt));
  for(const s of task.stages)for(const q of s.questions)for(const item of [q,q.alternate])assert.ok(item.answers.every(a=>item.options.includes(a)));
+});
+
+test('previous catalog versions remain accessible with separate progress and library views',async()=>{
+ const act=fixture(),oldId='world-lit-bibliography-v3';
+ const current=await act('lessonLibrary');assert.ok(current.items.some(x=>x.id===lesson.id));assert.ok(!current.items.some(x=>x.id===oldId));
+ const previous=await act('lessonLibrary',{previousVersions:true});assert.ok(previous.items.some(x=>x.id===oldId));assert.ok(!previous.items.some(x=>x.id===lesson.id));
+ const old=await act('lessonRead',{lessonId:oldId});assert.equal(old.state.step,0);
+ const oldCatalog=JSON.parse(readFileSync(new URL('./lesson-catalog-previous.json',import.meta.url)));
+ await act('lessonAnswer',{lessonId:oldId,revision:0,answer:oldCatalog[0].stages[0].questions[0].answers[0]});
+ assert.equal((await act('lessonRead')).state.step,0);
+ assert.equal((await act('lessonRead',{lessonId:oldId})).state.step,1);
+ await assert.rejects(act('lessonRead',{lessonId:oldId},{memberClassIds:new Set()}),/unavailable/);
+});
+
+test('every revised catalog lesson keeps valid gates, instructional assets and a short practice sequence',async()=>{
+ const {validateLesson}=await import('./lesson-authoring.js');
+ const catalog=JSON.parse(readFileSync(new URL('./lesson-catalog.json',import.meta.url)));
+ const previous=JSON.parse(readFileSync(new URL('./lesson-catalog-previous.json',import.meta.url)));
+ assert.equal(catalog.length,previous.length);
+ for(const l of catalog){
+  assert.ok(!previous.some(old=>old.id===l.id));assert.ok(l.minutes>=10&&l.minutes<=15);
+  const copy=structuredClone(l);for(const s of copy.stages)delete s.image;
+  assert.deepEqual(validateLesson(copy),[],l.id);
+  assert.ok(l.stages.flatMap(s=>s.questions).filter(q=>q.rehearsal).length>=2,l.id);
+  for(const s of l.stages)if(s.image){assert.ok(s.image.alt&&s.image.caption);assert.ok(readFileSync(new URL('../../../public/'+s.image.path,import.meta.url)).length>0);}
+ }
 });

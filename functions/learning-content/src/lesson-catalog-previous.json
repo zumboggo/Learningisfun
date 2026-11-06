@@ -1,0 +1,2006 @@
+[
+  {
+    "id": "world-lit-bibliography-v3",
+    "title": "Build one annotated bibliography entry",
+    "objective": "Give a reader a trail back to a source, explain what it says, and show why it earns a place in your research paper.",
+    "classIds": [
+      "09d7f0a7-4c29-462c-820f-e11ea914d375",
+      "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c"
+    ],
+    "minutes": 15,
+    "stages": [
+      {
+        "title": "Who said it, and how can I check?",
+        "shortTitle": "Why cite?",
+        "explanation": "A citation is a trail back to a source. It gives credit when you quote, paraphrase, or borrow an idea, and lets readers check the evidence for themselves. In an English paper, a brief in-text citation points to the full entry in Works Cited. An annotation comes after that entry: it explains and evaluates what you found.",
+        "model": "Imagine reading “The walls of Uruk change what Gilgamesh values.” Is that your interpretation or one you borrowed from Ira Spar? A citation lets your reader tell.",
+        "modelRows": [
+          [
+            "Without a trail",
+            "“Someone online says the walls matter.” A reader cannot tell whose idea it is or check its context."
+          ],
+          [
+            "With a trail",
+            "“Ira Spar connects Gilgamesh’s return to Uruk with what a person can leave behind.” Naming Spar points to his full entry, where the reader can find his essay."
+          ],
+          [
+            "Why MLA in English?",
+            "English scholars often discuss specific passages and compare editions or translations. MLA (Modern Language Association) gives them a shared way to point from a passage to the exact work they used. Other fields may choose different styles."
+          ],
+          [
+            "Why the same order?",
+            "Imagine a class bibliography with thirty entries. If the date moves around, or the website is mistaken for the writer, every entry becomes a new puzzle. A shared order tells readers where to look; it does not mean all sources have the same pieces."
+          ]
+        ],
+        "sourceUrl": "https://style.mla.org/works-cited/citations-by-format/",
+        "questions": [
+          {
+            "prompt": "You paraphrase Spar’s idea in your own words. Why still cite him?",
+            "options": [
+              "Only quotations need citations.",
+              "The wording is mine, but the idea is his; readers should be able to check it.",
+              "A citation proves his interpretation is correct."
+            ],
+            "answers": [
+              "The wording is mine, but the idea is his; readers should be able to check it."
+            ],
+            "hint": "Whose idea shaped the sentence?",
+            "explanation": "Cite borrowed ideas as well as borrowed words.",
+            "alternate": {
+              "prompt": "You describe an interviewer’s discovery in new words. Why credit the interview?",
+              "options": [
+                "The discovery is borrowed, and readers should be able to check it.",
+                "Only copied sentences need a source."
+              ],
+              "answers": [
+                "The discovery is borrowed, and readers should be able to check it."
+              ]
+            }
+          },
+          {
+            "prompt": "Why does this English class use one MLA pattern?",
+            "options": [
+              "Every source has exactly the same information.",
+              "MLA makes sources more credible.",
+              "Readers of literature can recognize the parts and locate the edition or passage used."
+            ],
+            "answers": [
+              "Readers of literature can recognize the parts and locate the edition or passage used."
+            ],
+            "hint": "Think about the person trying to follow your evidence.",
+            "explanation": "Consistency makes sources easier to identify, compare and locate.",
+            "alternate": {
+              "prompt": "A website names no author. What does consistency mean here?",
+              "options": [
+                "Invent an author to fill the slot.",
+                "Use the same order for the elements you actually have."
+              ],
+              "answers": [
+                "Use the same order for the elements you actually have."
+              ]
+            }
+          }
+        ],
+        "teachFirst": true
+      },
+      {
+        "title": "Put the pieces in MLA order",
+        "shortTitle": "Build citations",
+        "explanation": "Start with one common case: a signed essay on a website. Name the writer, identify the essay, name the website that carries it, then give the publication date and direct URL. Try this pattern first. In the book example, notice which pieces change.",
+        "model": "Signed web essay: author → essay title → website → date → URL. Unsigned translated book: title → translator and editor → publisher → year.",
+        "modelRows": [
+          [
+            "Spar, Ira.",
+            "The named writer comes first, family name first."
+          ],
+          [
+            "“Gilgamesh.”",
+            "Quotation marks identify this particular essay."
+          ],
+          [
+            "The Metropolitan Museum of Art",
+            "The italicized website name identifies the container."
+          ],
+          [
+            "1 Apr. 2009 → direct URL",
+            "The date identifies when the essay appeared; the link takes the reader to that page."
+          ],
+          [
+            "Source or outside source?",
+            "The Beowulf book below is a primary text. Practice citing it here, but it does not count as one of the 2–3 outside sources for your paper."
+          ]
+        ],
+        "sourceUrl": "https://style.mla.org/works-cited/citations-by-format/",
+        "questions": [
+          {
+            "prompt": "Build the MLA entry for Ira Spar’s museum essay.",
+            "pieces": [
+              "The Metropolitan Museum of Art,",
+              "www.metmuseum.org/essays/gilgamesh.",
+              "“Gilgamesh.”",
+              "Spar, Ira.",
+              "1 Apr. 2009,"
+            ],
+            "italicPieces": [
+              "The Metropolitan Museum of Art,"
+            ],
+            "answers": [
+              "Spar, Ira. “Gilgamesh.” The Metropolitan Museum of Art, 1 Apr. 2009, www.metmuseum.org/essays/gilgamesh."
+            ],
+            "hint": "Begin with the writer, then the essay title. The URL comes last.",
+            "explanation": "Signed essay: author → essay title → website → date → URL.",
+            "alternate": {
+              "prompt": "Practice-only source (invented): Assemble Mira Chen’s web essay about epic endings.",
+              "pieces": [
+                "Epic Reader,",
+                "Chen, Mira.",
+                "example.org/coming-home.",
+                "“Coming Home.”",
+                "5 May 2024,"
+              ],
+              "italicPieces": [
+                "Epic Reader,"
+              ],
+              "answers": [
+                "Chen, Mira. “Coming Home.” Epic Reader, 5 May 2024, example.org/coming-home."
+              ]
+            }
+          },
+          {
+            "prompt": "Build the MLA entry for this translated and edited edition of Beowulf. Credit the translators before the editor in this exercise. With no named author, begin with the book title. A book has a publisher rather than a website and URL.",
+            "pieces": [
+              "2004.",
+              "edited by Sarah Anderson,",
+              "Beowulf.",
+              "Pearson,",
+              "Translated by Alan Sullivan and Timothy Murphy,"
+            ],
+            "italicPieces": [
+              "Beowulf."
+            ],
+            "answers": [
+              "Beowulf. Translated by Alan Sullivan and Timothy Murphy, edited by Sarah Anderson, Pearson, 2004."
+            ],
+            "hint": "With no named author, start with the book title. Keep the publication year last.",
+            "explanation": "Unsigned book: title → contributors → publisher → year. In the full MLA pattern, use the elements your source has: author, source title, container, other contributors, version, number, publisher, date, location.",
+            "alternate": {
+              "prompt": "Practice-only source (invented): Assemble this unsigned translated book; credit the translator before the editor.",
+              "pieces": [
+                "edited by Mei Sun,",
+                "Songs of the River.",
+                "2022.",
+                "Translated by Lin Yu,",
+                "North Bank Press,"
+              ],
+              "italicPieces": [
+                "Songs of the River."
+              ],
+              "answers": [
+                "Songs of the River. Translated by Lin Yu, edited by Mei Sun, North Bank Press, 2022."
+              ]
+            }
+          }
+        ],
+        "teachFirst": true,
+        "image": {
+          "path": "lessons/mla-web-entry.jpg",
+          "alt": "Signed web essay: author (who wrote it), essay title (which page), website (where published), date (when), URL (where to find it).",
+          "caption": "Follow a reader’s questions from left to right. The essay title finds the particular work; the website name identifies its container."
+        }
+      },
+      {
+        "title": "Say what the source contributes",
+        "shortTitle": "Evaluate a source",
+        "modelRows": [
+          [
+            "Worked entry · Gilgamesh",
+            "Spar, Ira. “Gilgamesh.” The Metropolitan Museum of Art, 1 Apr. 2009, www.metmuseum.org/essays/gilgamesh."
+          ],
+          [
+            "Annotation",
+            "Spar reads the return to Uruk as a change in the king’s ambition: what he builds can endure even though he cannot. Spar writes for the museum’s Department of Ancient Near Eastern Art and names the translations behind his account. I could compare his reading of the walls with the passage where Gilgamesh returns home."
+          ],
+          [
+            "Your next source",
+            "In an On Being interview, Paulo Coelho describes how a pilgrimage helped him choose his spiritual path. He speaks about his own experience; the interview does not analyze the novel’s dialogue."
+          ]
+        ],
+        "explanation": "A summary reports the source's idea in your words. Credibility asks why you can rely on this source for a particular claim. Usefulness asks what you could do with that claim in your own paper. Even a reliable source can be a poor fit for your question.",
+        "model": "In Krista Tippett's On Being interview “The Alchemy of Pilgrimage,” Paulo Coelho describes a pilgrimage that helped him choose a spiritual life for himself. This is a first-person account of his experience. Imagine asking: How might Santiago's journey in The Alchemist dramatize the difference between following instructions and choosing a path?\n\nWeak: “He is famous, so this is useful.”\nStronger: “Coelho can speak firsthand about his own pilgrimage. I could compare his account of choice with Santiago's decision to leave; I still need evidence from the novel to interpret that scene.”",
+        "sourceUrl": "https://onbeing.org/programs/paulo-coelho-the-alchemy-of-pilgrimage/",
+        "questions": [
+          {
+            "prompt": "Which sentence summarizes an idea from the interview?",
+            "options": [
+              "I plan to use the interview in paragraph two.",
+              "Coelho describes pilgrimage as a turning point in how he approached faith.",
+              "This interview is credible because Coelho was there."
+            ],
+            "answers": [
+              "Coelho describes pilgrimage as a turning point in how he approached faith."
+            ],
+            "hint": "Choose the sentence that tells what the speaker said, rather than your plan or your evaluation.",
+            "explanation": "A summary names a particular idea in the source. A reason to trust it and a plan for using it do different jobs.",
+            "alternate": {
+              "prompt": "In Spar's Gilgamesh essay, which sentence reports the author's idea rather than rating or using the essay?",
+              "options": [
+                "I could use this beside a line from the ending.",
+                "The essay names translations I can check.",
+                "Spar connects the king's return to what can outlast a human life."
+              ],
+              "answers": [
+                "Spar connects the king's return to what can outlast a human life."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "Supply the missing summary. Citation and assessment are already handled: the interview is firsthand evidence about Coelho’s life. In one sentence, summarize what he says about pilgrimage without evaluating him.",
+              "sample": "Coelho describes his pilgrimage as a turning point in how he chose to live out his faith. Does your sentence report an idea rather than praise the speaker?"
+            }
+          },
+          {
+            "prompt": "Your question changes to “How does repetition shape the rhythm of Santiago's dialogue?” What should change in your evaluation of the interview?",
+            "options": [
+              "The interview becomes dishonest.",
+              "The interview remains credible about Coelho's experience but offers little evidence about sentence rhythm.",
+              "The interview still proves the answer because Coelho wrote the novel."
+            ],
+            "answers": [
+              "The interview remains credible about Coelho's experience but offers little evidence about sentence rhythm."
+            ],
+            "hint": "Ask what this particular interview actually discusses. Does a new question change the author's experience or the evidence you need?",
+            "explanation": "For rhythm, you need lines of dialogue and evidence about their language. Author expertise alone cannot supply that evidence.",
+            "alternate": {
+              "prompt": "A museum conservator explains how a Beowulf manuscript was repaired. Is that account useful for a question about the poem’s rhythm?",
+              "options": [
+                "Its expertise is relevant to the repairs, but the rhythm question needs evidence about the verse.",
+                "Any credible source about Beowulf answers every question about the poem."
+              ],
+              "answers": [
+                "Its expertise is relevant to the repairs, but the rhythm question needs evidence about the verse."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "Now supply both assessment moves. Question: How does Santiago learn to choose his own path? Write why Coelho can speak credibly about pilgrimage, then name one specific comparison you could test in the novel.",
+              "sample": "Coelho experienced the pilgrimage himself. I could compare his choice of a spiritual path with Santiago’s decision to leave home, checking the novel before claiming that their motives match."
+            }
+          }
+        ]
+      }
+    ],
+    "final": {
+      "shortTitle": "Write your entry",
+      "title": "Your turn: Can we date a story from its surviving pages?",
+      "prompt": "Research question: What can the surviving manuscript tell us—and not tell us—about when Beowulf's story was told? Using only the source card, write one full MLA entry, then a 3–4 sentence annotation in your own words. Summarize the source, give a concrete reason to trust it for this question, and explain which evidence you would use and what it cannot prove. Plain text is fine; no special typing is needed for italics. The practice source is provided; for the real assignment, select 2–3 outside sources for your own question on any semester text.",
+      "source": "Page title: Hwæt! Beowulf online\nWebsite: British Library\nPublished: 11 February 2013\nNo individual byline is shown. For an unsigned page, start the entry with the page title.\nURL: https://www.bl.uk/stories/blogs/posts/beowulf-online\n\nFrom the page: “Made around the year 1000” describes the manuscript. The article says some scholars think storytellers had shared the tale for centuries before that copy was made. The library cares for the manuscript and reproduces photographs of its pages. It identifies the opening page as Cotton MS Vitellius A XV, folio 132r. Apart from the short quotation, this card paraphrases the article.",
+      "sourceUrl": "https://www.bl.uk/stories/blogs/posts/beowulf-online",
+      "rubric": [
+        "MLA citation: Identifies the page by title, the British Library website, the publication date (11 Feb. 2013), and the direct URL in recognizable MLA order. Accept MLA title capitalization, straight/curly quotes, optional protocol, and missing italics in plain text. Do not require a personal author or an access date.",
+        "Summary: Accurately distinguishes the manuscript's approximate date from the possibility of an older oral tradition; does not treat the copy date as the proven composition date.",
+        "Credibility: Gives grounded evidence such as the library's custody of the manuscript, the reproduced pages, or the precise catalogue reference, and explains its significance.",
+        "Usefulness: Connects a specific source detail to the question and identifies the limit of what the evidence can establish about earlier storytelling."
+      ],
+      "delayedCheck": "When you next work on your bibliography, cover your notes. For a different outside source, reconstruct its MLA entry from the publication details, name its main idea, and explain one reason to trust it and one specific use for your own question."
+    },
+    "progressId": "world-lit-bibliography-v2",
+    "assignedOn": "2026-11-04"
+  },
+  {
+    "id": "nested-quotes-evidence-v2",
+    "title": "Nested quotes: make evidence part of your argument",
+    "objective": "Introduce and embed a short quotation, explain its wording, and connect that insight to your thesis.",
+    "classIds": [
+      "88421c66-9cda-4002-8e15-086312b7805e",
+      "09d7f0a7-4c29-462c-820f-e11ea914d375",
+      "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c"
+    ],
+    "releaseAt": "2026-11-09T00:00:00+08:00",
+    "minutes": 15,
+    "stages": [
+      {
+        "title": "Let borrowed words finish your sentence",
+        "shortTitle": "Introduce & embed",
+        "teachFirst": true,
+        "explanation": "Start small: name the speaker, add a verb, and let a few exact words complete your thought. In this original practice speech, a student asking for later library hours says, “For anyone coming from practice, the clock is a locked gate.”",
+        "model": "Library access depends on when students can arrive. Asking for later library hours, the speaker calls the clock “a locked gate.” A clock normally measures time. Here it becomes a barrier that keeps athletes out, even if the door itself is open. The council should therefore judge access by whether students can actually get there after practice.",
+        "modelRows": [
+          [
+            "Thesis",
+            "Library access depends on when students can arrive."
+          ],
+          [
+            "Introduce + embed",
+            "Asking for later library hours, the speaker calls the clock “a locked gate.”"
+          ],
+          [
+            "“locked gate”",
+            "A clock normally measures time. Here it becomes a barrier that keeps athletes out, even if the door itself is open."
+          ],
+          [
+            "Back to the thesis",
+            "The council should therefore judge access by whether students can actually get there after practice."
+          ]
+        ],
+        "questions": [
+          {
+            "prompt": "A runner says, “The hill was a wall.” Keep the runner’s image: The runner describes the hill as “___.” Type just the two missing words.",
+            "answers": [
+              "a wall"
+            ],
+            "hint": "Take the two words that name what the hill seemed to be.",
+            "explanation": "The quoted noun phrase completes the writer’s sentence after as.",
+            "alternate": {
+              "prompt": "A commuter says, “That bridge was a lifeline.” Complete the sentence with two exact words: The commuter calls the bridge “___.”",
+              "answers": [
+                "a lifeline"
+              ]
+            }
+          },
+          {
+            "prompt": "What made the borrowed phrase fit into your own sentence?",
+            "options": [
+              "My own wording created a grammatical place for the phrase.",
+              "I put a period immediately before the phrase.",
+              "I used all the words from the source."
+            ],
+            "answers": [
+              "My own wording created a grammatical place for the phrase."
+            ],
+            "hint": "Read the sentence aloud without pausing at the quotation marks.",
+            "explanation": "The lead-in gives context and makes room for the borrowed words.",
+            "alternate": {
+              "prompt": "A cook calls salt “a spotlight.” Which lead-in gives the phrase a grammatical role?",
+              "options": [
+                "Explaining how salt sharpens flavor, the cook calls it",
+                "The cook spoke. And said a quote."
+              ],
+              "answers": [
+                "Explaining how salt sharpens flavor, the cook calls it"
+              ]
+            },
+            "rehearsal": {
+              "prompt": "A student editor says, “Our newspaper is a window on the school.” Write your own sentence introducing the editor and embedding “a window” without quoting the whole line.",
+              "sample": "Explaining why the paper matters, the student editor calls it “a window” on school life. Read yours aloud: does the phrase fit and is its speaker clear?"
+            }
+          }
+        ],
+        "image": {
+          "path": "lessons/nested-quote-seam.jpg",
+          "alt": "The writer’s words “The speaker calls the clock” join the quoted phrase “a locked gate” to form one sentence.",
+          "caption": "Read across the join: calls the clock what? The source’s words answer inside your sentence."
+        }
+      },
+      {
+        "title": "Explain one word, then show why it matters",
+        "shortTitle": "Explain & connect",
+        "teachFirst": true,
+        "explanation": "The commentary does two jobs: explain what the wording makes us picture, then show how that picture supports the thesis. Do each job once with support before writing the full paragraph.",
+        "model": "Opposing cuts to a bus route, a resident calls the last bus “a thread.” A thread joins separate things but snaps easily. The image makes a neighborhood’s connection to work sound fragile. If a single route is all that connects workers to their jobs, cutting it would isolate people rather than simply inconvenience them.",
+        "modelRows": [
+          [
+            "Context + evidence",
+            "Opposing cuts to a bus route, a resident calls the last bus “a thread.”"
+          ],
+          [
+            "“thread” → interpretation",
+            "A thread joins separate things but snaps easily. The image makes a neighborhood’s connection to work sound fragile."
+          ],
+          [
+            "Interpretation → thesis",
+            "If a single route is all that connects workers to their jobs, cutting it would isolate people rather than simply inconvenience them."
+          ]
+        ],
+        "questions": [
+          {
+            "prompt": "Which detail should your explanation account for?",
+            "options": [
+              "How much the coach paid for the team uniforms",
+              "What a hinge can do that a wall cannot",
+              "Whether hinges are made of brass"
+            ],
+            "answers": [
+              "What a hinge can do that a wall cannot"
+            ],
+            "hint": "Think about how each object moves.",
+            "explanation": "The word hinge suggests a turn or a new direction. A wall suggests a stop.",
+            "alternate": {
+              "prompt": "A gardener calls a seed “a promise.” Which question helps you interpret that word?",
+              "options": [
+                "What future possibility does promise suggest?",
+                "What is the dictionary spelling of seed?"
+              ],
+              "answers": [
+                "What future possibility does promise suggest?"
+              ]
+            },
+            "rehearsal": {
+              "prompt": "Supply only the missing commentary. Lead-in and quote: After a defeat, the coach calls the loss “a hinge.” Thesis link already supplied: The defeat can change the team’s direction rather than end its season. Write the sentence that explains the image between them.",
+              "sample": "A hinge is where something turns, so the loss becomes a pivot rather than a dead end. A different reading can work if it explains the word."
+            }
+          },
+          {
+            "prompt": "Which question tests whether your last sentence has done its job?",
+            "options": [
+              "Did I repeat the quote exactly a second time?",
+              "Did I explain why this reading gives the audience a reason to accept my thesis?",
+              "Did I use the phrase this proves?"
+            ],
+            "answers": [
+              "Did I explain why this reading gives the audience a reason to accept my thesis?"
+            ],
+            "hint": "Ask what your reader now has a reason to believe.",
+            "explanation": "A tie-back carries the interpretation to the specific claim at stake.",
+            "alternate": {
+              "prompt": "A poet calls a secret “a splinter.” Your interpretation: the hidden object keeps causing pain. Which claim does that reasoning support?",
+              "options": [
+                "Silence can prolong the harm it conceals.",
+                "The speaker knows woodworking."
+              ],
+              "answers": [
+                "Silence can prolong the harm it conceals."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "Now supply both reasoning moves without a frame. Evidence: Defending the school archive, a librarian calls it “our memory.” Thesis: Discarding the archive would cost the school more than storage space. Write two sentences: interpret one word, then connect your interpretation to the thesis.",
+              "sample": "“Our” makes remembering a shared act, not one person’s private hobby. Throwing out the archive would take away the records that let different generations tell a common story."
+            }
+          }
+        ]
+      }
+    ],
+    "final": {
+      "title": "Your turn: give Dickinson’s words a job",
+      "shortTitle": "Write & revise",
+      "prompt": "Write one paragraph of 3–5 sentences. Develop this working thesis: Dickinson presents hope as a quiet presence that lives within a person. Introduce the speaker or poetic situation, weave in a short exact phrase, interpret a specific word or image, and show how that detail supports the thesis. You may sharpen the thesis if your reading fits the lines.",
+      "source": "Emily Dickinson, opening of “Hope is the thing with feathers” (254), Academy of American Poets. The speaker describes hope as a bird. Lines 2–3: “That perches in the soul, / And sings the tune without the words,” (slash marks the line break).",
+      "sourceUrl": "https://poets.org/poem/hope-thing-feathers-254",
+      "rubric": [
+        "Context: Identifies Dickinson, the speaker, or the poetic situation in a way that prepares the evidence. A brief lead-in suffices.",
+        "Integration: Embeds a short accurate phrase from the supplied lines grammatically in the student’s own sentence. Accept plain quotation marks and harmless punctuation differences.",
+        "Explanation: Interprets a particular word or image such as perches or the wordless tune; goes beyond paraphrasing. Accept other text-grounded readings.",
+        "Thesis connection: Explains how that interpretation supports the working thesis or a defensible refinement. Do not require a separate formulaic closing sentence."
+      ],
+      "delayedCheck": "In your next essay, cover your commentary and reread the quotation. Without looking, explain what one word contributes and how it supports your thesis."
+    }
+  },
+  {
+    "id": "ap-lang-making-an-argument-v1",
+    "classIds": [
+      "88421c66-9cda-4002-8e15-086312b7805e"
+    ],
+    "title": "Making an Argument: Should School Start Later?",
+    "objective": "Make a defensible claim, support it with evidence, explain the reasoning, and address a fair objection.",
+    "minutes": 15,
+    "releaseAt": "2026-11-09T00:00:00+08:00",
+    "dueOn": "2026-11-10",
+    "stages": [
+      {
+        "title": "Give the reader a reason to agree",
+        "shortTitle": "Claim & evidence",
+        "teachFirst": true,
+        "explanation": "An argument asks a particular audience to accept a debatable claim for a reason. Evidence gives the reader something concrete to consider. Reasoning explains why that evidence supports your claim. Start with one claim and one well-explained detail.",
+        "image": {
+          "path": "lessons/argument-bridge.jpg",
+          "alt": "Evidence and claim stand on opposite banks. Reasoning bridges them by answering why the evidence matters.",
+          "caption": "Cover the bridge: a fact beside an opinion still leaves the reader asking “So what?”"
+        },
+        "modelRows": [
+          [
+            "Model · fictional school",
+            "At Willow School, 12 of 20 students at an optional first-period review said their bus arrived before the doors opened."
+          ],
+          [
+            "Claim + reason",
+            "Willow should test a later review session because its current timing may discourage students who ride the early bus."
+          ],
+          [
+            "12 of 20 → evidence",
+            "These students reported a particular obstacle. The count is more useful than saying mornings are bad."
+          ],
+          [
+            "Waiting outside → reasoning",
+            "Even a motivated student pays a cost in waiting time. Removing that cost could make the review easier to attend."
+          ],
+          [
+            "Scope",
+            "The survey supports testing a change to this session. It cannot tell us what every student needs."
+          ]
+        ],
+        "questions": [
+          {
+            "prompt": "Which statement could the school council actually debate?",
+            "options": [
+              "Willow has a first period.",
+              "Willow should try a later review session because the current time makes access harder for bus riders.",
+              "This paragraph is about mornings."
+            ],
+            "answers": [
+              "Willow should try a later review session because the current time makes access harder for bus riders."
+            ],
+            "hint": "Look for a position someone could reasonably challenge.",
+            "explanation": "A defensible claim makes a specific judgment and gives a reason.",
+            "alternate": {
+              "prompt": "Which is a claim about the lunch timetable rather than a topic or a fact?",
+              "options": [
+                "There are two lunch periods.",
+                "Lunch schedules.",
+                "The school should stagger lunch because a shorter line would leave more time to eat."
+              ],
+              "answers": [
+                "The school should stagger lunch because a shorter line would leave more time to eat."
+              ]
+            }
+          },
+          {
+            "prompt": "Which evidence would best test a claim about first-period attention?",
+            "options": [
+              "A tally of students staying on task during comparable first-period activities before and after a change.",
+              "The school mascot’s popularity.",
+              "A count of people who like the idea of starting later."
+            ],
+            "answers": [
+              "A tally of students staying on task during comparable first-period activities before and after a change."
+            ],
+            "hint": "What exactly is the proposed benefit: preference or attention?",
+            "explanation": "Match the observation to what the claim predicts. Liking a change and paying attention are different outcomes.",
+            "alternate": {
+              "prompt": "A club says moving practice will increase attendance. What should it compare?",
+              "options": [
+                "The number who attend comparable sessions at each time.",
+                "The number who like the new poster."
+              ],
+              "answers": [
+                "The number who attend comparable sessions at each time."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "Write one sentence for your principal: should your school start later? Choose yes, no, or a limited trial. Give a reason someone could challenge.",
+              "sample": "Example: Keep the present start until we know whether buses can also move; otherwise early riders may still have to wake at the same hour. Your position can differ."
+            }
+          }
+        ],
+        "model": "Model · fictional school: At Willow School, 12 of 20 students at an optional first-period review said their bus arrived before the doors opened.\nClaim + reason: Willow should test a later review session because its current timing may discourage students who ride the early bus.\n12 of 20 → evidence: These students reported a particular obstacle. The count is more useful than saying mornings are bad.\nWaiting outside → reasoning: Even a motivated student pays a cost in waiting time. Removing that cost could make the review easier to attend.\nScope: The survey supports testing a change to this session. It cannot tell us what every student needs."
+      },
+      {
+        "title": "Build the bridge and answer an objection",
+        "shortTitle": "Reason & qualify",
+        "teachFirst": true,
+        "explanation": "After a fact, name what it suggests and why that matters for your decision. Then consider the best objection. You can answer it, narrow the claim, or change the proposal. You do not have to pretend your evidence proves more than it does.",
+        "modelRows": [
+          [
+            "Evidence · fictional example",
+            "During a two-day 9:00 review trial, 8 of 10 students completed the opening problem; previously 5 of those 10 had completed a similar problem at 8:00."
+          ],
+          [
+            "Interpret the change",
+            "More students finished a comparable task. That is consistent with better concentration, but a different problem or teacher could also explain it."
+          ],
+          [
+            "Qualify the claim",
+            "Try a longer comparison before permanently changing the review time."
+          ]
+        ],
+        "questions": [
+          {
+            "prompt": "Which move turns an observation into reasoning?",
+            "options": [
+              "Repeat the number with an exclamation point.",
+              "Explain why the observed change would matter for the proposed policy.",
+              "Call the evidence obvious."
+            ],
+            "answers": [
+              "Explain why the observed change would matter for the proposed policy."
+            ],
+            "hint": "Think about the bridge in the diagram.",
+            "explanation": "The reader needs your explanation of how a detail bears on the decision.",
+            "alternate": {
+              "prompt": "Attendance rose after a choir rehearsal moved. Which sentence supplies the missing reasoning?",
+              "options": [
+                "More singers came.",
+                "If fewer singers miss rehearsal, the group can practice harmonies with all parts present."
+              ],
+              "answers": [
+                "If fewer singers miss rehearsal, the group can practice harmonies with all parts present."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "Supply only the missing bridge. Claim: test a later bell. Evidence: in a fictional first-period trial, fewer students asked for the opening directions to be repeated. Explain why that observation might matter and what it cannot establish.",
+              "sample": "Following the first explanation could mean students were ready to focus sooner. Clearer directions could produce the same pattern, so the observation supports a trial rather than a guarantee."
+            }
+          },
+          {
+            "prompt": "Which response takes the bus objection seriously?",
+            "options": [
+              "Anyone who disagrees dislikes sleep.",
+              "Ignore buses; only the bell matters.",
+              "Check whether pickups can move too, since an unchanged early pickup limits the chance for extra sleep."
+            ],
+            "answers": [
+              "Check whether pickups can move too, since an unchanged early pickup limits the chance for extra sleep."
+            ],
+            "hint": "Which answer changes or defends the proposal in light of the objection?",
+            "explanation": "A meaningful qualification names a condition under which the policy would or would not work.",
+            "alternate": {
+              "prompt": "A later dismissal might disrupt childcare. Which reply addresses that trade-off?",
+              "options": [
+                "Compare childcare options and their cost before extending a pilot.",
+                "Everybody will get used to it."
+              ],
+              "answers": [
+                "Compare childcare options and their cost before extending a pilot."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "A teammate worries that a later dismissal would cut practice short. In your own words, acknowledge that concern and defend, modify, or reconsider your claim.",
+              "sample": "A shorter practice would cost teams preparation time. I would support a pilot only if the school can move practice or protect its length."
+            }
+          }
+        ],
+        "model": "Evidence · fictional example: During a two-day 9:00 review trial, 8 of 10 students completed the opening problem; previously 5 of those 10 had completed a similar problem at 8:00.\nInterpret the change: More students finished a comparable task. That is consistent with better concentration, but a different problem or teacher could also explain it.\nQualify the claim: Try a longer comparison before permanently changing the review time."
+      }
+    ],
+    "final": {
+      "shortTitle": "Make your case",
+      "title": "Advise the school council",
+      "prompt": "Should your school start later so students can be more attentive in class? Write a 4–6 sentence argument to the council. Support, oppose, or qualify the change. Use a specific detail from the source card, explain how far it supports your position, and respond to one reasonable objection. Your position is yours; the quality of the argument is what matters.",
+      "source": "Research evidence: In a 2018 Seattle study, Dunster and colleagues compared students before and after secondary schools moved the bell from 7:50 to 8:45 a.m. Median sleep duration on school days was 34 minutes longer after the change. This figure measures sleep, not classroom attention; it also does not promise the same result here.\n\nLocal decision scenario (fictional): The council can run a four-week pilot, but one shared bus route cannot change its morning pickup during that month. You may use this constraint for either side.",
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6291308/",
+      "rubric": [
+        "Claim: Takes a specific defensible position on a later start for this school, including a conditional position if desired.",
+        "Evidence: Accurately uses at least one specific source-card detail, distinguishing hypothetical local constraints from real Seattle findings.",
+        "Reasoning: Explains why the evidence supports the position in relation to attention; does not represent measured sleep as proof of increased attention.",
+        "Counterargument: Fairly considers a relevant objection and responds with reasoning, a limitation, or a practical condition."
+      ],
+      "delayedCheck": "At the next class, argue for or against rotating who chooses the film-club screening. Write a claim, supply a concrete example, and underline the sentence that connects them."
+    }
+  },
+  {
+    "id": "ap-lang-advertising-evidence-v1",
+    "title": "Advertising 1 · What does the offer actually prove?",
+    "objective": "Evaluate a line of reasoning and write commentary that connects the wording of an offer to an editorial decision (AP Lang 5.A, 6.A).",
+    "classIds": [
+      "88421c66-9cda-4002-8e15-086312b7805e"
+    ],
+    "assignedOn": "2026-11-04",
+    "minutes": 12,
+    "stages": [
+      {
+        "title": "Read the promise",
+        "shortTitle": "Read the terms",
+        "teachFirst": true,
+        "explanation": "In this fictional newsroom, an advertiser offers to pay for the arts insert. Start with the verb. What action has the business actually promised?",
+        "modelRows": [
+          [
+            "“We will cover printing costs.”",
+            "Cover commits money to a specific expense. An editor could use that promise to budget for printing."
+          ],
+          [
+            "“They will choose the reviews.”",
+            "Choose describes a different action. The offer says nothing about who picks the stories."
+          ]
+        ],
+        "model": "“We will cover printing costs.” — Cover commits money to a specific expense. An editor could use that promise to budget for printing.\n“They will choose the reviews.” — Choose describes a different action. The offer says nothing about who picks the stories.",
+        "questions": [
+          {
+            "prompt": "“We will buy the back page.” Which claim follows?",
+            "options": [
+              "The shop can set the headline.",
+              "The shop offers to pay for space.",
+              "The editor endorses the shop."
+            ],
+            "answers": [
+              "The shop offers to pay for space."
+            ],
+            "hint": "What does buy take as its object?",
+            "explanation": "The purchase is of space. An editorial role would need a separate term.",
+            "alternate": {
+              "prompt": "“We will pay the photographer’s travel.” What has been offered?",
+              "options": [
+                "Control of the captions",
+                "Money for travel",
+                "Approval of each photo"
+              ],
+              "answers": [
+                "Money for travel"
+              ]
+            }
+          },
+          {
+            "prompt": "Which missing detail matters most before claiming the sponsor controls coverage?",
+            "options": [
+              "The number of copies",
+              "The cost of ink",
+              "Who has final say over stories"
+            ],
+            "answers": [
+              "Who has final say over stories"
+            ],
+            "hint": "Look for authority to make an editorial decision.",
+            "explanation": "Evidence about approval rights bears directly on control.",
+            "alternate": {
+              "prompt": "A bakery buys a banner in a food issue. What would support a claim that it controls reviews?",
+              "options": [
+                "A clause letting it veto reviews",
+                "A larger banner",
+                "A second payment"
+              ],
+              "answers": [
+                "A clause letting it veto reviews"
+              ]
+            }
+          }
+        ],
+        "image": {
+          "path": "lessons/advertising-evidence.jpg",
+          "alt": "A printing receipt sits beside an arts section. A separate review marked with a question mark asks who edits.",
+          "caption": "Follow the money to the printed issue. What evidence would let you follow it to the editor’s pencil?"
+        }
+      },
+      {
+        "title": "Write the missing reasoning",
+        "shortTitle": "Connect the detail",
+        "teachFirst": true,
+        "explanation": "Commentary explains why a detail changes the decision. Try the editor’s question: “Because this clause exists, what could happen to our reporting?”",
+        "modelRows": [
+          [
+            "Evidence",
+            "A cinema asks to see reviews “before publication.”"
+          ],
+          [
+            "Reasoning",
+            "Advance access gives the cinema time to ask for changes while the review can still be edited."
+          ],
+          [
+            "Decision and limit",
+            "Ask why it needs early access. Seeing a draft creates an opportunity to object, but the clause gives no veto."
+          ]
+        ],
+        "model": "Evidence — A cinema asks to see reviews “before publication.”\nReasoning — Advance access gives the cinema time to ask for changes while the review can still be edited.\nDecision and limit — Ask why it needs early access. Seeing a draft creates an opportunity to object, but the clause gives no veto.",
+        "questions": [
+          {
+            "prompt": "A theater asks for “advance notice of review dates.” Which interpretation respects the wording?",
+            "options": [
+              "The theater chooses the reviewer.",
+              "The theater can prepare for coverage but has no stated right to approve it."
+            ],
+            "answers": [
+              "The theater can prepare for coverage but has no stated right to approve it."
+            ],
+            "hint": "Separate information about timing from authority over wording.",
+            "explanation": "Knowing a date allows preparation. Approval would require an additional term.",
+            "alternate": {
+              "prompt": "A gallery requests a copy “after publication.” Which inference fits?",
+              "options": [
+                "It can block publication.",
+                "It can see what readers have already seen."
+              ],
+              "answers": [
+                "It can see what readers have already seen."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "A printer asks for “a copy of each issue for our window.” The editor would accept. Supply one sentence explaining why that request fits the decision.",
+              "sample": "Displaying a finished issue can give the paper new readers while leaving decisions about its contents with the editors."
+            }
+          },
+          {
+            "prompt": "Which sentence explains why a clause matters to a decision?",
+            "options": [
+              "The sponsor asks to choose the cover photo.",
+              "Choosing the cover would let the sponsor decide which performance gets the most attention."
+            ],
+            "answers": [
+              "Choosing the cover would let the sponsor decide which performance gets the most attention."
+            ],
+            "hint": "Look for the consequence of the choice.",
+            "explanation": "The consequence connects an editorial power to what readers will see.",
+            "alternate": {
+              "prompt": "Which sentence explains the effect of a right to delay publication?",
+              "options": [
+                "The shop can delay publication.",
+                "A delay could keep a critical review out of readers’ hands until ticket sales close."
+              ],
+              "answers": [
+                "A delay could keep a critical review out of readers’ hands until ticket sales close."
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "final": {
+      "title": "Advise the editors",
+      "shortTitle": "Your editorial desk",
+      "source": "Fictional newsroom file\nJuniper Music writes, “We will buy an ad in each concert issue. Please send us the paragraph naming our shop before it goes to print so we can check the spelling.” The editors have not agreed to any terms.",
+      "sourceUrl": "",
+      "prompt": "In 3–5 sentences recommend accepting, declining, or changing the offer. Use a precise phrase, explain its consequence for the paper, and identify one conclusion the wording cannot establish.",
+      "rubric": [
+        "Decision: Makes a defensible recommendation; accept any position.",
+        "Evidence: Accurately uses the specific terms of the music shop offer.",
+        "Commentary: Connects the terms to a plausible editorial consequence and distinguishes a request from an established right or outcome."
+      ],
+      "delayedCheck": "Next class, underline one inference in an editorial and circle the words that support it."
+    },
+    "dueOn": "2026-11-13"
+  },
+  {
+    "id": "ap-lang-advertising-objection-v1",
+    "title": "Advertising 2 · Let an objection sharpen your policy",
+    "objective": "Explain how an objection qualifies a claim and write a policy that responds to it (AP Lang 3.C, 4.C).",
+    "classIds": [
+      "88421c66-9cda-4002-8e15-086312b7805e"
+    ],
+    "assignedOn": "2026-11-04",
+    "minutes": 12,
+    "stages": [
+      {
+        "title": "Find what changed",
+        "shortTitle": "Find the condition",
+        "teachFirst": true,
+        "explanation": "An objection is most useful when it names a cost someone will actually bear. Trace that concern to the exact words it changes in a policy.",
+        "modelRows": [
+          [
+            "Draft",
+            "“Sell ads anywhere in the arts section.”"
+          ],
+          [
+            "Reader’s objection",
+            "“If the theater’s ad sits beside its five-star review, how will I know the stars were earned?” The concern is the impression created by placement."
+          ],
+          [
+            "Revision",
+            "“Sell arts ads on a separate advertising page.” Separate changes where the ad can appear while preserving the sale."
+          ]
+        ],
+        "model": "Draft — “Sell ads anywhere in the arts section.”\nReader’s objection — “If the theater’s ad sits beside its five-star review, how will I know the stars were earned?” The concern is the impression created by placement.\nRevision — “Sell arts ads on a separate advertising page.” Separate changes where the ad can appear while preserving the sale.",
+        "questions": [
+          {
+            "prompt": "Which words answer the reader’s placement concern?",
+            "options": [
+              "Sell arts ads",
+              "On a separate advertising page",
+              "Five-star review"
+            ],
+            "answers": [
+              "On a separate advertising page"
+            ],
+            "hint": "Find the words a layout editor could act on.",
+            "explanation": "The new location directly addresses the side-by-side impression.",
+            "alternate": {
+              "prompt": "A critic wants free review tickets disclosed. Which addition answers that concern?",
+              "options": [
+                "Use experienced reviewers.",
+                "Name the ticket provider beneath the review."
+              ],
+              "answers": [
+                "Name the ticket provider beneath the review."
+              ]
+            }
+          },
+          {
+            "prompt": "Which objection is the strongest reason to revisit a blanket ban on arts ads?",
+            "options": [
+              "Ads sometimes use bright colors.",
+              "Without ad income, the print budget covers only one of three planned issues."
+            ],
+            "answers": [
+              "Without ad income, the print budget covers only one of three planned issues."
+            ],
+            "hint": "Which consequence bears directly on keeping the paper in print?",
+            "explanation": "The budget creates a concrete cost for readers and performers.",
+            "alternate": {
+              "prompt": "Which objection directly challenges a policy requiring full-page ads?",
+              "options": [
+                "Some ads use photos.",
+                "Small clubs can afford only a quarter page."
+              ],
+              "answers": [
+                "Small clubs can afford only a quarter page."
+              ]
+            }
+          }
+        ],
+        "image": {
+          "path": "lessons/advertising-objection.jpg",
+          "alt": "One layout puts a theater ad beside its glowing review. Another puts advertising and reviews on separate pages.",
+          "caption": "Look at the same review twice. Which layout would make you wonder who awarded the stars?"
+        }
+      },
+      {
+        "title": "Choose a workable boundary",
+        "shortTitle": "Revise the rule",
+        "teachFirst": true,
+        "explanation": "A qualification can change who, where, or under what conditions. A reader should be able to tell whether tomorrow’s proposed ad would pass your rule.",
+        "modelRows": [
+          [
+            "Proposal",
+            "“Let sponsors announce upcoming shows.”"
+          ],
+          [
+            "Objection",
+            "Readers may mistake a paid announcement for the editors’ pick."
+          ],
+          [
+            "One condition",
+            "“Run announcements only with a Paid advertisement label above the headline.” Where the label goes matters because readers encounter it before the pitch."
+          ]
+        ],
+        "model": "Proposal — “Let sponsors announce upcoming shows.”\nObjection — Readers may mistake a paid announcement for the editors’ pick.\nOne condition — “Run announcements only with a Paid advertisement label above the headline.” Where the label goes matters because readers encounter it before the pitch.",
+        "questions": [
+          {
+            "prompt": "A sponsor wants a quote from a critic inside its ad. Which restriction addresses misleading excerpts?",
+            "options": [
+              "Make ads shorter.",
+              "Require quoted words to preserve the critic’s judgment in context."
+            ],
+            "answers": [
+              "Require quoted words to preserve the critic’s judgment in context."
+            ],
+            "hint": "Ask what a selective quotation might hide.",
+            "explanation": "A negative review can look positive when a phrase is lifted out of context.",
+            "alternate": {
+              "prompt": "Students worry a sponsor logo looks like the paper’s signature. Which rule targets that concern?",
+              "options": [
+                "Keep sponsor logos out of the masthead.",
+                "Use fewer photographs."
+              ],
+              "answers": [
+                "Keep sponsor logos out of the masthead."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "The paper allows all businesses to sponsor awards. A finalist worries that a sponsor might also judge the competition. Add one condition to the policy.",
+              "sample": "Accept award funding only if the sponsor has no role in selecting the winner."
+            }
+          },
+          {
+            "prompt": "Which revision gives editors an enforceable rule?",
+            "options": [
+              "Respect independence whenever possible.",
+              "Reject contracts that give advertisers a vote on story selection."
+            ],
+            "answers": [
+              "Reject contracts that give advertisers a vote on story selection."
+            ],
+            "hint": "Could two editors apply the rule to the same contract?",
+            "explanation": "A voting right can be checked in the terms.",
+            "alternate": {
+              "prompt": "Which revision gives designers a usable boundary?",
+              "options": [
+                "Put the sponsor credit below the byline in a box marked Sponsor.",
+                "Keep funding tasteful."
+              ],
+              "answers": [
+                "Put the sponsor credit below the byline in a box marked Sponsor."
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "final": {
+      "title": "Set a policy for sponsored profiles",
+      "shortTitle": "Your editorial desk",
+      "source": "Fictional newsroom file\nDraft rule: “Accept a sponsor for any student-artist profile.” A drama student says the money could pay for portraits of backstage crews. A photographer objects that a costume shop wants the right to nominate every featured artist.",
+      "sourceUrl": "",
+      "prompt": "Write a revised policy and explain it in 3–5 sentences. Represent the strongest objection fairly, identify precisely what changes, and explain how your rule weighs the benefit of funding against the power to nominate.",
+      "rubric": [
+        "Objection: Accurately represents a concern about selection power.",
+        "Qualification: Writes a specific actionable policy boundary that responds to the objection.",
+        "Reasoning: Explains the effect of the boundary and weighs the benefit of portraits; accept different defensible policies."
+      ],
+      "delayedCheck": "In your next argument, underline the part of your thesis that would change if a reasonable objection disappeared."
+    },
+    "dueOn": "2026-11-17"
+  },
+  {
+    "id": "ap-lang-advertising-audience-v1",
+    "title": "Advertising 3 · Same decision, different reader",
+    "objective": "Explain how an argument addresses a reader’s needs and defend one decision to two audiences (AP Lang 1.B, 2.B).",
+    "classIds": [
+      "88421c66-9cda-4002-8e15-086312b7805e"
+    ],
+    "assignedOn": "2026-11-04",
+    "minutes": 12,
+    "stages": [
+      {
+        "title": "Hear the reader’s question",
+        "shortTitle": "Read for audience",
+        "teachFirst": true,
+        "explanation": "The paper will run a labeled ad to fund two arts pages. The editor still picks the stories. Before drafting, imagine what each reader would ask first.",
+        "modelRows": [
+          [
+            "A subscriber asks, “Who chose the story?”",
+            "“Our editors chose every story on these pages.” Chose answers the question about independence."
+          ],
+          [
+            "A performer asks, “Will our play be covered?”",
+            "“The ad buys space for two more arts pages.” Space explains what funding makes possible without promising any group a review."
+          ]
+        ],
+        "model": "A subscriber asks, “Who chose the story?” — “Our editors chose every story on these pages.” Chose answers the question about independence.\nA performer asks, “Will our play be covered?” — “The ad buys space for two more arts pages.” Space explains what funding makes possible without promising any group a review.",
+        "questions": [
+          {
+            "prompt": "“Will paying buy a positive review?” Which fact should the editor lead with?",
+            "options": [
+              "Two pages will be added.",
+              "Only student editors choose and evaluate shows."
+            ],
+            "answers": [
+              "Only student editors choose and evaluate shows."
+            ],
+            "hint": "What power is this reader worried about?",
+            "explanation": "The question concerns who controls judgment.",
+            "alternate": {
+              "prompt": "A reader asks whether the paper recommends the advertised café. Which opening addresses that question?",
+              "options": [
+                "The café bought the space for its own message.",
+                "The café paid on time."
+              ],
+              "answers": [
+                "The café bought the space for its own message."
+              ]
+            }
+          },
+          {
+            "prompt": "A stage manager asks how a backstage crew can be considered for coverage. Which opening fits?",
+            "options": [
+              "Our contract lasts a month.",
+              "Crews can send pitches directly to the arts editor."
+            ],
+            "answers": [
+              "Crews can send pitches directly to the arts editor."
+            ],
+            "hint": "What action does the stage manager want to take?",
+            "explanation": "The submission route gives the crew an actionable answer.",
+            "alternate": {
+              "prompt": "The treasurer asks how the next issue will be printed. Which detail belongs first?",
+              "options": [
+                "The ad payment covers this issue’s printing invoice.",
+                "Reviews have student bylines."
+              ],
+              "answers": [
+                "The ad payment covers this issue’s printing invoice."
+              ]
+            }
+          }
+        ],
+        "image": {
+          "path": "lessons/advertising-audience.jpg",
+          "alt": "A reader asks who chose the story while a performer asks whether the play will be covered. Both are looking at the same newspaper.",
+          "caption": "Read each thought bubble as the first question your opening sentence has to answer."
+        }
+      },
+      {
+        "title": "Change the opening reason",
+        "shortTitle": "Write for a reader",
+        "teachFirst": true,
+        "explanation": "Keep the decision and facts fixed. Choose a reason that answers this reader’s question, then explain why that reason matters to them.",
+        "modelRows": [
+          [
+            "Shared facts",
+            "The paper will print a separately labeled festival insert. Vendors buy listings; students write reviews."
+          ],
+          [
+            "To a reader",
+            "“Look for the listing label when planning your visit: vendors describe themselves there. Student reviewers sign their own assessments.”"
+          ],
+          [
+            "To a vendor",
+            "“A listing gives visitors your booth details. Buying one reserves space for those details while reviewers make their own selections.”"
+          ]
+        ],
+        "model": "Shared facts — The paper will print a separately labeled festival insert. Vendors buy listings; students write reviews.\nTo a reader — “Look for the listing label when planning your visit: vendors describe themselves there. Student reviewers sign their own assessments.”\nTo a vendor — “A listing gives visitors your booth details. Buying one reserves space for those details while reviewers make their own selections.”",
+        "questions": [
+          {
+            "prompt": "Which change most directly adapts the reader’s opening for vendors?",
+            "options": [
+              "Use “Dear valued vendor.”",
+              "Explain what a paid listing lets a booth owner tell visitors."
+            ],
+            "answers": [
+              "Explain what a paid listing lets a booth owner tell visitors."
+            ],
+            "hint": "What does a vendor need to decide?",
+            "explanation": "Knowing what space buys helps a vendor decide whether to participate.",
+            "alternate": {
+              "prompt": "Adapt a note for families asking how to identify paid content. Which detail should lead?",
+              "options": [
+                "Thank them warmly.",
+                "Tell them where the paid label appears."
+              ],
+              "answers": [
+                "Tell them where the paid label appears."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "A student critic asks how the festival insert affects their review. Write an opening using the shared facts above.",
+              "sample": "You still choose the judgment you sign your name to. The vendor’s paid listing has its own label."
+            }
+          },
+          {
+            "prompt": "Which pitch keeps the facts accurate while appealing to a vendor?",
+            "options": [
+              "Paying secures a favorable review.",
+              "Your listing can help visitors find your booth."
+            ],
+            "answers": [
+              "Your listing can help visitors find your booth."
+            ],
+            "hint": "Compare each promise with what the vendor buys.",
+            "explanation": "A listing can supply directions. A review is a separate editorial decision.",
+            "alternate": {
+              "prompt": "A photographer asks what a sponsor-funded travel allowance guarantees. The editor still selects photos. Which pitch is accurate?",
+              "options": [
+                "Your trip can be funded even if no photo is selected.",
+                "Your photo is guaranteed a page."
+              ],
+              "answers": [
+                "Your trip can be funded even if no photo is selected."
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "final": {
+      "title": "Write two notes about one decision",
+      "shortTitle": "Your editorial desk",
+      "source": "Fictional newsroom file\nThe paper will accept a framing shop’s ad to pay for a photo spread of the student exhibition. The art editor alone selects six works. All exhibitors may submit one photo by Friday. The ad will be labeled and printed on the back page.",
+      "sourceUrl": "",
+      "prompt": "Write two brief notes of two sentences each. A subscriber asks whether the shop chooses the art. An exhibitor asks how to get their work considered. Explain the decision to each using the same newsroom facts. Add one sentence explaining why you led with different details.",
+      "rubric": [
+        "Subscriber: Addresses selection or independence with an accurate fact and explains its significance.",
+        "Exhibitor: Gives accurate actionable information about consideration without guaranteeing selection.",
+        "Audience reasoning: Explains why the two readers need different opening details while maintaining the same policy."
+      ],
+      "delayedCheck": "Next class, rewrite the first sentence of your argument for a reader who shares your goal but worries about a different cost."
+    },
+    "dueOn": "2026-11-20"
+  },
+  {
+    "id": "ethics-reason-v1",
+    "title": "Ethics 1 · Does My Reason Support My Decision?",
+    "objective": "Identify a leap in reasoning and defend a decision with evidence and a limit (4a.1, 4b.1).",
+    "classIds": [
+      "e24ec8d9-21d7-4c32-a30e-08655c2f4e65"
+    ],
+    "assignedOn": "2026-11-04",
+    "minutes": 12,
+    "stages": [
+      {
+        "title": "Spot the leap",
+        "shortTitle": "Spot the leap",
+        "teachFirst": true,
+        "explanation": "A reason supports a decision when it helps explain why that choice is justified. Begin by separating what happened from what someone thinks caused it.",
+        "modelRows": [
+          [
+            "Observation",
+            "We held one early practice and then won one game. Both events happened."
+          ],
+          [
+            "Leap",
+            "“Early practice made us win.” The result alone cannot separate practice time from the opponent, the lineup, or luck."
+          ],
+          [
+            "Decision",
+            "Try two more sessions before requiring everyone to attend. A trial lets us gather evidence at a smaller cost."
+          ]
+        ],
+        "model": "Observation — We held one early practice and then won one game. Both events happened.\nLeap — “Early practice made us win.” The result alone cannot separate practice time from the opponent, the lineup, or luck.\nDecision — Try two more sessions before requiring everyone to attend. A trial lets us gather evidence at a smaller cost.",
+        "questions": [
+          {
+            "prompt": "Which statement reports an observation?",
+            "options": [
+              "Early sessions guarantee wins.",
+              "We won the match after Tuesday’s early practice.",
+              "The opponent lost because we trained early."
+            ],
+            "answers": [
+              "We won the match after Tuesday’s early practice."
+            ],
+            "hint": "Which could a calendar and score sheet verify?",
+            "explanation": "The timing and score are recorded. The cause still needs investigation.",
+            "alternate": {
+              "prompt": "A club switched rooms before a busy meeting. Which fact is directly observed?",
+              "options": [
+                "More students attended that meeting.",
+                "The new room attracted everyone."
+              ],
+              "answers": [
+                "More students attended that meeting."
+              ]
+            }
+          },
+          {
+            "prompt": "“We won once, so every team should train early.” What is the leap?",
+            "options": [
+              "It generalizes from one team and one match.",
+              "It uses a comparison across many teams.",
+              "It describes a scheduling conflict."
+            ],
+            "answers": [
+              "It generalizes from one team and one match."
+            ],
+            "hint": "How many cases support the word every?",
+            "explanation": "One success gives little basis for a rule covering other teams.",
+            "alternate": {
+              "prompt": "One student liked a workshop, so the organizer says all grades need it. What is the problem?",
+              "options": [
+                "A workshop cannot be evaluated.",
+                "One response is being extended to every grade."
+              ],
+              "answers": [
+                "One response is being extended to every grade."
+              ]
+            }
+          }
+        ],
+        "image": {
+          "path": "lessons/ethics-reason.jpg",
+          "alt": "One morning practice precedes a trophy. A second panel compares several matches against different opponents.",
+          "caption": "Count the comparisons behind the captain’s claim."
+        }
+      },
+      {
+        "title": "Calibrate the decision",
+        "shortTitle": "Calibrate the decision",
+        "teachFirst": true,
+        "explanation": "Match the strength of the recommendation to the strength of the comparison. Explain what extra evidence could change your mind.",
+        "modelRows": [
+          [
+            "Fictional log",
+            "Against the same opponent, the team made 6 passing errors after an early session and 10 after an afternoon one."
+          ],
+          [
+            "Reason",
+            "Fewer errors matter if accurate passing is the goal."
+          ],
+          [
+            "Limit",
+            "Two games leave room for other explanations. Compare more games and ask who can attend before setting a rule."
+          ]
+        ],
+        "model": "Fictional log — Against the same opponent, the team made 6 passing errors after an early session and 10 after an afternoon one.\nReason — Fewer errors matter if accurate passing is the goal.\nLimit — Two games leave room for other explanations. Compare more games and ask who can attend before setting a rule.",
+        "questions": [
+          {
+            "prompt": "Which comparison would better test whether timing helps passing?",
+            "options": [
+              "Early practice against beginners versus late practice against champions.",
+              "Run the same passing drill with the same players at both times."
+            ],
+            "answers": [
+              "Run the same passing drill with the same players at both times."
+            ],
+            "hint": "Hold the task and players steady.",
+            "explanation": "A comparable drill reduces differences unrelated to time.",
+            "alternate": {
+              "prompt": "Which comparison better tests two meeting formats?",
+              "options": [
+                "The same group doing similar tasks in each format.",
+                "Two clubs with unrelated goals."
+              ],
+              "answers": [
+                "The same group doing similar tasks in each format."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "A captain finds fewer missed passes in one morning drill and suggests a trial. Supply the missing reason and one limit.",
+              "sample": "Fewer missed passes suggest the session may help accuracy. One drill gives us too little evidence to require a permanent change."
+            }
+          },
+          {
+            "prompt": "One player cannot get an early bus. Which recommendation weighs that fact?",
+            "options": [
+              "Count absence as lack of effort.",
+              "Test a session everyone can reach before making attendance compulsory."
+            ],
+            "answers": [
+              "Test a session everyone can reach before making attendance compulsory."
+            ],
+            "hint": "Who would bear the cost of the proposed rule?",
+            "explanation": "Access changes whether the policy is fair even if practice helps.",
+            "alternate": {
+              "prompt": "A useful evening tutorial overlaps the last bus. Which response fits?",
+              "options": [
+                "Require everyone to stay.",
+                "Try an accessible slot and check participation."
+              ],
+              "answers": [
+                "Try an accessible slot and check participation."
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "final": {
+      "shortTitle": "Your turn",
+      "title": "Advise the debate captain",
+      "source": "Fictional log: In two rounds without a warm-up, speakers went over time 4 and 3 times. In two rounds with a ten-minute warm-up, they went over 1 and 2 times. Both warm-up rounds used familiar topics. Two bus riders cannot arrive early.",
+      "sourceUrl": "",
+      "prompt": "Should the club require an early warm-up? Write 3–5 sentences. Use the log, explain why the pattern matters, and say how the uncertainty or access issue affects your decision.",
+      "rubric": [
+        "Decision: Gives a defensible recommendation, including a trial or an alternative.",
+        "Reason: Accurately uses a comparison and connects it to timekeeping.",
+        "Limit: Weighs a plausible alternative explanation or access constraint without claiming the warm-up alone caused the change."
+      ],
+      "delayedCheck": "After your next episode choice, name the detail that influenced you and explain why it supports your decision."
+    }
+  },
+  {
+    "id": "ethics-options-v1",
+    "title": "Ethics 2 · Compare Two Good Options",
+    "objective": "Identify a community need and compare feasible responses against the same criteria (3a.3, 3b.3).",
+    "classIds": [
+      "e24ec8d9-21d7-4c32-a30e-08655c2f4e65"
+    ],
+    "assignedOn": "2026-11-04",
+    "minutes": 12,
+    "stages": [
+      {
+        "title": "Hear the need",
+        "shortTitle": "Hear the need",
+        "teachFirst": true,
+        "explanation": "Start with the people who will live with the project. Translate their request into a result you can check.",
+        "modelRows": [
+          [
+            "First offer",
+            "“We can donate books.” This names what the club can give."
+          ],
+          [
+            "Partner’s words",
+            "“Our shelves are full. Children need someone to read with.” The unmet need is company and help during reading hour."
+          ],
+          [
+            "Criterion",
+            "Ask how many children can read with someone on Saturday. That measure follows the request."
+          ]
+        ],
+        "model": "First offer — “We can donate books.” This names what the club can give.\nPartner’s words — “Our shelves are full. Children need someone to read with.” The unmet need is company and help during reading hour.\nCriterion — Ask how many children can read with someone on Saturday. That measure follows the request.",
+        "questions": [
+          {
+            "prompt": "Which question best clarifies the request?",
+            "options": [
+              "What color should our donation boxes be?",
+              "How many reading partners do you need and when?"
+            ],
+            "answers": [
+              "How many reading partners do you need and when?"
+            ],
+            "hint": "Ask what would change for children.",
+            "explanation": "The answer tells the club how to staff the hour.",
+            "alternate": {
+              "prompt": "A garden needs help watering in July. What should volunteers clarify?",
+              "options": [
+                "Which days lack watering coverage?",
+                "What slogan should go on the gate?"
+              ],
+              "answers": [
+                "Which days lack watering coverage?"
+              ]
+            }
+          },
+          {
+            "prompt": "Which observation shows the library need was met?",
+            "options": [
+              "Many boxes arrived.",
+              "A photo was published.",
+              "Children who requested partners had someone to read with."
+            ],
+            "answers": [
+              "Children who requested partners had someone to read with."
+            ],
+            "hint": "Look for the result named by the partner.",
+            "explanation": "A count of reading partnerships tests the actual goal.",
+            "alternate": {
+              "prompt": "A pantry asks for clear shelf labels. Which result matters most?",
+              "options": [
+                "Many signs were printed.",
+                "Visitors could find the items they needed."
+              ],
+              "answers": [
+                "Visitors could find the items they needed."
+              ]
+            }
+          }
+        ],
+        "image": {
+          "path": "lessons/ethics-options.jpg",
+          "alt": "A librarian shows students stocked shelves and empty reading-hour chairs. Students consider books and volunteer time.",
+          "caption": "Which detail tells you what the library needs this Saturday?"
+        }
+      },
+      {
+        "title": "Compare on common ground",
+        "shortTitle": "Compare on common ground",
+        "teachFirst": true,
+        "explanation": "Test both options against one shared measure, then name something valuable you would give up.",
+        "modelRows": [
+          [
+            "Library options",
+            "Four volunteers can each read with one child for the full hour, or each can run two half-hour sessions."
+          ],
+          [
+            "Reach",
+            "Full sessions serve four children; split sessions serve eight. The comparison uses the same hour and volunteers."
+          ],
+          [
+            "Trade-off",
+            "Split sessions increase access but halve the time each child has to finish a story."
+          ]
+        ],
+        "model": "Library options — Four volunteers can each read with one child for the full hour, or each can run two half-hour sessions.\nReach — Full sessions serve four children; split sessions serve eight. The comparison uses the same hour and volunteers.\nTrade-off — Split sessions increase access but halve the time each child has to finish a story.",
+        "questions": [
+          {
+            "prompt": "Which comparison uses one measure for both plans?",
+            "options": [
+              "A has cheerful posters; B costs little.",
+              "A covers four shifts; B covers two shifts."
+            ],
+            "answers": [
+              "A covers four shifts; B covers two shifts."
+            ],
+            "hint": "Finish the same question for each plan.",
+            "explanation": "Counting covered shifts lets the partner compare coverage directly.",
+            "alternate": {
+              "prompt": "Which comparison measures accessibility for both sites?",
+              "options": [
+                "Count the steps at each entrance.",
+                "Compare one site’s price with the other’s size."
+              ],
+              "answers": [
+                "Count the steps at each entrance."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "A club can provide three long tutoring sessions or six short ones. Compare the options for a learner who needs uninterrupted time.",
+              "sample": "A long session gives the learner time to finish a difficult problem. Short sessions reach more learners but may interrupt that work."
+            }
+          },
+          {
+            "prompt": "Which sentence names a cost of the chosen plan?",
+            "options": [
+              "Both ideas are great.",
+              "Short sessions include more readers but leave less time for longer stories."
+            ],
+            "answers": [
+              "Short sessions include more readers but leave less time for longer stories."
+            ],
+            "hint": "Name something the other option offers.",
+            "explanation": "A trade-off states what is lost as well as gained.",
+            "alternate": {
+              "prompt": "Which sentence gives a trade-off for rotating volunteers?",
+              "options": [
+                "More people can help, but children see a different partner.",
+                "Rotation is the best system."
+              ],
+              "answers": [
+                "More people can help, but children see a different partner."
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "final": {
+      "shortTitle": "Your turn",
+      "title": "Recommend a welcome plan",
+      "source": "Fictional partner note: “Twelve new students need help finding classrooms on Monday. Four have asked for someone to walk with them. We have two guides and 40 minutes. A group tour takes 20 minutes; a personal walk takes 10 minutes per guide. A map is available.”",
+      "sourceUrl": "",
+      "prompt": "Propose two workable uses of the guides. Compare both against the same need, recommend one, and name a cost or unmet need you would check with the students. Write 3–5 sentences.",
+      "rubric": [
+        "Options: Offers two distinguishable, feasible responses using the available people and time.",
+        "Comparison: Evaluates both against a shared need from the note.",
+        "Choice: Justifies a recommendation and acknowledges a concrete trade-off."
+      ],
+      "delayedCheck": "Before your next service project, ask the partner what a successful afternoon would look like."
+    }
+  },
+  {
+    "id": "ethics-perspective-v1",
+    "title": "Ethics 3 · What Would the Other Person Say?",
+    "objective": "Explain another person’s belief in terms they could recognize, then explain what informs your own judgment (1b.1, 1b.2).",
+    "classIds": [
+      "e24ec8d9-21d7-4c32-a30e-08655c2f4e65"
+    ],
+    "assignedOn": "2026-11-04",
+    "minutes": 12,
+    "stages": [
+      {
+        "title": "Represent the reason",
+        "shortTitle": "Represent the reason",
+        "teachFirst": true,
+        "explanation": "Use the person’s words to reconstruct what matters to them. If a motive is unknown, leave room to ask.",
+        "modelRows": [
+          [
+            "Coach",
+            "“I saw the baton hit the ground. We owe the reserve runner a fair trial.” The coach values an open selection process."
+          ],
+          [
+            "Runner",
+            "“We changed our hand signal yesterday. Give us one practice with it.” The runner values a fair chance to learn the change."
+          ],
+          [
+            "Fair account",
+            "Both care about fairness. They disagree about what evidence should count in this decision."
+          ]
+        ],
+        "model": "Coach — “I saw the baton hit the ground. We owe the reserve runner a fair trial.” The coach values an open selection process.\nRunner — “We changed our hand signal yesterday. Give us one practice with it.” The runner values a fair chance to learn the change.\nFair account — Both care about fairness. They disagree about what evidence should count in this decision.",
+        "questions": [
+          {
+            "prompt": "Which summary would the runner recognize?",
+            "options": [
+              "I should never be replaced.",
+              "I want time to practice the changed signal before selection.",
+              "The coach dislikes me."
+            ],
+            "answers": [
+              "I want time to practice the changed signal before selection."
+            ],
+            "hint": "Use the reason the runner actually gave.",
+            "explanation": "The runner challenges the timing of the decision.",
+            "alternate": {
+              "prompt": "“Let applicants use paper because some lack internet.” Which summary is fair?",
+              "options": [
+                "Reject all technology.",
+                "Keep an accessible route to apply."
+              ],
+              "answers": [
+                "Keep an accessible route to apply."
+              ]
+            }
+          },
+          {
+            "prompt": "Which reply checks an interpretation?",
+            "options": [
+              "You just want special treatment.",
+              "Would another practice give you a fair test of the new signal?"
+            ],
+            "answers": [
+              "Would another practice give you a fair test of the new signal?"
+            ],
+            "hint": "Ask a question the person can correct.",
+            "explanation": "The runner can confirm or refine that reading.",
+            "alternate": {
+              "prompt": "A teammate asks to rotate captains. Which reply checks their reason?",
+              "options": [
+                "You dislike our captain.",
+                "Are you hoping more players can learn the role?"
+              ],
+              "answers": [
+                "Are you hoping more players can learn the role?"
+              ]
+            }
+          }
+        ],
+        "image": {
+          "path": "lessons/ethics-perspective.jpg",
+          "alt": "Two people view a dropped relay baton from different angles.",
+          "caption": "What could the runner see that someone on the sideline might miss?"
+        }
+      },
+      {
+        "title": "Locate your own view",
+        "shortTitle": "Locate your own view",
+        "teachFirst": true,
+        "explanation": "Explain what shaped your judgment. A public example, a class discussion or an imagined case works; use only what you want to share.",
+        "modelRows": [
+          [
+            "Different proposal",
+            "A director wants an experienced soloist because rehearsal time is short. A newcomer asks for an open audition."
+          ],
+          [
+            "Own position",
+            "I would hold a short audition."
+          ],
+          [
+            "Influence",
+            "A rehearsal where a substitute learned quickly taught me that an unfamiliar voice can be ready. I still understand the director’s worry about time."
+          ]
+        ],
+        "model": "Different proposal — A director wants an experienced soloist because rehearsal time is short. A newcomer asks for an open audition.\nOwn position — I would hold a short audition.\nInfluence — A rehearsal where a substitute learned quickly taught me that an unfamiliar voice can be ready. I still understand the director’s worry about time.",
+        "questions": [
+          {
+            "prompt": "Which sentence explains an influence on a judgment?",
+            "options": [
+              "I just know auditions are fair.",
+              "Seeing a substitute learn in one rehearsal made me willing to try an audition."
+            ],
+            "answers": [
+              "Seeing a substitute learn in one rehearsal made me willing to try an audition."
+            ],
+            "hint": "Look for a connection between an experience and a belief.",
+            "explanation": "The experience explains why the speaker values an opportunity to demonstrate readiness.",
+            "alternate": {
+              "prompt": "Which writer connects a commitment to a decision?",
+              "options": [
+                "Everyone knows the answer.",
+                "Because I value keeping promises, I would honor the earlier booking."
+              ],
+              "answers": [
+                "Because I value keeping promises, I would honor the earlier booking."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "A musician wants blind auditions because names may influence judges. Write their strongest reason in your own words before saying whether you agree.",
+              "sample": "Hearing players before seeing names could help judges focus on the performance, even if they already know the musicians."
+            }
+          },
+          {
+            "prompt": "Which disagreement takes the director seriously?",
+            "options": [
+              "The director fears all new singers.",
+              "A short audition costs rehearsal time, but it can reveal a prepared newcomer."
+            ],
+            "answers": [
+              "A short audition costs rehearsal time, but it can reveal a prepared newcomer."
+            ],
+            "hint": "Keep the concern recognizable.",
+            "explanation": "The response names the time cost and explains a reason to accept it.",
+            "alternate": {
+              "prompt": "Which answer fairly challenges a request for anonymous voting?",
+              "options": [
+                "The requester is secretive.",
+                "Privacy can protect honest votes, though I also want a public count."
+              ],
+              "answers": [
+                "Privacy can protect honest votes, though I also want a public count."
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "final": {
+      "shortTitle": "Your turn",
+      "title": "Write both sides of the selection meeting",
+      "source": "Fictional council notes: Lin says, “Give the festival stall to last year’s group. We promised they could return if they cleaned up, and they did.” Sam says, “Open a draw. Four new groups have never had a chance to take part.”",
+      "sourceUrl": "",
+      "prompt": "Write 4–5 sentences. Give the strongest fair account of the view you are less inclined to choose, state your own rule, and explain one experience, example or commitment that informs it. You may propose a third rule.",
+      "rubric": [
+        "Fair account: Reconstructs a competing view using its actual reason without inventing motives.",
+        "Judgment: States a clear rule and explains what it values in this case.",
+        "Influence: Connects an example, experience or commitment to the judgment; private disclosure is unnecessary."
+      ],
+      "delayedCheck": "Before your next disagreement, ask whether the other person recognizes your summary of their reason."
+    }
+  },
+  {
+    "id": "ethics-repair-v1",
+    "title": "Ethics 4 · Turn an Apology into a Repair",
+    "objective": "Take responsibility for a choice and devise a repair plan the affected person can evaluate (A4 1.c, A3 1.c).",
+    "classIds": [
+      "e24ec8d9-21d7-4c32-a30e-08655c2f4e65"
+    ],
+    "assignedOn": "2026-11-04",
+    "minutes": 12,
+    "stages": [
+      {
+        "title": "Name the impact",
+        "shortTitle": "Name the impact",
+        "teachFirst": true,
+        "explanation": "Start with a specific action you controlled. Then identify what that action cost someone else.",
+        "modelRows": [
+          [
+            "Vague",
+            "“Sorry about the poster.” The organizer cannot tell whether you know what went wrong."
+          ],
+          [
+            "Accountable",
+            "“I tore the only concert poster while moving our display. People walking by can no longer see the time.”"
+          ],
+          [
+            "First question",
+            "“Is this still the best place to reach tonight’s audience?” The organizer can help define a repair."
+          ]
+        ],
+        "model": "Vague — “Sorry about the poster.” The organizer cannot tell whether you know what went wrong.\nAccountable — “I tore the only concert poster while moving our display. People walking by can no longer see the time.”\nFirst question — “Is this still the best place to reach tonight’s audience?” The organizer can help define a repair.",
+        "questions": [
+          {
+            "prompt": "Which opening owns a decision?",
+            "options": [
+              "Mistakes were made with the notice.",
+              "I took down your notice before the event ended.",
+              "Nobody told me to be careful."
+            ],
+            "answers": [
+              "I took down your notice before the event ended."
+            ],
+            "hint": "Find who did what.",
+            "explanation": "Naming the action makes it possible to address the consequence.",
+            "alternate": {
+              "prompt": "Which opening owns a roster mistake?",
+              "options": [
+                "I copied the old roster and left you off.",
+                "The roster got confusing."
+              ],
+              "answers": [
+                "I copied the old roster and left you off."
+              ]
+            }
+          },
+          {
+            "prompt": "What is the most direct impact of posting the wrong room number?",
+            "options": [
+              "The writer feels awkward.",
+              "Visitors may go to the wrong room."
+            ],
+            "answers": [
+              "Visitors may go to the wrong room."
+            ],
+            "hint": "Whose next action would the mistake affect?",
+            "explanation": "The misleading direction creates a practical problem for visitors.",
+            "alternate": {
+              "prompt": "An organizer omits the sign-language interpreter from the booking. Which impact matters first?",
+              "options": [
+                "The form looks untidy.",
+                "Some attendees may lose access to the talk."
+              ],
+              "answers": [
+                "Some attendees may lose access to the talk."
+              ]
+            }
+          }
+        ],
+        "image": {
+          "path": "lessons/ethics-repair.jpg",
+          "alt": "A student notices a torn concert poster, replaces it and checks with the organizer.",
+          "caption": "After the replacement goes up, who can tell whether it solved the problem?"
+        }
+      },
+      {
+        "title": "Make repair checkable",
+        "shortTitle": "Make repair checkable",
+        "teachFirst": true,
+        "explanation": "Choose a repair the person can use. Name who will act, by when, and how the person can say whether it worked.",
+        "modelRows": [
+          [
+            "Loss",
+            "A club’s mislabeled file left a designer out of the printed credits."
+          ],
+          [
+            "Repair",
+            "The editor offers a corrected online credit today and a correction in the next print issue."
+          ],
+          [
+            "Check",
+            "The editor sends the proposed credit to the designer before publication and checks the printed copy afterward."
+          ]
+        ],
+        "model": "Loss — A club’s mislabeled file left a designer out of the printed credits.\nRepair — The editor offers a corrected online credit today and a correction in the next print issue.\nCheck — The editor sends the proposed credit to the designer before publication and checks the printed copy afterward.",
+        "questions": [
+          {
+            "prompt": "Which step lets the affected person judge the repair?",
+            "options": [
+              "Promise to do better.",
+              "Send the corrected credit for the designer to review."
+            ],
+            "answers": [
+              "Send the corrected credit for the designer to review."
+            ],
+            "hint": "Who can confirm whether the correction is accurate?",
+            "explanation": "The designer can catch another error before it appears in print.",
+            "alternate": {
+              "prompt": "A group replaces a borrowed cable. Which check matters?",
+              "options": [
+                "Ask the owner to test it with their device.",
+                "Count how many people heard the apology."
+              ],
+              "answers": [
+                "Ask the owner to test it with their device."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "You accidentally canceled a room booking. A comparable room is available. Write the missing check after you reserve it.",
+              "sample": "I’ll show the new room and time to the organizer today and ask whether the space works for their group."
+            }
+          },
+          {
+            "prompt": "Which plan prevents a repeat?",
+            "options": [
+              "Everyone should be careful.",
+              "The editor checks each credit against the signed contributor list before printing."
+            ],
+            "answers": [
+              "The editor checks each credit against the signed contributor list before printing."
+            ],
+            "hint": "Find a person, a check and a time.",
+            "explanation": "The rule gives someone a specific action before the harm can recur.",
+            "alternate": {
+              "prompt": "Which plan prevents another missed pickup?",
+              "options": [
+                "Try harder next week.",
+                "The trip leader confirms pickup time with the driver before sending the notice."
+              ],
+              "answers": [
+                "The trip leader confirms pickup time with the driver before sending the notice."
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "final": {
+      "shortTitle": "Your turn",
+      "title": "Respond to the students who missed the bus",
+      "source": "Fictional trip report: You sent the wrong departure time. Two students missed the museum visit and had already paid. The teacher handles refunds. The museum offers a second visit next Thursday, but you do not know if the students can attend.",
+      "sourceUrl": "",
+      "prompt": "Write the message you would send the students and one prevention step. Own the error, offer a repair within your authority, and give a time and way for the students to tell you whether it meets their needs.",
+      "rubric": [
+        "Ownership: Identifies the writer’s action and a concrete impact.",
+        "Repair: Offers a feasible next action with a responsible person and time; does not promise an unauthorized refund.",
+        "Follow-up: Gives the students a meaningful say and identifies a specific prevention check."
+      ],
+      "delayedCheck": "During your next group project, check a promised repair with the people who experienced the problem."
+    }
+  },
+  {
+    "id": "ethics-lead-v1",
+    "title": "Ethics 5 · Lead, Then Check the Effect",
+    "objective": "Practice a leadership move, identify its observable effect, and choose an adjustment (3d.1, 3d.2).",
+    "classIds": [
+      "e24ec8d9-21d7-4c32-a30e-08655c2f4e65"
+    ],
+    "assignedOn": "2026-11-04",
+    "minutes": 12,
+    "stages": [
+      {
+        "title": "Make room to contribute",
+        "shortTitle": "Make room to contribute",
+        "teachFirst": true,
+        "explanation": "Choose a particular action that gives someone a workable way to influence a shared decision. Explain how you will know whether their contribution was used.",
+        "modelRows": [
+          [
+            "Invite",
+            "“Would you sketch a layout, or would you prefer to comment on ours?” A choice gives the teammate a way in."
+          ],
+          [
+            "Observe",
+            "The teammate sketches a larger title. The group uses it on the final poster."
+          ],
+          [
+            "Interpret",
+            "You can report what changed on the poster. To know how the teammate felt, ask them."
+          ]
+        ],
+        "model": "Invite — “Would you sketch a layout, or would you prefer to comment on ours?” A choice gives the teammate a way in.\nObserve — The teammate sketches a larger title. The group uses it on the final poster.\nInterpret — You can report what changed on the poster. To know how the teammate felt, ask them.",
+        "questions": [
+          {
+            "prompt": "Which invitation gives a real choice?",
+            "options": [
+              "You must explain the poster to everyone.",
+              "Would you rather sketch an idea or review our two designs?"
+            ],
+            "answers": [
+              "Would you rather sketch an idea or review our two designs?"
+            ],
+            "hint": "Can the teammate choose how to contribute?",
+            "explanation": "Both routes let the teammate influence the design.",
+            "alternate": {
+              "prompt": "Which invitation fits a planning meeting?",
+              "options": [
+                "Would you like to add an idea aloud or leave a written suggestion?",
+                "You have to go first."
+              ],
+              "answers": [
+                "Would you like to add an idea aloud or leave a written suggestion?"
+              ]
+            }
+          },
+          {
+            "prompt": "Which detail is observable evidence of influence?",
+            "options": [
+              "Everyone felt valued.",
+              "The leader meant well.",
+              "The group used the teammate’s larger title."
+            ],
+            "answers": [
+              "The group used the teammate’s larger title."
+            ],
+            "hint": "What could another observer check?",
+            "explanation": "The final design contains the suggestion.",
+            "alternate": {
+              "prompt": "Which fact shows an idea reached the plan?",
+              "options": [
+                "The speaker felt proud.",
+                "The final schedule includes the break they proposed."
+              ],
+              "answers": [
+                "The final schedule includes the break they proposed."
+              ]
+            }
+          }
+        ],
+        "image": {
+          "path": "lessons/ethics-lead.jpg",
+          "alt": "A leader invites a sketch, observes a teammate drawing, and the group uses the drawing on its poster.",
+          "caption": "Follow the sketch. Where do you first see evidence that it changed the group’s work?"
+        }
+      },
+      {
+        "title": "Interpret and adjust",
+        "shortTitle": "Interpret and adjust",
+        "teachFirst": true,
+        "explanation": "An invitation can succeed, fall flat or have an unexpected effect. Use the response to choose a next move.",
+        "modelRows": [
+          [
+            "Action",
+            "A facilitator asks for written ideas before a vote."
+          ],
+          [
+            "Observation",
+            "Three cards appear. The group votes before reading two of them."
+          ],
+          [
+            "Adjustment",
+            "Read every card before the next vote. Collecting ideas gave people a turn; the order of the vote limited their influence."
+          ]
+        ],
+        "model": "Action — A facilitator asks for written ideas before a vote.\nObservation — Three cards appear. The group votes before reading two of them.\nAdjustment — Read every card before the next vote. Collecting ideas gave people a turn; the order of the vote limited their influence.",
+        "questions": [
+          {
+            "prompt": "Which adjustment responds to those two unread cards?",
+            "options": [
+              "Ask for five cards next time.",
+              "Read all submissions before opening the vote."
+            ],
+            "answers": [
+              "Read all submissions before opening the vote."
+            ],
+            "hint": "At what point did influence break down?",
+            "explanation": "The issue came after collection and before the decision.",
+            "alternate": {
+              "prompt": "A leader invites questions after people have left. What adjustment fits?",
+              "options": [
+                "Reserve question time before dismissal.",
+                "Print more invitations."
+              ],
+              "answers": [
+                "Reserve question time before dismissal."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "You invited a quiet teammate to choose a task. They picked checking sources, but nobody waited for the check. Write one adjustment linked to what happened.",
+              "sample": "I would reserve two minutes for their source check before we submit, so their work can affect the final answer."
+            }
+          },
+          {
+            "prompt": "A teammate declines an invitation. Which reflection fits the evidence?",
+            "options": [
+              "They have no ideas.",
+              "They declined this time; offer another route without assuming why."
+            ],
+            "answers": [
+              "They declined this time; offer another route without assuming why."
+            ],
+            "hint": "Separate an observed response from a guessed motive.",
+            "explanation": "A refusal gives information about this moment, not a private motive.",
+            "alternate": {
+              "prompt": "A suggestion receives no reply. Which note is accurate?",
+              "options": [
+                "They all disliked it.",
+                "There was no reply before the topic changed."
+              ],
+              "answers": [
+                "There was no reply before the topic changed."
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "final": {
+      "shortTitle": "Your turn",
+      "title": "Try one move and report what happened",
+      "source": "Use an actual group task. If you are together now, take two minutes with a consenting partner to choose a name or layout for a class event. Invite a contribution in a way they can accept or decline. Notice what happened to the decision. If working alone, plan your move now and return after the next group task to submit. Omit names.",
+      "sourceUrl": "",
+      "prompt": "After trying the move, write 3–5 sentences: What was your shared goal? What did you actually say or do? What did someone do in response, and what effect, if any, did that have? Explain one adjustment for next time. An unsuccessful invitation is valid evidence.",
+      "rubric": [
+        "Action: Describes an enacted move toward a shared goal. A future plan or hypothetical scenario alone needs a follow-up after practice.",
+        "Observation: Describes an observable response and its effect or lack of effect on the group, without requiring names or a successful outcome.",
+        "Reflection: Connects a feasible adjustment to the observed result. Assess the written reflection as self-report, without claiming independent observation."
+      ],
+      "delayedCheck": "At the next group meeting, try your adjustment. Ask a teammate what difference they noticed and compare their observation with yours."
+    }
+  }
+]

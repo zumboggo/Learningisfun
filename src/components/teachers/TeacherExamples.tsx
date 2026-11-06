@@ -7,7 +7,7 @@ const examples = {
     {id: 'one-more-step-toward-peace', title: 'One More Step Toward Peace', description: 'Vietnam War · choices, consequences, and responsibility'},
   ],
   lessons: [
-    {id: 'nested-quotes-evidence-v2', title: 'Quoting and nested quotations', description: 'Guided practice with evidence and quotations within quotations'},
+    {id: 'nested-quotes-evidence-v3', title: 'Quoting and nested quotations', description: 'A conversational lesson with visual explanation, short rehearsals, and revision'},
   ],
   texts: [
     {id: '1', title: 'Part 1 · The Teacher and the Tiger', description: 'History of Ethics in China'},

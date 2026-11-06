@@ -1,5 +1,5 @@
 {
-  "id": "nested-quotes-evidence-v2",
+  "id": "nested-quotes-evidence-v3",
   "title": "Nested quotes: make evidence part of your argument",
   "objective": "Introduce and embed a short quotation, explain its wording, and connect that insight to your thesis.",
   "minutes": 15,
@@ -8,7 +8,7 @@
       "title": "Let borrowed words finish your sentence",
       "shortTitle": "Introduce & embed",
       "teachFirst": true,
-      "explanation": "Start small: name the speaker, add a verb, and let a few exact words complete your thought. In this original practice speech, a student asking for later library hours says, “For anyone coming from practice, the clock is a locked gate.”",
+      "explanation": "You have found the perfect quotation. You drop it into the paragraph and wait for the reader to applaud. The reader is waiting for a sentence. Give the borrowed words a grammatical home: name the speaker, add a verb, and let a short exact phrase complete your thought. Our fictional student asks for later library hours: “For anyone coming from practice, the clock is a locked gate.”",
       "model": "Library access depends on when students can arrive. Asking for later library hours, the speaker calls the clock “a locked gate.” A clock normally measures time. Here it becomes a barrier that keeps athletes out, even if the door itself is open. The council should therefore judge access by whether students can actually get there after practice.",
       "modelRows": [
         [
@@ -72,16 +72,16 @@
         }
       ],
       "image": {
-        "path": "lessons/nested-quote-seam.jpg",
-        "alt": "The writer’s words “The speaker calls the clock” join the quoted phrase “a locked gate” to form one sentence.",
-        "caption": "Read across the join: calls the clock what? The source’s words answer inside your sentence."
+        "path": "lessons/engagement-quote.webp",
+        "alt": "Quotation-mark characters stand outside paper sentence pieces, then fit into their joined seam under a lamp.",
+        "caption": "The joined pieces represent a grammatical sentence; the lamp represents explanation. Quotation marks alone do neither job. AI-generated teaching illustration."
       }
     },
     {
       "title": "Explain one word, then show why it matters",
       "shortTitle": "Explain & connect",
       "teachFirst": true,
-      "explanation": "The commentary does two jobs: explain what the wording makes us picture, then show how that picture supports the thesis. Do each job once with support before writing the full paragraph.",
+      "explanation": "“The writer uses imagery. This creates an image.” True, but we are still standing where we started. Try: “A locked gate keeps people out, so the clock becomes a barrier for students arriving late.” Now the image has a consequence. Explain one exact word or phrase, then connect that interpretation to the thesis. You will try each move before putting them together.",
       "model": "Opposing cuts to a bus route, a resident calls the last bus “a thread.” A thread joins separate things but snaps easily. The image makes a neighborhood’s connection to work sound fragile. If a single route is all that connects workers to their jobs, cutting it would isolate people rather than simply inconvenience them.",
       "modelRows": [
         [
