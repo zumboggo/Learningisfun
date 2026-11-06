@@ -4,10 +4,13 @@ import StoryPlayer from '../components/animated/StoryPlayer';
 import {readFileSync} from 'node:fs';
 import {validatePackage,initialStoryState,settleStory,advanceStory,replayStory} from '../../functions/learning-content/src/story-engine.js';
 const pack=JSON.parse(readFileSync('public/stories/public-quixote/a-knight-needs-a-witness/revisions/2/episode.json','utf8'));
+// Exhaustive replay across 192 routes needs CI headroom, like public-quixote.test.tsx.
 it('all revised routes preserve chapter 1 sequence, staged acting and earned callbacks',()=>{
  const {story,errors}=validatePackage(pack);expect(errors).toEqual([]);let paths=0;
  function walk(state:any,steps:(string|null)[],lines:string[],choices:number){
+  expect(steps.length).toBeLessThan(240);
   while(!state.ended&&['say','act'].includes(story!.nodes[state.cursor].type)){
+   expect(steps.length).toBeLessThan(240);
    const n=story!.nodes[state.cursor];lines=[...lines,n.text];
    if(n.type==='act'){
     expect(state.stage.actors[n.actor]).toBeDefined();
@@ -31,7 +34,7 @@ it('all revised routes preserve chapter 1 sequence, staged acting and earned cal
   for(const o of node.options!)walk(advanceStory(story!,state,o.id),[...steps,o.id],lines,choices+1);
  }
  walk(settleStory(story!,initialStoryState(story!,7)),[],[],0);expect(paths).toBe(192);
-});
+},30000);
 
 it('restores the helmet-test sword and readable caption with reduced motion',()=>{
  const {story}=validatePackage(pack);let state=settleStory(story!,initialStoryState(story!,7));const steps:(string|null)[]=[];
