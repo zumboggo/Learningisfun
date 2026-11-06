@@ -14,7 +14,7 @@ it('does not add game access to parent navigation',()=>{auth.isTeacher=false;aut
 it('puts Planner last in student navigation and marks it active',()=>{auth.isTeacher=false;auth.isParent=false;render(<MemoryRouter initialEntries={['/brainstorming']}><AppLayout>Planner</AppLayout></MemoryRouter>);const link=screen.getByRole('link',{name:'Planner'});expect(link).toHaveAttribute('href','/brainstorming');expect(link).toHaveAttribute('aria-current','page');expect(link.closest('nav')?.lastElementChild).toBe(link);});
 it('keeps Planner out of parent navigation',()=>{auth.isTeacher=false;auth.isParent=true;render(<MemoryRouter><AppLayout>Home</AppLayout></MemoryRouter>);expect(screen.queryByRole('link',{name:'Planner'})).not.toBeInTheDocument();});
 it.each([
-  ['/planning', 'Planning', 'Weekly plans', 'Brainstorming boards'],
+  ['/planning', 'Planning', 'Weekly Lesson Plans', 'Brainstorming boards'],
   ['/teacher-access', 'Settings', 'Settings', 'Data'],
 ])('groups %s in the teacher menu and switches views', (path, section, current, other) => {
   auth.isTeacher = true;

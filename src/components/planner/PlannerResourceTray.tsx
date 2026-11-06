@@ -30,7 +30,7 @@ export function PlannerResourceTray({resources:sourceResources,week,lessons,onSe
       if(isText&&isPlannerTextLabel(label)){e.preventDefault();e.stopPropagation();onTextLabel?.(slot,label);}
     }} onClick={()=>activeTextLabel&&isText?onTextLabel?.(slot,activeTextLabel):onPreview&&isText?onPreview(slot):onSelect(slot)} className={'block w-full rounded-lg border px-2 py-2 text-left text-xs '+resourceColor(slot)}><span className="font-medium"><PlannerTextBadges item={slot}/>{resourceTitle(slot)}</span><span className="block text-[10px] opacity-70">{resource.kind}{dates.length?` · Placed: ${dates.join(', ')}`:''}</span></button>;
   };
-  const primaryRoutine=(item:WeeklyResource)=>/^(Text Discussion|Episode|Game Episode|Student Presentations)$/i.test(item.title.trim());
+  const primaryRoutine=(item:WeeklyResource)=>/^(Lesson|Text Discussion|Episode|Game Episode|Student Presentations)$/i.test(item.title.trim());
   const visibleItems=(kind:string)=>items.filter(item=>!isCopyworkPlaceholder(item)&&resourceCategory(item)===kind&&(resourceTitle(item)+' '+item.content).toLowerCase().includes(weeklySearch.trim().toLowerCase())).sort((a,b)=>Number(b.sourceWeek===week)-Number(a.sourceWeek===week)||resourcePriority(a)-resourcePriority(b));
   const renderItem=(item:WeeklyResource)=>{
     const kind=resourceCategory(item);

@@ -15,7 +15,7 @@ interface AppLayoutProps {
 
 const planningViews = [
   { label: 'Brainstorming boards', to: '/brainstorming' },
-  { label: 'Weekly plans', to: '/planner' },
+  { label: 'Weekly Lesson Plans', to: '/planner' },
 ];
 const settingsViews = [
   { label: 'Settings', to: '/settings' },
