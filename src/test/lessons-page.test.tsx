@@ -83,3 +83,28 @@ it('opens previous lesson versions through a separate read-only library request'
  expect(await screen.findByText('Earlier lesson')).toBeVisible();expect(screen.queryByText('Current lesson')).toBeNull();
  expect(request).toHaveBeenLastCalledWith({action:'lessonLibrary',previousVersions:true});
 });
+
+it('lets Ethics 1 choices respond before rehearsal while explaining and preserving the check gate',async()=>{
+ const {default:catalog}=await import('../../functions/learning-content/src/lesson-catalog.json');
+ const lesson=catalog.find(l=>l.id==='ethics-reason-v2')!;
+ const q=lesson.stages[0].questions[1],nextQuestion=lesson.stages[1].questions[0];
+ if(!('options' in q)||!('options' in nextQuestion))throw Error('Expected Ethics 1 multiple-choice questions');
+ auth.isTeacher=false;
+ const state={step:1,misses:0,checks:[],draft:'',submissions:[],outcome:'',notice:''};
+ request.mockResolvedValueOnce({items:[{...item,id:lesson.id}]}).mockResolvedValueOnce({lesson,state,revision:1}).mockResolvedValueOnce({lesson,state:{...state,step:2},revision:2});
+ render(<LessonsPage/>);fireEvent.click(await screen.findByText('Open lesson'));
+ const choice=await screen.findByRole('radio',{name:q.options![0]});
+ expect(choice).toBeEnabled();expect(screen.getByText(/You can select an answer below/)).toBeVisible();
+ fireEvent.click(screen.getByText(q.options![0]));expect(choice).toBeChecked();
+ const check=screen.getByRole('button',{name:'Check answer'});expect(check).toBeDisabled();
+ fireEvent.change(screen.getByLabelText('Practice in your own words'),{target:{value:'One result does not establish the cause.'}});
+ expect(check).toBeDisabled();fireEvent.click(screen.getByRole('button',{name:'Compare with a model'}));
+ expect(check).toBeEnabled();expect(choice).toBeChecked();expect(screen.queryByText(/You can select an answer below/)).toBeNull();
+ fireEvent.change(screen.getByLabelText('Practice in your own words'),{target:{value:'The meeting topic might also explain attendance.'}});
+ expect(check).toBeDisabled();expect(choice).toBeChecked();
+ fireEvent.click(screen.getByRole('button',{name:'Compare with a model'}));fireEvent.click(check);
+ await screen.findByText(lesson.stages[1].questions[0].prompt);
+ expect(screen.getByRole('button',{name:'Check answer'})).toBeDisabled();
+ const next=screen.getByRole('radio',{name:nextQuestion.options![1]});fireEvent.click(next);expect(next).toBeChecked();
+ expect(screen.getByRole('button',{name:'Check answer'})).toBeDisabled();
+});
