@@ -1,0 +1,172 @@
+{
+  "id": "nested-quotes-evidence-v2",
+  "title": "Nested quotes: make evidence part of your argument",
+  "objective": "Introduce and embed a short quotation, explain its wording, and connect that insight to your thesis.",
+  "minutes": 15,
+  "stages": [
+    {
+      "title": "Let borrowed words finish your sentence",
+      "shortTitle": "Introduce & embed",
+      "teachFirst": true,
+      "explanation": "Start small: name the speaker, add a verb, and let a few exact words complete your thought. In this original practice speech, a student asking for later library hours says, “For anyone coming from practice, the clock is a locked gate.”",
+      "model": "Library access depends on when students can arrive. Asking for later library hours, the speaker calls the clock “a locked gate.” A clock normally measures time. Here it becomes a barrier that keeps athletes out, even if the door itself is open. The council should therefore judge access by whether students can actually get there after practice.",
+      "modelRows": [
+        [
+          "Thesis",
+          "Library access depends on when students can arrive."
+        ],
+        [
+          "Introduce + embed",
+          "Asking for later library hours, the speaker calls the clock “a locked gate.”"
+        ],
+        [
+          "“locked gate”",
+          "A clock normally measures time. Here it becomes a barrier that keeps athletes out, even if the door itself is open."
+        ],
+        [
+          "Back to the thesis",
+          "The council should therefore judge access by whether students can actually get there after practice."
+        ]
+      ],
+      "questions": [
+        {
+          "prompt": "A runner says, “The hill was a wall.” Keep the runner’s image: The runner describes the hill as “___.” Type just the two missing words.",
+          "answers": [
+            "a wall"
+          ],
+          "hint": "Take the two words that name what the hill seemed to be.",
+          "explanation": "The quoted noun phrase completes the writer’s sentence after as.",
+          "alternate": {
+            "prompt": "A commuter says, “That bridge was a lifeline.” Complete the sentence with two exact words: The commuter calls the bridge “___.”",
+            "answers": [
+              "a lifeline"
+            ]
+          }
+        },
+        {
+          "prompt": "What made the borrowed phrase fit into your own sentence?",
+          "options": [
+            "My own wording created a grammatical place for the phrase.",
+            "I put a period immediately before the phrase.",
+            "I used all the words from the source."
+          ],
+          "answers": [
+            "My own wording created a grammatical place for the phrase."
+          ],
+          "hint": "Read the sentence aloud without pausing at the quotation marks.",
+          "explanation": "The lead-in gives context and makes room for the borrowed words.",
+          "alternate": {
+            "prompt": "A cook calls salt “a spotlight.” Which lead-in gives the phrase a grammatical role?",
+            "options": [
+              "Explaining how salt sharpens flavor, the cook calls it",
+              "The cook spoke. And said a quote."
+            ],
+            "answers": [
+              "Explaining how salt sharpens flavor, the cook calls it"
+            ]
+          },
+          "rehearsal": {
+            "prompt": "A student editor says, “Our newspaper is a window on the school.” Write your own sentence introducing the editor and embedding “a window” without quoting the whole line.",
+            "sample": "Explaining why the paper matters, the student editor calls it “a window” on school life. Read yours aloud: does the phrase fit and is its speaker clear?"
+          }
+        }
+      ],
+      "image": {
+        "path": "lessons/nested-quote-seam.jpg",
+        "alt": "The writer’s words “The speaker calls the clock” join the quoted phrase “a locked gate” to form one sentence.",
+        "caption": "Read across the join: calls the clock what? The source’s words answer inside your sentence."
+      }
+    },
+    {
+      "title": "Explain one word, then show why it matters",
+      "shortTitle": "Explain & connect",
+      "teachFirst": true,
+      "explanation": "The commentary does two jobs: explain what the wording makes us picture, then show how that picture supports the thesis. Do each job once with support before writing the full paragraph.",
+      "model": "Opposing cuts to a bus route, a resident calls the last bus “a thread.” A thread joins separate things but snaps easily. The image makes a neighborhood’s connection to work sound fragile. If a single route is all that connects workers to their jobs, cutting it would isolate people rather than simply inconvenience them.",
+      "modelRows": [
+        [
+          "Context + evidence",
+          "Opposing cuts to a bus route, a resident calls the last bus “a thread.”"
+        ],
+        [
+          "“thread” → interpretation",
+          "A thread joins separate things but snaps easily. The image makes a neighborhood’s connection to work sound fragile."
+        ],
+        [
+          "Interpretation → thesis",
+          "If a single route is all that connects workers to their jobs, cutting it would isolate people rather than simply inconvenience them."
+        ]
+      ],
+      "questions": [
+        {
+          "prompt": "Which detail should your explanation account for?",
+          "options": [
+            "How much the coach paid for the team uniforms",
+            "What a hinge can do that a wall cannot",
+            "Whether hinges are made of brass"
+          ],
+          "answers": [
+            "What a hinge can do that a wall cannot"
+          ],
+          "hint": "Think about how each object moves.",
+          "explanation": "The word hinge suggests a turn or a new direction. A wall suggests a stop.",
+          "alternate": {
+            "prompt": "A gardener calls a seed “a promise.” Which question helps you interpret that word?",
+            "options": [
+              "What future possibility does promise suggest?",
+              "What is the dictionary spelling of seed?"
+            ],
+            "answers": [
+              "What future possibility does promise suggest?"
+            ]
+          },
+          "rehearsal": {
+            "prompt": "Supply only the missing commentary. Lead-in and quote: After a defeat, the coach calls the loss “a hinge.” Thesis link already supplied: The defeat can change the team’s direction rather than end its season. Write the sentence that explains the image between them.",
+            "sample": "A hinge is where something turns, so the loss becomes a pivot rather than a dead end. A different reading can work if it explains the word."
+          }
+        },
+        {
+          "prompt": "Which question tests whether your last sentence has done its job?",
+          "options": [
+            "Did I repeat the quote exactly a second time?",
+            "Did I explain why this reading gives the audience a reason to accept my thesis?",
+            "Did I use the phrase this proves?"
+          ],
+          "answers": [
+            "Did I explain why this reading gives the audience a reason to accept my thesis?"
+          ],
+          "hint": "Ask what your reader now has a reason to believe.",
+          "explanation": "A tie-back carries the interpretation to the specific claim at stake.",
+          "alternate": {
+            "prompt": "A poet calls a secret “a splinter.” Your interpretation: the hidden object keeps causing pain. Which claim does that reasoning support?",
+            "options": [
+              "Silence can prolong the harm it conceals.",
+              "The speaker knows woodworking."
+            ],
+            "answers": [
+              "Silence can prolong the harm it conceals."
+            ]
+          },
+          "rehearsal": {
+            "prompt": "Now supply both reasoning moves without a frame. Evidence: Defending the school archive, a librarian calls it “our memory.” Thesis: Discarding the archive would cost the school more than storage space. Write two sentences: interpret one word, then connect your interpretation to the thesis.",
+            "sample": "“Our” makes remembering a shared act, not one person’s private hobby. Throwing out the archive would take away the records that let different generations tell a common story."
+          }
+        }
+      ]
+    }
+  ],
+  "final": {
+    "title": "Your turn: give Dickinson’s words a job",
+    "shortTitle": "Write & revise",
+    "prompt": "Write one paragraph of 3–5 sentences. Develop this working thesis: Dickinson presents hope as a quiet presence that lives within a person. Introduce the speaker or poetic situation, weave in a short exact phrase, interpret a specific word or image, and show how that detail supports the thesis. You may sharpen the thesis if your reading fits the lines.",
+    "source": "Emily Dickinson, opening of “Hope is the thing with feathers” (254), Academy of American Poets. The speaker describes hope as a bird. Lines 2–3: “That perches in the soul, / And sings the tune without the words,” (slash marks the line break).",
+    "sourceUrl": "https://poets.org/poem/hope-thing-feathers-254",
+    "rubric": [
+      "Context: Identifies Dickinson, the speaker, or the poetic situation in a way that prepares the evidence. A brief lead-in suffices.",
+      "Integration: Embeds a short accurate phrase from the supplied lines grammatically in the student’s own sentence. Accept plain quotation marks and harmless punctuation differences.",
+      "Explanation: Interprets a particular word or image such as perches or the wordless tune; goes beyond paraphrasing. Accept other text-grounded readings.",
+      "Thesis connection: Explains how that interpretation supports the working thesis or a defensible refinement. Do not require a separate formulaic closing sentence."
+    ],
+    "delayedCheck": "In your next essay, cover your commentary and reread the quotation. Without looking, explain what one word contributes and how it supports your thesis."
+  }
+}

@@ -1,3 +1,4 @@
+import TeacherExamples from '@/components/teachers/TeacherExamples';
 import { assignedReadingLink } from '@/utils/assigned-reading-link';
 import { TextDiscussionButton } from '@/components/texts/TextDiscussionButton';
 import { useWeeklyTextDiscussions } from '@/hooks/useWeeklyTextDiscussions';
@@ -30,6 +31,7 @@ export function TextsPage() {
   return <div className="p-4 max-w-4xl mx-auto space-y-5"><header className="space-y-5"><div><h1 className="text-2xl font-bold">Texts</h1><p className="text-sm text-gray-500">Assigned readings open with the text and discussion side by side. Choose Text only whenever you prefer.</p>
       {isTeacher && <Link to="/discussions" className="mt-2 inline-block text-sm font-medium text-blue-700 underline">View all discussions and writing prompts</Link>}
     </div>{isTeacher && <div className="flex justify-center"><Button size="lg" className="min-h-20 w-full max-w-sm rounded-2xl text-xl shadow-sm" onClick={() => setCreating(true)}>Add a Text</Button></div>}</header>
+    {isTeacher && <TeacherExamples section="texts"/>}
     {rows?.length ? <TextsByWeek rows={rows} classes={classes||[]} isTeacher={isTeacher} discussions={discussions} onEdit={setEditing}/> : <EmptyState title="No texts yet" message={isTeacher ? 'Upload a text for close reading and discussion.' : 'Assigned readings will appear here.'}/>}
     {creating && user && classes && <CreateTextModal teacherId={user.$id} classes={classes.map(c => ({id:c!.$id,name:classLabel(c)}))} onClose={() => setCreating(false)}/>}
     {editing&&user&&classes&&<TextEditorModal text={editing} teacherId={user.$id} classes={classes.map(c=>({id:c!.$id,name:classLabel(c)}))} onClose={()=>setEditing(null)}/>}

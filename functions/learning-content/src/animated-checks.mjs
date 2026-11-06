@@ -112,3 +112,14 @@ test('publishing removes private studio conversation and source brief while reta
  const published=await call({action:'animatedRead',assignmentId:assignment.assignmentId},'student');assert.equal(published.pack.authoring.messages,undefined);assert.equal(published.pack.authoring.brief,undefined);assert.equal(published.pack.authoring.guidance,undefined);
  const saved=await call({action:'animatedReadDraft',id:'private-studio'});assert.equal(saved.pack.authoring.messages[0].content,'Private teacher planning');
 });
+
+test('teacher examples are available without a class and cannot request other media',async()=>{
+ const {call,records}=harness();
+ for(const id of ['the-people-who-told-him-to-wait','one-more-step-toward-peace']){
+  assert.deepEqual(await call({action:'animatedExampleMedia',id}),{mediaUrls:{}});
+  await assert.rejects(call({action:'animatedExampleMedia',id},'student'),/Teacher access/);
+  await assert.rejects(call({action:'animatedExampleMedia',id},'parent'),/Teacher access/);
+ }
+ await assert.rejects(call({action:'animatedExampleMedia',id:'other-story'}),/Example not found/);
+ assert.equal(records.size,0);
+});

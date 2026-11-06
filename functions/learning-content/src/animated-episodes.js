@@ -13,6 +13,15 @@ const safeId=s=>typeof s==='string'&&/^[\w-]{1,64}$/.test(s);
 export function packageBytes(pack){let bytes=packageContentBytes(pack);for(const a of packageAssetEntries(pack)){if(typeof a.src!=='string'||!/^data:(image\/webp|audio\/mpeg|audio\/ogg);base64,[A-Za-z0-9+/]+=*$/.test(a.src))fail('Package assets must be embedded WebP images or MP3/Ogg audio');const b=Buffer.from(a.src.split(',')[1],'base64');if(a.src.startsWith('data:image/webp')&&(b.toString('ascii',0,4)!=='RIFF'||b.toString('ascii',8,12)!=='WEBP'))fail('Invalid WebP image');}return bytes;}
 export async function animatedEpisodeAction({body,profile,userId,memberClassIds,db,databaseId,storage,tokens,endpoint,projectId,mirror=true}){
  const teacher=['teacher','admin'].includes(profile.role),scope='studio-'+userId;
+ if(body.action==='animatedExampleMedia'){
+  if(!teacher)fail('Teacher access required',403);
+  const scripts={
+   'the-people-who-told-him-to-wait':'label birmingham_opening_v2\nlabel birmingham_hose_v2\nlabel birmingham_dog_v2',
+   'one-more-step-toward-peace':'',
+  };
+  if(!Object.hasOwn(scripts,body.id))fail('Example not found',404);
+  return {mediaUrls:await privateMediaUrls({pack:{script:scripts[body.id]},db,databaseId,tokens,endpoint,projectId})};
+ }
  const list=async(queries)=>{const all=[];let cursor;do{const page=await db.listDocuments(databaseId,collection,[...queries,Query.limit(100),...(cursor?[Query.cursorAfter(cursor)]:[])]);all.push(...page.documents);cursor=page.documents.length===100?page.documents.at(-1).$id:null;}while(cursor);return all;};
  const read=async id=>JSON.parse((await db.getDocument(databaseId,collection,id)).dataJson);
  const write=async(id,classId,kind,data)=>{const dataJson=JSON.stringify(data);if(dataJson.length>28000)fail('Record exceeds supported size');return db.createDocument(databaseId,collection,id,{classId,userId,kind,dataJson},[]);};
