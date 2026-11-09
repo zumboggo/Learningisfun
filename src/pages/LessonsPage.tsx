@@ -27,6 +27,20 @@ function LessonDates({item}:{item:Item}){
  const date=new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'Asia/Shanghai'});
  return <div className="lesson-dates"><span>{item.releaseAt?'Release: '+date.format(new Date(item.releaseAt)):item.assignedOn?'Assigned: '+date.format(new Date(item.assignedOn+'T12:00:00+08:00')):'Available now'}</span>{item.dueOn&&<span>Due {date.format(new Date(item.dueOn+'T12:00:00+08:00'))}</span>}</div>;
 }
+function classFilterLabels(items:Item[],teacher:boolean){
+ const sections=new Map(items.map(item=>[item.classId,item]));
+ const titles=new Map<string,string>(),counts=new Map<string,number>();
+ for(const [id,{courseName,className}] of sections){
+  const title=courseName?.trim()||className;
+  const label=teacher?lessonClassLabel(id,title):title;
+  titles.set(id,label);counts.set(label,(counts.get(label)||0)+1);
+ }
+ for(const [id,title] of titles){
+  const section=sections.get(id)?.className.trim();
+  if((counts.get(title)||0)>1&&section&&section!==title)titles.set(id,title+' · '+section);
+ }
+ return titles;
+}
 function TeacherLibrary({items,onChoose}:{items:Item[];onChoose:(selection:{item:Item;report:boolean})=>void}){
  const groups=new Map<string,Item[]>();
  for(const item of items){const sections=groups.get(item.id)||[];sections.push(item);groups.set(item.id,sections);}
@@ -41,8 +55,9 @@ function Library({teacher}:{teacher:boolean}){
  const [items,setItems]=useState<Item[]>(),[error,setError]=useState(''),[load,setLoad]=useState(0);
  const [choice,choose]=useState<{item:Item;report:boolean}|null>(null);
  useEffect(()=>{let live=true;call<{items:Item[]}>({action:'lessonLibrary',previousVersions}).then(r=>{if(live)setItems(r.items)}).catch(e=>{if(live)setError(message(e))});return()=>{live=false}},[load,previousVersions]);
- const item=choice?.item,classes=[...new Map((items||[]).map(i=>[i.classId,lessonClassLabel(i.classId,i.className)])).entries()].sort((a,b)=>a[1].localeCompare(b[1]));
- const filtered=(items||[]).filter(i=>(!classFilter||i.classId===classFilter)&&[i.title,i.objective,i.className,i.courseName,lessonClassLabel(i.classId,i.className)].join(' ').toLowerCase().includes(query.trim().toLowerCase()));
+ const item=choice?.item,classLabels=classFilterLabels(items||[],teacher);
+ const classes=[...classLabels].sort((a,b)=>a[1].localeCompare(b[1]));
+ const filtered=(items||[]).filter(i=>(!classFilter||i.classId===classFilter)&&[i.title,i.objective,i.className,i.courseName,classLabels.get(i.classId)].join(' ').toLowerCase().includes(query.trim().toLowerCase()));
  const lessonCount=new Set(filtered.map(i=>i.id)).size;
  return <div className="lesson-studio lesson-library mx-auto space-y-4 p-4 pb-24 text-slate-900">
  {!choice&&<><header className="lesson-library-head"><div><p className="lesson-eyebrow">Learning is Fun · {teacher?'Teaching studio':'Practice studio'}</p><h1>Lessons</h1><p>{teacher?'Find assigned lessons, resume a draft, or create something new.':'Study a model, try it yourself, and put feedback to work.'}</p></div>{teacher&&<button className="lesson-create" onClick={()=>navigate('/create/lesson')}><span aria-hidden="true">＋</span> Create lesson</button>}</header>

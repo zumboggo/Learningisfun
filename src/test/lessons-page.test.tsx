@@ -1,7 +1,7 @@
 const navigate=vi.hoisted(()=>vi.fn());
 vi.mock('react-router-dom',async importOriginal=>({...await importOriginal<typeof import('react-router-dom')>(),useNavigate:()=>navigate}));
 import {afterEach,expect,it,vi} from 'vitest';
-import {cleanup,fireEvent,render,screen} from '@testing-library/react';
+import {cleanup,fireEvent,render,screen,within} from '@testing-library/react';
 import {LessonsPage} from '@/pages/LessonsPage';
 const auth=vi.hoisted(()=>({isTeacher:false,user:{$id:'learner'}}));
 const request=vi.hoisted(()=>vi.fn());
@@ -70,8 +70,15 @@ it('places the diagram with the model and makes room for original writing before
 });
 
 it('filters assigned lessons by class and title, and clears an empty search',async()=>{
- auth.isTeacher=true;request.mockResolvedValueOnce({items:[{...item,classId:'blue',className:'Blue'},{...item,id:'argument',title:'Making an argument',classId:'red',className:'Red'}]});
- render(<LessonsPage/>);await screen.findByText('Making an argument');fireEvent.change(screen.getByLabelText('Filter by class'),{target:{value:'blue'}});expect(screen.queryByText('Making an argument')).toBeNull();expect(screen.getByText('Annotated entry')).toBeVisible();fireEvent.change(screen.getByLabelText('Search lessons'),{target:{value:'no match'}});expect(screen.getByText('No matching lessons')).toBeVisible();fireEvent.click(screen.getByText('Clear filters'));expect(screen.getByText('Making an argument')).toBeVisible();
+ auth.isTeacher=true;request.mockResolvedValueOnce({items:[
+  {...item,classId:'history',className:'Section 1',courseName:'History'},
+  {...item,id:'argument',title:'Making an argument',classId:'writing',className:'Section 1',courseName:'Writing'},
+  {...item,id:'writing-2',title:'Editing an argument',classId:'writing-2',className:'Section 2',courseName:'Writing'},
+ ]});
+ render(<LessonsPage/>);await screen.findByText('Making an argument');
+ const filter=screen.getByLabelText('Filter by class');
+ expect(within(filter).getAllByRole('option').map(option=>option.textContent)).toEqual(['All classes','History','Writing · Section 1','Writing · Section 2']);
+ fireEvent.change(filter,{target:{value:'history'}});expect(screen.queryByText('Making an argument')).toBeNull();expect(screen.getByText('Annotated entry')).toBeVisible();fireEvent.change(screen.getByLabelText('Search lessons'),{target:{value:'no match'}});expect(screen.getByText('No matching lessons')).toBeVisible();fireEvent.click(screen.getByText('Clear filters'));expect(screen.getByText('Making an argument')).toBeVisible();
 });
 it('opens drafts directly without creating a record or requesting AI',async()=>{
  auth.isTeacher=true;request.mockImplementation(async b=>b.action==='lessonLibrary'?{items:[]}:b.action==='lessonBuilderLibrary'?{drafts:[{id:'draft',title:'A saved idea'}],classes:[]}:Promise.reject(Error('Unexpected mutation')));
