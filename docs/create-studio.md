@@ -19,3 +19,5 @@ No new collections or schema migration are required. Deploy `learning-content` b
 ## Verification
 
 `npm test` includes backend text checks and UI tests for length changes, local recovery, manual editing and resume navigation. Existing episode/lesson checks cover publication, progress and previews. `npm run build` runs story checks, TypeScript and production bundling. Provider calls are mocked in tests; do not automatically submit paid validation generations. Use `node scripts/verify-create-studio.mjs` for read-only production checks.
+
+`node scripts/verify-create-draft.mjs` explicitly creates/reuses one clearly labeled private verification draft and four small layout swatches, then verifies their authenticated retrieval. It does not publish, assign, or call paid providers. The draft remains available for browser QA.

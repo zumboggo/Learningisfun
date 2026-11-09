@@ -1,4 +1,4 @@
-import type {TextDraft} from '../../../../src/services/text-authoring';
+import type {TextDraft} from '../../../src/services/text-authoring';
 export const LENGTHS:Record<string,[number,number]>;
 export function lengthRange(brief:TextDraft['brief']):[number,number];
 export function proseWords(content:string):number;
