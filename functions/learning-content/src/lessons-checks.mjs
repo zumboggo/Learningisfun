@@ -71,7 +71,7 @@ test('every revised catalog lesson keeps valid gates, instructional assets and a
  const {validateLesson}=await import('./lesson-authoring.js');
  const catalog=JSON.parse(readFileSync(new URL('./lesson-catalog.json',import.meta.url)));
  const previous=JSON.parse(readFileSync(new URL('./lesson-catalog-previous.json',import.meta.url)));
- assert.equal(catalog.length,previous.length);
+ assert.ok(catalog.length>=previous.length);
  for(const l of catalog){
   assert.ok(!previous.some(old=>old.id===l.id));assert.ok(l.minutes>=10&&l.minutes<=15);
   const copy=structuredClone(l);for(const s of copy.stages)delete s.image;

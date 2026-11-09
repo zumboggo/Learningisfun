@@ -2038,5 +2038,272 @@
       ],
       "delayedCheck": "At the next group task, try your adjustment in a new decision. Record what someone actually did and whether it changed the result. Compare that observation with your expectation."
     }
+  },
+  {
+    "id": "world-lit-alchemist-symbol-allegory-v1",
+    "title": "Symbol and Allegory in The Alchemist",
+    "objective": "Explain how a concrete symbol and two connected events in The Alchemist develop a broader idea about pursuing a purpose.",
+    "classIds": [
+      "09d7f0a7-4c29-462c-820f-e11ea914d375",
+      "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c"
+    ],
+    "minutes": 15,
+    "assignedOn": "2026-11-09",
+    "releaseAt": "2026-11-09T00:00:00+08:00",
+    "dueOn": "2026-11-13",
+    "stages": [
+      {
+        "title": "A sheep is still a sheep—and can suggest more",
+        "shortTitle": "Explain a symbol",
+        "explanation": "Santiago has a flock, a living, and familiar paths. Then a dream pulls him toward treasure in Egypt. Leaving could cost him the life he knows. Why would a writer spend time on his sheep? In Paulo Coelho’s The Alchemist, concrete details help us think about difficult choices. A symbol is a person, object, place, or action that suggests an idea beyond its literal role. Start with what it actually does; then explain the connection.",
+        "modelRows": [
+          [
+            "Scene · original paraphrase",
+            "Santiago’s sheep follow him for food and water. He notices their repeated routines and dependence on him. He cares for them, but considers leaving to pursue treasure."
+          ],
+          [
+            "Detail → meaning",
+            "The sheep follow familiar routines → they can suggest the security, and limits, of a life without questioning what comes next. Their behaviour supports this reading."
+          ],
+          [
+            "Complete explanation",
+            "The sheep are real animals that provide Santiago with a living. Because their daily needs and routines keep them following a familiar path, they can also symbolize comfortable dependence. Leaving them makes his choice of uncertainty visible."
+          ],
+          [
+            "A memorable mistake",
+            "“The sheep symbolize symbolism.” The label explains nothing. Repair it with a link: “Their repeated routines suggest the comfort of a familiar life.” A symbol needs evidence, not a secret dictionary."
+          ]
+        ],
+        "model": "Scene · original paraphrase: Santiago’s sheep follow him for food and water. He notices their repeated routines and dependence on him. He cares for them, but considers leaving to pursue treasure.\n\nDetail → meaning: The sheep follow familiar routines → they can suggest the security, and limits, of a life without questioning what comes next. Their behaviour supports this reading.\n\nComplete explanation: The sheep are real animals that provide Santiago with a living. Because their daily needs and routines keep them following a familiar path, they can also symbolize comfortable dependence. Leaving them makes his choice of uncertainty visible.\n\nA memorable mistake: “The sheep symbolize symbolism.” The label explains nothing. Repair it with a link: “Their repeated routines suggest the comfort of a familiar life.” A symbol needs evidence, not a secret dictionary.",
+        "sourceUrl": "https://www.harperreach.com/products/collins-readers-the-alchemist-paulo-coelho-9780007155668/",
+        "questions": [
+          {
+            "prompt": "Scene: Santiago’s sheep follow him to food and water and repeat the same routines. Which explanation connects their behaviour to a symbolic meaning?",
+            "options": [
+              "They are sheep, so they must symbolize innocence in every scene.",
+              "They provide wool and sometimes meat; that is the whole symbolic explanation.",
+              "Their repeated routines can suggest comfortable dependence on a familiar life."
+            ],
+            "answers": [
+              "Their repeated routines can suggest comfortable dependence on a familiar life."
+            ],
+            "hint": "Find both a concrete behaviour and the idea that behaviour makes plausible.",
+            "explanation": "A supported symbolic reading connects what a detail does in this scene with a larger idea. Naming its practical use alone is literal description.",
+            "alternate": {
+              "prompt": "New detail: Santiago’s recurring dream points toward treasure at the distant Egyptian pyramids and encourages him to leave home. Which explanation links this detail to a symbolic meaning?",
+              "options": [
+                "The distant pyramids can represent a goal that draws him beyond his familiar life.",
+                "The pyramids are buildings in Egypt, which fully explains their symbolic role.",
+                "All tall buildings always represent pride."
+              ],
+              "answers": [
+                "The distant pyramids can represent a goal that draws him beyond his familiar life."
+              ]
+            }
+          },
+          {
+            "prompt": "Scene: Santiago’s sheep provide his livelihood and follow familiar routines. A reader says they symbolize comfortable security. What does that claim mean?",
+            "options": [
+              "They are imaginary animals that exist only inside Santiago’s mind.",
+              "They must have exactly one meaning in every part of the novel.",
+              "They remain real animals in the story while also suggesting an idea."
+            ],
+            "answers": [
+              "They remain real animals in the story while also suggesting an idea."
+            ],
+            "hint": "A symbolic reading adds a layer to the literal story.",
+            "explanation": "A symbol does not erase an object’s literal role or lock it into one universal meaning.",
+            "alternate": {
+              "prompt": "New detail: the Egyptian pyramids are a real destination in Santiago’s search and can suggest a distant ambition. What does this symbolic reading require?",
+              "options": [
+                "Keeping their literal role as a destination while explaining the larger idea.",
+                "Treating the pyramids as imaginary because they carry meaning.",
+                "Assuming every pyramid in every story means ambition."
+              ],
+              "answers": [
+                "Keeping their literal role as a destination while explaining the larger idea."
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "title": "Supply the link, not just the label",
+        "shortTitle": "Connect evidence",
+        "explanation": "Now try the explaining yourself. Use this small pattern: detail → possible meaning → because. “Because” makes you show your reasoning. A symbol can have more than one supported meaning, but not just any meaning. Use the scene to test your interpretation; do not rely on the colour or shape of an object alone.",
+        "modelRows": [
+          [
+            "New scene · original paraphrase",
+            "After losing his money in Tangier, Santiago works in a crystal shop. He proposes an outdoor display to attract customers. The merchant fears that passers-by will break the glasses. He eventually agrees, and the display helps business."
+          ],
+          [
+            "One move missing",
+            "Claim: the fragile crystal can suggest the risks of change. Evidence: the merchant fears putting it outside, but the display attracts customers. Missing: explain HOW this evidence supports the claim."
+          ],
+          [
+            "Keep the claim proportionate",
+            "Crystal is literally merchandise that can break. Reading its fragility as a symbol is an interpretation supported by the merchant’s fear; the novel does not give us a rule that all glass means fear."
+          ]
+        ],
+        "model": "New scene · original paraphrase: After losing his money in Tangier, Santiago works in a crystal shop. He proposes an outdoor display to attract customers. The merchant fears that passers-by will break the glasses. He eventually agrees, and the display helps business.\n\nOne move missing: Claim: the fragile crystal can suggest the risks of change. Evidence: the merchant fears putting it outside, but the display attracts customers. Missing: explain HOW this evidence supports the claim.\n\nKeep the claim proportionate: Crystal is literally merchandise that can break. Reading its fragility as a symbol is an interpretation supported by the merchant’s fear; the novel does not give us a rule that all glass means fear.",
+        "sourceUrl": "https://www.harperreach.com/products/collins-readers-the-alchemist-paulo-coelho-9780007155668/",
+        "questions": [
+          {
+            "prompt": "Crystal-shop scene: the merchant fears an outdoor display will break his fragile glasses; he agrees, and it attracts customers. Which missing explanation best supports “the crystal can suggest the risks of change”?",
+            "options": [
+              "The crystal is expensive, so every change will definitely make the merchant rich.",
+              "The display is outside the shop, so the scene is only about where furniture belongs.",
+              "Moving the fragile glasses exposes something valuable to possible loss, but keeping them protected would also miss an opportunity."
+            ],
+            "answers": [
+              "Moving the fragile glasses exposes something valuable to possible loss, but keeping them protected would also miss an opportunity."
+            ],
+            "hint": "Connect possible damage and possible benefit to the choice about change.",
+            "explanation": "The explanation links a physical risk to a human decision without claiming that taking risks always succeeds.",
+            "alternate": {
+              "prompt": "New scene: Santiago can keep his flock and familiar livelihood or sell the sheep to fund the uncertain search for treasure. Which explanation best supports “selling the flock can symbolize accepting risk”?",
+              "options": [
+                "He gives up a dependable source of income to make an uncertain goal possible.",
+                "Selling animals proves that he no longer values anything familiar.",
+                "Receiving money means the decision has no cost or uncertainty."
+              ],
+              "answers": [
+                "He gives up a dependable source of income to make an uncertain goal possible."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "Write the ONE missing move in 1–2 sentences. Claim: the fragile crystal can suggest the risks of change. Evidence: the merchant fears the outdoor display will cause breakage, but it later attracts customers. Explain how this evidence supports the claim. Then compare with the sample.",
+              "sample": "Putting fragile goods outside risks damage but creates an opportunity. The crystal makes the merchant’s fear of losing something valuable concrete. Compare: did you explain the link, rather than repeat “it is symbolic”?"
+            }
+          },
+          {
+            "prompt": "Scene: after a theft in Tangier, Santiago works at the crystal shop and earns money that can let him continue. Which interpretation stays within this evidence?",
+            "options": [
+              "The shop proves that every theft is secretly helpful to its victim.",
+              "The shop means Santiago’s dream has already come true.",
+              "The shop can represent a place of recovery where practical work makes renewed hope possible."
+            ],
+            "answers": [
+              "The shop can represent a place of recovery where practical work makes renewed hope possible."
+            ],
+            "hint": "Choose a claim about this character’s recovery, not a guarantee about everyone’s suffering.",
+            "explanation": "Interpretation should fit the supplied events. Santiago rebuilds his resources; that does not make theft good or guarantee success.",
+            "alternate": {
+              "prompt": "New scene: Santiago leaves a familiar livelihood with his sheep to search for treasure, although the outcome is uncertain. Which interpretation stays within this evidence?",
+              "options": [
+                "Leaving the flock can represent choosing uncertainty in pursuit of a goal.",
+                "Leaving the flock proves familiar work has no value for anyone.",
+                "His departure guarantees that every dream will come true."
+              ],
+              "answers": [
+                "Leaving the flock can represent choosing uncertainty in pursuit of a goal."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "Now remove more support. Using the theft → shop work → renewed resources sequence in the question, write one sentence naming a possible meaning for the shop and explaining it with evidence. Then compare.",
+              "sample": "The shop can symbolize recovery because Santiago’s work there rebuilds the resources he lost and makes another attempt possible. A different meaning is reasonable if the same scene supports it."
+            }
+          }
+        ]
+      },
+      {
+        "title": "Connect a pattern across the story",
+        "shortTitle": "Build an allegory",
+        "explanation": "One symbol is a meaningful detail. An allegory is a story, or sustained story pattern, whose characters, places, and actions also develop a connected meaning beyond the literal events. You can read Santiago’s journey as an allegory of pursuing a purpose: leaving security, facing setbacks, and learning to act. “Personal Legend” is the novel’s name for a person’s calling or life purpose. A theme is the broader idea; allegory is how the story embodies it.",
+        "modelRows": [
+          [
+            "Literal sequence",
+            "Santiago leaves his flock, loses his money in Tangier, then works in the crystal shop and rebuilds his resources. These are linked events, not a list of decorative objects."
+          ],
+          [
+            "Corresponding ideas",
+            "Leaving the flock → risking familiar security. Losing his money → encountering a setback. Working and rebuilding → learning to respond through action."
+          ],
+          [
+            "Connected reading",
+            "Together, these events can dramatize the pursuit of a purpose as a process that demands risk and persistence, not just wishing. “Follow your dreams” names a theme; explaining how the events enact that idea develops an allegorical reading."
+          ],
+          [
+            "A limit",
+            "This is a supported reading, not a code that forces every detail to mean one thing. A character can serve an allegorical role and still have ordinary needs and mixed motives."
+          ]
+        ],
+        "model": "Literal sequence: Santiago leaves his flock, loses his money in Tangier, then works in the crystal shop and rebuilds his resources. These are linked events, not a list of decorative objects.\n\nCorresponding ideas: Leaving the flock → risking familiar security. Losing his money → encountering a setback. Working and rebuilding → learning to respond through action.\n\nConnected reading: Together, these events can dramatize the pursuit of a purpose as a process that demands risk and persistence, not just wishing. “Follow your dreams” names a theme; explaining how the events enact that idea develops an allegorical reading.\n\nA limit: This is a supported reading, not a code that forces every detail to mean one thing. A character can serve an allegorical role and still have ordinary needs and mixed motives.",
+        "sourceUrl": "https://www.harperreach.com/products/collins-readers-the-alchemist-paulo-coelho-9780007155668/",
+        "questions": [
+          {
+            "prompt": "Sequence: Santiago leaves his flock, loses money in Tangier, then rebuilds his resources through shop work. Which statement develops an allegorical reading of this sequence?",
+            "options": [
+              "The flock symbolizes security; no other event needs to be considered.",
+              "First he leaves, then he loses money, then he works.",
+              "Leaving security, meeting a setback, and rebuilding connect his travels to the difficult process of pursuing a purpose."
+            ],
+            "answers": [
+              "Leaving security, meeting a setback, and rebuilding connect his travels to the difficult process of pursuing a purpose."
+            ],
+            "hint": "Look for several connected events AND a broader human process.",
+            "explanation": "An allegorical reading explains a sustained relationship between the literal sequence and a larger meaning. Plot summary or one symbol alone does not establish that relationship.",
+            "alternate": {
+              "prompt": "New sequence: the crystal merchant fears an outdoor display, permits it, and gains customers. Which statement develops an allegorical reading of this smaller pattern?",
+              "options": [
+                "Fear, a cautious experiment, and a new opportunity can enact the process of learning to accept change.",
+                "The display stands outside the shop and brings customers.",
+                "Crystal is fragile, so we need no explanation of the merchant’s changing decisions."
+              ],
+              "answers": [
+                "Fear, a cautious experiment, and a new opportunity can enact the process of learning to accept change."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "Explain the pattern yourself in two sentences: how do leaving the flock AND rebuilding after the theft help turn Santiago’s journey into an allegory of pursuing a purpose? Use both events, then compare.",
+              "sample": "Leaving the flock makes the cost of beginning visible: Santiago gives up familiar security. Rebuilding after the theft shows that pursuing a purpose also requires responding to setbacks, so the journey enacts a process of growth rather than an effortless wish."
+            }
+          },
+          {
+            "prompt": "A classmate writes, “The lesson is that people need courage.” You have the sequence of Santiago leaving his flock and rebuilding after the theft. What must the classmate add to explain allegory rather than only state a theme?",
+            "options": [
+              "Replace “courage” with the word “allegory” and keep everything else.",
+              "List more objects without explaining their connection.",
+              "Explain how the departure and recovery together enact that idea about courage."
+            ],
+            "answers": [
+              "Explain how the departure and recovery together enact that idea about courage."
+            ],
+            "hint": "How does the story make the general idea happen through actions?",
+            "explanation": "A theme states an idea; an allegorical explanation maps the story’s connected actions onto that idea.",
+            "alternate": {
+              "prompt": "New scene: the merchant first fears a display, then tries it and gains customers. A reader writes, “Change can create opportunities.” What addition makes this an allegorical explanation?",
+              "options": [
+                "Connect his fear, his decision to try, and the result to the broader process of accepting change.",
+                "Say “the story is symbolic” without using its events.",
+                "Describe the colour of the glasses, which the supplied scene does not specify."
+              ],
+              "answers": [
+                "Connect his fear, his decision to try, and the result to the broader process of accepting change."
+              ]
+            }
+          }
+        ],
+        "image": {
+          "path": "lessons/alchemist-symbol-allegory-v1.webp",
+          "alt": "At left, a flock is paired with a sheltered home to suggest familiar security. At right, linked scenes show departure, crystal-shop work, and onward travel, suggesting a connected process of risk, recovery, and growth.",
+          "caption": "Compare one detail with the connected path: a symbol suggests an idea; an allegorical pattern develops an idea through linked events. The home, thread, and lower icons are teaching metaphors, not extra events in the novel. AI-generated illustration."
+        }
+      }
+    ],
+    "final": {
+      "shortTitle": "Explain a fresh scene",
+      "title": "Help a reader see both layers",
+      "prompt": "A classmate understands what happens but asks, “How is this more than an adventure?” Choose A or B from the source card. Write one paragraph of about 90–130 words. Explain one possible symbol using a concrete detail; then connect at least two events or choices to explain an allegorical idea about pursuing a purpose. Make the connection explicit with “because” or an equivalent explanation. Keep the literal events accurate. Use your own words; quotations, page numbers, and outside research are not required. After feedback, revise the least clear link. Different interpretations can succeed when the supplied evidence supports them.",
+      "source": "Paulo Coelho, The Alchemist, translated into English by Alan R. Clarke; scenes from Parts One and Two, before the desert journey. These are original teaching paraphrases, not quotations. All information needed for either option is below. The source link identifies the novel; use this card to write.\n\nA · Guidance and choice. The old king gives Santiago two stones, Urim and Thummim, to help him seek yes/no guidance when he cannot understand omens (signs he interprets as guidance). The king also urges him to make his own decisions when possible. After the theft in Tangier, Santiago turns to the stones for reassurance. When both fall through a hole in his pouch, he picks them up and recalls his promise to decide for himself. He keeps the stones, feels less desperate, and begins to see the unfamiliar place as somewhere he can explore.\n\nB · A dream kept at a distance. The crystal merchant wants to make a pilgrimage, a religious journey, to Mecca. He says imagining the journey helps him endure his repeated daily work, yet he fears having nothing left to live for once the dream is fulfilled. He has postponed leaving the shop. By contrast, after earning enough at the shop to buy sheep again, Santiago chooses to continue toward Egypt. Both men value a dream, but they respond differently to the possibility of acting on it. Interpret these individual choices; the merchant does not represent all Muslims or all religious believers.",
+      "sourceUrl": "https://www.harperreach.com/products/collins-readers-the-alchemist-paulo-coelho-9780007155668/",
+      "rubric": [
+        "Accurate evidence: Uses concrete details from chosen card A or B without invented quotations or events. At least two connected events or choices must be identifiable; paraphrase is sufficient. Do not require outside knowledge, a page citation, or strict word count.",
+        "Symbol and explanation: Identifies a concrete object, place, or action and explains a plausible meaning through what it does in the supplied scene. For A, stones may suggest guidance, reassurance, or the limits of dependence; for B, the dreamed-of pilgrimage or continued shop routine may suggest sustaining hope or postponement. Accept other grounded readings. Literal role must remain intact.",
+        "Allegorical connection: Explains how at least two events or choices together enact a broader process or tension about pursuing a purpose, rather than merely retelling events or naming a theme. A can connect receiving guidance with reclaiming decisions while retaining reassurance. B can connect the merchant’s postponement with Santiago’s decision to continue, showing competing responses to dreams. No single prescribed moral is required.",
+        "Clear reasoning: Makes the evidence-to-meaning connections understandable with because or equivalent causal reasoning; distinguishes a detail’s symbolic meaning from the sustained allegorical pattern. Accept accessible language and multilingual grammar when meaning is clear. Avoid universal claims about a religion or guaranteed success. Feedback must identify a response-grounded strength and one actionable next move without rewriting the paragraph; compare drafts only when available and only where evidence shows change."
+      ],
+      "delayedCheck": "Next class, without reopening the models: a new scene from The Alchemist shows the Englishman studying alchemy through books while Santiago learns by observing the caravan and desert. In three sentences, suggest what the books might symbolize, explain that meaning using the scene, and connect the two ways of learning into a possible allegorical idea about pursuing understanding. What makes your answer more than a plot summary?"
+    }
   }
 ]
