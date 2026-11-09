@@ -6,6 +6,7 @@ import {CitationBuilder} from './CitationBuilder';
 import {useEffect,useState} from 'react';
 import {useAuth} from '@/contexts/AuthContext';
 import {executeLearningContent as call} from '@/services/learning-content.service';
+import {lessonClassLabel} from '@/services/lesson-class-label';
 
 type Item={id:string;dueOn?:string|null;assignedOn?:string|null;progressId?:string;releaseAt?:string|null;courseName?:string;classId:string;title:string;objective:string;minutes:number|string;className:string};
 type Question={rehearsal?:{prompt:string;sample:string};pieces?:string[];italicPieces?:string[];prompt:string;options?:string[]};
@@ -40,8 +41,8 @@ function Library({teacher}:{teacher:boolean}){
  const [items,setItems]=useState<Item[]>(),[error,setError]=useState(''),[load,setLoad]=useState(0);
  const [choice,choose]=useState<{item:Item;report:boolean}|null>(null);
  useEffect(()=>{let live=true;call<{items:Item[]}>({action:'lessonLibrary',previousVersions}).then(r=>{if(live)setItems(r.items)}).catch(e=>{if(live)setError(message(e))});return()=>{live=false}},[load,previousVersions]);
- const item=choice?.item,classes=[...new Map((items||[]).map(i=>[i.classId,i.className])).entries()].sort((a,b)=>a[1].localeCompare(b[1]));
- const filtered=(items||[]).filter(i=>(!classFilter||i.classId===classFilter)&&[i.title,i.objective,i.className,i.courseName].join(' ').toLowerCase().includes(query.trim().toLowerCase()));
+ const item=choice?.item,classes=[...new Map((items||[]).map(i=>[i.classId,lessonClassLabel(i.classId,i.className)])).entries()].sort((a,b)=>a[1].localeCompare(b[1]));
+ const filtered=(items||[]).filter(i=>(!classFilter||i.classId===classFilter)&&[i.title,i.objective,i.className,i.courseName,lessonClassLabel(i.classId,i.className)].join(' ').toLowerCase().includes(query.trim().toLowerCase()));
  const lessonCount=new Set(filtered.map(i=>i.id)).size;
  return <div className="lesson-studio lesson-library mx-auto space-y-4 p-4 pb-24 text-slate-900">
  {!choice&&<><header className="lesson-library-head"><div><p className="lesson-eyebrow">Learning is Fun · {teacher?'Teaching studio':'Practice studio'}</p><h1>Lessons</h1><p>{teacher?'Find assigned lessons, resume a draft, or create something new.':'Study a model, try it yourself, and put feedback to work.'}</p></div>{teacher&&<button className="lesson-create" onClick={()=>navigate('/create/lesson')}><span aria-hidden="true">＋</span> Create lesson</button>}</header>
