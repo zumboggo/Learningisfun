@@ -1,0 +1,5 @@
+export {newTextDraft,lengthRange,proseWords,readingParagraphs} from '../../functions/learning-content/src/text-authoring-model.js';
+export type Scene={id:string;prompt:string;alt:string;caption:string;after:number;fileId?:string;requestId?:string;pending?:boolean;omitted?:boolean;generated?:boolean};
+export type TextDraft={brief:{topic:string;audience:string;length:string;customWords:number;illustrations:number;course:string;week:string;vocabulary:string;source:string;preferences:string;historical:boolean};messages:{role:'user'|'assistant';content:string}[];title:string;author:string;content:string;contentMode:'full'|'link';externalUrl:string;originalPdfId?:string;scenes:Scene[];sources:{title:string;url:string}[];research:null|{input?:string;key:string;evidence:{title:string;url:string;passage:string;unavailable?:boolean}[];notes:string};reviewed:boolean;guidanceVersion:string;warnings?:string[]};
+export type SavedText={value:TextDraft;revision:number};
+export type SaveRegistrar=(save:()=>Promise<void>)=>void;

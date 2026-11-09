@@ -75,6 +75,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     ? [
         { to: '/classes', label: 'Classes', icon: 'C' },
         { to: '/brainstorming', label: 'Planning', icon: 'P' },
+        { to: '/create', label: 'Create', icon: '+' },
         { to: '/decks', label: 'Cards', icon: 'V' },
         { to: '/texts', label: 'Texts', icon: 'T' },
         { to: '/lessons', label: 'Lessons', icon: 'L' },

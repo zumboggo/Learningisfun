@@ -1,3 +1,4 @@
+import CreatePage, {LegacyEpisodeCreate} from './pages/CreatePage';
 import WorkshopPage from './pages/WorkshopPage';
 import PrivateEpisodeGate from './components/teachers/PrivateEpisodeGate';
 import PlannerAccess from './components/teachers/PlannerAccess';
@@ -180,7 +181,9 @@ export default function App() {
           <Route path="/workshop" element={<ProtectedRoute><WorkshopPage/></ProtectedRoute>} />
           <Route path="/classes" element={<ProtectedRoute><ClassesListPage /></ProtectedRoute>} />
           <Route path="/classes/:classId/episodes/:episodeId" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening episode…</p>}><PrivateEpisodeGate><EpisodePage /></PrivateEpisodeGate></Suspense></ProtectedRoute>} />
-          <Route path="/game/create" element={<ProtectedRoute><TeacherRoute><Suspense fallback={<p>Opening studio…</p>}><AnimatedStudioPage /></Suspense></TeacherRoute></ProtectedRoute>} />
+          <Route path="/create" element={<ProtectedRoute><TeacherRoute><CreatePage /></TeacherRoute></ProtectedRoute>} />
+          <Route path="/create/:type" element={<ProtectedRoute><TeacherRoute><CreatePage /></TeacherRoute></ProtectedRoute>} />
+          <Route path="/game/create" element={<ProtectedRoute><TeacherRoute><Suspense fallback={<p>Opening studio…</p>}><LegacyEpisodeCreate /></Suspense></TeacherRoute></ProtectedRoute>} />
           <Route path="/game/play/:assignmentId" element={<ProtectedRoute><Suspense fallback={<p>Opening episode…</p>}><AnimatedEpisodePage /></Suspense></ProtectedRoute>} />
           <Route path="/game" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening The Game…</p>}><GamePage /></Suspense></ProtectedRoute>} />
           <Route path="/classes/:classId/principles" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening portfolio…</p>}><PrinciplesPortfolioPage /></Suspense></ProtectedRoute>} />

@@ -1,3 +1,5 @@
+const navigate=vi.hoisted(()=>vi.fn());
+vi.mock('react-router-dom',async importOriginal=>({...await importOriginal<typeof import('react-router-dom')>(),useNavigate:()=>navigate}));
 import {afterEach,expect,it,vi} from 'vitest';
 import {cleanup,fireEvent,render,screen} from '@testing-library/react';
 import {LessonsPage} from '@/pages/LessonsPage';
@@ -73,7 +75,7 @@ it('filters assigned lessons by class and title, and clears an empty search',asy
 });
 it('opens drafts directly without creating a record or requesting AI',async()=>{
  auth.isTeacher=true;request.mockImplementation(async b=>b.action==='lessonLibrary'?{items:[]}:b.action==='lessonBuilderLibrary'?{drafts:[{id:'draft',title:'A saved idea'}],classes:[]}:Promise.reject(Error('Unexpected mutation')));
- render(<LessonsPage/>);fireEvent.click(await screen.findByRole('button',{name:'Drafts'}));expect(await screen.findByText('A saved idea')).toBeVisible();expect(request.mock.calls.every(([b])=>['lessonLibrary','lessonBuilderLibrary'].includes(b.action))).toBe(true);
+ render(<LessonsPage/>);fireEvent.click(await screen.findByRole('button',{name:'Drafts'}));expect(navigate).toHaveBeenCalledWith('/create/lesson?resume=1');expect(request.mock.calls.every(([b])=>['lessonLibrary','lessonBuilderLibrary'].includes(b.action))).toBe(true);
 });
 
 it('opens previous lesson versions through a separate read-only library request',async()=>{

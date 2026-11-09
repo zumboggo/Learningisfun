@@ -11,6 +11,7 @@ async function resolveImage(source: string): Promise<string> {
   const body={action:'readReadingImage',textId:match[1],fileId:match[2]};
   try{return (await executeLearningContent<{url:string}>(body)).url;}
   catch {
+    try{return (await executeLearningContent<{url:string}>({action:'textDraftImage',draftId:match[1],fileId:match[2]})).url}catch{/* Try public reading access next. */}
     const response=await functions.createExecution('public-reading',JSON.stringify(body));
     const result=JSON.parse(response.responseBody||'{}');
     if(response.status==='failed'||response.responseStatusCode>=400||!result.url)throw new Error('Picture unavailable.');

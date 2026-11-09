@@ -7,24 +7,24 @@ export const monthKey=(now=new Date())=>new Intl.DateTimeFormat('en-CA',{timeZon
 const INPUT_PRICE=.15,OUTPUT_PRICE=.6,OUTPUT_TOKENS=8192;
 export function maximumCost(messages){return Math.ceil(((Buffer.byteLength(JSON.stringify(messages),'utf8')+2048)*INPUT_PRICE+OUTPUT_TOKENS*OUTPUT_PRICE)/1e6*1e6)/1e6;}
 export async function budgetStatus(args,owner=args.userId){const {db,databaseId}=args;const allowance=await readRecord(db,databaseId,owner,'ai-allowance'),ledger=await readRecord(db,databaseId,owner,'ai-month:'+monthKey());const limit=allowance.value?.usd??1;return {ownerId:owner,month:monthKey(),limit,used:ledger.value?.used||0,remaining:Math.max(0,limit-(ledger.value?.used||0))};}
-export async function paidCompletion(args,{ownerId,messages,requestId=randomUUID(),json=false,learnerId}){
+export async function paidCompletion(args,{ownerId,messages,requestId=randomUUID(),json=false,learnerId,research=false,metadata=false}){
  if(!process.env.OPENROUTER_API_KEY)fail('AI is not configured. You can keep editing manually.',503);
  if(Buffer.byteLength(JSON.stringify(messages),'utf8')>100000)fail('Reduce the selected source material to under 100 KB.');
- const reservation=maximumCost(messages),month=monthKey(),requestKey='ai-request:'+requestId;
+ const reservation=maximumCost(messages)+(research?.15:0),month=monthKey(),requestKey='ai-request:'+requestId;
  await atomic({...args,transactionOwner:ownerId},async({db})=>{const prior=await readRecord(db,args.databaseId,ownerId,requestKey);if(prior.revision)fail('This request was already submitted. No automatic paid retry was made.',409);const allowance=await readRecord(db,args.databaseId,ownerId,'ai-allowance'),ledger=await readRecord(db,args.databaseId,ownerId,'ai-month:'+month);const limit=allowance.value?.usd??1,used=ledger.value?.used||0;
  const meter=learnerId?await readRecord(db,args.databaseId,ownerId,'lesson-rate:'+learnerId):ledger;
  const recent=(meter.value?.recent||[]).filter(t=>Date.now()-t<60000);if(recent.length>=5)fail('Please wait a minute before generating again.',429);
  if(used+reservation>limit)fail('Your monthly AI allowance cannot cover this request. You can keep editing manually.',429);
  if(learnerId)await writeRecord(db,args.databaseId,ownerId,'lesson-rate:'+learnerId,{recent:[...recent,Date.now()]},meter.revision);
  await writeRecord(db,args.databaseId,ownerId,'ai-month:'+month,{used:used+reservation,recent:learnerId?(ledger.value?.recent||[]):[...recent,Date.now()]},ledger.revision);
- await writeRecord(db,args.databaseId,ownerId,requestKey,{month,reservation,status:'reserved',createdAt:new Date().toISOString()},0);});
+ await writeRecord(db,args.databaseId,ownerId,requestKey,{month,reservation,status:'reserved',category:research?'research':'text',createdAt:new Date().toISOString()},0);});
  // Network uncertainty intentionally leaves the reservation charged. No automatic retries.
- const response=await fetch('https://openrouter.ai/api/v1/chat/completions',{method:'POST',headers:{Authorization:`Bearer ${process.env.OPENROUTER_API_KEY}`,'Content-Type':'application/json'},body:JSON.stringify({model:AI_MODEL,provider:{only:['openai','azure'],allow_fallbacks:false,max_price:{prompt:INPUT_PRICE,completion:OUTPUT_PRICE},require_parameters:true},max_tokens:OUTPUT_TOKENS,temperature:.5,...(json?{response_format:{type:"json_object"}}:{}),messages,usage:{include:true}}),signal:AbortSignal.timeout(90000)});
+ const response=await fetch('https://openrouter.ai/api/v1/chat/completions',{method:'POST',headers:{Authorization:`Bearer ${process.env.OPENROUTER_API_KEY}`,'Content-Type':'application/json'},body:JSON.stringify({model:AI_MODEL,provider:{only:['openai','azure'],allow_fallbacks:false,max_price:{prompt:INPUT_PRICE,completion:OUTPUT_PRICE},require_parameters:true},max_tokens:OUTPUT_TOKENS,temperature:.5,...(research?{tools:[{type:'openrouter:web_search',parameters:{engine:'exa',mode:'fast',max_uses:2,max_results:3,max_total_results:6,max_characters:3000}}]}:{}),...(json?{response_format:{type:"json_object"}}:{}),messages,usage:{include:true}}),signal:AbortSignal.timeout(90000)});
  if(!response.ok)fail('AI generation failed. Your draft is safe; no automatic retry was made.',503);
  const result=await response.json();const content=result.choices?.[0]?.message?.content;if(typeof content!=='string')fail('AI returned no text. Your draft is safe.',503);
  const actual=result.usage?.cost;
- await atomic({...args,transactionOwner:ownerId},async({db})=>{const request=await readRecord(db,args.databaseId,ownerId,requestKey);if(request.value?.status!=='reserved')return;const settled=typeof actual==='number'&&Number.isFinite(actual)&&actual>=0&&actual<=reservation;if(settled){const ledger=await readRecord(db,args.databaseId,ownerId,'ai-month:'+month);await writeRecord(db,args.databaseId,ownerId,'ai-month:'+month,{...ledger.value,used:Math.max(0,ledger.value.used-reservation+actual)},ledger.revision);}await writeRecord(db,args.databaseId,ownerId,requestKey,{...request.value,...(settled?{status:'settled',actual}:{}),generationId:typeof result.id==='string'?result.id:null},request.revision);});
- return content;
+ await atomic({...args,transactionOwner:ownerId},async({db})=>{const request=await readRecord(db,args.databaseId,ownerId,requestKey);if(request.value?.status!=='reserved')return;const settled=typeof actual==='number'&&Number.isFinite(actual)&&actual>=0;if(settled){const ledger=await readRecord(db,args.databaseId,ownerId,'ai-month:'+month);await writeRecord(db,args.databaseId,ownerId,'ai-month:'+month,{...ledger.value,used:Math.max(0,ledger.value.used-reservation+actual)},ledger.revision);}await writeRecord(db,args.databaseId,ownerId,requestKey,{...request.value,...(settled?{status:'settled',actual}:{}),generationId:typeof result.id==='string'?result.id:null},request.revision);});
+ return metadata?{content,annotations:result.choices?.[0]?.message?.annotations||[]}:content;
 }
 export async function teacherAIAction(args){const {body,profile,userId,db,databaseId}=args;if(!['teacher','admin'].includes(profile.role))fail('Teacher account required',403);
  if(body.action==='reconcileAIUsage'){

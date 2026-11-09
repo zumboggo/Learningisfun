@@ -1,0 +1,1042 @@
+===============================================================================
+CORE VOCABULARY BY WEEK · 2026-27 · D. Hepting
+The scannable view. Full cards with backs and tags are in CORE_CARDS_2026-27.csv
+===============================================================================
+
+###############################################################################
+AP English Language & Composition   (P3)
+198 core cards over 33 weeks · CONCEPT 61 · TERM 71 · WORD 66
+###############################################################################
+
+--- UNIT 1: Introduction to Rhetoric ----------------------------
+    standards: 1.A 1.B 2.A
+
+  W01  Aug 10-14       What rhetoric is
+        rhetoric
+      * rhetorical situation
+      * audience
+        purpose
+      + ostensible
+      + tacit
+
+  W02  Aug 17-21       The three appeals
+        ethos
+        pathos
+        logos
+      * persona
+      + salient
+      + plausible
+
+  W03  Aug 24-28       Claim and evidence
+      * claim
+        evidence
+        thesis
+      * defensible
+      + arbitrary
+      + substantive
+
+  W04  Aug 31-Sep 4    Why now
+      * exigence
+        occasion
+        context
+        stance
+      + implicit
+      + explicit
+
+  W05  Sep 7-11        Tone and the analysis sentence
+        tone
+        diction
+        syntax
+      * commentary
+      + nuanced
+      + discernible
+
+--- UNIT 2: Rhetorical Analysis ---------------------------------
+    standards: 3.A 3.B 3.C
+
+  W06  Sep 14-18       Diction and the loaded choice
+        connotation
+        denotation
+        register
+        euphemism
+      + reductive
+      + incisive
+
+  W07  Sep 21-25       Balance and repetition
+        parallelism
+        antithesis
+        anaphora
+        epistrophe
+      + cogent
+      + undercut
+
+  W08  Oct 5-9         Emphasis
+        asyndeton
+        polysyndeton
+        climax
+        sentential adverb
+      + pervasive
+      + temper
+
+  W09  Oct 12-16       From device to effect
+      * line of reasoning
+      * sophistication
+      * emphatic positioning
+      * rhythm
+      + coherent
+      + evoke
+
+--- UNIT 3: Different Ways to Argue -----------------------------
+    standards: 4.A 4.B 5.A
+
+  W10  Oct 19-23       Answering the objection
+        procatalepsis
+        concession
+        refutation
+        qualifier
+      + untenable
+      + specious
+
+  W11  Oct 26-30       Asking and not asking
+        hypophora
+        rhetorical question
+        apophasis
+      * warrant
+      + presuppose
+      + equivocate
+
+  W12  Nov 2-6         Steering the reader
+        metabasis
+        distinctio
+        exemplum
+      * transitions of logic
+      + delineate
+      + elucidate
+
+  W13  Nov 9-13        Shapes of argument
+      * enthymeme
+      * counterargument
+        rebuttal
+      * burden of proof
+      + corroborate
+      + undermine
+
+  W14  Nov 16-20       Clear versus opaque
+        jargon
+      * obfuscation
+      * qualification
+      * clarity
+      + obfuscate
+      + rigorous
+
+--- UNIT 4: Technology ------------------------------------------
+    standards: 5.B 5.C 6.A
+
+  W15  Nov 23-27       Comparison
+        simile
+        metaphor
+        analogy
+      * tenor and vehicle
+      + conflate
+      + extrapolate
+
+  W16  Nov 30-Dec 4    Dead metaphors and false ones
+      * dead metaphor
+        extended metaphor
+      * false analogy
+      * freshness
+      + contingent
+      + ubiquitous
+
+  W17  Dec 7-11        Synthesis
+      * synthesis
+      * source integration
+        attributive tag
+      * causation vs correlation
+      + reconcile
+      + substantiate
+
+--- UNIT 5: Satire ----------------------------------------------
+    standards: 6.B 6.C 7.A
+
+  W18  Jan 4-8         What satire needs
+        satire
+        irony
+        verbal irony
+        situational irony
+      + caustic
+      + derisive
+
+  W19  Jan 11-15       The two poles
+        understatement
+        litotes
+        hyperbole
+        invective
+      + trivialize
+      + egregious
+
+  W20  Jan 18-22       Incongruity
+        oxymoron
+        juxtaposition
+        parody
+      * target and standard
+      + incongruous
+      + ludicrous
+
+  W21  Jan 25-29       Voice under control
+      * tone shift
+      * texture
+      * vividness
+      * satirical persona
+      + dispassionate
+      + earnest
+
+--- UNIT 6: Social Status ---------------------------------------
+    standards: 7.B 7.C 2.B
+
+  W22  Feb 15-19       What stands for what
+        metonymy
+        synecdoche
+        allusion
+      * code-switching
+      + deferential
+      + patronizing
+
+  W23  Feb 22-26       The voice that carries status
+        personification
+        dialect
+      * prestige variety
+        idiolect
+      + marginalize
+      + legitimize
+
+  W24  Mar 1-5         Who gets believed
+      * credibility
+        testimony
+      * positionality
+      * bias
+      + scrutinize
+      + discredit
+
+--- UNIT 7: Style, Syntax and Grammar ---------------------------
+    standards: 8.A 8.B 8.C
+
+  W25  Mar 8-12        The sentence's moving parts
+        appositive
+        parenthesis
+        hyperbaton
+        zeugma
+      + cumbersome
+      + economical
+
+  W26  Mar 15-19       Shapes of the whole sentence
+        chiasmus
+        antimetabole
+        cumulative sentence
+        periodic sentence
+      + succinct
+      + ponderous
+
+--- UNIT 8: Extended Analysis and Timed Writing -----------------
+    standards: Cumulative U1-8
+
+  W27  Mar 22-26       Sound and stress
+        alliteration
+        cadence
+      * parataxis
+      * hypotaxis
+      + resonant
+      + deliberate
+
+  W28  Mar 29-Apr 2    Building under time
+        topic sentence
+      * thesis-driven structure
+      * concession placement
+      * so-what move
+      + lucid
+      + disciplined
+
+  W29  Apr 12-16       Complexity that scores
+      * complexity
+      * tension
+      * qualification of the thesis
+      * levels of style
+      + ambivalent
+      + paradoxical
+
+--- UNIT 9: Review ----------------------------------------------
+    standards: All units
+
+  W30  Apr 19-23       The exam as a document
+      * FRQ 1 synthesis
+      * FRQ 2 rhetorical analysis
+      * FRQ 3 argument
+      * MC question types
+      + diagnostic
+      + systematic
+
+  W31  Apr 26-30       Reading your own record
+      * error log
+      * time budget
+      * scoring rubric
+      * self-assessment
+      + methodical
+      + candid
+
+--- UNIT 10: Personal Statement ----------------------------------
+    standards: No new framework skills
+
+  W32  May 24-28       Voice on purpose
+      * persona (in a statement)
+      * voice
+      * authenticity
+      * plain style
+      + idiosyncratic
+      + understated
+
+  W33  May 31-Jun 4    The statement as an argument
+      * anecdote as evidence
+      * self-characterization
+      * audience of one
+      * the argument of a statement
+      + aspirational
+      + reflective
+
+      key:   (blank) TERM   * CONCEPT   + WORD (tier 2)   ~ NAME
+
+###############################################################################
+Introduction to Ethics and Leadership   (P6-7)
+280 core cards over 35 weeks · CONCEPT 162 · TERM 48 · WORD 70
+###############################################################################
+
+--- UNIT 1: Introduction to Logic and Debate --------------------
+    standards: Logic 4b.1 · Reasoning 2a.2
+
+  W01  Aug 10-14       What an argument is
+      * argument
+        premise
+        conclusion
+      * inference
+      * validity
+      * soundness
+      + tenable
+      + spurious
+
+  W02  Aug 17-21       Deduction and induction
+      * deductive argument
+      * inductive argument
+      * inductive strength
+      * cogency
+        counterexample
+        syllogism
+      + provisional
+      + categorical
+
+  W03  Aug 24-28       Fallacies of relevance
+      * fallacy
+      * ad hominem
+      * straw man
+      * illegitimate appeal to authority
+      * red herring
+      * tu quoque
+      + disingenuous
+      + tendentious
+
+  W04  Aug 31-Sep 4    Fallacies of presumption
+      * begging the question
+      * false dilemma
+      * slippery slope
+      * hasty generalization
+      * equivocation
+      * post hoc
+      + unfounded
+      + gratuitous
+
+  W05  Sep 7-11        Reconstruction
+      * principle of charity
+        enthymeme
+        hidden premise
+      * standard form
+      * steelman
+      * dialectic
+      + scrupulous
+      + perfunctory
+
+  W06  Sep 14-18       Refutation and debate craft
+        rebuttal
+        refutation
+        concession
+      * burden of proof
+        rejoinder
+      * clash
+      + forthright
+      + evasive
+
+  W07  Sep 21-25       The ethics of arguing
+      * epistemic humility
+      * motivated reasoning
+      * confirmation bias
+      * falsifiability
+      * crux
+      * reasonable disagreement
+      + dogmatic
+      + tentative
+
+--- UNIT 2: Egypt to Greece -------------------------------------
+    standards: Philosophy 1b.2 · 2a.1
+
+  W08  Oct 5-9         Before philosophy
+      * wisdom literature
+        maat
+        eudaimonia
+        telos
+        arete
+      * the good life
+      + temperate
+      + indulgent
+
+  W09  Oct 12-16       Socrates
+      * Socratic method
+        elenchus
+        aporia
+      * the examined life
+        Socratic irony
+        sophist
+      + probing
+      + obstinate
+
+  W10  Oct 19-23       Plato
+      * Form (Platonic)
+      * the Cave
+      * tripartite soul
+      * episteme and doxa
+      * justice as harmony
+      * philosopher-king
+      + transcendent
+      + illusory
+
+  W11  Oct 26-30       Aristotle and the Stoics
+      * golden mean
+        phronesis
+      * habituation
+        akrasia
+      * Stoicism
+      * dichotomy of control
+      + habitual
+      + immoderate
+
+--- UNIT 3: China to Islam --------------------------------------
+    standards: Philosophy 2a.1 · 3a.1 · Worldview 3d.2
+
+  W12  Nov 2-6         Confucius
+        ren
+        li
+        xiao
+        junzi
+      * five relationships
+      * rectification of names
+      + hierarchical
+      + obligatory
+
+  W13  Nov 9-13        Human nature, and the Dao
+      * Mencius on human nature
+      * Xunzi on human nature
+      * four sprouts
+      * self-cultivation
+        dao
+        wu wei
+      + innate
+      + malleable
+
+  W14  Nov 16-20       Buddhist ethics
+        ziran
+      * Four Noble Truths
+        dukkha
+        karma
+        cetana
+      * the Middle Way
+      + detached
+      + fleeting
+
+  W15  Nov 23-27       Islamic philosophy
+        falsafa
+        kalam
+        ijtihad
+      * al-Ghazali's critique
+      * transmission of Aristotle
+        adab
+      + syncretic
+      + orthodox
+
+--- UNIT 4: Aquinas to Enlightenment ----------------------------
+    standards: Philosophy 3a.2 · 3a.3
+
+  W16  Nov 30-Dec 4    Natural law and the moral test
+      * natural law
+      * double effect
+      * cardinal virtues
+      * categorical imperative
+      * universalizability
+      * the is-ought gap
+      + intrinsic
+      + permissible
+
+  W17  Dec 7-11        The arithmetic of suffering
+      * hypothetical imperative
+      * kingdom of ends
+      * utilitarianism
+        utility
+      * act versus rule utilitarianism
+      * trolley problem
+      + aggregate
+      + impartial
+
+--- UNIT 5: Understanding Poverty -------------------------------
+    standards: Philosophy 3d.1 · Decisions 1c.2
+
+  W18  Jan 4-8         What poverty is
+      * absolute poverty
+      * relative poverty
+        poverty line
+      * multidimensional poverty
+        deprivation
+      * capability approach
+      + destitute
+      + precarious
+
+  W19  Jan 11-15       Singer's pond
+      * Singer's pond
+      * moral obligation
+      * duty versus charity
+      * demandingness objection
+      * effective altruism
+      * moral distance
+      + culpable
+      + commendable
+
+  W20  Jan 18-22       What poverty does to thinking
+      * scarcity mindset
+      * bandwidth tax
+        cognitive load
+      * decision fatigue
+        opportunity cost
+      * time preference
+      + depleted
+      + myopic
+
+  W21  Jan 25-29       Systems, not just choices
+      * structural cause
+      * individual cause
+      * poverty trap
+        social mobility
+      * meritocracy
+      * systemic injustice
+      + entrenched
+      + inequitable
+
+  W22  Feb 15-19       When helping hurts
+      * aid dependency
+      * unintended consequence
+      * moral hazard
+      * paternalism
+      * agency
+      * subsidiarity
+      + counterproductive
+      + coercive
+
+  W23  Feb 22-26       Debt as a moral idea
+      * debt
+      * jubilee
+        usury
+      * reciprocity
+      * gift economy
+      * standing
+      + onerous
+      + exploitative
+
+--- UNIT 6: Service and Leadership ------------------------------
+    standards: Leadership A3 2.c · Identity 1b.1
+
+  W24  Mar 1-5         Leadership without charisma
+      * leadership
+      * authority
+      * legitimacy
+      * servant leadership
+      * followership
+      * moral courage
+      + decisive
+      + self-effacing
+
+  W25  Mar 8-12        What a leader owes
+      * stewardship
+      * accountability
+      * transparency
+      * conflict of interest
+      * integrity
+      * duty of care
+      + candid
+      + negligent
+
+  W26  Mar 15-19       Measuring good
+      * theory of change
+      * output versus outcome
+      * counterfactual
+      * impact
+        stakeholder
+      * mission drift
+      + attributable
+      + nominal
+
+--- UNIT 7: Applied Ethics of Service ---------------------------
+    standards: Philosophy 4a.1 · Decisions 1c.2
+
+  W27  Mar 22-26       The service trip that helps nobody
+      * voluntourism
+      * saviour complex
+      * informed consent
+      * dignity
+      * power asymmetry
+      * cultural humility
+      + extractive
+      + condescending
+
+  W28  Mar 29-Apr 2    How to read a mess
+      * case study method
+        casuistry
+      * prima facie duty
+      * all-things-considered duty
+      * moral remainder
+      * tragic choice
+      + irreducible
+      + competing
+
+  W29  Apr 12-16       Distributive justice
+      * distributive justice
+      * veil of ignorance
+      * difference principle
+      * desert
+      * need
+      * equality of opportunity
+      + equitable
+      + meritorious
+
+  W30  Apr 19-23       Rights
+      * right
+      * negative right
+      * positive right
+        duty-bearer
+      * human dignity
+      * rights inflation
+      + inalienable
+      + enforceable
+
+  W31  Apr 26-30       When roles conflict
+      * professional ethics
+      * whistleblowing
+      * loyalty
+      * confidentiality
+      * dual loyalty
+      * moral distress
+      + complicit
+      + expedient
+
+--- UNIT 8: The Real Service Project ----------------------------
+    standards: Leadership A3 2.c · Identity 1b.3
+
+  W32  May 3-7         From an idea to a proposal
+      * proposal
+      * feasibility
+        scope
+      * risk assessment
+      * sustainability
+      * exit plan
+      + viable
+      + tractable
+
+  W33  May 10-14       Working with, not for
+      * partnership
+      * co-design
+      * local knowledge
+      * capacity building
+        monitoring
+        evaluation
+      + collaborative
+      + responsive
+
+  W34  May 24-28       The principles paper
+      * principle
+      * transferability
+      * testability
+      * costliness
+      * a mood with good posture
+      * defence (of a principle)
+      + unwavering
+      + exacting
+
+  W35  May 31-Jun 4    Presenting work that is not finished
+      * provisional conclusion
+      * intellectual honesty
+        limitation
+      * acknowledgement
+      * the next question
+      * standing to speak
+      + forthcoming
+      + unresolved
+
+      key:   (blank) TERM   * CONCEPT   + WORD (tier 2)   ~ NAME
+
+###############################################################################
+English III/IV World Literature (Blue and Red)   (P1-2 / P3-4)
+210 core cards over 35 weeks · CONCEPT 66 · TERM 74 · WORD 70
+###############################################################################
+
+--- UNIT 1: Epic Tales and Timeless Voices ----------------------
+    standards: AERO RL.1 RL.2 RL.4 RI.1 RI.4 W.1 W.4
+
+  W01  Aug 10-14       What an epic is for
+        epic
+      * epic hero
+        epithet
+        in medias res
+      + transient
+      + formidable
+
+  W02  Aug 17-21       The voice on the tablet
+      * oral tradition
+      * translation as interpretation
+        characterization
+        foil
+      + reciprocal
+      + inexorable
+
+  W03  Aug 24-28       Flesh and clay
+      * hubris
+        motif
+        symbol
+      * binary opposition
+      + austere
+      + visceral
+
+  W04  Aug 31-Sep 4    Mortality and the quest
+      * theme
+        tone
+        imagery
+        elegy
+      + evocative
+      + stark
+
+  W05  Sep 7-11        The alliterative line
+        kenning
+        alliteration
+        caesura
+        litotes
+      + resonant
+      + sonorous
+
+  W06  Sep 14-18       What the monster is for
+        antagonist
+      * the monstrous
+      * othering
+        grotesque
+      + primal
+      + insatiable
+
+  W07  Sep 21-25       Vengeance and its limits
+      * heroic code
+        comitatus
+        wergild
+      * feud
+      + inviolable
+      + implacable
+
+  W08  Oct 5-9         The dragon and the aging hero
+      * elegiac mode
+        foreshadowing
+        anagnorisis
+        ubi sunt
+      + mournful
+      + futile
+
+  W09  Oct 12-16       Across eras, and revision
+      * intertextuality
+      * adaptation
+      * revision
+      * close reading
+      + derivative
+      + judicious
+
+--- UNIT 2: Literary Mosaic -------------------------------------
+    standards: AERO RL.2 RL.4 W.1 W.7 W.8
+
+  W10  Oct 19-23       The accidental birth of the novel
+        novel
+        picaresque
+      * quest narrative
+        frame narrative
+      + episodic
+      + delusional
+
+  W11  Oct 26-30       When the narrator does not believe
+        narrator
+      * unreliable narrator
+        dramatic irony
+        free indirect discourse
+      + detached
+      + complicit
+
+  W12  Nov 2-6         The ordinary and the impossible
+      * magical realism
+      * the fantastic
+        verisimilitude
+      * matter-of-fact tone
+      + mundane
+      + seamless
+
+  W13  Nov 9-13        Labyrinths
+        metafiction
+      * recursion
+      * the double
+      * labyrinth motif
+      + vertiginous
+      + cyclical
+
+  W14  Nov 16-20       Symbol, allegory, and the lesson
+        allegory
+        parable
+      * didacticism
+        conceit
+      + portentous
+      + platitudinous
+
+  W15  Nov 23-27       Word choice builds a world
+        diction
+        register
+        idiom
+      * world-building
+      + lyrical
+      + sparse
+
+  W16  Nov 30-Dec 4    Philosophy or platitude
+      * Personal Legend
+      * theme versus message
+      * sentimentality
+        aphorism
+      + earnest
+      + saccharine
+
+  W17  Dec 7-11        Finding a source you can defend
+      * source credibility
+        annotation
+        paraphrase
+        citation
+      + verifiable
+      + tangential
+
+--- UNIT 3: Echoes of the East ----------------------------------
+    standards: AERO RL.1 RL.2 RL.4 LS.3 LS.4
+
+  W18  Jan 4-8         Constraint as engine
+      * classical Chinese form
+        parallelism (in couplets)
+        couplet
+      * compression
+      + terse
+      + elliptical
+
+  W19  Jan 11-15       Folk poetry before the canon
+        refrain
+      * oral formula
+      * anonymity
+        folk poetry
+      + plaintive
+      + communal
+
+  W20  Jan 18-22       A painter's eye in verse
+      * landscape poetry
+      * negative space
+      * imagism
+        juxtaposition
+      + luminous
+      + spare
+
+  W21  Jan 25-29       Haiku
+        haiku
+        kireji
+        kigo
+      * mono no aware
+      + fleeting
+      + understated
+
+  W22  Feb 15-19       The turn that has to land
+        sijo
+      * the turn
+        syllabic form
+      * closure
+      + pivotal
+      + emphatic
+
+  W23  Feb 22-26       The self against the society that made it
+      * social critique
+        first-person retrospective
+        satire
+      * irony (structural)
+      + disillusioned
+      + mordant
+
+  W24  Mar 1-5         Seven testimonies, no verdict
+      * multiple narration
+        testimony
+      * indeterminacy
+        point of view
+      + contradictory
+      + elusive
+
+  W25  Mar 8-12        Panel size is duration
+        graphic narrative
+        panel
+        gutter
+      * closure (in comics)
+      + kinetic
+      + sequential
+
+  W26  Mar 15-19       Mischief punished into discipline
+        episodic narrative
+      * allegorical journey
+      * trickster
+        character arc
+      + irreverent
+      + cumulative
+
+  W27  Mar 22-26       Who decides what belongs
+      * canon
+      * canonicity
+      * literary value
+      * gatekeeping
+      + contested
+      + arbitrary
+
+--- UNIT 4: Speeches and Nonfiction -----------------------------
+    standards: AERO RI.8 W.1 LS.2 LS.4 LS.5
+
+  W28  Mar 29-Apr 2    The room, the moment, the stakes
+      * rhetorical situation
+        occasion
+      * audience
+      * exigence
+      + urgent
+      + consequential
+
+  W29  Apr 12-16       A starting point, not an answer
+        ethos
+        pathos
+        logos
+      * credibility
+      + authoritative
+      + impassioned
+
+  W30  Apr 19-23       The shapes a speech makes
+        anaphora
+        tricolon
+        rhetorical question
+        cadence
+      + percussive
+      + rousing
+
+  W31  Apr 26-30       The speech as an act of defiance
+        peroration
+        exordium
+      * moral authority
+      * witness
+      + defiant
+      + resolute
+
+  W32  May 3-7         Everything the page cannot show
+        delivery
+      * pause
+        prosody
+      * emphasis by stress
+      + measured
+      + restrained
+
+  W33  May 10-14       Can rhetoric be neutral
+      * framing
+      * propaganda
+      * neutrality
+        agenda
+      + ostensibly
+      + insidious
+
+  W34  May 24-28       The address that does not sound like every other one
+        commencement address
+      * convention
+        cliche
+      * specificity
+      + trite
+      + unaffected
+
+  W35  May 31-Jun 4    Argument for the ear
+      * podcast essay
+      * signposting
+        sound design
+      * intimacy
+      + conversational
+      + immersive
+
+      key:   (blank) TERM   * CONCEPT   + WORD (tier 2)   ~ NAME
+
+###############################################################################
+HOW A 10-QUESTION QUIZ DRAWS FROM THIS
+###############################################################################
+
+  A teaching week is thematically tight, so four of its six core cards share a
+  family by design. That is right for teaching and wrong for a matching grid,
+  where five near-identical backs stop being a vocabulary test. The two rules
+  resolve if the question types split the work:
+
+    Q1-5   MULTIPLE CHOICE, all five from THIS WEEK's new cards.
+           Draw the distractors from the SAME family - siblings are what make
+           a multiple-choice item discriminate.
+
+    Q6-10  TWO MATCHING SETS, 5 points: ONE new card plus FOUR prior ones,
+           each set spanning DIFFERENT families, max two per family.
+           The two unmatched fronts should be same-family cards from an
+           earlier week, so the distractors double as review.
+
+  That lands exactly on the 60/40 split: 6 items new, 4 items prior.
+  The confusable pairs never to place in one set are listed in
+  AP_RHETORICAL_DEVICE_MAP.txt Part D5.
+
+
+###############################################################################
+REFERENCE DECKS   (imported once per unit, tagged REFERENCE)
+###############################################################################
+
+  WL Unit 1 · Gilgamesh and Beowulf  (22 cards)
+      Gilgamesh · Enkidu · Shamhat · Humbaba · Ishtar · Utnapishtim · Siduri · Uruk · Sin-leqi-unninni · cuneiform · Beowulf · Grendel · Grendel's mother · Hrothgar · Heorot · Wiglaf · Unferth · Hygelac · the Geats · Nowell Codex · Seamus Heaney · the Finnsburg episode
+
+  WL Unit 2 · Literary Mosaic  (13 cards)
+      Cervantes · Don Quixote · Sancho Panza · Dulcinea · Paulo Coelho · Santiago · Melchizedek · Fatima · Jorge Luis Borges · Gabriel Garcia Marquez · Macondo · Julio Cortazar · Juan Rulfo
+
+  WL Unit 3 · Echoes of the East  (15 cards)
+      Book of Songs (Shijing) · Wang Wei · Li Bai · Du Fu · Matsuo Basho · Yosa Buson · Kobayashi Issa · sijo · Lu Xun · Ryunosuke Akutagawa · Rashomon · Jiro Taniguchi · Wu Cheng'en · Sun Wukong · Tripitaka
+
+  WL Unit 4 · Speeches and Nonfiction  (9 cards)
+      Winston Churchill · Nelson Mandela · Chimamanda Ngozi Adichie · Malala Yousafzai · Abraham Lincoln · Martin Luther King Jr · Sojourner Truth · Vaclav Havel · George Orwell
+
+  ETH Unit 2 · Egypt to Greece  (10 cards)
+      Ptahhotep · Thales · Protagoras · Socrates · Plato · Aristotle · Zeno of Citium · Epictetus · Marcus Aurelius · Seneca
+
+  ETH Unit 3 · China to Islam  (11 cards)
+      Confucius · Mencius · Xunzi · Laozi · Zhuangzi · the Buddha · Ashoka · al-Farabi · Avicenna (Ibn Sina) · Averroes (Ibn Rushd) · al-Ghazali
+
+  ETH Unit 4 · Aquinas to Enlightenment  (9 cards)
+      Augustine · Thomas Aquinas · Thomas Hobbes · John Locke · David Hume · Jean-Jacques Rousseau · Immanuel Kant · Jeremy Bentham · John Stuart Mill
+
+  ETH Unit 5 · Understanding Poverty  (7 cards)
+      Peter Singer · Amartya Sen · Mullainathan and Shafir · Banerjee and Duflo · Muhammad Yunus · David Graeber · Hernando de Soto
+
+  ETH Unit 7 · Applied Ethics of Service  (7 cards)
+      John Rawls · Robert Nozick · Ivan Illich · Robert Lupton · Paul Farmer · W E B Du Bois · Teju Cole
+
+  AP all units · Harris extension devices and the classical sources  (31 cards)
+      amplification · metanoia · diazeugma · prozeugma · mesozeugma · hypozeugma · syllepsis · anastrophe · catachresis · eponym · apostrophe · transferred epithet · simploce · anadiplosis · conduplicatio · epanalepsis · diacope · epizeuxis · scesis onomaton · onomatopoeia · assonance · consonance · aporia · anacoluthon · pun · anthimeria · Cicero · Quintilian · Demetrius · Longinus · Robert A. Harris

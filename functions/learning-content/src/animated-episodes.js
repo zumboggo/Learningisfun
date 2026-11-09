@@ -45,7 +45,7 @@ export async function animatedEpisodeAction({body,profile,userId,memberClassIds,
   let classIds=[...memberClassIds];if(teacher)classIds=(await db.listDocuments(databaseId,'classes',[Query.equal('teacherId',userId),Query.limit(100)])).documents.map(c=>c.$id);
   const rows=classIds.length?await list([Query.equal('classId',classIds),Query.equal('kind','animated-assignment')]):[];
   const assignments=rows.map(r=>({...JSON.parse(r.dataJson),assignmentId:r.$id})).filter(a=>!a.archived&&(teacher||profile.role==='student'&&Date.parse(a.releaseAt)<=Date.now()));
-  const drafts=teacher?await list([Query.equal('classId',scope)]):[];const byId={};for(const r of drafts){const d=JSON.parse(r.dataJson);if(d.type==='animated-draft'&&(!byId[d.id]||byId[d.id].revision<d.revision))byId[d.id]=d;}
+  const drafts=teacher?await list([Query.equal('classId',scope)]):[];const byId={};for(const r of drafts){const d={...JSON.parse(r.dataJson),updatedAt:r.$updatedAt};if(d.type==='animated-draft'&&(!byId[d.id]||byId[d.id].revision<d.revision))byId[d.id]=d;}
   const results=classIds.length?(await list([Query.equal('classId',classIds),Query.equal('userId',userId),Query.equal('kind','animated-result')])).map(r=>JSON.parse(r.dataJson)):[];const best={};for(const r of results)if(typeof r.score==='number')best[r.assignmentId]=Math.max(best[r.assignmentId]||0,r.score);return {assignments:assignments.map(a=>({...a,best:best[a.assignmentId]??null,completed:results.some(r=>r.assignmentId===a.assignmentId&&r.complete)})),drafts:Object.values(byId)};
  }
  if(['animatedSaveDraft','animatedReadDraft','animatedPublish'].includes(body.action)){
