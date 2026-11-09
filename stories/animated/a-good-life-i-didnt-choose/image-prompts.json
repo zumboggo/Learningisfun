@@ -1,0 +1,12 @@
+{
+  "tool": "built-in imagegen",
+  "teaser": {
+    "reference": "../everything-i-owned/teaser-reference.png",
+    "output": "teaser-reference.png",
+    "prompt": "Wide 16:9 illustration-story. Identity-only reference for Santiago: slim teenage Andalusian boy, warm tan skin, brown eyes, tousled brown hair, ochre tunic olive neckline. New setting: moonlit rocky Sahara near Al-Fayoum. Waist-up left facing unseen mentor right, quietly troubled and asking a sincere question, empty hands lowered. Distinct hand-carved woodcut print, carved hatching, paper grain, navy/ochre/ivory inks. No text or additional people. English line for motion: What if I decide to stay?"
+  },
+  "background": {
+    "output": "public/stories/animated/a-good-life-i-didnt-choose/assets/desert-v1.webp",
+    "prompt": "Wide 16:9 empty visual novel background near Al-Fayoum. Moonlit rocky Sahara, dark blue night, silver moon glow, low warm grey rocks at edges, distant palms left. Broad clear sandy foreground for standing actors, eye level. Clean slate outlines, muted cel-shaded graphic novel style, softly textured calm palette. No people, animals, snakes, text, furniture, modern objects or circle. Full frame."
+  }
+}

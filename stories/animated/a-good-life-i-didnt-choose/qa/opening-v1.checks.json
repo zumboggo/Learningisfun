@@ -1,0 +1,27 @@
+{
+  "source": "/Users/david.hepting/Documents/ChatGPT/Learning is Fun/implementation/stories/animated/a-good-life-i-didnt-choose/teaser-native.mp4",
+  "output": "/Users/david.hepting/Documents/ChatGPT/Learning is Fun/implementation/public/stories/shared/a-good-life-i-didnt-choose/opening-v1.mp4",
+  "dimensions": [
+    854,
+    480
+  ],
+  "fps": 24,
+  "hold_seconds": 3.0,
+  "motion_seconds": 6.0,
+  "reaction_hold_seconds": 0.0,
+  "total_seconds": 9.0,
+  "decoded_audio_seconds": 9.00275,
+  "audio_non_silent": true,
+  "audio_starts_after_hold": true,
+  "hold_mean_pixel_difference": 0.0020272248243559717,
+  "sha256": "1ed7964477e47cee6148c8752d27b34ebac58699aea30bfdfb34933852fa211b",
+  "expected_dialogue": "What if I decide to stay?",
+  "speech_check": "pass",
+  "review": "One visual/listening review remains; automated checks do not prove natural acting or lip sync.",
+  "transcription": "What if I decide to stay?",
+  "speech_runtime": {
+    "model": "base.en",
+    "cache": "/Users/david.hepting/Documents/ChatGPT/ChunkyChinese/app/.local/speech-cache",
+    "modelPath": "/Users/david.hepting/Documents/ChatGPT/ChunkyChinese/app/.local/speech-cache/models--Systran--faster-whisper-base.en/snapshots/3d3d5dee26484f91867d81cb899cfcf72b96be6c"
+  }
+}

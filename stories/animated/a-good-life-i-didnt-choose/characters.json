@@ -1,0 +1,24 @@
+[
+  {
+    "id": "Alchemist",
+    "name": "The alchemist",
+    "version": 1,
+    "finish": "polished",
+    "palette": {
+      "skin": "#ad7854",
+      "hair": "#37302c",
+      "shirt": "#313d49",
+      "trim": "#b7a581",
+      "beard": "#71665b"
+    },
+    "appearance": {
+      "age": "elder",
+      "hair": "swept",
+      "face": "lean",
+      "eyes": "keen",
+      "facialHair": "full",
+      "outfit": "robe"
+    },
+    "provenance": "Original stylized vector interpretation of Coelho’s alchemist. Dark robe, grey beard and uncovered face are readable theatrical approximations, not a claimed exact portrait. No real-person likeness."
+  }
+]

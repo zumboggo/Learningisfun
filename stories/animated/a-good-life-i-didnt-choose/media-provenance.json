@@ -1,0 +1,47 @@
+{
+  "model": "prunaai/p-video-2-pro",
+  "version": "7fc65104affa38f28b544b3549506e52f6519d752f528944f4eae2f94cd384b6",
+  "prompt": "Animate this woodcut print, preserving carved ink lines, paper grain, limited navy ochre ivory palette and Santiago’s exact youthful face, brown tousled hair and ochre tunic. Fixed camera and uninterrupted shot. He looks toward his unseen mentor at the right, quietly troubled, then speaks exactly one English line, exactly once: \"What if I decide to stay?\" Natural clear young male English voice. No additional words, repetitions, fillers, other voices, lyrics, humming or narration. After speaking he closes his mouth and waits for the answer. A restrained head movement and breathing only. Faint desert wind beneath the line, no music, no new objects or people, no text. Preserve the woodcut medium throughout the motion.",
+  "settings": {
+    "prompt": "Animate this woodcut print, preserving carved ink lines, paper grain, limited navy ochre ivory palette and Santiago’s exact youthful face, brown tousled hair and ochre tunic. Fixed camera and uninterrupted shot. He looks toward his unseen mentor at the right, quietly troubled, then speaks exactly one English line, exactly once: \"What if I decide to stay?\" Natural clear young male English voice. No additional words, repetitions, fillers, other voices, lyrics, humming or narration. After speaking he closes his mouth and waits for the answer. A restrained head movement and breathing only. Faint desert wind beneath the line, no music, no new objects or people, no text. Preserve the woodcut medium throughout the motion.",
+    "duration": 6,
+    "resolution": "480p",
+    "mode": "cost",
+    "prompt_upsampler": "off",
+    "aspect_ratio": "16:9",
+    "enable_safety_filter": true
+  },
+  "maximumChargeUsd": 0.06,
+  "predictionId": "6jw0fknv19rmy0d1qqp89azknr",
+  "status": "succeeded",
+  "metrics": {
+    "billing": {
+      "fps": 24,
+      "mode": "cost",
+      "model_variant": "cost",
+      "resolution_target": "480p",
+      "turbo": true,
+      "video_output_duration_seconds": 6
+    },
+    "fps": 24,
+    "inference_provider": "modal",
+    "metadata": {
+      "execution_time": {
+        "model_execution_time": 4.772,
+        "prompt_upsampler_execution_time": 0,
+        "total_execution_time": 11.583
+      }
+    },
+    "mode": "cost",
+    "model_variant": "cost",
+    "predict_time": 12.219184949,
+    "prompt_upsampler": "off",
+    "prompt_upsampler_fallback": false,
+    "resolution_target": "480p",
+    "total_time": 12.513996881,
+    "turbo": true,
+    "video_output_count": 1,
+    "video_output_duration_seconds": 6
+  },
+  "output": "https://replicate.delivery/xezq/4hksIWEziJ5mBB0HEMLeN0VcelS4LqVblOktYYq4dCOGQtfuA/5afaa3ea-c4bd-42fc-b46d-0fa4d09cfd51.mp4"
+}

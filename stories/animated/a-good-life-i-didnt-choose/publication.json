@@ -1,0 +1,34 @@
+{
+  "id": "a-good-life-i-didnt-choose",
+  "title": "A Good Life I Didn’t Choose",
+  "status": "published-assigned",
+  "version": 1,
+  "versionId": "884360e7c51f2443fa0fd704b544ccea",
+  "bytes": 658949,
+  "activeMembershipsVerified": true,
+  "liveTeacherReadVerified": true,
+  "publishedBytesVerified": true,
+  "privateMediaVerified": true,
+  "privatePreviewVerified": true,
+  "studentRelease": "Friday 2026-11-06 08:00 Asia/Shanghai",
+  "studioUrl": "https://zumboggo.github.io/Learningisfun/#/game/create?draft=a-good-life-i-didnt-choose",
+  "previewUrl": "https://zumboggo.github.io/Learningisfun/#/game/story-preview/a-good-life-i-didnt-choose",
+  "assignments": [
+    {
+      "classId": "09d7f0a7-4c29-462c-820f-e11ea914d375",
+      "className": "Red - Sect. 1",
+      "date": "2026-11-09",
+      "releaseAt": "2026-11-06T00:00:00.000Z",
+      "assignmentId": "b6d2b2338922656e1ca33fcdee3b7586",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/b6d2b2338922656e1ca33fcdee3b7586"
+    },
+    {
+      "classId": "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c",
+      "className": "Blue Sect. 2",
+      "date": "2026-11-09",
+      "releaseAt": "2026-11-06T00:00:00.000Z",
+      "assignmentId": "8829444592ec07c87fc3c983153da750",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/8829444592ec07c87fc3c983153da750"
+    }
+  ]
+}

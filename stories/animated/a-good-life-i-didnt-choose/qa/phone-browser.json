@@ -1,0 +1,11 @@
+[
+  {
+    "device": "phone",
+    "choices": 6,
+    "resume": true,
+    "listener": true,
+    "score": 100,
+    "reducedMotion": true,
+    "videoTransition": true
+  }
+]
