@@ -1,3 +1,5 @@
+import {ChineseReading,type ChineseSupport} from './ChineseReading';
+import './chinese-reading.css';
 import StoryInterlude from './StoryInterlude';
 import {storyInterludeCursors} from '@/services/story-interludes';
 import TaxiCutscene from './TaxiCutscene';
@@ -14,7 +16,23 @@ import {GameFullscreenButton} from '../GameFullscreenButton';
 import StoryPanel from './StoryPanel';
 export interface StoryWriting {question:number;text:string;submitted:boolean;revision:number}
 export interface StoryProgress {writing?:StoryWriting;choicePauseUntil?:number;steps:(string|null)[];quizzes:number[][];seed:number}
-export default function StoryPlayer({pack,mediaUrls,initial,onProgress,onReplay,debug=false,studentName,endContent,cinema=false,notebook,tools,status}:{pack:StoryPackage;mediaUrls?:Record<string,string>;initial?:StoryProgress;onProgress?:(p:StoryProgress)=>void;onReplay?:()=>void;debug?:boolean;studentName?:string;endContent?:ReactNode;cinema?:boolean;notebook?:ReactNode;tools?:ReactNode;status?:string}){
+export default function StoryPlayer({pack,mediaUrls,initial,onProgress,onReplay,debug=false,studentName,endContent,cinema=false,notebook,tools,status}:{pack:StoryPackage & {chinese?:ChineseSupport};mediaUrls?:Record<string,string>;initial?:StoryProgress;onProgress?:(p:StoryProgress)=>void;onReplay?:()=>void;debug?:boolean;studentName?:string;endContent?:ReactNode;cinema?:boolean;notebook?:ReactNode;tools?:ReactNode;status?:string}){
+ const chinese=pack.chinese;
+ const [pinyin,setPinyin]=useState(true),[gloss,setGloss]=useState(true),[autoVoice,setAutoVoice]=useState(false),[voiceError,setVoiceError]=useState('');
+ const voice=useRef<HTMLAudioElement|null>(null);
+ const voiceGeneration=useRef(0);
+ const [introDone,setIntroDone]=useState(!!initial?.steps.length),[introPlaying,setIntroPlaying]=useState(false);
+ const introVideo=useRef<HTMLVideoElement>(null);
+ const stopVoice=()=>{voiceGeneration.current++;voice.current?.pause();voice.current=null;setSpeaking(false);};
+ const playVoice=(text:string,actor='I')=>{
+  stopVoice();introVideo.current?.pause();setVoiceError('');const path=chinese?.audio[actor+'|'+text];if(!path)return;
+  const token=voiceGeneration.current,a=new Audio(import.meta.env.BASE_URL+path);voice.current=a;
+  a.onplay=()=>{if(token===voiceGeneration.current)setSpeaking(actor!=='I'&&!chinese?.recordedLines?.includes(text));};
+  a.onended=()=>{if(token===voiceGeneration.current)setSpeaking(false);};
+  a.onerror=()=>{if(token===voiceGeneration.current){setSpeaking(false);setVoiceError('Audio unavailable. You can keep reading and try replay.');}};
+  void a.play().catch(()=>{if(token===voiceGeneration.current){setSpeaking(false);setVoiceError('Tap Listen to play the Mandarin audio.');}});
+ };
+ const renderLine=(text:string,interactive=false)=>chinese?<ChineseReading text={text} line={chinese.lines[text]} pinyin={pinyin} gloss={gloss} interactive={interactive}/>:taxiWording(text);
  const displayPack=useMemo(()=>({...pack,assets:{...pack.assets,characters:Object.fromEntries(Object.entries(pack.assets.characters).map(([id,actor])=>[id,{...actor,name:taxiWording(actor.name)}]))}}),[pack]);
  const [previousSimulation,setPreviousSimulation]=useState<SimulationResult|null>(null);
  const compiled=useMemo(()=>validatePackage(pack),[pack]);const story=compiled.story;
@@ -31,7 +49,7 @@ export default function StoryPlayer({pack,mediaUrls,initial,onProgress,onReplay,
  const motion=useRef<AbortController|null>(null);
  const generation=useRef(0),animationRoot=useRef<HTMLDivElement|null>(null);
  useEffect(()=>{const m=window.matchMedia?.('(prefers-reduced-motion: reduce)');if(!m)return;const change=()=>setReduced(m.matches);m.addEventListener?.('change',change);return()=>m.removeEventListener?.('change',change);},[]);
- useEffect(()=>{const n=story?.nodes[state?.cursor];setSpeaking(accepted&&n?.type==='say'&&n.actor!=='I');const t=setTimeout(()=>setSpeaking(false),Math.min(7000,Math.max(1600,(n?.text?.length||0)*40)));return()=>clearTimeout(t);},[state?.cursor,accepted,story]);
+ useEffect(()=>{if(chinese)return;const n=story?.nodes[state?.cursor];setSpeaking(accepted&&n?.type==='say'&&n.actor!=='I');const t=setTimeout(()=>setSpeaking(false),Math.min(7000,Math.max(1600,(n?.text?.length||0)*40)));return()=>clearTimeout(t);},[state?.cursor,accepted,story]);
  const lock=useRef(false),root=useRef<HTMLDivElement>(null),timer=useRef<ReturnType<typeof setTimeout>|undefined>(undefined),audio=useRef<HTMLAudioElement>(null);
  useEffect(()=>()=>{generation.current++;motion.current?.abort();clearTimeout(timer.current);animationRoot.current?.getAnimations?.({subtree:true}).forEach(a=>a.cancel());},[]);
  useEffect(()=>{if(!accepted||initial?.steps.length||!root.current)return;const controller=new AbortController();motion.current=controller;void playSceneMotion(root.current,state?.cues||[],story?.nodes[state?.cursor],reduced,setResponses,controller.signal);return()=>controller.abort();
@@ -46,8 +64,16 @@ export default function StoryPlayer({pack,mediaUrls,initial,onProgress,onReplay,
  const interlude=accepted&&!state?.ended?interludeCursors[state?.cursor]:undefined;
  const taxiClip=accepted&&!state?.ended?taxiCursors[state?.cursor]:undefined;
  useEffect(()=>{if(taxiClip||interlude){motion.current?.abort();setResponses({});audio.current?.pause();setMusic(false);}},[taxiClip,interlude]);
+ useEffect(()=>{
+  if(chinese&&accepted&&introDone&&autoVoice&&current?.type==='say'&&!state.ended)playVoice(current.text,current.actor);
+  return()=>{voiceGeneration.current++;voice.current?.pause();voice.current=null;};
+ // The current beat owns one recording; all navigation cancels it.
+ // eslint-disable-next-line react-hooks/exhaustive-deps
+ },[state?.cursor,accepted,introDone,autoVoice]);
+ useEffect(()=>{const hide=()=>{if(document.hidden){stopVoice();introVideo.current?.pause();}};document.addEventListener('visibilitychange',hide);return()=>document.removeEventListener('visibilitychange',hide);},[]);
+ const languageControls=chinese&&<div className="mandarin-controls" aria-label="Mandarin reading supports"><button aria-pressed={pinyin} onClick={()=>setPinyin(v=>!v)}>Pinyin</button><button aria-pressed={gloss} onClick={()=>setGloss(v=>!v)}>English meanings</button><button aria-pressed={autoVoice} onClick={()=>{stopVoice();setAutoVoice(v=>!v);}}>Auto audio {autoVoice?'on':'off'}</button><button onClick={stopVoice}>Stop audio</button><span>Tap a phrase to reveal hidden help.</span>{voiceError&&<span role="status">{voiceError}</span>}</div>;
  const save=(p:StoryProgress)=>{setProgress(p);onProgress?.(p);};
- const cancel=()=>{generation.current++;motion.current?.abort();clearTimeout(timer.current);root.current?.getAnimations?.({subtree:true}).forEach(a=>a.cancel());setResponses({});lock.current=false;setBusy(false);};
+ const cancel=()=>{stopVoice();generation.current++;motion.current?.abort();clearTimeout(timer.current);root.current?.getAnimations?.({subtree:true}).forEach(a=>a.cancel());setResponses({});lock.current=false;setBusy(false);};
  const replay=()=>{if(onReplay){onReplay();return;}if(onProgress)return;setPreviousSimulation(simulation);cancel();setState(settleStory(story,initialStoryState(story,progress.seed)));setProgress({steps:[],quizzes:[],seed:progress.seed});setAnswers([-1,-1,-1,-1]);setShowHistory(false);setPanel(null);root.current?.scrollIntoView?.({block:'start',behavior:'instant'});};
  const back=()=>{
   const position=onProgress?viewStep:progress.steps.length;
@@ -57,14 +83,14 @@ export default function StoryPlayer({pack,mediaUrls,initial,onProgress,onReplay,
   setState(replayStory(story,p.steps,p.seed));setViewStep(position-1);
   if(!onProgress)save(p);
  };
- const history=<>{state.history.map((h,i)=>h.choice?<section className="story-history-choice" key={i} aria-label="Decision"><p><strong>{taxiWording(h.choice.prompt)}</strong></p><p><strong>What do I do?</strong></p><ol>{h.choice.options.map(o=><li key={o.id} className={o.id===h.choice!.selected?'story-history-picked':undefined}>{taxiWording(o.text)}{o.id===h.choice!.selected&&<strong className="story-history-badge"> ✓ You chose</strong>}</li>)}</ol></section>:<p className="cinema-history-line" key={i}><strong>{h.actor==='I'?'I':displayPack.assets.characters[h.actor]?.name}</strong>{taxiWording(h.text)}</p>)}</>;
+ const history=<>{state.history.map((h,i)=>h.choice?<section className="story-history-choice" key={i} aria-label="Decision"><p><strong>{taxiWording(h.choice.prompt)}</strong></p><p><strong>What do I do?</strong></p><ol>{h.choice.options.map(o=><li key={o.id} className={o.id===h.choice!.selected?'story-history-picked':undefined}>{renderLine(o.text)}{o.id===h.choice!.selected&&<strong className="story-history-badge"> ✓ You chose</strong>}</li>)}</ol></section>:<p className="cinema-history-line" key={i}><strong>{h.actor==='I'?'I':displayPack.assets.characters[h.actor]?.name}</strong>{renderLine(h.text)}</p>)}</>;
  const animate=async(el:HTMLElement|null,frames:Keyframe[],duration=420)=>{if(reduced||motionPaused||!el?.animate)return;const animation=el.animate(frames,{duration,easing:'ease-in-out'});try{await animation.finished;}catch{/* Navigation cancels effects. */}};
  const reviewing=!!onProgress&&viewStep<progress.steps.length;
  const advance=async(option:string|null)=>{if(lock.current||state.ended||choicePause.current>Date.now())return;
   if(reviewing){
    if(option!==progress.steps[viewStep])return;
    cancel();setViewStep(viewStep+1);setState(replayStory(story,progress.steps.slice(0,viewStep+1),progress.seed));return;
-  }motion.current?.abort();setResponses({});lock.current=true;setBusy(true);setSpeaking(false);const token=++generation.current;
+  }stopVoice();motion.current?.abort();setResponses({});lock.current=true;setBusy(true);setSpeaking(false);const token=++generation.current;
   const next=advanceStory(story,state,option);
   if(current?.type==='choice'&&pack.profile==='english-corner')choicePause.current=Date.now()+2000;
   // Keep departing actors mounted until their exit is complete.
@@ -108,12 +134,14 @@ export default function StoryPlayer({pack,mediaUrls,initial,onProgress,onReplay,
  </header>;
  const drawer=cinema&&panel&&<StoryPanel title={panel} onClose={()=>setPanel(null)}>{panel==='Notebook'?notebook:panel==='History'?<><p className="cinema-panel-hint">Your conversation so far.</p>{state.history.length?history:<p>The conversation will appear here as you play.</p>}</>:<>{status&&<p role="status">{status}</p>}{tools}{previewControls}</>}</StoryPanel>;
  if(!accepted)return <div className={cinema?'animated-story story-cinema cinema-intro':''}>{toolbar}<section className="story-disclaimer"><p className="cinema-intro-kicker">An interactive story</p><h2>{pack.title}</h2><p>{pack.notice||'All characters are imaginative recreations of real or fictional people and may not represent their actual views or ideas. Only labelled source excerpts are authentic quotations.'}</p><button onClick={()=>setAccepted(true)}>Accept</button></section>{drawer}</div>;
+ if(chinese?.intro&&accepted&&!introDone)return <div className="animated-story mandarin-intro"><h2>{pack.title}</h2>{introPlaying&&!reduced?<video ref={introVideo} src={import.meta.env.BASE_URL+chinese.intro.video} poster={import.meta.env.BASE_URL+chinese.intro.poster} controls autoPlay playsInline onEnded={()=>setIntroDone(true)} onError={()=>{setIntroPlaying(false);setVoiceError('Video unavailable; listen to the line or continue.');}}/>:<img src={import.meta.env.BASE_URL+chinese.intro.poster} alt={pack.description}/>}<p>{renderLine(chinese.intro.line)}</p>{voiceError&&<p role="status">{voiceError}</p>}{!reduced&&!introPlaying&&<button onClick={()=>{stopVoice();setIntroPlaying(true);}}>Play teaser</button>}<button onClick={()=>playVoice(chinese.intro!.line,chinese.intro!.actor)}>Listen to the line</button><button onClick={()=>{stopVoice();setIntroDone(true);}}>Continue to story →</button></div>;
  if(pack.context?.length===2&&!contextRead&&progress.steps.length===0)return <StoryInterlude media={{kind:'crawl',title:pack.title,kicker:'Before the story',fullTextLabel:'Show full text',paragraphs:pack.context,seconds:24}} reduced={reduced} onContinue={()=>setContextRead(true)}/>;
  if(interlude)return <div className={`animated-story ${cinema?'story-cinema':''}`}>{toolbar}<StoryInterlude key={state.cursor} media={interlude} reduced={reduced} disabled={busy||choiceBlocked} onContinue={()=>void advance(null)}/>{drawer}</div>;
  if(taxiClip)return <div className={`animated-story taxi-playing ${cinema?'story-cinema':''}`}>{toolbar}<TaxiCutscene key={state.cursor} clip={taxiClip} disabled={busy||choiceBlocked} onContinue={()=>void advance(null)}/>{drawer}</div>;
  const lastLine=state.history.at(-1),choiceContext=current.type==='choice'&&lastLine&&lastLine.text.length<=220?lastLine:null;
  return <div className={`animated-story ${pack.format===2?'story-modern':''} ${cinema?'story-cinema':''} ${state.ended?'story-ended':''}`} ref={el=>{root.current=el;if(el)animationRoot.current=el;}}>
   {toolbar}
+  {languageControls}
   {!cinema&&previewControls}
   <div className="story-content">
   <div className="story-stage-shell"><StoryStage pack={displayPack} state={state} current={current} speaking={speaking&&!state.ended} reduced={reduced} responses={responses} motionPaused={cinema?motionPaused:undefined} onMotionPause={cinema?setMotionPaused:undefined} hideMotionControl={cinema}/></div>
@@ -122,7 +150,7 @@ export default function StoryPlayer({pack,mediaUrls,initial,onProgress,onReplay,
   {simulation&&state.ended&&<SimulationScorecard result={simulation} previous={previousSimulation} complete={state.ended}/>}
   {simulation&&!state.ended&&<div className="story-meters" aria-label="Simulation score so far"><strong>Decision total: {simulation.total}/{simulation.maximum}</strong>{simulation.categories.map(c=><span key={c.variable}>{c.label}: {c.value}/{c.maximum}</span>)}</div>}
   {!simulation&&<div className="story-meters">{Object.entries(story.variables).filter(([,v]:any)=>v.visible).map(([k])=><span key={k}>{k}: {String(state.variables[k])}</span>)}</div>}
-  <section className={`story-dialogue ${current?.type==='choice'?'story-choice-dialogue':''}`} aria-live="polite">{cinema&&choiceContext&&<p className="cinema-choice-context"><strong>{choiceContext.actor==='I'?'My story':displayPack.assets.characters[choiceContext.actor]?.name}</strong><span>{taxiWording(choiceContext.text)}</span></p>}{!state.ended&&current.type==='say'&&<><strong>{current.beat?'On the scene':current.actor==='I'?'My story':displayPack.assets.characters[current.actor].name}</strong><p>{taxiWording(current.text)}</p><button data-next disabled={busy||choiceBlocked} onClick={()=>advance(null)}>{current.beat?'Continue →':'Next →'}</button></>}{!state.ended&&current.type==='act'&&<><strong>On the scene</strong><p>{taxiWording(current.text)}</p><button data-next disabled={busy||choiceBlocked} onClick={()=>advance(null)}>{busy?'Action playing…':'Continue →'}</button></>}{!state.ended&&current.type==='choice'&&<><h2>What do I do?</h2>{reviewing&&<p>Reviewing your recorded choice. Press → or select it to continue.</p>}<div className="story-options" style={{gridTemplateColumns:cinema?`repeat(${current.options.length===4?2:Math.min(current.options.length,3)}, minmax(0, 1fr))`:undefined}}>{current.options.map((o:any,i:number)=><button key={o.id} data-choice={o.id} disabled={busy||choiceBlocked||(reviewing&&o.id!==progress.steps[viewStep])} onClick={()=>advance(o.id)}>{cinema&&<kbd aria-hidden="true">{i+1}</kbd>}<span>{o.text}</span></button>)}</div></>}
+  <section className={`story-dialogue ${current?.type==='choice'?'story-choice-dialogue':''}`} aria-live="polite">{cinema&&choiceContext&&<p className="cinema-choice-context"><strong>{choiceContext.actor==='I'?'My story':displayPack.assets.characters[choiceContext.actor]?.name}</strong><span>{renderLine(choiceContext.text)}</span></p>}{!state.ended&&current.type==='say'&&<><strong>{current.beat?'On the scene':current.actor==='I'?'My story':displayPack.assets.characters[current.actor].name}</strong><p>{renderLine(current.text,true)}</p>{chinese&&<button className="mandarin-listen" onClick={()=>playVoice(current.text,current.actor)}>Listen ↻</button>}<button data-next disabled={busy||choiceBlocked} onClick={()=>advance(null)}>{current.beat?'Continue →':'Next →'}</button></>}{!state.ended&&current.type==='act'&&<><strong>On the scene</strong><p>{renderLine(current.text,true)}</p>{chinese&&<button className="mandarin-listen" onClick={()=>playVoice(current.text,current.actor)}>Listen ↻</button>}<button data-next disabled={busy||choiceBlocked} onClick={()=>advance(null)}>{busy?'Action playing…':'Continue →'}</button></>}{!state.ended&&current.type==='choice'&&<><h2>What do I do?</h2>{reviewing&&<p>Reviewing your recorded choice. Press → or select it to continue.</p>}<div className="story-options" style={{gridTemplateColumns:cinema?`repeat(${current.options.length===4?2:Math.min(current.options.length,3)}, minmax(0, 1fr))`:undefined}}>{current.options.map((o:any,i:number)=><div className={chinese?'mandarin-option':undefined} style={chinese?undefined:{display:'contents'}} key={o.id}><button key={o.id} data-choice={o.id} disabled={busy||choiceBlocked||(reviewing&&o.id!==progress.steps[viewStep])} onClick={()=>advance(o.id)}>{cinema&&<kbd aria-hidden="true">{i+1}</kbd>}<span>{renderLine(o.text)}</span></button>{chinese&&<button className="mandarin-listen" aria-label={`Listen to choice ${i+1}`} onClick={()=>playVoice(o.text)}>Listen ↻</button>}</div>)}</div></>}
   {choiceBlocked&&<p role="status">Take a moment to read the response…</p>}
   {state.ended&&<>{(onReplay||!onProgress)&&<button onClick={replay}>Replay episode</button>}<h2>{pack.assessmentMode==='none'?'Story complete':passed?'Home again':'Four questions before we return'}</h2>{pack.assessmentMode==='none'&&<p>Completed · no knowledge quiz</p>}{score!==null&&<p role="status">{score/25}/4 correct · {score}/100 · {passed?(pack.writing?(progress.writing?.submitted?'Quiz passed. Your paragraph is ready for teacher review.':'Quiz passed. Complete your paragraph below.'):'Complete. Your story choices are separate from this knowledge score.'):'Review the explanations, then try again.'}</p>}{!passed&&pack.quiz.map((q,i)=><fieldset key={i}><legend>{i+1}. {q.prompt}</legend>{q.options.map((o,j)=><label key={j}><input type="radio" name={'question-'+i} checked={answers[i]===j} onChange={()=>setAnswers(answers.map((v,k)=>k===i?j:v))}/>{o}</label>)}{score!==null&&<p>{q.explanation}</p>}</fieldset>)}{!passed&&<button disabled={answers.includes(-1)||choiceBlocked} onClick={()=>{if(lock.current||choicePause.current>Date.now())return;lock.current=true;save({...progress,quizzes:[...progress.quizzes,answers.slice()]});setAnswers([-1,-1,-1,-1]);timer.current=setTimeout(()=>{lock.current=false;},300);}}>Check answers</button>}</>}
   {state.ended&&(score!==null||pack.assessmentMode==='none')&&pack.writing&&<section className="story-writing" aria-label="Writing response">

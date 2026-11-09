@@ -1,3 +1,4 @@
+import ChineseDemoPage from '@/pages/ChineseDemoPage';
 import {useEffect, useState} from 'react';
 import StoryPlayer from '@/components/animated/StoryPlayer';
 import {Practice} from '@/pages/LessonsPage';
@@ -11,6 +12,7 @@ const readings = import.meta.glob('../../../readings/history-of-ethics-china/par
 const images = import.meta.glob('./reading-images/*.webp', {query: '?url', import: 'default', eager: true}) as Record<string, string>;
 
 export default function TeacherExamplePreview({section, id, title}: {section: ExampleSection; id: string; title: string}) {
+  if (section === 'game' && ['today-youre-the-teacher','a-message-from-tomorrow'].includes(id)) return <ChineseDemoPage episodeId={id}/>;
   if (section === 'game') return <EpisodeExample id={id}/>;
   if (section === 'texts') return <ReadingExample id={id} title={title}/>;
   const lesson = nestedQuoteExample.id === id ? nestedQuoteExample : undefined;

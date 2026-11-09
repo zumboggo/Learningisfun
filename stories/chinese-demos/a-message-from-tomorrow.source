@@ -1,0 +1,145 @@
+story 2
+label opening
+scene corridor
+show Ning worried left
+camera medium Ning cut
+I: 新家的第一个晚上，我只有一个碗。 || 新家的=in my new home / 第一个晚上，=on the first evening / 我只有=I have only / 一个碗。=one bowl
+I: 门外有声音。我没有开门。 || 门外=outside the door / 有声音。=there is a sound / 我没有=I do not / 开门。=open the door
+I: 今天，我把邻居的名字叫错了三次。 || 今天，=today / 我把邻居的名字=I said my neighbor's name / 叫错了=wrong / 三次。=three times
+I: 手机亮了。一条语音消息。 || 手机亮了。=my phone lights up / 一条=a / 语音消息。=voice message
+I: 我按下播放。 || 我按下=I press / 播放。=play
+Ning: 明天，别走那条路。 || 明天，=tomorrow / 别走=don't take / 那条路。=that road
+I: 是我的声音。可是我没有说过这句话。 || 是我的声音。=it is my voice / 可是=but / 我没有说过=I have never said / 这句话。=this sentence
+choice message
+option again "我再听一次。" -> again || 我再听=I'll listen again / 一次。=once
+option reply "你是谁？" -> reply || 你是谁？=who are you?
+label again
+I: 连最后那口气，都和我一样。 || 连=even / 最后那口气，=the breath at the end / 都和我一样。=is just like mine
+Ning: 明天，别走那条路。 || 明天，=tomorrow / 别走=don't take / 那条路。=that road
+goto knock
+label reply
+Ning: 你是谁？ || 你是谁？=who are you?
+I: 没有回答。我的话旁边，只有一个小小的点。 || 没有回答。=there is no answer / 我的话旁边，=beside my words / 只有=there is only / 一个小小的点。=a tiny dot
+label knock
+I: 门又响了。这次，我开了一点。 || 门又响了。=the door sounds again / 这次，=this time / 我开了一点。=I open it a little
+show Chen neutral right
+camera two Ning Chen cut
+look Ning Chen
+look Chen Ning
+Chen: 我姓陈。不是程，也不是成。 || 我姓陈。=my surname is Chen / 不是程，=not Cheng / 也不是成。=nor that other Cheng
+Ning: 陈先生。对不起。 || 陈先生。=Mr Chen / 对不起。=I'm sorry
+Chen: 这次对了。你吃饭了吗？ || 这次对了。=you got it right this time / 你吃饭了吗？=have you eaten?
+I: 他拿着一个蓝色的碗。 || 他拿着=he is holding / 一个蓝色的碗。=a blue bowl
+Ning: 我吃过了。谢谢。 || 我吃过了。=I have eaten / 谢谢。=thank you
+I: 我的肚子叫了一声。 || 我的肚子=my stomach / 叫了一声。=growls
+react Chen laugh
+Chen: 你的肚子不同意。 || 你的肚子=your stomach / 不同意。=disagrees
+choice bowl
+option accept "那……给我一点吧。" -> accept || 那……=then… / 给我=give me / 一点吧。=a little, please
+option explain "我有点不好意思。" -> explain || 我有点=I feel a little / 不好意思。=embarrassed
+label accept
+Chen: 好。碗不急着还。 || 好。=okay / 碗=the bowl / 不急着还。=doesn't need returning right away
+I: 他把碗放在门边，慢慢走回去。 || 他把碗=he takes the bowl and / 放在门边，=sets it beside the door / 慢慢=slowly / 走回去。=walking back
+goto morning
+label explain
+express Chen happy
+Chen: 我也怕你不喜欢。放这里，你饿了就吃。 || 我也怕=I was also afraid / 你不喜欢。=you wouldn't like it / 放这里，=I'll leave it here / 你饿了=when you're hungry / 就吃。=eat
+I: 他没有等我回答。碗里还有热气。 || 他没有=he did not / 等我回答。=wait for my reply / 碗里=in the bowl / 还有热气。=steam still rises
+label morning
+scene corridor
+show Ning neutral left
+camera medium Ning cut
+I: 第二天，我洗好碗，准备去上班。 || 第二天，=the next day / 我洗好碗，=I wash the bowl / 准备=and get ready / 去上班。=to go to work
+I: 手机又亮了。 || 手机=the phone / 又亮了。=lights up again
+Ning: 走左边。带上那个碗。 || 走左边。=go left / 带上=bring / 那个碗。=that bowl
+I: 右边是大路。左边要经过陈先生的门。 || 右边=to the right / 是大路。=is the main road / 左边=to the left / 要经过=you must pass / 陈先生的门。=Mr Chen's door
+choice road
+option left "我走左边。" -> left || 我走左边。=I'll go left
+option test "我先看看右边。" -> test || 我先=I'll first / 看看右边。=look to the right
+label left
+I: 我抱着碗，向左走。 || 我抱着碗，=I hold the bowl / 向左走。=and walk left
+I: 没有什么可怕的东西。只有很多箱子。 || 没有=there is no / 什么可怕的东西。=terrifying thing / 只有=only / 很多箱子。=lots of boxes
+goto boxes
+label test
+I: 右边阳光很好。一个孩子跑过，笑得很大声。 || 右边=to the right / 阳光很好。=the sun shines brightly / 一个孩子=a child / 跑过，=runs past / 笑得很大声。=laughing loudly
+I: 这里没有危险。那条消息到底想说什么？ || 这里=here / 没有危险。=there is no danger / 那条消息=that message / 到底=what on earth / 想说什么？=is it trying to say?
+I: 我想起那个碗，转身向左走。 || 我想起=I remember / 那个碗，=that bowl / 转身=turn around / 向左走。=and walk left
+label boxes
+show Chen sad right
+camera two Ning Chen cut
+look Ning Chen
+look Chen Ning
+Ning: 你要搬家？ || 你要=are you going to / 搬家？=move?
+Chen: 明天走。女儿叫我去她那里。 || 明天走。=I leave tomorrow / 女儿=my daughter / 叫我=asked me / 去她那里。=to go and live with her
+Ning: 那很好啊。 || 那很好啊。=that's good, isn't it?
+Chen: 是啊。很好。 || 是啊。=yes / 很好。=very good
+camera listener Ning cut
+I: 他说“很好”的时候，没有看我。 || 他说=when he said / “很好”的时候，=“very good” / 没有看我。=he didn't look at me
+choice truth
+option memory "你在这里住了多久？" -> memory || 你在这里=here you have / 住了多久？=lived for how long?
+option phone "我收到一条奇怪的消息。" -> phone || 我收到=I received / 一条奇怪的消息。=a strange message
+label memory
+Chen: 三十年。以前，晚上总有人来敲门。 || 三十年。=thirty years / 以前，=before / 晚上=in the evenings / 总有人=someone would always / 来敲门。=come and knock
+Chen: 现在，大家都很忙。 || 现在，=now / 大家=everyone / 都很忙。=is very busy
+I: 我看看自己关着的门。 || 我看看=I look at / 自己= my own / 关着的门。=closed door
+goto leaving
+label phone
+camera two Ning Chen cut
+I: 我给他听手机里的声音。 || 我给他听=I let him hear / 手机里的声音。=the voice in my phone
+Chen: 你的声音？ || 你的声音？=your voice?
+Ning: 可是我不记得说过。 || 可是=but / 我不记得=I don't remember / 说过。=saying it
+Chen: 它叫你来还碗？这手机比你有礼貌。 || 它叫你=it told you to / 来还碗？=come return the bowl? / 这手机=this phone / 比你=compared with you / 有礼貌。=has better manners
+react Ning laugh
+I: 我笑了。他也笑了，但很快又低下头。 || 我笑了。=I laughed / 他也笑了，=he laughed too / 但很快=but soon / 又低下头。=he lowered his head again
+label leaving
+camera two Ning Chen cut
+Chen: 碗送给你。我用不了两个。 || 碗送给你。=the bowl is yours / 我用不了=I have no use for / 两个。=two
+I: 箱子上，放着另一个蓝色的碗。 || 箱子上，=on a box / 放着=there sits / 另一个=another / 蓝色的碗。=blue bowl
+Ning: 你今晚吃什么？ || 你今晚=tonight you / 吃什么？=will eat what?
+Chen: 随便吃点。你上班去吧。 || 随便吃点。=just something simple / 你上班去吧。=go on to work
+I: 我走到楼下。手机没有再响。 || 我走到=I walk / 楼下。=downstairs / 手机=the phone / 没有再响。=does not sound again
+I: 我等了一会儿。没有新的消息。 || 我等了=I wait / 一会儿。=a while / 没有=there is no / 新的消息。=new message
+I: 也许，它不是要我躲开什么。 || 也许，=perhaps / 它不是要我=it doesn't want me to / 躲开什么。=avoid something
+I: 我把手机放进口袋。今晚，我自己选。 || 我把手机=I put my phone / 放进口袋。=into my pocket / 今晚，=tonight / 我自己选。=I'll choose for myself
+scene corridor
+show Ning neutral left
+show Chen neutral right
+camera two Ning Chen cut
+I: 晚上，我敲了陈先生的门。 || 晚上，=that evening / 我敲了=I knock on / 陈先生的门。=Mr Chen's door
+Chen: 又叫错名字了？ || 又=again / 叫错名字了？=got my name wrong?
+choice dinner
+option invite "陈先生，和我一起吃饭吧。" -> invite || 陈先生，=Mr Chen / 和我=together with me / 一起吃饭吧。=let's have dinner
+option help "我不会做饭。你能教我吗？" -> help || 我不会做饭。=I cannot cook / 你能=can you / 教我吗？=teach me?
+label invite
+Ning: 陈先生，和我一起吃饭吧。 || 陈先生，=Mr Chen / 和我=together with me / 一起吃饭吧。=let's have dinner
+Chen: 你请我？ || 你请我？=you're inviting me?
+Ning: 我有两个碗。一个在你这里。 || 我有=I have / 两个碗。=two bowls / 一个=one / 在你这里。=is here with you
+goto dinner
+label help
+Ning: 我不会做饭。你能教我吗？ || 我不会做饭。=I cannot cook / 你能=can you / 教我吗？=teach me?
+Chen: 你会洗碗吗？ || 你会=can you / 洗碗吗？=wash dishes?
+Ning: 这个我会。 || 这个=this / 我会。=I can do
+Chen: 那我们都不会饿了。 || 那=then / 我们都=neither of us / 不会饿了。=will go hungry
+label dinner
+express Chen happy
+camera listener Chen cut
+I: 这次，他笑的时候，眼睛也笑了。 || 这次，=this time / 他笑的时候，=when he smiled / 眼睛也笑了。=his eyes smiled too
+scene kitchen
+show Ning happy left
+show Chen happy right
+camera two Ning Chen cut
+I: 两个蓝色的碗，放在一张小桌上。 || 两个=two / 蓝色的碗，=blue bowls / 放在=are set on / 一张小桌上。=a small table
+Chen: 明天还是要走。 || 明天=tomorrow / 还是要走。=I still have to leave
+Ning: 我知道。到了以后，给我打电话吧。 || 我知道。=I know / 到了以后，=after you arrive / 给我打电话吧。=give me a call
+Chen: 你可别不接。 || 你可别=make sure you don't / 不接。=ignore it
+Ning: 我会接。 || 我会接。=I'll answer
+I: 手机亮了。我把它翻过去。饭还热着。 || 手机亮了。=the phone lights up / 我把它=I turn it / 翻过去。=face down / 饭还热着。=the food is still hot
+I: 吃完饭，我才听那条消息。 || 吃完饭，=after dinner / 我才听=only then do I listen to / 那条消息。=that message
+express Ning surprised
+camera listener Ning cut
+Chen: 明天，别让她一个人等。 || 明天，=tomorrow / 别让她=don't let her / 一个人等。=wait alone
+I: 是陈先生的声音。我慢慢抬起头。 || 是=it is / 陈先生的声音。=Mr Chen's voice / 我慢慢=I slowly / 抬起头。=raise my head
+Ning: 她是谁？ || 她是谁？=who is she?
+Chen: 什么？ || 什么？=what?
+I: 他的手机，就在桌上。关着。 || 他的手机，=his phone / 就在桌上。=is right there on the table / 关着。=switched off
+end

@@ -1,0 +1,9 @@
+import {afterEach,expect,it} from 'vitest';
+import {render,screen,fireEvent,cleanup} from '@testing-library/react';
+import {ChineseReading} from '@/components/animated/ChineseReading';
+import TeacherExamples from '@/components/teachers/TeacherExamples';
+const line={english:'I will wait for you.',pinyin:'wǒ děng nǐ',interlinear:[{chinese:'我等你。',pinyin:'wǒ děng nǐ',gloss:'I will wait for you.'}]};
+afterEach(cleanup);
+it('reveals hidden phrase support independently without replacing Chinese',()=>{render(<ChineseReading text="我等你。" line={line} pinyin={false} gloss={true} interactive/>);expect(screen.queryByText('wǒ děng nǐ')).toBeNull();expect(screen.getByText('I will wait for you.')).toBeVisible();fireEvent.click(screen.getByRole('button'));expect(screen.getByText('wǒ děng nǐ')).toBeVisible();fireEvent.click(screen.getByRole('button'));expect(screen.queryByText('wǒ děng nǐ')).toBeNull();});
+it('keeps choices free of nested buttons',()=>{const {container}=render(<button><ChineseReading text="我等你。" line={line} pinyin gloss/></button>);expect(container.querySelectorAll('button')).toHaveLength(1);});
+it('offers both Mandarin demos to teachers independently of their classes',()=>{render(<TeacherExamples section="game"/>);expect(screen.getByRole('button',{name:/Today, You’re the Teacher/})).toBeVisible();expect(screen.getByRole('button',{name:/A Message from Tomorrow/})).toBeVisible();});

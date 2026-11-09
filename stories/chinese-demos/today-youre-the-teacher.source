@@ -1,0 +1,129 @@
+story 2
+label opening
+scene classroom
+show Alex worried left
+show Kevin neutral right
+look Alex Kevin
+look Kevin Alex
+camera two Alex Kevin cut
+I: 还有十分钟。 || 还有=there are still / 十分钟。=ten minutes
+I: 我是老师。今天，我要用中文说话。 || 我是老师。=I am a teacher / 今天，=today / 我要=I need to / 用中文=use Chinese to / 说话。=speak
+I: 学生的爸爸妈妈快来了。 || 学生的=the students' / 爸爸妈妈=parents / 快来了。=will arrive soon
+Alex: 欢迎……欢迎你们吃我！ || 欢迎……=welcome… / 欢迎你们=you are welcome to / 吃我！=eat me!
+Kevin: 老师，是“来看我们”。不是“吃我”。 || 老师，=teacher / 是=is / “来看我们”。=“come and see us” / 不是=not / “吃我”。=“eat me”
+react Kevin laugh
+I: 他笑了。我也笑了，可是我的手还在抖。 || 他笑了。=he laughed / 我也笑了，=I laughed too / 可是=but / 我的手=my hands / 还在抖。=are still shaking
+Alex: 你怎么还没回家？ || 你怎么=how come you / 还没=have not yet / 回家？=gone home?
+Kevin: 我妈妈要来。我想让她看我的画。 || 我妈妈=my mother / 要来。=is coming / 我想=I want to / 让她=let her / 看我的画。=see my drawing
+I: 他把一张画放在桌上。画上有一只很小的鸟。 || 他把=he takes / 一张画=a drawing and / 放在桌上。=puts it on the desk / 画上=in the drawing / 有=there is / 一只很小的鸟。=a very small bird
+Kevin: 我帮你练习，好吗？ || 我帮你=I'll help you / 练习，=practise / 好吗？=okay?
+choice help
+option repeat "请再说一遍。" -> repeat || 请=please / 再说一遍。=say it again
+option honest "我有点怕。" -> honest || 我=I / 有点怕。=am a little scared
+label repeat
+Kevin: 欢迎你们来看我们。慢慢说。 || 欢迎你们=you are welcome / 来看我们。=to come and see us / 慢慢说。=say it slowly
+Alex: 欢迎你们……来看我们。 || 欢迎你们……=you are welcome… / 来看我们。=to come and see us
+Kevin: 对！这次不用吃老师了。 || 对！=right! / 这次=this time / 不用=no need to / 吃老师了。=eat the teacher
+ goto practice
+label honest
+express Kevin surprised
+Kevin: 你也会怕？你每天都说很多话。 || 你也=you too / 会怕？=can feel afraid? / 你每天=every day you / 都说=say / 很多话。=so much
+Alex: 用英语说。中文不一样。 || 用英语说。=I speak in English / 中文=Chinese / 不一样。=is different
+Kevin: 那今天，我是老师。 || 那今天，=then today / 我是老师。=I am the teacher
+label practice
+camera two Alex Kevin cut
+Kevin: 你想说什么？先告诉我。 || 你想=what do you want to / 说什么？=say? / 先=first / 告诉我。=tell me
+Alex: 你们的孩子很好。我很高兴教他们。 || 你们的孩子=your children / 很好。=are wonderful / 我很高兴=I am happy / 教他们。=to teach them
+Kevin: 那就说这个。 || 那=then / 就说这个。=just say this
+I: 他指着我的纸。纸上都是很长的句子。 || 他指着=he points to / 我的纸。=my paper / 纸上=on the paper / 都是=there are only / 很长的句子。=very long sentences
+choice paper
+option simple "我们写短一点。" -> simple || 我们=let's / 写短一点。=write it a little shorter
+option keep "我想说得好一点。" -> keep || 我想=I want to / 说得=speak / 好一点。=a little better
+label simple
+Kevin: 好。第一句，你会了。 || 好。=okay / 第一句，=the first sentence / 你会了。=you know it now
+I: 我们写了三句。纸上突然有了很多空白。 || 我们写了=we wrote / 三句。=three sentences / 纸上=on the paper / 突然=suddenly / 有了=there was / 很多空白。=a lot of empty space
+goto bird
+label keep
+Kevin: 长，不一定好。你说的，我想听懂。 || 长，=long / 不一定好。=is not always good / 你说的，=what you say / 我想=I want to / 听懂。=understand
+I: 我看看纸，又看看他。我们只留下三句。 || 我看看纸，=I look at the paper / 又看看他。=then look at him / 我们=we / 只留下=keep only / 三句。=three sentences
+label bird
+Alex: 你的画真好。你能给大家讲讲吗？ || 你的画=your drawing / 真好。=is lovely / 你能=can you / 给大家=tell everyone / 讲讲吗？=a little about it?
+express Kevin worried
+look Kevin away
+Kevin: 不。我说不好英语。 || 不。=no / 我说不好=I cannot speak well / 英语。=in English
+Alex: 可是你知道怎么说。 || 可是=but / 你知道=you know / 怎么说。=how to say it
+Kevin: 我知道。但是大家一看我，我就忘了。 || 我知道。=I know / 但是=but / 大家一看我，=as soon as everyone looks at me / 我就忘了。=I forget
+camera listener Alex cut
+I: 我低头看看自己的手。它们还在抖。 || 我低头=I look down / 看看=at / 自己的手。=my own hands / 它们=they / 还在抖。=are still shaking
+choice listen
+option admit "我也有点怕。" -> admit || 我也=I too / 有点怕。=am a little scared
+option ask "你想让我怎么帮你？" -> ask || 你想=how would you like / 让我=me to / 怎么帮你？=help you?
+label admit
+Alex: 我也有点怕。 || 我也=I too / 有点怕。=am a little scared
+camera listener Kevin cut
+Kevin: 那……你也不想听“很简单”吧？ || 那……=then… / 你也=you also / 不想听=do not want to hear / “很简单”吧？=“it's easy,” right?
+Alex: 对。我想听“我等你”。 || 对。=right / 我想听=I want to hear / “我等你”。=“I'll wait for you”
+goto together
+label ask
+Kevin: 别马上叫别人。等我一下。 || 别=don't / 马上=immediately / 叫别人。=call on someone else / 等我一下。=wait a moment for me
+camera listener Alex cut
+I: 昨天，我只等了两秒。 || 昨天，=yesterday / 我只等了=I waited only / 两秒。=two seconds
+Alex: 好。以后，我多等一会儿。 || 好。=okay / 以后，=from now on / 我多等=I'll wait / 一会儿。=a little longer
+label together
+camera two Alex Kevin cut
+look Kevin Alex
+Kevin: 这只鸟想飞。可是它还没飞过。 || 这只鸟=this bird / 想飞。=wants to fly / 可是=but / 它还没=it has never / 飞过。=flown before
+Alex: 像我们。 || 像我们。=like us
+Kevin: 老师，你没有翅膀。 || 老师，=teacher / 你没有=you don't have / 翅膀。=wings
+react Alex laugh
+I: 这一次，我笑得停不下来。 || 这一次，=this time / 我笑得=I laugh so much / 停不下来。=I cannot stop
+I: 门外有说话的声音。时间到了。 || 门外=outside the door / 有说话的声音。=there are voices / 时间到了。=it is time
+express Alex worried
+Alex: 我又忘了第一句。 || 我又忘了=I forgot again / 第一句。=the first sentence
+choice entrance
+option note "我拿着纸进去。" -> note || 我拿着纸=I'll take my paper / 进去。=inside
+option partner "你能站在我旁边吗？" -> partner || 你能=can you / 站在=stand / 我旁边吗？=beside me?
+label note
+Kevin: 拿着吧。看纸也可以。 || 拿着吧。=take it / 看纸=looking at your paper / 也可以。=is okay too
+I: 他把纸递给我，没有把它藏起来。 || 他把纸=he takes the paper and / 递给我，=hands it to me / 没有=without / 把它藏起来。=hiding it
+goto welcome
+label partner
+Kevin: 可以。但是你要自己说。 || 可以。=yes / 但是=but / 你要=you need to / 自己说。=say it yourself
+Alex: 好。你不用替我说。 || 好。=okay / 你不用=you don't have to / 替我说。=speak for me
+label welcome
+scene classroom
+show Alex worried left
+show Kevin neutral right
+camera two Alex Kevin cut
+I: 大家都看着我。我把脚放稳。 || 大家=everyone / 都看着我。=is looking at me / 我把脚=I plant my feet / 放稳。=firmly
+Alex: 欢迎你们来看我们。 || 欢迎你们=you are welcome / 来看我们。=to come and see us
+I: 第二句不见了。屋里很安静。 || 第二句=the second sentence / 不见了。=has disappeared / 屋里=in the room / 很安静。=it is very quiet
+Alex: 请等一下。我还在学中文。 || 请等一下。=please wait a moment / 我还在学=I am still learning / 中文。=Chinese
+camera listener Kevin cut
+Kevin: 我等你。 || 我等你。=I'll wait for you
+I: 他没有马上替我说。 || 他没有=he did not / 马上=immediately / 替我说。=speak for me
+camera two Alex Kevin cut
+Alex: 你们的孩子很好。我很高兴教他们。 || 你们的孩子=your children / 很好。=are wonderful / 我很高兴=I am happy / 教他们。=to teach them
+express Alex happy
+I: 有人笑着点头。我终于能呼吸了。 || 有人=someone / 笑着点头。=smiles and nods / 我终于=at last I / 能呼吸了。=can breathe
+I: 后来，他妈妈来了。他拿起那张画。 || 后来，=later / 他妈妈来了。=his mother arrived / 他拿起=he picked up / 那张画。=that drawing
+Kevin: 老师，我想用英语讲一句。你别走。 || 老师，=teacher / 我想=I want to / 用英语=in English / 讲一句。=say one sentence / 你别走。=don't go
+choice ending
+option stay "我在这里。我等你。" -> stay || 我在这里。=I am here / 我等你。=I'll wait for you
+option quiet "我点点头，留在他旁边。" -> quiet || 我点点头，=I nod / 留在=and stay / 他旁边。=beside him
+label stay
+Alex: 我在这里。我等你。 || 我在这里。=I am here / 我等你。=I'll wait for you
+Kevin: 那你要等久一点。 || 那=then / 你要=you'll need to / 等久一点。=wait a little longer
+goto finish
+label quiet
+I: 我点点头，没有看钟。 || 我点点头，=I nod / 没有=without / 看钟。=looking at the clock
+Kevin: 你真的不走？ || 你真的=are you really / 不走？=not leaving?
+Alex: 不走。 || 不走。=I'm not leaving
+label finish
+camera listener Alex cut
+I: 他开始说了。声音很小，但我听见了。 || 他开始说了。=he began to speak / 声音很小，=his voice was quiet / 但我听见了。=but I heard him
+I: 他说的是那只还没飞过的鸟。 || 他说的是=he was talking about / 那只=that / 还没飞过的鸟。=bird that had never flown
+camera two Alex Kevin cut
+Kevin: 明天，我能再试一次吗？ || 明天，=tomorrow / 我能=can I / 再试一次吗？=try again?
+Alex: 能。明天，我们都再试一次。 || 能。=yes / 明天，=tomorrow / 我们都=both of us / 再试一次。=will try again
+end

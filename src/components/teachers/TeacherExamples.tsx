@@ -3,6 +3,8 @@ import {lazy, Suspense, useState} from 'react';
 const ExamplePreview = lazy(() => import('./TeacherExamplePreview'));
 const examples = {
   game: [
+    {id:'today-youre-the-teacher',title:'Today, You’re the Teacher · 今天你是老师',description:'Beginner Mandarin · a teacher learns to ask for help · pinyin, phrase meanings and audio'},
+    {id:'a-message-from-tomorrow',title:'A Message from Tomorrow · 来自明天的消息',description:'Beginner Mandarin · a mysterious voice and an unexpected connection · pinyin, phrase meanings and audio'},
     {id: 'the-people-who-told-him-to-wait', title: 'The People Who Told Him to Wait', description: 'Letter from Birmingham Jail · responding to objections'},
     {id: 'one-more-step-toward-peace', title: 'One More Step Toward Peace', description: 'Vietnam War · choices, consequences, and responsibility'},
   ],
