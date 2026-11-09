@@ -28,6 +28,7 @@ export async function reserveUsage(args,{ownerId,key,reservation,billing,categor
   if((await readRecord(db,args.databaseId,ownerId,key)).revision)fail('This request was already submitted. No automatic paid retry was made.',409);
   const connection=await readRecord(db,args.databaseId,ownerId,'ai-connection:'+billing.provider);
   if(billing.source==='personal'&&(connection.value?.credentialId!==billing.credentialId||connection.value?.epoch!==billing.epoch)||billing.source==='shared'&&connection.value?.credentialId)fail('Your billing connection changed. Review the request before submitting again.',409);
+  if(category==='images'){const settings=await readRecord(db,args.databaseId,ownerId,'ai-image-settings'),ceiling=billing.source==='personal'?(settings.value?.ceiling??.01):.01;if(reservation>ceiling)fail('Your image ceiling changed. Review the cost before generating.',409);}
   const ledger=await readRecord(db,args.databaseId,ownerId,ledgerKey(billing,month)),used=ledger.value?.used||0;
   const rateKey='ai-rate:'+(learnerId||ownerId),rate=await readRecord(db,args.databaseId,ownerId,rateKey),recent=(rate.value?.recent||[]).filter(t=>Date.now()-t<60000);
   if(recent.length>=5)fail('Please wait a minute before generating again.',429);
