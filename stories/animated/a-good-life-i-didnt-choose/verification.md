@@ -8,3 +8,5 @@
 - Cobra and horse events use faithful narration, not bespoke animated creatures. Circle erasing uses supported reaching movement. Stable readable captions preserve meaning with reduced motion. No historical-event crawl is required for this literary episode.
 - Full npm test passes: 217 frontend files / 1,113 tests, plus backend suites. Production build passes with the existing large-chunk advisory. Public output excludes classroom package and private teaser. No Canvas posting and no student attempts are created by verification.
 - Backend activation, two assignments and live package/media checks are recorded in publication.json after release.
+
+- Final live check: both Red and Blue student reads return the exact published version and all three accessible private teaser URLs. Teacher preview and stored bytes match. A concurrent backend release briefly removed the mapping; redeployed from integrated production source as 6af124dbdbcf7eb7a2e8, then both checks passed. Both assignments are dated 2026-11-09 and available now.

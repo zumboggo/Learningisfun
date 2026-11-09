@@ -1,6 +1,6 @@
 {
   "id": "a-good-life-i-didnt-choose",
-  "title": "A Good Life I Didn’t Choose",
+  "title": "A Good Life I Didn\u2019t Choose",
   "status": "published-assigned",
   "version": 1,
   "versionId": "884360e7c51f2443fa0fd704b544ccea",
@@ -30,5 +30,9 @@
       "assignmentId": "8829444592ec07c87fc3c983153da750",
       "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/8829444592ec07c87fc3c983153da750"
     }
-  ]
+  ],
+  "studentReadVerified": true,
+  "studentMediaVerified": true,
+  "studentAttemptsCreated": false,
+  "backendDeployment": "6af124dbdbcf7eb7a2e8"
 }

@@ -1,7 +1,7 @@
 {
-  "title": "A Good Life I Didn’t Choose",
+  "title": "A Good Life I Didn\u2019t Choose",
   "voice": "Intimate character drama",
-  "reason": "Love, belonging, fear of loss, and responsibility drive Santiago’s competing desires. Kevin’s small classroom vulnerability supplies a recognizable point of entry.",
+  "reason": "Love, belonging, fear of loss, and responsibility drive Santiago\u2019s competing desires. Kevin\u2019s small classroom vulnerability supplies a recognizable point of entry.",
   "date": "2026-11-09",
   "source": "User-supplied The Alchemist 25th Anniversary EPUB, Part_2a, inspected locally",
   "boundary": "Oasis reward as context through commitment to leave before sunrise; stop before goodbye to Fatima.",
@@ -54,9 +54,9 @@
     "Hepting": "Questions leave space rather than announce a moral; calm presence and small practical encouragement."
   },
   "directing": [
-    "Santiago/Alchemist pair → Fatima not asking him to stop → Santiago looks away, held observation → pair",
-    "pair → third-year undeserved guilt → sad Santiago listener → eyes down observation and short admission, each reader controlled → response choice",
-    "pair → commitment → relieved Santiago listener → consequences still unresolved → pair"
+    "Santiago/Alchemist pair \u2192 Fatima not asking him to stop \u2192 Santiago looks away, held observation \u2192 pair",
+    "pair \u2192 third-year undeserved guilt \u2192 sad Santiago listener \u2192 eyes down observation and short admission, each reader controlled \u2192 response choice",
+    "pair \u2192 commitment \u2192 relieved Santiago listener \u2192 consequences still unresolved \u2192 pair"
   ],
   "activities": "Travel and snake handling summarized in readable narration; stillness suits the confrontation. Supported reach action accompanies erasing the circle. No invented walk/snake animation claimed.",
   "cast": "Current reusable Kevin/Hepting; existing Santiago; supported new vector Alchemist. Auto partner-facing views used; no unsupported rear views.",
@@ -72,9 +72,9 @@
   },
   "assessment": "4 knowledge MCQs, 25 each, 75 passes; 6 story choices unscored; reflection optional and private.",
   "interpretiveLimits": "Stability and family commitment remain legitimate. Prediction belongs to the alchemist; no claim that every abandoned ambition causes lifelong regret. Kevin cannot alter canonical decisions.",
-  "backendDeployment": "6af124146d1b24c5ac7e",
+  "backendDeployment": "6af124dbdbcf7eb7a2e8",
   "runtimeVerification": {
     "castRehearsal": "Front, three-quarter and profile, mirrored, desktop and phone; actual auto-view exchanges inspected.",
-    "captionedLimits": "No animated cobra or riding cycle; movement is narrated. The alchemist’s stylized face is uncovered for readability."
+    "captionedLimits": "No animated cobra or riding cycle; movement is narrated. The alchemist\u2019s stylized face is uncovered for readability."
   }
 }
