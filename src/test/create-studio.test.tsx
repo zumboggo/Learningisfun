@@ -31,9 +31,9 @@ it('switches formats only after saving and restores each separate draft',async()
  });
  render(<MemoryRouter initialEntries={['/create/text?draft=separate-text']}><Routes><Route path="/create/:type" element={<CreatePage/>}/></Routes></MemoryRouter>);
  fireEvent.change(await screen.findByLabelText('Topic'),{target:{value:'The bridge reading'}});
- fireEvent.click(screen.getByRole('button',{name:'Lesson',exact:true}));
+ fireEvent.click(screen.getByRole('button',{name:'Lesson'}));
  await screen.findByText('Your lesson plan');fireEvent.change(screen.getByLabelText('Topic'),{target:{value:'Explain a metaphor'}});
- fireEvent.click(screen.getByRole('button',{name:'Text',exact:true}));
+ fireEvent.click(screen.getByRole('button',{name:'Text'}));
  expect(await screen.findByLabelText('Reading length')).toHaveValue('standard');expect(screen.getByLabelText('Topic')).toHaveValue('The bridge reading');
- fireEvent.click(screen.getByRole('button',{name:'Lesson',exact:true}));await screen.findByText('Your lesson plan');expect(screen.getByLabelText('Topic')).toHaveValue('Explain a metaphor');expect(texts.size).toBe(1);expect(lessons.size).toBe(1);
+ fireEvent.click(screen.getByRole('button',{name:'Lesson'}));await screen.findByText('Your lesson plan');expect(screen.getByLabelText('Topic')).toHaveValue('Explain a metaphor');expect(texts.size).toBe(1);expect(lessons.size).toBe(1);
 });
