@@ -5,6 +5,7 @@ import {paidCompletion} from './teacher-ai.js';
 import {teacherLessonClasses} from './lesson-authoring.js';
 import {readingImageAction,IMAGE_BUCKET,ownsImage} from './reading-images.js';
 import {ownsPdf} from './original-pdf.js';
+import {imageCatalog} from './image-models.js';
 import {backgroundAction} from './episode-background.js';
 import {GUIDANCE_VERSION,COURSES,textGuidance,researchKey} from './text-guidance.js';
 import {lengthRange,readingParagraphs,proseWords,newTextDraft} from './text-authoring-model.js';
@@ -38,7 +39,7 @@ export async function textAuthoringAction(args){
  if(!['teacher','admin'].includes(profile.role))fail('Teacher account required.',403);
  if(body.action==='textStudioLibrary'){
   const rows=await allRows(db,databaseId,WORKSPACE,[Query.equal('ownerId',userId),Query.startsWith('kind','text-draft:')]);
-  return {drafts:rows.map(r=>{const v=JSON.parse(r.dataJson);return {id:r.kind.slice(11),title:v.title||v.brief.topic||'Untitled text',updatedAt:v.updatedAt}}),classes:(await teacherLessonClasses(args)).map(c=>({id:c.$id,name:[c.courseName,c.name].filter(Boolean).join(' · ')})),courses:COURSES,imagePrice:IMAGE_PRICE,imageAvailable:!!process.env.REPLICATE_API_TOKEN&&Date.now()<=Date.parse(IMAGE_PRICE_VALID_UNTIL),guidanceVersion:GUIDANCE_VERSION};
+  return {drafts:rows.map(r=>{const v=JSON.parse(r.dataJson);return {id:r.kind.slice(11),title:v.title||v.brief.topic||'Untitled text',updatedAt:v.updatedAt}}),classes:(await teacherLessonClasses(args)).map(c=>({id:c.$id,name:[c.courseName,c.name].filter(Boolean).join(' · ')})),courses:COURSES,imagePrice:IMAGE_PRICE,imageAvailable:(await imageCatalog(args)).available,guidanceVersion:GUIDANCE_VERSION};
  }
  if(!validId(body.draftId))fail('Choose a valid draft.');const key='text-draft:'+body.draftId;
  const saved=await readRecord(db,databaseId,userId,key);
@@ -60,7 +61,7 @@ export async function textAuthoringAction(args){
   const result=await backgroundAction({...args,body:{action:'readEpisodeBackground',requestId:scene.requestId}},{reading:true,price:IMAGE_PRICE});
   if(result.status!=='succeeded')return {status:result.status,message:result.message};
   const uploaded=await readingImageAction({...args,profile:{role:'teacher'},body:{action:'importReadingImage',source:result.src}});
-  const updated=await atomic(args,async({db})=>{const current=await readRecord(db,databaseId,userId,key),next=structuredClone(current.value),s=next.scenes.find(s=>s.id===scene.id);if(!s||s.requestId!==scene.requestId)fail('This scene changed; its previous image was retained.',409);s.fileId=uploaded.fileId;s.pending=false;s.generated=true;s.cost=IMAGE_PRICE;next.reviewed=false;next.updatedAt=new Date().toISOString();return writeRecord(db,databaseId,userId,key,next,current.revision);});
+  const updated=await atomic(args,async({db})=>{const current=await readRecord(db,databaseId,userId,key),next=structuredClone(current.value),s=next.scenes.find(s=>s.id===scene.id);if(!s||s.requestId!==scene.requestId)fail('This scene changed; its previous image was retained.',409);s.fileId=uploaded.fileId;s.pending=false;s.generated=true;s.cost=result.cost;s.model=result.model;next.reviewed=false;next.updatedAt=new Date().toISOString();return writeRecord(db,databaseId,userId,key,next,current.revision);});
   return {...updated,status:'succeeded'};
  }
  if(body.revision!==saved.revision)fail('This draft changed elsewhere. Reload before continuing.',409);
@@ -71,12 +72,12 @@ export async function textAuthoringAction(args){
   return commit(args,key,saved.revision,v);
  }
  if(body.action==='textGenerateImage'){
-  const price=imagePrice(),scene=v.scenes.find(s=>s.id===body.sceneId&&!s.omitted);if(!scene?.prompt.trim())fail('Describe this illustration first.');
+  const scene=v.scenes.find(s=>s.id===body.sceneId&&!s.omitted);if(!scene?.prompt.trim())fail('Describe this illustration first.');
   if(!validId(body.requestId)||body.requestId.length<10)fail('A unique image request ID is required.');
   if(scene.pending)fail('Check the existing image request before generating again.');
   scene.requestId=body.requestId;scene.pending=true;v.reviewed=false;
   const next=await commit(args,key,saved.revision,v);
-  try{await backgroundAction({...args,body:{action:'generateEpisodeBackground',requestId:body.requestId,prompt:scene.prompt}},{reading:true,price});}catch(e){const job=await readRecord(db,databaseId,userId,'text-image-job:'+body.requestId);if(!job.value){const safe=structuredClone(next.value);safe.scenes.find(s=>s.id===scene.id).pending=false;return {...await commit(args,key,next.revision,safe),status:'failed',message:e.message};}return {...next,status:'uncertain',message:e.message};}
+  try{await backgroundAction({...args,body:{action:'generateEpisodeBackground',requestId:body.requestId,prompt:scene.prompt,modelId:body.modelId,expectedBilling:body.expectedBilling}},{reading:true});}catch(e){const job=await readRecord(db,databaseId,userId,'text-image-job:'+body.requestId);if(!job.value){const safe=structuredClone(next.value);safe.scenes.find(s=>s.id===scene.id).pending=false;return {...await commit(args,key,next.revision,safe),status:'failed',message:e.message};}return {...next,status:'uncertain',message:e.message};}
   return {...next,status:'processing'};
  }
  if(body.action==='textPublish')return publish(args,v,key,saved.revision);

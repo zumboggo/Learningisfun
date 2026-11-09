@@ -11,6 +11,8 @@ import {privateEpisodeAction,privateAnimatedPreviewAction} from './private-episo
 import {scopedDataAction} from './scoped-data.js';
 import {generalPlannerAction} from './general-planner.js';
 import {episodeAuthoringAction} from './episode-authoring.js';
+import {BILLING_ACTIONS,aiBillingAction} from './ai-billing.js';
+import {imageCatalog} from './image-models.js';
 import {teacherAIAction,paidCompletion} from './teacher-ai.js';
 import {teacherWorkspaceAction, allRows} from './teacher-workspace.js';
 import {episodeSharingAction} from './public-episode.js';
@@ -122,7 +124,6 @@ const paragraphBatches = paragraphs => {
   return batches;
 };
 async function adaptTextParagraphs(paragraphs, level, aiArgs, ownerId) {
-  if (!process.env.OPENROUTER_API_KEY) throw new Error('AI text support is not configured');
   const guidance = level === 'highly_supported'
     ? 'Use very clear, direct English, mostly short sentences, and explicitly identify pronoun referents and implied relationships. Keep essential academic or literary terms and briefly explain them in context.'
     : 'Use clearer sentence structure and moderately simpler English while retaining the original detail, tone, sequence, and important academic or literary vocabulary.';
@@ -155,7 +156,9 @@ export default async ({ req, res, error }) => {
     const profile=workshop.profile;
     if(body.action==='scopedData'){try{return res.json(await scopedDataAction({body,profile,userId,db,databaseId}));}catch(e){return res.json({error:e.message},e.code||500);}}
     if(['readGeneralPlanner','saveGeneralPlanner','readGeneralPlannerHistory','publishGeneralLesson','readGeneralPlannerMaterials'].includes(body.action)){try{return res.json(await generalPlannerAction({body,profile,userId,db,databaseId,storage:new Storage(client)}));}catch(e){return res.json({error:e.message},e.code||500);}}
-    if(['readEpisodeAuthoring','savePersonalCharacter','generateEpisodeDraft','chatEpisode','generateEpisodeBackground','readEpisodeBackground'].includes(body.action)){try{return res.json(await episodeAuthoringAction({body,profile,userId,db,databaseId}));}catch(e){return res.json({error:e.message},e.code||500);}}
+    if(BILLING_ACTIONS.includes(body.action)){try{return res.json(await aiBillingAction({body,profile,userId,db,databaseId}));}catch(e){return res.json({error:e.message},e.code||500);}}
+    if(body.action==='readImageModels'){if(!['teacher','admin'].includes(profile.role))return res.json({error:'Teacher account required'},403);return res.json(await imageCatalog({body,profile,userId,db,databaseId}));}
+    if(['generateCharacterRecipes','readEpisodeAuthoring','savePersonalCharacter','generateEpisodeDraft','chatEpisode','generateEpisodeBackground','readEpisodeBackground'].includes(body.action)){try{return res.json(await episodeAuthoringAction({body,profile,userId,db,databaseId}));}catch(e){return res.json({error:e.message},e.code||500);}}
     if(['generateTeacherAI','reconcileAIUsage','readAIAllowance','manageAIAllowance','listAIAllowances'].includes(body.action)){try{return res.json(await teacherAIAction({body,profile,userId,db,databaseId}));}catch(e){return res.json({error:e.message},e.code||500);}}
     if(['redeemTeacherInvitation','readTeacherPreferences','saveTeacherPreferences','manageTeacherInvitation','readTeacherInvitation'].includes(body.action)) {try{return res.json(await teacherWorkspaceAction({body,profile,userId,db,databaseId}));}catch(e){return res.json({error:e.message},e.code||500);}}
     if(['readFamilyContacts','saveFamilyContacts'].includes(body.action))return res.json({error:'The family contact form has been retired.'},410);

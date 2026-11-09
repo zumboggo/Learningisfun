@@ -79,5 +79,5 @@ export async function lessonAction(args){
  Object.assign(current.submissions.at(-1),feedback);
  current.outcome=feedback.criteria.every(Boolean)?outcomes[current.submissions.slice(0,-1).some(a=>a.feedback)?1:2]:outcomes[3];
  const next=await writeRecord(db,databaseId,userId,key,current,r.revision);return view(l,current,next.revision,body.citationBuilder);});
- }catch{return {...view(l,saved.value,saved.revision,body.citationBuilder),warning:'Your entry is saved for your teacher. Feedback is unavailable right now; you can try again later.'};}
+ }catch{return {...view(l,saved.value,saved.revision,body.citationBuilder),warning:'Your entry is saved for your teacher. Immediate feedback is unavailable. Ask your teacher to check AI & billing before trying again.'};}
 }

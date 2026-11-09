@@ -23,7 +23,7 @@ it('includes the craft, source brief and conversation in generation and blocks i
 it('reserves background cost once, fixes cheap model settings, and scopes polling to the owner',async()=>{
  vi.stubEnv('REPLICATE_API_TOKEN','test-only');const fetcher=vi.fn().mockResolvedValue({ok:true,json:async()=>({id:'prediction1',status:'processing'})});vi.stubGlobal('fetch',fetcher);
  const body={action:'generateEpisodeBackground',requestId:'request-12345',prompt:'A peaceful courtyard'};await episodeAuthoringAction(args(body));await episodeAuthoringAction(args(body));expect(fetcher).toHaveBeenCalledTimes(1);
- expect(fetcher.mock.calls[0][0]).toContain('black-forest-labs/flux-schnell');expect(JSON.parse(fetcher.mock.calls[0][1].body).input).toMatchObject({num_outputs:1,aspect_ratio:'16:9',output_format:'webp',disable_safety_checker:false});expect(records.get('teacher:ai-month:2026-10').value.used).toBe(.003);
+ expect(fetcher.mock.calls[0][0]).toContain('black-forest-labs/flux-schnell');expect(JSON.parse(fetcher.mock.calls[0][1].body).input).toMatchObject({num_outputs:1,aspect_ratio:'16:9',output_format:'webp',disable_safety_checker:false});expect([...records.entries()].find(([key])=>key.startsWith('teacher:ai-month:'))?.[1].value.used).toBe(.003);
  await expect(episodeAuthoringAction(args({action:'readEpisodeBackground',requestId:'request-12345'},'teacher','other'))).rejects.toThrow('not found');
 });
 it('does not spend without an allowance or retry an uncertain background submission',async()=>{
