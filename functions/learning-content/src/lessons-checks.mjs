@@ -80,3 +80,15 @@ test('every revised catalog lesson keeps valid gates, instructional assets and a
   for(const s of l.stages)if(s.image){assert.ok(s.image.alt&&s.image.caption);assert.ok(readFileSync(new URL('../../../public/'+s.image.path,import.meta.url)).length>0);}
  }
 });
+
+test('current bibliography can be submitted after practice without a final or AI call',async t=>{
+ const act=fixture();t.mock.method(globalThis,'fetch',async()=>{throw Error('Must not call AI');});
+ await assert.rejects(act('lessonComplete'),/Finish practice/);
+ await assert.rejects(act('lessonComplete',{}, {profile:{role:'teacher'},userId:'teacher'}),/preview/);
+ await assert.rejects(act('lessonComplete',{lessonId:'world-lit-bibliography-v3'}),/required/);
+ for(const q of lesson.stages.flatMap(s=>s.questions))await act('lessonAnswer',{answer:q.answers[0]});
+ await act('lessonDraft',{draft:'Optional draft to keep'});
+ const r=await act('lessonComplete');assert.equal(r.state.outcome,'Completed');assert.ok(r.state.practiceSubmittedAt);assert.equal(r.state.draft,'Optional draft to keep');assert.deepEqual(r.state.submissions,[]);
+ const again=await act('lessonComplete');assert.equal(again.state.practiceSubmittedAt,r.state.practiceSubmittedAt);
+ assert.equal((await act('lessonRead')).state.outcome,'Completed');assert.equal(r.lesson.finalOptional,true);assert.equal(globalThis.fetch.mock.callCount(),0);
+});

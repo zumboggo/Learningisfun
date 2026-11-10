@@ -1,6 +1,7 @@
 [
   {
     "id": "world-lit-bibliography-v4",
+    "finalOptional": true,
     "title": "Build one annotated bibliography entry",
     "objective": "Give a reader a trail back to a source, explain what it says, and show why it earns a place in your research paper.",
     "classIds": [

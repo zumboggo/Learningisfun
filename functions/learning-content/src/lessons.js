@@ -20,7 +20,7 @@ export function answerCheck(state,lesson,answer){
 function view(lesson,state,revision,canOrder){
  let index=0;const stages=lesson.stages.map(s=>({title:s.title,shortTitle:s.shortTitle,teachFirst:s.teachFirst,image:s.image,modelRows:s.modelRows,explanation:s.explanation,model:s.model,sourceUrl:s.sourceUrl,questions:s.questions.map(q=>{
  const item=index++===state.step&&state.misses>=2?q.alternate:q;return {prompt:item.prompt+(item.pieces&&!canOrder?' If you see a text box instead of movable pieces, reload the app to get the citation builder. Your saved checks will stay in place.':''),rehearsal:item.rehearsal,options:item.options,pieces:item.pieces,italicPieces:item.italicPieces};})}));
- return {lesson:{id:lesson.id,title:lesson.title,objective:lesson.objective,minutes:lesson.minutes,stages,final:{...lesson.final,rubric:lesson.final.rubric.map(r=>r.split(':')[0])}},state,revision};
+ return {lesson:{id:lesson.id,finalOptional:lesson.finalOptional===true,title:lesson.title,objective:lesson.objective,minutes:lesson.minutes,stages,final:{...lesson.final,rubric:lesson.final.rubric.map(r=>r.split(':')[0])}},state,revision};
 }
 export function parseFeedback(raw,rubric){
  let f;try{f=JSON.parse(raw);}catch{fail('Feedback could not be read. Your entry is saved.',503);}
@@ -41,7 +41,7 @@ export async function lessonAction(args){
  const cls=classes.find(c=>c.$id===body.classId);let l=available.find(l=>l.id===body.lessonId&&l.classIds.includes(body.classId));
  if(!cls||!l)fail('This lesson is unavailable for your class.',403);
  l=await hydrateLessonImages(args,l);
- if(teacher&&['lessonAnswer','lessonDraft','lessonSubmit'].includes(body.action))fail('Use the local teacher preview; it does not save attempts.',403);
+ if(teacher&&['lessonAnswer','lessonDraft','lessonSubmit','lessonComplete'].includes(body.action))fail('Use the local teacher preview; it does not save attempts.',403);
  const key='lesson:'+cls.$id+':'+(l.progressId||l.id);
  if(body.action==='lessonRoster'||body.action==='lessonReview'){
  if(!teacher)fail('Class teacher required.',403);
@@ -57,6 +57,12 @@ export async function lessonAction(args){
  const saved=await atomic(args,async({db})=>{const r=await readRecord(db,databaseId,userId,key),s=r.value||initial();
  if(body.revision!==r.revision)fail('Your lesson changed elsewhere. Reopen it to see the saved work.',409);
  if(body.action==='lessonAnswer'){if(typeof body.answer!=='string'||!body.answer.trim()||body.answer.length>600)fail('Enter a short answer.');answerCheck(s,l,body.answer.trim());}
+ else if(body.action==='lessonComplete'){
+ if(!l.finalOptional)fail('The final application is required for this lesson.');
+ if(s.step!==l.stages.flatMap(x=>x.questions).length)fail('Finish practice before submitting the lesson.');
+ if(!s.practiceSubmittedAt){s.practiceSubmittedAt=new Date().toISOString();if(!s.outcome)s.outcome=outcomes[0];}
+ s.notice='Lesson submitted. The final application is optional; your practice is saved for your teacher.';
+ }
  else if(body.action==='lessonDraft'||body.action==='lessonSubmit'){
  if(s.step!==l.stages.flatMap(x=>x.questions).length||typeof body.draft!=='string'||body.draft.length>4500)fail('Finish practice and enter up to 4,500 characters.');
  s.draft=body.draft;s.notice='';

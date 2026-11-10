@@ -117,3 +117,15 @@ it('lets Ethics 1 choices respond before rehearsal while explaining and preservi
  const next=screen.getByRole('radio',{name:nextQuestion.options![1]});fireEvent.click(next);expect(next).toBeChecked();
  expect(screen.getByRole('button',{name:'Check answer'})).toBeDisabled();
 });
+
+it('submits optional final practice with an empty entry and preserves the local draft',async()=>{
+ auth.isTeacher=false;
+ const player={lesson:{...item,finalOptional:true,stages:[],final:{title:'New source',source:'Source card',sourceUrl:'',rubric:[],prompt:'Write your entry.',delayedCheck:'Try again.'}},state:{step:0,draft:'',submissions:[],outcome:''},revision:2};
+ request.mockResolvedValueOnce({items:[item]}).mockResolvedValueOnce(player).mockResolvedValueOnce({...player,state:{...player.state,outcome:'Completed',practiceSubmittedAt:'2026-11-10T00:00:00Z'}});
+ render(<LessonsPage/>);fireEvent.click(await screen.findByText('Open lesson'));
+ const submit=await screen.findByRole('button',{name:'Submit lesson without final application'});expect(submit).toBeEnabled();
+ expect(screen.getByRole('button',{name:'Submit for feedback'})).toBeDisabled();
+ localStorage.setItem('lesson-draft:learner:wl:pilot','Unsent work');fireEvent.click(submit);
+ expect(await screen.findByRole('button',{name:'Lesson submitted without final application'})).toBeDisabled();
+ expect(request).toHaveBeenLastCalledWith(expect.objectContaining({action:'lessonComplete',revision:2}));expect(localStorage.getItem('lesson-draft:learner:wl:pilot')).toBe('Unsent work');
+});
