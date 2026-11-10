@@ -1,0 +1,5 @@
+{
+  "recognizedSpeech": "",
+  "method": "cached faster-whisper base.en; VAD; offline",
+  "limit": "No speech detected does not verify the artistic quality of ambience."
+}

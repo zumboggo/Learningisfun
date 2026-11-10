@@ -1,0 +1,44 @@
+[
+  {
+    "id": "Sam",
+    "name": "Sam",
+    "version": 1,
+    "finish": "polished",
+    "palette": {
+      "skin": "#c89268",
+      "hair": "#292825",
+      "shirt": "#b93f46",
+      "trim": "#f4e9d8"
+    },
+    "appearance": {
+      "age": "teen",
+      "hair": "cropped",
+      "glasses": "none",
+      "outfit": "uniform",
+      "face": "angular",
+      "eyes": "keen"
+    },
+    "provenance": "Original invented teenage neighbour for Sports Day; no real student likeness or claimed relationship."
+  },
+  {
+    "id": "Ben",
+    "name": "Ben",
+    "version": 1,
+    "finish": "polished",
+    "palette": {
+      "skin": "#c89268",
+      "hair": "#403c34",
+      "shirt": "#477b76",
+      "trim": "#e9dbc2"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "side-part",
+      "glasses": "none",
+      "outfit": "workshirt",
+      "face": "broad",
+      "eyes": "gentle"
+    },
+    "provenance": "Original invented father of Sam; no real parent likeness. Knee support is described in narration, not a supported rendered prop."
+  }
+]

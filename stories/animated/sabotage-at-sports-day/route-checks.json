@@ -1,0 +1,13 @@
+{
+  "routes": 729,
+  "optionsCovered": 18,
+  "routeWords": [
+    1269,
+    1323
+  ],
+  "quiz": "4 × 25",
+  "fairClues": true,
+  "stagedSpeakers": true,
+  "callbacks": true,
+  "replay": true
+}

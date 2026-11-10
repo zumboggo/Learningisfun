@@ -1,0 +1,15 @@
+{
+  "tool": "built-in imagegen",
+  "date": "2026-11-10",
+  "background": {
+    "path": "field-v1.webp",
+    "source": "exec-b503aafe-7350-4e04-8633-b5f2925906c9.png",
+    "prompt": "Create one 16:9 visual novel background for an original humorous teenage mystery set at a neighbourhood sports day in a contemporary Chinese city. Eye level view across an open level grass playing field, a simple red running track behind it, leafy trees and modest apartment buildings distant. At far left edge a folding registration table with a clipboard and a small gold running-shoe trophy with an unlettered base; at far right edge a low practice arch and a tall orange cone. A gentle grass bank at rear left with a chalk start stripe. Clear wide central foreground for animated standing characters. No people, no text, no logos. Simple manga-inspired clean dark slate outlines, flat muted warm colours, restrained two-tone cel shadows, simplified scenery, light late-afternoon atmosphere. Scenery lower contrast than actors. Maintain all objects at edges so mobile central crops remain useful.",
+    "editPrompt": "Edit this sports-field background only: remove the golden shoe trophy and its entire base from the left table, leaving the clipboard and blank tabletop. Remove the low curved arch at the right, leaving plain grass behind it. Keep the tall orange cone. Preserve the entire composition, trees, buildings, track, grass bank, chalk stripe, empty foreground, table, chair, manga outlines and colours exactly. No new objects, no people, no text. These two removed items change during the story and must not be permanently present in the background."
+  },
+  "teaser": {
+    "path": "teaser-reference.png",
+    "source": "exec-76cd0829-7c7b-4826-8a09-dababdc507e0.png",
+    "prompt": "Create a 16:9 dramatic still for a six-second animated mystery teaser, in expressive wax crayon and soft pastel on textured cream paper, clearly a tactile drawn medium rather than 3D, photographic, woodcut or cut-paper. Close view of a folding award table at a neighbourhood sports day in a Chinese city, soft blurred grass and track behind. A small golden running-shoe trophy on a dark wooden rectangular base stands near the edge of the table. The table has a loose cream tablecloth hanging down, providing a dark hiding space beneath. From the right edge enters only one teenage boy's medium-warm tan bare forearm and natural open hand, poised to grasp the trophy base. No face or torso visible, culprit identity concealed. Frame the trophy and hand centrally with space below to lower the trophy behind the cloth. A blank clipboard lies farther back. Strong diagonal late-afternoon shadow adds playful suspense. Rich muted teal, ochre, vermilion. No writing, letters, logos, subtitles or other people. Anatomically plausible single hand with five fingers, no duplicated objects. The action that will follow is this hand quietly hiding the trophy under the table."
+  }
+}

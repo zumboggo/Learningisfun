@@ -1,0 +1,20 @@
+[
+  {
+    "device": "desktop",
+    "choices": 6,
+    "pauses": 6,
+    "resumed": true,
+    "listener": true,
+    "score": 100,
+    "paragraphDraftAndSubmissionRestored": true
+  },
+  {
+    "device": "phone",
+    "choices": 6,
+    "pauses": 6,
+    "resumed": true,
+    "listener": true,
+    "score": 25,
+    "paragraphDraftAndSubmissionRestored": true
+  }
+]

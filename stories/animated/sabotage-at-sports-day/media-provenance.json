@@ -1,0 +1,51 @@
+{
+  "imageTool": "built-in imagegen",
+  "imageMedium": "wax crayon and soft pastel on textured paper",
+  "model": "prunaai/p-video-2-pro",
+  "version": "7fc65104affa38f28b544b3549506e52f6519d752f528944f4eae2f94cd384b6",
+  "prompt": "Animate this exact wax-crayon and soft-pastel drawing, preserving the textured cream paper, drawn marks and limited teal ochre vermilion palette throughout. One uninterrupted fixed close shot. The single right hand closes around the dark base of the golden running-shoe trophy, lifts it carefully off the table, lowers it past the table edge and hides it beneath the hanging cream tablecloth. The trophy remains one solid object, never bends or melts. At the end the tabletop is empty where it stood; the hand is out of sight. Do not reveal a face or body. Quiet playful suspense. Native audio: gentle outdoor breeze, faint distant birds, a soft scrape of wood and rustle of fabric only. Absolutely no speech, words, voices, cheering, singing, humming, narration or music. No text, no cuts, no additional hands or objects.",
+  "settings": {
+    "prompt": "Animate this exact wax-crayon and soft-pastel drawing, preserving the textured cream paper, drawn marks and limited teal ochre vermilion palette throughout. One uninterrupted fixed close shot. The single right hand closes around the dark base of the golden running-shoe trophy, lifts it carefully off the table, lowers it past the table edge and hides it beneath the hanging cream tablecloth. The trophy remains one solid object, never bends or melts. At the end the tabletop is empty where it stood; the hand is out of sight. Do not reveal a face or body. Quiet playful suspense. Native audio: gentle outdoor breeze, faint distant birds, a soft scrape of wood and rustle of fabric only. Absolutely no speech, words, voices, cheering, singing, humming, narration or music. No text, no cuts, no additional hands or objects.",
+    "duration": 6,
+    "resolution": "480p",
+    "mode": "cost",
+    "prompt_upsampler": "off",
+    "aspect_ratio": "16:9",
+    "enable_safety_filter": true
+  },
+  "maximumChargeUsd": 0.06,
+  "paidAttempts": 1,
+  "predictionId": "h0c5hdwsrdrmt0d1rhk928b1h8",
+  "status": "succeeded",
+  "holdSeconds": 3,
+  "motionSeconds": 6,
+  "metrics": {
+    "billing": {
+      "fps": 24,
+      "mode": "cost",
+      "model_variant": "cost",
+      "resolution_target": "480p",
+      "turbo": true,
+      "video_output_duration_seconds": 6
+    },
+    "fps": 24,
+    "inference_provider": "modal",
+    "metadata": {
+      "execution_time": {
+        "model_execution_time": 4.916,
+        "prompt_upsampler_execution_time": 0,
+        "total_execution_time": 16.283
+      }
+    },
+    "mode": "cost",
+    "model_variant": "cost",
+    "predict_time": 17.36743594,
+    "prompt_upsampler": "off",
+    "prompt_upsampler_fallback": false,
+    "resolution_target": "480p",
+    "total_time": 17.591723394,
+    "turbo": true,
+    "video_output_count": 1,
+    "video_output_duration_seconds": 6
+  }
+}
