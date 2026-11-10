@@ -12,10 +12,10 @@ const examples = {
     {id: 'nested-quotes-evidence-v3', title: 'Quoting and nested quotations', description: 'A conversational lesson with visual explanation, short rehearsals, and revision'},
   ],
   texts: [
-    {id: '1', title: 'Part 1 · The Teacher and the Tiger', description: 'History of Ethics in China'},
-    {id: '2', title: 'Part 2 · The Job Offer and the Dead Tortoise', description: 'History of Ethics in China'},
-    {id: '3', title: 'Part 3 · The King, the Ox, and the Extremely Convenient Horse', description: 'History of Ethics in China'},
-    {id: '4', title: 'Part 4 · The Bamboo Would Not Explain Itself', description: 'History of Ethics in China'},
+    {id: '1', title: 'Part 1 · The Teacher and the Tiger', description: 'History of Ethics in China · parallel text and sample discussion'},
+    {id: 'please-stop', title: 'Please Stop Improving My Life', description: 'Original PDF · annotated classroom model'},
+    {id: 'alchemist', title: 'The World Behind the Alchemist', description: 'Parallel text and discussion · sample questions and replies'},
+    {id: 'helplessness', title: 'Learned Helplessness', description: 'The elephant, the rope, and learning to try again'},
   ],
 };
 export type ExampleSection = keyof typeof examples;
