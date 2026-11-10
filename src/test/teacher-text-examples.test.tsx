@@ -5,7 +5,8 @@ vi.mock('@/services/learning-content.service', () => ({executeLearningContent: v
 describe('teacher text examples', () => {
   it('offers the four requested readings', () => {
     render(<TeacherExamples section="texts"/>);
-    for (const title of ['Part 1', 'Please Stop Improving My Life', 'The World Behind the Alchemist', 'Learned Helplessness']) expect(screen.getByRole('button', {name: new RegExp(title)})).toBeVisible();
+    for (const title of ['Part 1', 'The World Behind the Alchemist', 'Learned Helplessness']) expect(screen.getByRole('button', {name: new RegExp(title)})).toBeVisible();
+    expect(screen.getByRole('link', {name: /Please Stop Improving My Life/})).toHaveAttribute('href', import.meta.env.BASE_URL + 'teacher-examples/please-stop-improving-my-life.pdf');
     expect(screen.queryByRole('button', {name: /Part 2/})).not.toBeInTheDocument();
   });
   it('opens Alchemist alongside illustrative discussion and can switch to text only', async () => {

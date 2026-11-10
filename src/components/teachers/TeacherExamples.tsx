@@ -31,8 +31,11 @@ export default function TeacherExamples({section}: {section: ExampleSection}) {
       <Suspense fallback={<p role="status">Opening example…</p>}>
         <ExamplePreview key={example.id} section={section} id={example.id} title={example.title}/>
       </Suspense>
-    </> : <div className="grid gap-3 sm:grid-cols-2">{examples[section].map(item =>
-      <button key={item.id} onClick={() => setSelected(item.id)} className="rounded-xl border border-teal-200 bg-white p-4 text-left hover:border-teal-700">
+    </> : <div className="grid gap-3 sm:grid-cols-2">{examples[section].map(item => item.id === 'please-stop' ?
+      <a key={item.id} href={import.meta.env.BASE_URL + 'teacher-examples/please-stop-improving-my-life.pdf'} target="_blank" rel="noopener noreferrer" className="rounded-xl border border-teal-200 bg-white p-4 text-left hover:border-teal-700">
+        <strong className="block">{item.title}</strong><span className="mt-1 block text-sm text-slate-600">{item.description}</span>
+        <span className="mt-3 block text-sm font-semibold text-teal-800">Open original PDF →</span>
+      </a> : <button key={item.id} onClick={() => setSelected(item.id)} className="rounded-xl border border-teal-200 bg-white p-4 text-left hover:border-teal-700">
         <strong className="block">{item.title}</strong><span className="mt-1 block text-sm text-slate-600">{item.description}</span>
         <span className="mt-3 block text-sm font-semibold text-teal-800">Open example →</span>
       </button>

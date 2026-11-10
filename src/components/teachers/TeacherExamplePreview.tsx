@@ -74,7 +74,6 @@ const sampleDiscussions = {
 function TextExample({id, title}: {id: string; title: string}) {
   const [parallel, setParallel] = useState(true);
   const samples = sampleDiscussions[id as keyof typeof sampleDiscussions];
-  if (id === 'please-stop') return <OriginalPdfExample/>;
   const content = id === 'helplessness' ? helplessness : alchemist.replace(/\]\(images\/([^ )]+)\)/g, (_, name) => '](' + images['./reading-images/alchemist-' + name.replace('.png', '.webp')] + ')');
   return <section className="space-y-3">
     <h3 className="text-xl font-bold">{title}</h3>
@@ -88,12 +87,4 @@ function TextExample({id, title}: {id: string; title: string}) {
       </aside>}
     </div>
   </section>;
-}
-function OriginalPdfExample() {
-  const [error, setError] = useState('');
-  return <div><button className="rounded-lg border bg-white px-4 py-2" onClick={async () => {
-    const tab = window.open('', '_blank');
-    try {const result = await executeLearningContent<{url: string}>({action: 'readOriginalPdf', textId: 'cw_enough_20261106'}); if (tab) {tab.opener = null; tab.location.href = result.url;} else window.location.assign(result.url);}
-    catch {tab?.close(); setError('The original PDF requires permission to view this text.');}
-  }}>Open original PDF →</button>{error && <p role="alert">{error}</p>}</div>;
 }
