@@ -31,3 +31,19 @@ test('image briefs survive saving and preview; revised review requires engagemen
  await assert.rejects(f.invoke('lessonSaveBuilderDraft',{revision:1,value:incomplete}),/instructional review/);
  v.lesson.stages[0].imageBrief='x'.repeat(4001);assert.ok(validateLesson(v.lesson).some(e=>e.includes('image brief')));
 });
+
+test('page previews support follow-ups and final edits without changing the saved lesson',async t=>{
+ const f=fixture(),v=draft();await f.invoke('lessonSaveBuilderDraft',{revision:0,value:v});
+ const old=process.env.OPENROUTER_API_KEY;process.env.OPENROUTER_API_KEY='fixture';t.after(()=>{if(old===undefined)delete process.env.OPENROUTER_API_KEY;else process.env.OPENROUTER_API_KEY=old});
+ let page={...v.lesson.stages[0],explanation:'More context.'},sent;
+ t.mock.method(globalThis,'fetch',async(url,options)=>{sent=JSON.parse(options.body);return {ok:true,json:async()=>({usage:{cost:0},choices:[{message:{content:JSON.stringify({page})}}]})}});
+ const preview=await f.invoke('lessonEditPage',{revision:1,requestId:'preview1',pageIndex:0,instruction:'Add context'});
+ assert.equal(preview.page.explanation,'More context.');assert.deepEqual((await f.invoke('lessonReadBuilderDraft')).value,v);
+ page={...page,model:'A clearer model.'};await f.invoke('lessonEditPage',{revision:1,requestId:'preview2',pageIndex:0,instruction:'Improve the example',proposal:preview.page});
+ assert.equal(JSON.parse(sent.messages[1].content).lesson.stages[0].explanation,'More context.');
+ page={...v.lesson.final,prompt:'Explain how the word suggests frustration.'};const final=await f.invoke('lessonEditPage',{revision:1,requestId:'preview3',pageIndex:'final',instruction:'Clarify task'});assert.equal(final.page.prompt,page.prompt);
+ page={title:'broken'};await assert.rejects(f.invoke('lessonEditPage',{revision:1,requestId:'preview4',pageIndex:0,instruction:'Break'}),/did not pass checks/);
+ await assert.rejects(f.invoke('lessonEditPage',{revision:1,requestId:'preview5',pageIndex:100,instruction:'Edit'}),/Choose a lesson page/);
+ await assert.rejects(f.invoke('lessonEditPage',{revision:0,requestId:'preview6',pageIndex:0,instruction:'Edit'}),/changed elsewhere/);
+ assert.deepEqual((await f.invoke('lessonReadBuilderDraft')).value,v);
+});

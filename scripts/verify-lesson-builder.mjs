@@ -16,3 +16,9 @@ const bucket=await storage.getBucket({bucketId:'original-pdfs'});assert.equal(bu
 // A malformed image must reach the decoder and fail before any file is written.
 const rejected=await functions.createExecution({functionId:'learning-content',body:JSON.stringify({action:'lessonUploadImage',data:'data:image/png;base64,'+Buffer.from('invalid image fixture').toString('base64')})});
 assert.equal(rejected.responseStatusCode,400);assert.match(JSON.parse(rejected.responseBody).error,/cannot be decoded/);console.log('Verified: deployed image decoder rejects invalid bytes without storing a file');
+
+// Missing private draft is rejected before any provider call or write.
+const pageEdit=await functions.createExecution({functionId:'learning-content',body:JSON.stringify({action:'lessonEditPage',draftId:'page-edit-smoke-missing',revision:0,pageIndex:0,instruction:'Add context',requestId:'page-edit-smoke'})});
+assert.equal(pageEdit.responseStatusCode,404);
+assert.match(JSON.parse(pageEdit.responseBody).error,/Save the draft first/);
+console.log('Verified: page-edit preview route rejects missing drafts before spending');
