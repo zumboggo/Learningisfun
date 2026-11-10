@@ -1,7 +1,10 @@
 import {render, screen, fireEvent} from '@testing-library/react';
-import {describe, it, expect, vi} from 'vitest';
+import {beforeAll, describe, it, expect, vi} from 'vitest';
 import TeacherExamples from '@/components/teachers/TeacherExamples';
 vi.mock('@/services/learning-content.service', () => ({executeLearningContent: vi.fn()}));
+// Load the real preview before timing UI assertions; CI transforms its large
+// story-player dependency graph more slowly than a warm local run.
+beforeAll(async () => { await import('@/components/teachers/TeacherExamplePreview'); }, 30000);
 describe('teacher text examples', () => {
   it('offers the four requested readings', () => {
     render(<TeacherExamples section="texts"/>);
