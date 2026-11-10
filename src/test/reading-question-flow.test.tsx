@@ -140,10 +140,14 @@ it('posts directly to the shared feed without a private notebook, including duri
 it.each(['Question', 'Reply'])('routes a selected passage to Use in %s with quote styling', async (destination) => {
   mount();
   const passage=await screen.findByText('An exact paragraph from the reading.');
-  const range=document.createRange();range.selectNodeContents(passage);
-  window.getSelection()?.removeAllRanges();window.getSelection()?.addRange(range);
-  fireEvent(document,new Event('selectionchange'));
-  fireEvent.click(screen.getByRole('button',{name:`Use in ${destination}`}));
+  // Flush the reading's effects before dispatching a native selection event.
+  await act(async () => {});
+  await act(async () => {
+    const range=document.createRange();range.selectNodeContents(passage);
+    window.getSelection()?.removeAllRanges();window.getSelection()?.addRange(range);
+    fireEvent(document,new Event('selectionchange'));
+  });
+  fireEvent.click(await screen.findByRole('button',{name:`Use in ${destination}`}));
   if(destination==='Reply'){
     expect(screen.getByText(/Passage retained/)).toBeInTheDocument();
     const thread=screen.getByText('First question?').closest('article')!;
