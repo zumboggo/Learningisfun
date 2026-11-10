@@ -1,4 +1,4 @@
-import {authoredLessons,hydrateLessonImages} from './lesson-authoring.js';
+import {authoredLessons,hydrateLessonImages,createAssignedLessonDraft} from './lesson-authoring.js';
 import catalog from './lesson-catalog.json' with {type:'json'};
 import previousCatalog from './lesson-catalog-previous.json' with {type:'json'};
 import {Query} from 'node-appwrite';
@@ -40,6 +40,7 @@ export async function lessonAction(args){
  items.push({id:l.id,progressId:l.progressId||l.id,title:l.title,objective:l.objective,releaseAt:l.releaseAt||null,dueOn:l.dueOn||null,assignedOn:l.assignedOn||null,courseName:c.courseName||'',minutes:l.minutes,classId:c.$id,className:c.name||c.courseName});}return {items};}
  const cls=classes.find(c=>c.$id===body.classId);let l=available.find(l=>l.id===body.lessonId&&l.classIds.includes(body.classId));
  if(!cls||!l)fail('This lesson is unavailable for your class.',403);
+ if(body.action==='lessonEditAssigned'){if(!teacher)fail('Class teacher required.',403);return createAssignedLessonDraft(args,l);}
  l=await hydrateLessonImages(args,l);
  if(teacher&&['lessonAnswer','lessonDraft','lessonSubmit','lessonComplete'].includes(body.action))fail('Use the local teacher preview; it does not save attempts.',403);
  const key='lesson:'+cls.$id+':'+(l.progressId||l.id);

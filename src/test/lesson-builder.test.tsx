@@ -38,3 +38,12 @@ it('previews and refines a page before apply, supports undo and final-page editi
  fireEvent.change(screen.getByLabelText('Follow-up instructions'),{target:{value:'More detail'}});fireEvent.click(screen.getByText('Update preview'));await screen.findByText('A detailed example');fireEvent.click(screen.getByText('Apply changes'));await waitFor(()=>expect(value.lesson.stages[0].model).toBe('A detailed example'));await waitFor(()=>expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
  fireEvent.click(screen.getByText('Undo last AI edit'));await waitFor(()=>expect(value.lesson.stages[0].model).toBe('Crept implies caution'));fireEvent.click(screen.getByRole('button',{name:'Edit with AI · Final task'}));expect(await screen.findByRole('dialog')).toHaveTextContent('Write an explanation');fireEvent.click(screen.getByText('Close preview'));expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
+
+it('opens assigned revisions directly in Edit with preserved images and explicit new-version assignment',async()=>{
+ const lesson=definition();lesson.stages[0].image={path:'lessons/example.webp',alt:'Original diagram',caption:'Original caption'};
+ const value={...newDraft(),lesson,sourceAssignment:{lessonId:'assigned',classId:'blue',title:'Original lesson'}};
+ request.mockImplementation(async b=>{if(b.action==='lessonBuilderLibrary')return {drafts:[],classes:[{id:'blue',name:'Blue'}]};if(b.action==='lessonReadBuilderDraft')return {value,revision:1};if(b.action==='readAIAllowance')return {remaining:1};throw Error('Unexpected '+b.action)});
+ render(<LessonBuilder onClose={()=>{}} initialDraftId="revision-test"/>);
+ expect(await screen.findByRole('button',{name:'Edit with AI · Stage 1'})).toBeVisible();expect(screen.getByRole('note')).toHaveTextContent('completed work and in-progress attempts stay with the original lesson');expect(screen.getByAltText('Original diagram')).toHaveAttribute('src',expect.stringContaining('lessons/example.webp'));
+ fireEvent.click(screen.getByRole('button',{name:'Assign'}));expect(screen.getByLabelText('Blue')).toBeChecked();expect(screen.getByRole('button',{name:'Assign reviewed new version'})).toBeDisabled();
+});

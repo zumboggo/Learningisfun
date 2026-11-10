@@ -129,3 +129,17 @@ it('submits optional final practice with an empty entry and preserves the local 
  expect(await screen.findByRole('button',{name:'Lesson submitted without final application'})).toBeDisabled();
  expect(request).toHaveBeenLastCalledWith(expect.objectContaining({action:'lessonComplete',revision:2}));expect(localStorage.getItem('lesson-draft:learner:wl:pilot')).toBe('Unsent work');
 });
+
+it('opens an assigned lesson as a revision draft in Creator',async()=>{
+ auth.isTeacher=true;navigate.mockClear();
+ request.mockImplementation(async b=>{if(b.action==='lessonLibrary')return {items:[item]};if(b.action==='lessonEditAssigned')return {draftId:'revision-test',reused:false};throw Error('Unexpected '+b.action)});
+ render(<LessonsPage/>);fireEvent.click(await screen.findByRole('button',{name:'Edit with AI'}));
+ await vi.waitFor(()=>expect(navigate).toHaveBeenCalledWith('/create/lesson?draft=revision-test'));
+ expect(request).toHaveBeenCalledWith({action:'lessonEditAssigned',lessonId:item.id,classId:item.classId});
+ expect(request.mock.calls.some(([b])=>b.action==='lessonAssign')).toBe(false);
+});
+
+it('keeps an assigned lesson visible when opening a revision fails',async()=>{
+ auth.isTeacher=true;request.mockImplementation(async b=>{if(b.action==='lessonLibrary')return {items:[item]};throw Error('Could not open revision. Please retry.')});
+ render(<LessonsPage/>);fireEvent.click(await screen.findByRole('button',{name:'Edit with AI'}));expect(await screen.findByRole('alert')).toHaveTextContent('Could not open revision');expect(screen.getByText(item.title)).toBeVisible();expect(screen.getByRole('button',{name:'Edit with AI'})).toBeEnabled();
+});

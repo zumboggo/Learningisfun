@@ -22,3 +22,9 @@ const pageEdit=await functions.createExecution({functionId:'learning-content',bo
 assert.equal(pageEdit.responseStatusCode,404);
 assert.match(JSON.parse(pageEdit.responseBody).error,/Save the draft first/);
 console.log('Verified: page-edit preview route rejects missing drafts before spending');
+
+// Assigned-lesson editing must use class access checks before creating a draft.
+const assignedEdit=await functions.createExecution({functionId:'learning-content',body:JSON.stringify({action:'lessonEditAssigned',lessonId:catalog[0].id,classId:'missing-verification-class'})});
+assert.equal(assignedEdit.responseStatusCode,403);
+assert.match(JSON.parse(assignedEdit.responseBody).error,/unavailable for your class/);
+console.log('Verified: assigned lesson edits reject unavailable classes before creating drafts');

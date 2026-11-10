@@ -47,3 +47,37 @@ test('page previews support follow-ups and final edits without changing the save
  await assert.rejects(f.invoke('lessonEditPage',{revision:0,requestId:'preview6',pageIndex:0,instruction:'Edit'}),/changed elsewhere/);
  assert.deepEqual((await f.invoke('lessonReadBuilderDraft')).value,v);
 });
+
+test('assigned lesson editing creates a reusable private revision and preserves completed work and original rubric',async()=>{
+ const f=fixture(),v=draft();v.lesson.finalOptional=true;
+ await f.invoke('lessonSaveBuilderDraft',{revision:0,value:v});
+ const {assignments}=await f.invoke('lessonAssign',{revision:1,assignments:[{classId:'blue'}]});const oldId=assignments[0].id;
+ const completed={step:2,misses:0,checks:[{step:0,correct:true,answer:'crept'}],draft:'Original work',submissions:[{text:'Original work',feedback:'Original feedback',criteria:[true]}],outcome:'Demonstrated independently',notice:''};
+ await writeRecord(f.args.db,'test','student','lesson:blue:'+oldId,completed,0);
+ const edit=()=>lessonAction({...f.args,body:{action:'lessonEditAssigned',lessonId:oldId,classId:'blue'}});
+ const created=await edit();assert.equal(created.reused,false);
+ let saved=await f.invoke('lessonReadBuilderDraft',{draftId:created.draftId});assert.equal(saved.value.reviewed,false);assert.equal(saved.value.lesson.finalOptional,true);assert.deepEqual(saved.value.lesson,v.lesson);assert.equal(saved.value.sourceAssignment.lessonId,oldId);
+ saved.value.lesson.stages[0].explanation='More detail in the revised teaching.';saved.value.lesson.final.rubric=['New criterion: Require a new skill.'];saved.value.review=v.review;saved.value.reviewed=true;
+ saved=await f.invoke('lessonSaveBuilderDraft',{draftId:created.draftId,revision:saved.revision,value:{...saved.value,sourceAssignment:{lessonId:'forged'}}});assert.equal(saved.value.sourceAssignment.lessonId,oldId);
+ assert.deepEqual(await edit(),{draftId:created.draftId,reused:true});
+ assert.equal((await f.invoke('lessonReadBuilderDraft',{draftId:created.draftId})).value.lesson.stages[0].explanation,'More detail in the revised teaching.');
+ const revised=await f.invoke('lessonAssign',{draftId:created.draftId,revision:saved.revision,assignments:[{classId:'blue'}]});const newId=revised.assignments[0].id;assert.notEqual(newId,oldId);
+ const original=await f.student('lessonRead',{lessonId:oldId});assert.deepEqual(original.state,completed);assert.deepEqual(original.lesson.final.rubric,['Explanation']);
+ const newer=await f.student('lessonRead',{lessonId:newId});assert.equal(newer.state.step,0);assert.equal(newer.state.submissions.length,0);assert.deepEqual(newer.lesson.final.rubric,['New criterion']);
+ assert.deepEqual((await readRecord(f.args.db,'test','student','lesson:blue:'+oldId)).value,completed);
+ const items=(await f.student('lessonLibrary')).items;assert.ok(items.some(i=>i.id===oldId));assert.ok(items.some(i=>i.id===newId));
+ await assert.rejects(f.student('lessonEditAssigned',{lessonId:oldId}),/teacher/);
+ await assert.rejects(lessonAction({...f.args,userId:'other',body:{action:'lessonEditAssigned',lessonId:oldId,classId:'blue'}}),/unavailable/);
+});
+
+test('built-in assigned lessons retain catalog images, optional final, and existing in-progress attempts',async()=>{
+ const {default:catalog}=await import('./lesson-catalog.json',{with:{type:'json'}});const source=catalog[0],classId=source.classIds[0],f=fixture();
+ f.rows.set('classes:'+classId,{$id:classId,teacherId:'teacher',status:'active',name:'Catalog class'});
+ const key='lesson:'+classId+':'+(source.progressId||source.id),progress={step:1,misses:1,checks:[{step:0,correct:true,answer:'saved'}],draft:'In-progress draft',submissions:[],outcome:'',notice:''};
+ await writeRecord(f.args.db,'test','student',key,progress,0);
+ const created=await lessonAction({...f.args,body:{action:'lessonEditAssigned',lessonId:source.id,classId}});
+ const saved=await f.invoke('lessonReadBuilderDraft',{draftId:created.draftId});assert.deepEqual(saved.value.lesson.stages,source.stages);assert.equal(saved.value.lesson.finalOptional,source.finalOptional);assert.deepEqual(validateLesson(saved.value.lesson),[]);
+ await f.invoke('lessonSaveBuilderDraft',{draftId:created.draftId,revision:saved.revision,value:saved.value});const preview=await f.invoke('lessonPreview',{draftId:created.draftId,revision:2});assert.deepEqual(preview.errors,[]);assert.deepEqual(preview.lesson.stages[0].image,source.stages[0].image);
+ assert.deepEqual((await readRecord(f.args.db,'test','student',key)).value,progress);
+ const bad=structuredClone(saved.value);bad.lesson.stages[0].image={path:'https://untrusted.example/image',alt:'Bad',caption:'Bad'};assert.ok(validateLesson(bad.lesson).length);await assert.rejects(f.invoke('lessonSaveBuilderDraft',{draftId:created.draftId,revision:2,value:bad}),/own uploads/);
+});
