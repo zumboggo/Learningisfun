@@ -1,14 +1,28 @@
 {
   "id": "the-institution-protects-its-own",
   "title": "The Institution Protects Its Own",
-  "status": "published-unassigned",
-  "versionId": "58dac3300ad51efb2501328e69fb4041",
-  "version": 1,
+  "status": "published-assigned",
+  "versionId": "b4f53e9bda31e8a99483e0c23d0c3bdb",
+  "version": 2,
   "privateMediaVerified": true,
   "privatePreviewVerified": true,
   "publishedBytesVerified": true,
   "previewUrl": "https://zumboggo.github.io/Learningisfun/#/game/story-preview/the-institution-protects-its-own",
   "studioUrl": "https://zumboggo.github.io/Learningisfun/#/game/create?draft=the-institution-protects-its-own",
-  "assignments": [],
-  "verifiedAt": "2026-11-10T07:39:18.932Z"
+  "assignments": [
+    {
+      "classId": "e24ec8d9-21d7-4c32-a30e-08655c2f4e65",
+      "className": "Ethics and Leadership",
+      "section": "Section 1",
+      "date": "2026-11-10",
+      "releaseAt": "2026-11-10T00:00:00.000Z",
+      "assignmentId": "c24e068fa98346f44d042c296f3842cf",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/c24e068fa98346f44d042c296f3842cf"
+    }
+  ],
+  "studentReadVerified": true,
+  "studentAttemptsCreated": false,
+  "unrelatedAssignmentsPreserved": true,
+  "deadline": null,
+  "verifiedAt": "2026-11-10T07:51:25.622Z"
 }

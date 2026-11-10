@@ -1,0 +1,46 @@
+{
+  "automated": {
+    "allRoutes": 96,
+    "choiceEdges": 13,
+    "savedStateReplayChecks": 187,
+    "productionBuild": "passed",
+    "vitest": {
+      "files": 219,
+      "tests": 1123,
+      "status": "passed with two workers"
+    },
+    "backendChecks": "passed",
+    "existingEthicsAnswers": "preservation guard passed before backend deployment",
+    "packageBytes": 478329,
+    "backendDeployment": "6af2c9ad107b02d5fb1f"
+  },
+  "visual": [
+    "Actual Kevin/Mara conversation and grounded cast inspected on desktop",
+    "Rafi listener framing inspected; worried reaction added in staged version 2",
+    "390x844 phone viewport: context, Kevin/Hepting, first choice and Rafi/Aya exchange inspected",
+    "Shared taxi skip controls advance normally",
+    "Version 2 Rafi worried listener verified in live phone preview",
+    "Production opening silent playback advances automatically into story; viewport override reset"
+  ],
+  "video": {
+    "model": "prunaai/p-video-2-pro",
+    "maximumUsd": 0.06,
+    "paidAttempts": 1,
+    "holdSeconds": 3,
+    "motionSeconds": 6,
+    "nativeAudio": true,
+    "timingAndNonSilence": "passed",
+    "visual": "Generated still and finished midpoint inspected; folder closing preserves paper-cut medium"
+  },
+  "limits": [
+    "Viewport emulation is not a physical-phone test.",
+    "No separate OS reduced-motion session; static context and scene pause controls plus replay checks cover available alternatives.",
+    "Cached speech check returned no words but emitted numerical warnings; audio timing/non-silence are verified, not a guarantee from audible listening."
+  ],
+  "publication": {
+    "status": "published-assigned",
+    "studentReadAndMediaVerified": true,
+    "deadline": null,
+    "firstProductionDeployment": "42777122092 succeeded"
+  }
+}

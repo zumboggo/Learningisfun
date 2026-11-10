@@ -175,6 +175,7 @@ Mara [sad]: I'll correct that claim without exposing her family circumstances. T
 label shared_result
 I: Rafi reads the award twice. His problem has a concrete answer. Aya's money problem does not. The sponsor has not made its renewal decision; no route lets us announce what it will do.
 Mara [sad]: The board has taken me off award decisions while it reviews my conduct. I can keep packing bags. I cannot approve my own return.
+express Rafi worried
 camera listener Rafi over 0.65
 Mara [worried]: I am sorry I made you choose between gratitude and a fair hearing.
 I: Rafi folds the letter carefully. He does not offer forgiveness to make the room less awkward.
