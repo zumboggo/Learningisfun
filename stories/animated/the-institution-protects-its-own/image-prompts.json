@@ -1,0 +1,13 @@
+{
+  "tool": "built-in ImageGen",
+  "office": {
+    "source": "exec-b38edf45-2e3d-406d-a35d-ec38e6188894.png",
+    "file": "office-v1.webp",
+    "prompt": "16:9 modest contemporary nonprofit scholarship charity office; clean slate manga outlines, muted teal cream terracotta, afternoon windows, filing cabinets, school bags, open foreground, no people/text/logos. Eye-level, low contrast."
+  },
+  "teaser": {
+    "source": "exec-95254914-ecf3-41e4-8349-860d6a0667ab.png",
+    "file": "teaser-reference.png",
+    "prompt": "16:9 layered cut-paper close-up. Single medium-brown adult woman\u2019s right hand with teal cardigan cuff holds burgundy folder cover partly open over an anonymous grid sheet. Quiet hesitation, paper texture, no legible text/numbers; fixed camera, school bags softly behind."
+  }
+}

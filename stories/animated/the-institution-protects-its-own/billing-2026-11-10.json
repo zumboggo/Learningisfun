@@ -1,0 +1,42 @@
+{
+  "verifiedDate": "2026-11-10",
+  "source": "https://replicate.com/prunaai/p-video-2-pro",
+  "tier": {
+    "criteria": [
+      {
+        "description": "cost",
+        "subtype": "string",
+        "title": "model variant",
+        "type": "equals",
+        "value": "cost"
+      },
+      {
+        "description": "480p",
+        "subtype": "string",
+        "title": "target resolution",
+        "type": "equals",
+        "value": "480p"
+      }
+    ],
+    "description": "480p resolution, cost mode",
+    "prices": [
+      {
+        "description": "or 100 seconds for $1",
+        "metric": "video_output_duration_seconds",
+        "metric_display": "second of output video",
+        "price": "$0.01",
+        "title": "per second of output video",
+        "type": "per-unit"
+      }
+    ],
+    "title": "480p cost"
+  },
+  "duration": 6,
+  "resolution": "480p",
+  "mode": "cost",
+  "prompt_upsampler": "off",
+  "nativeAudio": true,
+  "maximumChargeUsd": 0.06,
+  "paidAttempts": 1,
+  "submissionStarted": true
+}

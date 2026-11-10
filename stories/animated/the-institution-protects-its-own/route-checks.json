@@ -1,0 +1,13 @@
+{
+  "routes": 96,
+  "choiceEdges": 13,
+  "replayChecks": 187,
+  "words": [
+    1641,
+    1677
+  ],
+  "stagedSpeakers": true,
+  "allCommitmentsHaveCallbacks": true,
+  "quiz": "100/75",
+  "zipScriptMatches": true
+}

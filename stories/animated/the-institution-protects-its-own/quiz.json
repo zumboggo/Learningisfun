@@ -1,0 +1,46 @@
+[
+  {
+    "prompt": "What establishes that the extra eight points were an unauthorized change?",
+    "options": [
+      "Rafi is Kevin\u2019s friend.",
+      "Aya\u2019s mother volunteers at the charity.",
+      "The signed total differs from the final list, and Mara admits changing it outside the rules.",
+      "The sponsor has canceled next year\u2019s funding."
+    ],
+    "answer": 2,
+    "explanation": "The two records and Mara\u2019s admission support this conclusion. Friendship and a family connection alone would not prove wrongdoing. The sponsor has not decided."
+  },
+  {
+    "prompt": "What is the conflict of interest in Mara\u2019s decision?",
+    "options": [
+      "Her loyalty to a longtime volunteer\u2019s family interferes with her duty to apply the agreed scholarship rules.",
+      "Two applicants have the same name.",
+      "An independent reviewer asks questions.",
+      "Kevin dislikes checking arithmetic."
+    ],
+    "answer": 0,
+    "explanation": "Mara\u2019s personal attachment pulls against her responsibility to all applicants. The story also establishes that she acted on it by changing the score."
+  },
+  {
+    "prompt": "Which claim is still uncertain at the end?",
+    "options": [
+      "Mara entered an extra eight points.",
+      "The original committee ranking has been restored.",
+      "Aya did not ask Mara to change her score.",
+      "The sponsor will withdraw next year\u2019s support."
+    ],
+    "answer": 3,
+    "explanation": "The sponsor\u2019s renewal remains undecided. A possible future cost deserves consideration, but it must not be presented as an established outcome."
+  },
+  {
+    "prompt": "What does this case add to the comparison with Henrich\u2019s argument?",
+    "options": [
+      "Every institution is less fair than every family.",
+      "Cooperation beyond kin can still involve favoritism toward insiders.",
+      "One charity proves that medieval marriage rules had no effect.",
+      "Equal rules mean that nobody should ever help Aya."
+    ],
+    "answer": 1,
+    "explanation": "An organization can favor its own circle without blood relationships. This case tests institutional loyalty; it does not settle Henrich\u2019s historical explanation or forbid help under fair, transparent arrangements."
+  }
+]

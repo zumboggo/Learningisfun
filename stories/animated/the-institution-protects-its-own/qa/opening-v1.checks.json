@@ -1,0 +1,23 @@
+{
+  "source": "/Users/david.hepting/Documents/ChatGPT/Learning is Fun/implementation/stories/animated/the-institution-protects-its-own/teaser-native.mp4",
+  "output": "/Users/david.hepting/Documents/ChatGPT/Learning is Fun/implementation/public/stories/shared/the-institution-protects-its-own/opening-v1.mp4",
+  "dimensions": [
+    854,
+    480
+  ],
+  "fps": 24,
+  "hold_seconds": 3.0,
+  "motion_seconds": 6.0,
+  "reaction_hold_seconds": 0.0,
+  "total_seconds": 9.0,
+  "decoded_audio_seconds": 9.00275,
+  "audio_non_silent": true,
+  "audio_starts_after_hold": true,
+  "hold_mean_pixel_difference": 0.0026883294301327087,
+  "sha256": "83978eee9468b9d7b8d71bf8f7a82b167c915e242a4f9cd8d324119f1b01b0e9",
+  "expected_dialogue": "",
+  "speech_check": "No speech detected",
+  "review": "One visual/listening review remains; automated checks do not prove natural acting or lip sync.",
+  "transcription": "",
+  "speechCheckLimitation": "Cached ASR returned no speech but emitted numerical warnings; not a substitute for listening."
+}

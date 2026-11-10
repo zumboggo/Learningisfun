@@ -1,0 +1,48 @@
+{
+  "model": "prunaai/p-video-2-pro",
+  "version": "7fc65104affa38f28b544b3549506e52f6519d752f528944f4eae2f94cd384b6",
+  "prompt": "Animate the supplied layered cut-paper artwork, retaining its exact paper fibres, tactile edges, warm cream teal burgundy palette and single right hand with teal cardigan cuff. One continuous fixed shot. The hand gently lowers the burgundy folder cover over the assessment sheet until closed, rests on the closed cover for a brief hesitant moment, then withdraws to the right. The folder stays closed. No other people or hands appear. No camera movement. Do not add writing or numbers. Preserve the cut-paper medium throughout. Native audio: quiet paper rustling and a soft folder tap, faint room ambience. Absolutely no human speech, no words, no voices, no humming, no music. The mood is uncomfortable hesitation, not horror.",
+  "settings": {
+    "prompt": "Animate the supplied layered cut-paper artwork, retaining its exact paper fibres, tactile edges, warm cream teal burgundy palette and single right hand with teal cardigan cuff. One continuous fixed shot. The hand gently lowers the burgundy folder cover over the assessment sheet until closed, rests on the closed cover for a brief hesitant moment, then withdraws to the right. The folder stays closed. No other people or hands appear. No camera movement. Do not add writing or numbers. Preserve the cut-paper medium throughout. Native audio: quiet paper rustling and a soft folder tap, faint room ambience. Absolutely no human speech, no words, no voices, no humming, no music. The mood is uncomfortable hesitation, not horror.",
+    "duration": 6,
+    "resolution": "480p",
+    "mode": "cost",
+    "prompt_upsampler": "off",
+    "aspect_ratio": "16:9",
+    "enable_safety_filter": true
+  },
+  "maximumChargeUsd": 0.06,
+  "predictionId": "9tt3a1ayz5rmr0d1rharcq2518",
+  "status": "succeeded",
+  "downloaded": true,
+  "bytes": 1702163,
+  "metrics": {
+    "billing": {
+      "fps": 24,
+      "mode": "cost",
+      "model_variant": "cost",
+      "resolution_target": "480p",
+      "turbo": true,
+      "video_output_duration_seconds": 6
+    },
+    "fps": 24,
+    "inference_provider": "modal",
+    "metadata": {
+      "execution_time": {
+        "model_execution_time": 4.746,
+        "prompt_upsampler_execution_time": 0,
+        "total_execution_time": 8.976
+      }
+    },
+    "mode": "cost",
+    "model_variant": "cost",
+    "predict_time": 9.887418273,
+    "prompt_upsampler": "off",
+    "prompt_upsampler_fallback": false,
+    "resolution_target": "480p",
+    "total_time": 10.068824256,
+    "turbo": true,
+    "video_output_count": 1,
+    "video_output_duration_seconds": 6
+  }
+}

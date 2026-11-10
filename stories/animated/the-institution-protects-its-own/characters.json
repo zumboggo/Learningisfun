@@ -1,0 +1,62 @@
+[
+  {
+    "id": "Mara",
+    "name": "Mara \u00b7 charity director",
+    "version": 1,
+    "finish": "polished",
+    "palette": {
+      "skin": "#ad7854",
+      "hair": "#49352e",
+      "shirt": "#477d78",
+      "trim": "#e5d6bb"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "bob",
+      "face": "angular",
+      "eyes": "gentle",
+      "outfit": "cardigan"
+    },
+    "provenance": "Original supporting character in an invented scholarship charity; no real organization or personal likeness."
+  },
+  {
+    "id": "Rafi",
+    "name": "Rafi \u00b7 scholarship applicant",
+    "version": 1,
+    "finish": "polished",
+    "palette": {
+      "skin": "#c28b62",
+      "hair": "#2f2927",
+      "shirt": "#697b9a",
+      "trim": "#e5d6bb"
+    },
+    "appearance": {
+      "age": "teen",
+      "hair": "cropped",
+      "face": "spirited",
+      "eyes": "gentle",
+      "outfit": "workshirt"
+    },
+    "provenance": "Original supporting character in an invented scholarship charity; no real organization or personal likeness."
+  },
+  {
+    "id": "Aya",
+    "name": "Aya \u00b7 scholarship applicant",
+    "version": 1,
+    "finish": "polished",
+    "palette": {
+      "skin": "#c89a78",
+      "hair": "#2c2927",
+      "shirt": "#ae7757",
+      "trim": "#e5d6bb"
+    },
+    "appearance": {
+      "age": "teen",
+      "hair": "ponytail",
+      "face": "oval",
+      "eyes": "gentle",
+      "outfit": "cardigan"
+    },
+    "provenance": "Original supporting character in an invented scholarship charity; no real organization or personal likeness."
+  }
+]

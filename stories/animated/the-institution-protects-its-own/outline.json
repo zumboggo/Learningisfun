@@ -1,0 +1,113 @@
+{
+  "title": "The Institution Protects Its Own",
+  "voice": "Warm, self-questioning adolescent",
+  "voiceReason": "Kevin initially trusts the charity\u2019s admirable work and learns to distinguish loyalty to its purpose from loyalty to its reputation. Humor targets his assumptions, never the students\u2019 financial need.",
+  "primaryStandard": "4b.1",
+  "objective": "Connect a judgement about institutional loyalty to reasons and show how a specific fact supports it.",
+  "successCriterion": "Support a proposed response with a verified case detail, distinguish a feared consequence from established evidence, and address a serious competing reason.",
+  "promise": "Kevin wants to help a useful charity keep its promise of fair scholarships; an admitted score change forces him to act without sacrificing either affected student\u2019s dignity.",
+  "earlyCare": "Mara fixes a bag zip before distributing it; Rafi makes room for Aya despite his anger; Aya refuses a second hidden advantage.",
+  "context": [
+    "Present day. The Bridge Scholarship Trust helps students stay in school. Its twenty awards are supposed to follow scores agreed before names are revealed. Kevin has volunteered to check the totals. A tidy spreadsheet should be safer than a stolen sheep.",
+    "One applicant is his friend. Another has a parent who has served the charity for years. A sponsor is deciding whether to renew funding. The final list is ready\u2014but the totals may have something to say first."
+  ],
+  "directing": [
+    "Mara admits the score change \u2192 listener Kevin \u2192 thought held by Continue \u2192 pair resumes.",
+    "Mara fears exposure \u2192 listener Mara receives Kevin\u2019s question about hidden harm \u2192 held narration before scene change.",
+    "Aya and Rafi face each other \u2192 shared shot holds their different needs without awarding either moral superiority.",
+    "Mara apologizes \u2192 listener Rafi holds the folded letter \u2192 pair resumes with gratitude and harm both acknowledged."
+  ],
+  "signatures": {
+    "Kevin": "Concrete questions, self-directed humor; begins open and curious, becomes specific about limits. Pauses his checking motion at the mismatch.",
+    "Mara": "Practical care and collective \u201cwe\u201d; pressure brings predicted losses, later explicit \u201cI\u201d. Reaches to close the folder, later leaves it open.",
+    "Rafi": "Short deadlines and direct requests; anger becomes precise demands. Makes room for Aya and withholds automatic forgiveness.",
+    "Aya": "Asks to speak for herself; refuses pity and another hidden preference. Offers the borrowed calculator even while distressed.",
+    "Hepting": "Brief questions that connect cases without supplying a winning moral verdict."
+  },
+  "sceneActivities": [],
+  "physicalWork": "Supported reaching accompanies packing/checking; folder, calculator, bags and letters are narrated/mimed. No claim that these are animated prop objects. Teaser depicts the folder-closing action.",
+  "choices": [
+    [
+      "first_check",
+      "How I checked the mismatch"
+    ],
+    [
+      "evidence",
+      "How I supported Rafi"
+    ],
+    [
+      "response",
+      "How I sought accountability"
+    ],
+    [
+      "help",
+      "How I supported Aya"
+    ],
+    [
+      "statement",
+      "What the sponsor should hear"
+    ],
+    [
+      "return",
+      "Whether I would return"
+    ]
+  ],
+  "branches": [
+    [
+      "first_check",
+      "Private clarification / documented query",
+      "Different admission responses; remembered in Mara\u2019s final exchange"
+    ],
+    [
+      "evidence",
+      "Factual summary / joint record request",
+      "Rafi asks Kevin to sign or remain present; both establish next-day deadline"
+    ],
+    [
+      "response",
+      "Internal correction / independent review / applicant disclosure",
+      "Different actors, costs, visibility and safeguards; distinct outcome callbacks"
+    ],
+    [
+      "help",
+      "Open emergency-fund route / other support with consent",
+      "No guaranteed replacement award; final notebook callback"
+    ],
+    [
+      "statement",
+      "Verified facts / affected voices with consent",
+      "Different redrafting action; neither hides failure"
+    ],
+    [
+      "return",
+      "Conditional volunteering / supportive distance",
+      "Different commitments, both defensible"
+    ]
+  ],
+  "payoff": "All routes verify and restore the original ranking before Rafi\u2019s deadline. Independent institutional responses differ; Aya\u2019s unmet need and the donor\u2019s undecided renewal remain honestly unresolved. Mara loses award authority pending review.",
+  "freshQuestion": "Can students check whether promised safeguards actually happen after Kevin leaves?",
+  "teaser": {
+    "label": "institution_opening_v1",
+    "medium": "Layered cut-paper theatre",
+    "moment": "Mara closes the folder after warning that disclosure may cost support.",
+    "action": "One hand lowers the cover, hesitates on it, then withdraws.",
+    "speech": false,
+    "holdSeconds": 3,
+    "generatedSeconds": 6,
+    "maximumUsd": 0.06
+  },
+  "portfolioOptions": [
+    "What fact best supports your chosen response to Mara, and why does it matter?",
+    "What if the sponsor definitely would withdraw next year\u2019s funding? Would your response change? Why?",
+    "Can Kevin be loyal to the charity while refusing to volunteer there? Why?"
+  ],
+  "concepts": [
+    "institution",
+    "conflict of interest",
+    "accountability",
+    "impartiality",
+    "evidence versus prediction"
+  ],
+  "presentationSuitability": "Three routes with real costs; original totals 78/86/84, unauthorized change, real deadline and uncertain renewal provide concrete evidence. Standards focus assesses reasons, not compliance with a preferred route.",
+  "sourceBoundary": "Wholly original contemporary case. No real charity, real allegation, legal reporting rule or actual scholarship process is claimed. The parent connection is long service rather than blood kinship. The case tests limits of impersonal institutions; it neither refutes nor proves Henrich\u2019s historical causal thesis."
+}
