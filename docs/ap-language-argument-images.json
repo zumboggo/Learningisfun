@@ -1,0 +1,15 @@
+{
+  "tool": "Built-in image_gen.imagegen",
+  "images": [
+    {
+      "path": "public/lessons/ap-argument-toulmin-bridge.webp",
+      "prompt": "Use case: scientific-educational. Create an instructional illustration for AP Language Toulmin reasoning, landscape editorial comic in warm cream, navy and teal with restrained coral. Two side-by-side panels show a physical bridge between a stack of observation cards on left shore and a student holding a policy proposal on right shore. Left panel bridge has a clearly missing central span and student cannot cross; right panel the central span is installed and supported by a sturdy pier beneath it, allowing crossing. This metaphor teaches evidence needs a warrant connecting it to a claim, and backing supports the warrant. Include only four large clean labels in the RIGHT panel: 'EVIDENCE' above left shore, 'WARRANT' on central span, 'CLAIM' above right shore, 'BACKING' on support pier. No other text. Stylish clear flat illustration, educational conceptual relationships obvious, age appropriate high school, generous margins.",
+      "inspection": "All four labels legible and correct; missing span and supporting pier distinguish warrant from backing. Caption explains metaphor limits. Optimized to 1400px WebP."
+    },
+    {
+      "path": "public/lessons/ap-argument-criteria-lenses.webp",
+      "prompt": "Use case: scientific-educational. Landscape editorial instructional comic, warm cream navy teal coral flat illustration matching a high school argument lesson. Three equal panels show the SAME two school phone policy cards being compared through three different evaluation lenses. Card A icon: smartphone in a locked box with clock. Card B icon: smartphone in schoolbag with small break-time clock. In panel 1 a magnifying glass highlights a focused student at desk; in panel 2 highlights student choosing when to use phone during lunch; in panel 3 highlights accessible medical phone with medical cross and a respectful teacher helping. Only text: panel headings 'LEARNING', 'AUTONOMY', 'FAIR ACCESS', and tiny 'A' and 'B' on policy cards, legible. Under panels a thoughtful student considers all three panels, with three arrows converging toward an empty speech bubble. No scores, ticks, winner, balance scale, or ranking: visual teaches compare SAME options using consistent criteria, then justify priorities; no automatic winner by counting criteria. Sophisticated inviting classroom art, no logos.",
+      "inspection": "Consistent A/B options across three legible lenses; no score or predetermined winner. Empty speech bubble directs attention to the judgment students must justify. Optimized to 1400px WebP."
+    }
+  ]
+}

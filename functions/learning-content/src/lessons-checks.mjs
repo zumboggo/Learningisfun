@@ -4,7 +4,8 @@ import {readFileSync} from 'node:fs';
 import {lessonAction} from './lessons.js';
 const [lesson]=JSON.parse(readFileSync(new URL('./lesson-catalog.json',import.meta.url)));
 const classId=lesson.classIds[0];
-function fixture(){
+function fixture(selectedClassId=classId){
+ const classId=selectedClassId;
  const rows=new Map();const db={createTransaction:async()=>({$id:'tx'}),updateTransaction:async()=>{},getDocument:async(_,c,id)=>{const row=rows.get(c+id);if(!row)throw Object.assign(Error(),{code:404});return structuredClone(row);},createDocument:async(_,c,id,row)=>rows.set(c+id,{$id:id,...row}),updateDocument:async(_,c,id,row)=>rows.set(c+id,{$id:id,...rows.get(c+id),...row}),listDocuments:async()=>({documents:[{userId:'learner'}]})};
  rows.set('classes'+classId,{$id:classId,status:'active',teacherId:'teacher',name:'World Lit'});let revision=0;
  async function invoke(action,extra={},identity={}){const r=await lessonAction({db,databaseId:'main',profile:{role:'student'},userId:'learner',memberClassIds:new Set([classId]),body:{action,classId,lessonId:lesson.id,revision,...extra},...identity});if(r.revision!==undefined)revision=r.revision;return r;}
@@ -73,7 +74,7 @@ test('every revised catalog lesson keeps valid gates, instructional assets and a
  const previous=JSON.parse(readFileSync(new URL('./lesson-catalog-previous.json',import.meta.url)));
  assert.ok(catalog.length>=previous.length);
  for(const l of catalog){
-  assert.ok(!previous.some(old=>old.id===l.id));assert.ok(l.minutes>=10&&l.minutes<=15);
+  assert.ok(!previous.some(old=>old.id===l.id));assert.ok(l.minutes>=10&&l.minutes<=(l.id.startsWith('ap-lang-phone-argument-')?50:15));
   const copy=structuredClone(l);for(const s of copy.stages)delete s.image;
   assert.deepEqual(validateLesson(copy),[],l.id);
   assert.ok(l.stages.flatMap(s=>s.questions).filter(q=>q.rehearsal).length>=2,l.id);
@@ -91,4 +92,29 @@ test('current bibliography can be submitted after practice without a final or AI
  const r=await act('lessonComplete');assert.equal(r.state.outcome,'Completed');assert.ok(r.state.practiceSubmittedAt);assert.equal(r.state.draft,'Optional draft to keep');assert.deepEqual(r.state.submissions,[]);
  const again=await act('lessonComplete');assert.equal(again.state.practiceSubmittedAt,r.state.practiceSubmittedAt);
  assert.equal((await act('lessonRead')).state.outcome,'Completed');assert.equal(r.lesson.finalOptional,true);assert.equal(globalThis.fetch.mock.callCount(),0);
+});
+
+test('AP argument sequence supports full periods and all fresh retry gates without AI',async t=>{
+ const {validateLesson}=await import('./lesson-authoring.js');
+ const catalog=JSON.parse(readFileSync(new URL('./lesson-catalog.json',import.meta.url)));
+ const sequence=catalog.filter(l=>l.id.startsWith('ap-lang-phone-argument-'));
+ assert.equal(sequence.length,2);
+ t.mock.method(globalThis,'fetch',async()=>{throw Error('No live AI in content verification');});
+ for(const lesson of sequence){
+  assert.equal(lesson.minutes,50);assert.deepEqual(lesson.classIds,['88421c66-9cda-4002-8e15-086312b7805e']);
+  assert.deepEqual(validateLesson(lesson),[]);
+  assert.ok(validateLesson({...lesson,minutes:61}).length);
+  const act=fixture(lesson.classIds[0]),identity={memberClassIds:new Set(lesson.classIds)},base={lessonId:lesson.id,classId:lesson.classIds[0]};
+  await assert.rejects(act('lessonSubmit',{...base,draft:'No practice yet'},identity),/Finish practice/);
+  let step=0;
+  for(const stage of lesson.stages)for(const question of stage.questions){
+   await act('lessonAnswer',{...base,answer:'deliberately incorrect'},identity);
+   const retry=await act('lessonAnswer',{...base,answer:'deliberately incorrect'},identity);
+   assert.equal(retry.state.step,step);
+   const response=await act('lessonAnswer',{...base,answer:question.alternate.answers[0]},identity);
+   assert.equal(response.state.step,++step);
+  }
+  const read=await act('lessonRead',base,identity);assert.equal(read.state.step,6);
+ }
+ assert.equal(globalThis.fetch.mock.callCount(),0);
 });

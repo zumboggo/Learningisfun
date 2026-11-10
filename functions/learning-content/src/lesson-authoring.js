@@ -20,7 +20,7 @@ export function validateLesson(l){
  const errors=[];const check=(ok,msg)=>{if(!ok)errors.push(msg);};
  if(!l||typeof l!=='object')return ['Create a lesson first.'];
  for(const k of ['title','objective'])check(text(l[k],1500),`Add a ${k}.`);
- check(Number.isFinite(l.minutes)&&l.minutes>=5&&l.minutes<=30,'Use a duration between 5 and 30 minutes.');
+ check(Number.isFinite(l.minutes)&&l.minutes>=5&&l.minutes<=60,'Use a duration between 5 and 60 minutes.');
  check(Array.isArray(l.stages)&&l.stages.length>=1&&l.stages.length<=5,'Use one to five stages.');
  const url=(v,label)=>check(!v||(typeof v==='string'&&v.length<=2048&&/^https?:\/\/[^\s]+$/i.test(v)),label+' needs a valid source URL.');
  const item=(q,label)=>{
