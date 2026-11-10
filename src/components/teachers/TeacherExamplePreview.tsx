@@ -74,7 +74,7 @@ const sampleDiscussions = {
 function TextExample({id, title}: {id: string; title: string}) {
   const [parallel, setParallel] = useState(true);
   const samples = sampleDiscussions[id as keyof typeof sampleDiscussions];
-  const content = id === 'helplessness' ? helplessness : alchemist.replace(/\]\(images\/([^ )]+)\)/g, (_, name) => '](' + images['./reading-images/alchemist-' + name.replace('.png', '.webp')] + ')');
+  const content = id === 'helplessness' ? helplessness.replace('/Learningisfun/images/teacher-example-elephant.webp', new URL(import.meta.env.BASE_URL + 'images/teacher-example-elephant.webp', window.location.href).href) : alchemist.replace(/\]\(images\/([^ )]+)\)/g, (_, name) => '](' + new URL(images['./reading-images/alchemist-' + name.replace('.png', '.webp')], window.location.href).href + ')');
   return <section className="space-y-3">
     <h3 className="text-xl font-bold">{title}</h3>
     {samples && <button className="rounded-lg border bg-white px-4 py-2" onClick={() => setParallel(!parallel)}>{parallel ? 'Text only' : 'Text and sample discussion'}</button>}

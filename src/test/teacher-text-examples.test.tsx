@@ -16,6 +16,7 @@ describe('teacher text examples', () => {
     render(<TeacherExamples section="texts"/>);
     fireEvent.click(screen.getByRole('button', {name: /The World Behind the Alchemist/}));
     expect(await screen.findByRole('complementary', {name: 'Sample discussion'})).toBeVisible();
+    expect(await screen.findByRole('img', {name: /seventeenth-century alchemist/})).toHaveAttribute('src', expect.stringMatching(/^https?:\/\//));
     expect(screen.getAllByText(/Sample reply:/)).toHaveLength(2);
     fireEvent.click(screen.getByRole('button', {name: 'Text only'}));
     expect(screen.queryByRole('complementary')).not.toBeInTheDocument();

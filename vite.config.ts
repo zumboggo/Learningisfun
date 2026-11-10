@@ -47,7 +47,7 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         globIgnores: ['stories/**'],
-        navigateFallbackDenylist: [/\/stories\//],
+        navigateFallbackDenylist: [/\/stories\//, /\.pdf$/i],
         runtimeCaching: [
           {
             urlPattern: /\/assets\/pdf\.worker\.min-[^/]+\.mjs$/,
