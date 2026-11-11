@@ -169,7 +169,7 @@ export default async ({ req, res, error }) => {
     if(['readFamilyContacts','saveFamilyContacts'].includes(body.action))return res.json({error:'The family contact form has been retired.'},410);
     if (['usageSummary','teacherData'].includes(body.action)) {
       try { return res.json(await usageSummary({body,profile,userId,db,databaseId,storage:new Storage(client)})); }
-      catch (cause) { if ([400,403].includes(cause.code)) return res.json({error:cause.message},cause.code); throw cause; }
+      catch (cause) { if ([400,403,404].includes(cause.code)) return res.json({error:cause.message},cause.code); throw cause; }
     }
     if (body.action === 'readUserProfile') {
       if (!await canReadProfile({ db, databaseId, userId, profile, targetId: body.userId })) return res.json({ error: 'Profile unavailable' }, 403);

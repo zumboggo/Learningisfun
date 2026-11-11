@@ -78,3 +78,33 @@ test('teacher Data includes zero-activity students and scoped participation with
   expect(r.studentRows.find(s=>s.name==='Lee')).toMatchObject({questions:0,replies:0,lastActivity:null});
   expect(JSON.stringify(r)).not.toMatch(/private@example|answerText|questionText/);
 });
+
+test('episode detail returns only submitted writing for the selected class and assignment, across the full history',async()=>{
+  const episode=(id,kind,data,extra={})=>({$id:id,classId:'c',kind,userId:'s',$createdAt:'2026-08-01T00:00:00Z',dataJson:JSON.stringify(data),...extra});
+  const attempt={type:'animated-attempt',id:'play',assignmentId:'story',revision:4,quizzes:[[0,0,0,0]],score:100,complete:true,
+    writing:{question:1,text:'Submitted paragraph',submitted:true}};
+  const assigned={title:'Story',date:'2026-08-01',fileId:'f'};
+  const ctx=fixture({episode_records:[
+    episode('story','animated-assignment',assigned),
+    episode('another','animated-assignment',assigned),
+    episode('foreign-story','animated-assignment',assigned,{classId:'foreign'}),
+    episode('completed','aa-one',{...attempt,revision:6}),
+    episode('editing','aa-one',{...attempt,revision:5,complete:false,writing:{...attempt.writing,text:'Unsubmitted edit',submitted:false}}),
+    episode('superseded','aa-one',{...attempt,writing:{...attempt.writing,text:'Old submission'}}),
+    episode('draft','aa-two',{...attempt,id:'replay',complete:false,writing:{question:0,text:'Unsubmitted draft',submitted:false}}),
+    episode('other-answer','aa-three',{...attempt,assignmentId:'another',writing:{...attempt.writing,text:'Other answer'}}),
+    episode('outsider-answer','aa-four',{...attempt,writing:{...attempt.writing,text:'Outsider answer'}},{userId:'outsider'}),
+  ]});
+  const body={action:'teacherData',classId:'c',days:7};
+  const storage={getFileDownload:vi.fn(async()=>({format:1,writing:{prompts:['First prompt','Chosen prompt']}}))};
+  const detail=await usageSummary({...ctx,storage,body:{...body,episodeAssignmentId:'story'}});
+  expect(detail.episodeRows).toHaveLength(1);
+  expect(detail.episodeRows[0]).toMatchObject({userId:'s',quizTries:2,hasWriting:true,
+    answers:[{prompt:'Chosen prompt',text:'Submitted paragraph'}]});
+  expect(JSON.stringify(detail)).not.toMatch(/Old submission|Unsubmitted|Other answer|Outsider answer/);
+  expect(storage.getFileDownload).toHaveBeenCalledTimes(1);
+  const summary=await usageSummary({...ctx,storage,body:{...body,days:0}});
+  expect(summary.episodeCatalog.map(e=>e.assignmentId)).toEqual(['story','another']);
+  expect(JSON.stringify(summary)).not.toContain('Submitted paragraph');
+  await expect(usageSummary({...ctx,storage,body:{...body,episodeAssignmentId:'foreign-story'}})).rejects.toMatchObject({code:404});
+});

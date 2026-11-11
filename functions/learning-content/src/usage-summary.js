@@ -30,7 +30,20 @@ export async function usageSummary({body, profile, userId, db, databaseId, stora
   if (detailed && body.classId && !ownedClasses.some(c=>c.$id===body.classId)) throw Object.assign(new Error('Only your own classes are available'),{code:403});
   if (detailed && !body.classId) return {classes:ownedClasses.map(c=>({id:c.$id,name:c.name,courseName:c.courseName||''}))};
   const classes = detailed ? ownedClasses.filter(c=>c.$id===body.classId) : ownedClasses;
-  let studentRows = [], episodeRows = [];
+  const currentStudents = (members, cls) => new Set(members.filter(m=>m.role==='student' && (!m.expiresAt || m.expiresAt>now.toISOString()) && m.userId!==cls.teacherId).map(m=>m.userId));
+  const animatedAssignments = scope => list('episode_records',[...scope,Query.equal('kind','animated-assignment')]);
+  if (detailed && body.episodeAssignmentId !== undefined) {
+    const cls = classes[0], scope = [Query.equal('classId',cls.$id)];
+    const assignment = (await animatedAssignments(scope)).find(row=>row.$id===body.episodeAssignmentId);
+    if (!assignment) throw Object.assign(new Error('Episode unavailable in this class'), {code:404});
+    const [members, records] = await Promise.all([
+      list('class_members',scope),
+      list('episode_records',[...scope,Query.startsWith('kind','aa-')]),
+    ]);
+    return {episodeRows:await teacherEpisodeRows({records,assignments:[assignment],students:currentStudents(members, cls),
+      inRange:()=>true,storage,includeWriting:true}),missingSources:[...missing]};
+  }
+  let studentRows = [], episodeRows = [], episodeCatalog = [];
 
   const totals = empty(), enrolled = new Set(), active = new Set(), rows = [];
   // Bound concurrency so a teacher with many classes cannot flood the database.
@@ -41,7 +54,7 @@ export async function usageSummary({body, profile, userId, db, databaseId, stora
       list('text_discussion_posts',scope), list('text_annotations',scope),
       list('flashcard_review_events',scope), list('flashcard_study_sessions',scope), list('episode_records',[...scope,Query.or([Query.equal('kind','attempt'),Query.startsWith('kind','aa-')])]),
     ]);
-    const students = new Set(members.filter(m=>m.role==='student' && (!m.expiresAt || m.expiresAt>now.toISOString()) && m.userId!==cls.teacherId).map(m=>m.userId));
+    const students = currentStudents(members, cls);
     students.forEach(id=>enrolled.add(id));
     const details = new Map([...students].map(id=>[id,{userId:id,...empty(),lastActivity:null}]));
     const values = empty(), participants = new Set();
@@ -125,7 +138,11 @@ export async function usageSummary({body, profile, userId, db, databaseId, stora
       const profiles = await byIds('users','$id',[...students]);
       const names = new Map(profiles.map(p=>[p.$id,p.name||p.nickname||'Unnamed student']));
       studentRows = [...details.values()].map(s=>({...s,name:names.get(s.userId)||'Unavailable student profile'})).sort((a,b)=>a.name.localeCompare(b.name));
-      const assignedEpisodes = await list('episode_records',[...scope,Query.equal('kind','animated-assignment')]);
+      const assignedEpisodes = await animatedAssignments(scope);
+      episodeCatalog = assignedEpisodes.map(row=>{
+        const {title,date,archived} = JSON.parse(row.dataJson);
+        return {assignmentId:row.$id,title,assignedDate:date,archived:!!archived};
+      });
       episodeRows = await teacherEpisodeRows({records:episodes,assignments:assignedEpisodes,students,inRange,storage});
     }
     for (const key of metricKeys) totals[key]+=values[key];
@@ -133,5 +150,5 @@ export async function usageSummary({body, profile, userId, db, databaseId, stora
   }
   for (let i=0;i<classes.length;i+=4) await Promise.all(classes.slice(i,i+4).map(summarizeClass));
   rows.sort((a,b)=>a.name.localeCompare(b.name));
-  return {...(detailed?{studentRows,episodeRows}:{}),generatedAt:now.toISOString(),since,days,students:enrolled.size,activeStudents:active.size,classes:rows,totals,missingSources:[...missing]};
+  return {...(detailed?{studentRows,episodeRows,episodeCatalog}:{}),generatedAt:now.toISOString(),since,days,students:enrolled.size,activeStudents:active.size,classes:rows,totals,missingSources:[...missing]};
 }

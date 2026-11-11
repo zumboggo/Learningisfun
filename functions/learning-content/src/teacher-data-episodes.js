@@ -2,9 +2,16 @@ import {quizScore} from './story-engine.js';
 
 // Immutable save revisions are not separate attempts. Keep only the latest
 // revision of each play, but retain the time and score of each quiz submission.
-export async function teacherEpisodeRows({records, assignments, students, inRange, storage}) {
+export async function teacherEpisodeRows({records, assignments, students, inRange, storage, includeWriting = false}) {
   const catalog = new Map(assignments.map(row => [row.$id, JSON.parse(row.dataJson)]));
   const plays = new Map(), packCache = new Map();
+  const getPack = async fileId => {
+    if (!packCache.has(fileId)) {
+      const raw = await storage.getFileDownload({bucketId: 'animated-episodes', fileId});
+      packCache.set(fileId, raw?.format ? raw : JSON.parse(Buffer.from(raw).toString()));
+    }
+    return packCache.get(fileId);
+  };
   for (const row of records) {
     const a = JSON.parse(row.dataJson);
     if (a.type !== 'animated-attempt' || a.preview || !students.has(row.userId) || !catalog.has(a.assignmentId)) continue;
@@ -35,22 +42,27 @@ export async function teacherEpisodeRows({records, assignments, students, inRang
         if (!entry || !Number.isFinite(entry.score)) {
           // Older clients can upload multiple quiz tries in one save. Score
           // those answers against the assignment's immutable published package.
-          if (!packCache.has(assignment.fileId)) {
-            const raw = await storage.getFileDownload({bucketId: 'animated-episodes', fileId: assignment.fileId});
-            packCache.set(assignment.fileId, raw?.format ? raw : JSON.parse(Buffer.from(raw).toString()));
-          }
           entry = {date: play.quizzes.get(play.latest.quizzes.length)?.date || play.date,
-            score: quizScore(packCache.get(assignment.fileId).quiz, play.latest.quizzes[i])};
+            score: quizScore((await getPack(assignment.fileId)).quiz, play.latest.quizzes[i])};
         }
         quizzes.push({...entry, index: i, playId: play.latest.id});
       }
     }
     quizzes.sort((a,b) => a.date.localeCompare(b.date) || a.playId.localeCompare(b.playId) || a.index-b.index);
+    let writingDetails;
+    if (includeWriting) {
+      const prompts = (await getPack(assignment.fileId)).writing?.prompts || [];
+      const answers = group
+        .filter(p => p.latest.writing?.submitted)
+        .sort((a,b) => b.date.localeCompare(a.date))
+        .map(({latest: {writing}}) => ({prompt: prompts[writing.question] || `Question ${writing.question + 1}`, text: writing.text}));
+      writingDetails = {hasWriting: prompts.length > 0, answers};
+    }
     rows.push({userId, assignmentId, title: assignment.title, assignedDate: assignment.date,
       firstScore: quizzes[0]?.score ?? null, latestScore: quizzes.at(-1)?.score ?? null,
       bestScore: quizzes.length ? Math.max(...quizzes.map(q=>q.score)) : null,
       quizTries: quizzes.length, plays: group.length, complete: group.some(p=>p.latest.complete),
-      assessmentMode: assignment.assessmentMode || 'quiz', lastActivity});
+      assessmentMode: assignment.assessmentMode || 'quiz', lastActivity, ...writingDetails});
   }
   return rows.sort((a,b) => b.lastActivity.localeCompare(a.lastActivity));
 }
