@@ -1524,7 +1524,7 @@ input, textarea, select, button {
 .planner-print-prep { display: flex; flex-wrap: wrap; align-content: center; gap: 1mm 2mm; max-height: 19mm; overflow: hidden; font-size: 7pt; }
 .planner-print-prep small { flex-basis: 100%; color: #56616c; font-size: 6.5pt; }
 .planner-page-courses { position: absolute; top: 24mm; bottom: 10mm; left: 0; right: 0; display: grid; gap: 4mm; min-height: 0; overflow: hidden; }
-.planner-course-panel { display: grid; grid-template-rows: 7mm 16mm minmax(0, 1fr) auto; gap: 2mm; padding: 3mm; border: .25mm solid #aebbc5; border-radius: 3mm; min-height: 0; overflow: hidden; }
+.planner-course-panel { display: grid; grid-template-rows: 7mm 16mm auto minmax(0, 1fr) auto; gap: 2mm; padding: 3mm; border: .25mm solid #aebbc5; border-radius: 3mm; min-height: 0; overflow: hidden; }
 .planner-course-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 3mm; overflow: hidden; }
 .planner-course-heading h2 { font-size: 12pt; line-height: 1.2; font-weight: 700; flex: 1; }
 .planner-course-heading > span { max-width: 46%; font-size: 6.5pt; color: #56616c; text-align: right; }
@@ -1533,6 +1533,11 @@ input, textarea, select, button {
 .planner-skills-strip { background: #eef4f8; }
 .planner-resource-strip { background: #eff7f1; }
 .planner-course-overview p { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; margin-bottom: .5mm; }
+.planner-weekly-deadlines { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; gap: 2mm; padding: 1mm 2mm; border-radius: 1.5mm; background: #fcf0e6; font-size: 7pt; }
+.planner-weekly-deadlines ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5mm 3mm; }
+.planner-weekly-deadlines li { display: flex; gap: 1mm; }
+.planner-weekly-deadlines li span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.planner-weekly-deadlines time { flex-shrink: 0; font-variant-numeric: tabular-nums; }
 .planner-lesson-grid { display: grid; gap: 2.5mm; min-height: 0; overflow: hidden; }
 .planner-printed-lesson { display: flex; flex-direction: column; min-height: 0; padding: 1.5mm; border: .2mm solid #c1ccd4; border-radius: 2mm; overflow: hidden; }
 .planner-printed-lesson h3 { display: flex; justify-content: space-between; gap: 1mm; align-items: baseline; flex-shrink: 0; padding: 1mm; margin: -1mm -1mm 1mm; background: #f3f5f6; border-radius: 1mm; }

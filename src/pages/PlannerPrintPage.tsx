@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Button } from '@/components/common/Button';
 import { readPlanner, type WeeklyPlanData, type LessonPlan } from '@/services/planner.service';
+import { plannerDeadlinesForWeek, type ParsedPlannerSource } from '@/services/planner-parser';
 import { normalizePlan } from '@/services/planner-layout';
 import { compactPrintText, printActivityText, printLessonSlots, selectPrintActivities, PRINT_LESSON_LIMIT } from '@/services/planner-print';
 
@@ -18,7 +19,19 @@ const dateLabel = (value:string) => {
 export function PlannerPrintPage() {
   const { planId } = useParams();
   const [data, setData] = useState<WeeklyPlanData | null>(null);
-  useEffect(() => { void readPlanner().then(result => { const row = result.plans.find(plan => plan.$id === planId); if (row) setData(normalizePlan(JSON.parse(row.planJson))); }); }, [planId]);
+  useEffect(() => {
+    void readPlanner().then(result => {
+      const row = result.plans.find(plan => plan.$id === planId);
+      if (!row) return;
+      const plan = JSON.parse(row.planJson) as WeeklyPlanData;
+      const source = result.sources.find(item => item.active) ?? result.sources[0];
+      const sourceWeek = source && (JSON.parse(source.parsedJson) as ParsedPlannerSource).weeks.find(
+        week => week.key === row.weekKey && week.startDate === plan.week.startDate,
+      );
+      if (sourceWeek?.deadlines) plan.week.deadlines = sourceWeek.deadlines;
+      setData(normalizePlan(plan));
+    });
+  }, [planId]);
   if (!data) return <div className="p-6">Loading summary…</div>;
   return <PlannerPrintSheet data={data}/>;
 }
@@ -70,6 +83,7 @@ function PrintCourse({data,block}:{data:WeeklyPlanData;block:WeeklyPlanData['wee
       <div className="planner-skills-strip"><p><b>Skills:</b> {list(goals,3,9)}</p>{vocabulary.length>0&&<p><b>Vocab:</b> {list(vocabulary,10,3)}</p>}</div>
       <div className="planner-resource-strip">{texts.length>0&&<p><b>Texts:</b> {list(texts,3)}</p>}{presentations.length>0&&<p><b>Present:</b> {list(presentations,2)}</p>}</div>
     </div>
+    <PrintWeeklyDeadlines week={data.week} classCode={block.code}/>
     <div className="planner-lesson-grid" style={{gridTemplateColumns:`repeat(${Math.max(1,lessons.length)}, minmax(0, 1fr))`}}>
       {lessons.map(lesson=><PrintLesson key={lesson.id} lesson={lesson}/>)}
       {!lessons.length&&<p>No meetings planned.</p>}
@@ -81,6 +95,22 @@ function PrintCourse({data,block}:{data:WeeklyPlanData;block:WeeklyPlanData['wee
       {allLessons.length>lessons.length&&<span>+{allLessons.length-lessons.length} meetings in planner</span>}
     </div>
   </article>;
+}
+function PrintWeeklyDeadlines({week, classCode}: {week: WeeklyPlanData['week']; classCode: string}) {
+  const deadlines = plannerDeadlinesForWeek(week, classCode);
+  const limit = 4;
+  return <section className="planner-weekly-deadlines" aria-label="Due this week">
+    <b>Due this week</b>
+    {deadlines?.length ? <>
+      <ul>
+        {deadlines.slice(0, limit).map(item => <li key={item.url || item.date + item.time + item.title}>
+          <time dateTime={item.date}>{item.date.slice(5)}</time>
+          <span title={item.title}>{item.url ? <a href={item.url}>{item.title}</a> : item.title}</span>
+        </li>)}
+      </ul>
+      {deadlines.length > limit && <span>+{deadlines.length - limit} in planner</span>}
+    </> : <span>{deadlines ? 'None scheduled' : 'No deadline inventory imported'}</span>}
+  </section>;
 }
 function PrintLesson({lesson}:{lesson:LessonPlan}) {
   const allSlots = printLessonSlots(lesson);

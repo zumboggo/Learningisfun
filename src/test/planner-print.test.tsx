@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { PlannerPrintSheet } from '@/pages/PlannerPrintPage';
 import { createWeeklyPlan } from '@/services/planner.service';
@@ -20,6 +20,22 @@ describe('bounded weekly print summary',()=>{
     expect(screen.getAllByText('EAL Support')).toHaveLength(1);
     expect(screen.getAllByText('Learning Support')).toHaveLength(1);
     expect(screen.queryByText('Improvements for next time')).not.toBeInTheDocument();
+  });
+  it('prints class-specific deadlines through Sunday and summarizes crowded lists',()=>{
+    const plan=fixture();
+    plan.week.deadlines=[
+      ...Array.from({length:5},(_,i)=>({classCode:'WL-B',date:'2026-09-13',time:'23:59',title:'Weekend assignment '+i,url:''})),
+      {classCode:'WL-R',date:'2026-09-11',time:'23:59',title:'Red section essay',url:''},
+      {classCode:'WL-B',date:'2026-09-14',time:'23:59',title:'Next Monday essay',url:''},
+    ];
+    const {container}=render(<MemoryRouter><PlannerPrintSheet data={plan}/></MemoryRouter>);
+    const [blue,red]=screen.getAllByRole('region',{name:'Due this week'});
+    expect(within(blue).getByText('Weekend assignment 0')).toBeInTheDocument();
+    expect(within(blue).getByText('+1 in planner')).toBeInTheDocument();
+    expect(within(red).getByText('Red section essay')).toBeInTheDocument();
+    expect(within(red).queryByText('Weekend assignment 0')).not.toBeInTheDocument();
+    expect(screen.queryByText('Next Monday essay')).not.toBeInTheDocument();
+    expect(container.querySelectorAll('.planner-paper-page')).toHaveLength(2);
   });
   it('prints saved weekly support notes once without mutating them',()=>{
     const plan=fixture();

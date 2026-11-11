@@ -54,6 +54,13 @@ export function plannerDiff(previous:ParsedPlannerSource|null,next:ParsedPlanner
 export function addDays(date:string,days:number) {
   const value=new Date(date+'T12:00:00Z');value.setUTCDate(value.getUTCDate()+days);return value.toISOString().slice(0,10);
 }
+export function plannerDeadlinesForWeek(week: PlannerWeekSource, classCode: string, offset: 0 | 1 = 0) {
+  if (!week.deadlines || !week.startDate) return undefined;
+  const start = addDays(week.startDate, offset * 7);
+  const end = addDays(start, 7);
+  return week.deadlines.filter(item => item.classCode === classCode && item.date >= start && item.date < end);
+}
+
 /** Only the published non-quiz inventory supplies deadlines, including weekends and breaks. */
 function parseDeadlines(lines:string[]):PlannerDeadline[]|undefined {
   const start=lines.findIndex(line=>/^§4\s/.test(line)),end=lines.findIndex((line,index)=>index>start&&/^§5\s/.test(line));
