@@ -1,16 +1,31 @@
 {
   "id": "sabotage-at-sports-day",
   "title": "Someone Is Sabotaging Sports Day",
-  "status": "published-unassigned",
+  "status": "published-assigned",
   "version": 1,
   "versionId": "5f864428f235a73c90f615cdef6e7ac1",
   "bytes": 780802,
   "publishedBytesVerified": true,
   "privatePreviewVerified": true,
   "signedMediaVerified": true,
-  "assignmentsCreated": 0,
+  "assignmentsCreated": 1,
   "existingAssignmentsPreserved": true,
   "studentAttemptsCreated": 0,
   "studioUrl": "https://zumboggo.github.io/Learningisfun/#/game/create?draft=sabotage-at-sports-day",
-  "previewUrl": "https://zumboggo.github.io/Learningisfun/#/game/story-preview/sabotage-at-sports-day"
+  "previewUrl": "https://zumboggo.github.io/Learningisfun/#/game/story-preview/sabotage-at-sports-day",
+  "assigned": true,
+  "assignments": [
+    {
+      "classId": "7e5810c3-dfac-4595-ba51-0e20e645e727",
+      "className": "English Corner",
+      "date": "2026-11-11",
+      "releaseAt": "2026-11-06T00:00:00.000Z",
+      "assignmentId": "1dca7a1bb4427f444ac97e08b61f71f9",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/1dca7a1bb4427f444ac97e08b61f71f9",
+      "sectionName": "High School"
+    }
+  ],
+  "studentAccessVerified": true,
+  "studentLibraryVerified": true,
+  "assignmentVerifiedAt": "2026-11-11T04:27:26.789Z"
 }
