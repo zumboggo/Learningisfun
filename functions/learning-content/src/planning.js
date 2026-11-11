@@ -1,3 +1,4 @@
+import {releasePrivateVocabulary} from './private-vocabulary.js';
 import { Query } from 'node-appwrite';
 import { createHash } from 'node:crypto';
 
@@ -117,7 +118,7 @@ async function scheduleUnit(db,databaseId,teacherId,unit) {
 }
 export async function releaseDue(db,databaseId,now=new Date().toISOString()) {
   const jobs=await listAll(db,databaseId,'planning_releases',[Query.equal('status',['pending','failed']),Query.lessThanEqual('releaseAt',now)]);
-  let completed=0;
+  let completed=await releasePrivateVocabulary(db,databaseId,now);
   for(const job of jobs) {
     try {
       const payload=JSON.parse(job.payloadJson);

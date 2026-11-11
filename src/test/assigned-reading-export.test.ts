@@ -8,8 +8,8 @@ const base='https://zumboggo.github.io/Learningisfun/#/planning';
 describe('compact Canvas reading export',()=>{
   it('matches the exact format with course IDs, per-reading dates and optional sources',()=>{
     const result=assignedReadingPrompt(classes,[text('one'),text('two','published','https://example.com/source')],[assignment('b','one'),assignment('r','two','2026-09-17')],base,'2026-09-15');
-    expect(result.prompt).toBe('Canvas readings — week of 2026-09-14\n\n21695\n- Reading two | https://zumboggo.github.io/Learningisfun/#/texts/two | 09-17 | src:https://example.com/source\n\n21824\n- Reading one | https://zumboggo.github.io/Learningisfun/#/texts/one | 09-15');
-    expect(result.count).toBe(2);
+    expect(result.prompt.split('\n\nInstructions:')[0]).toBe('Canvas readings — week of 2026-09-14\n\n21695\n- Reading two | https://zumboggo.github.io/Learningisfun/#/texts/two | 09-17 | src:https://example.com/source\n\n21824\n- Reading one | https://zumboggo.github.io/Learningisfun/#/texts/one | 09-15');
+    expect(result.count).toBe(2);expect(result.prompt).toContain('0-point complete/incomplete');expect(result.prompt).toContain('avoid duplicates on retries');expect(result.prompt).toContain('sign in with their class account');
   });
   it('filters by due-date week, excludes undated/optional/draft items and deduplicates',()=>{
     const a=assignment('b','one');

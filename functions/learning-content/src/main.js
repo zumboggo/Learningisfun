@@ -15,6 +15,8 @@ import {episodeAuthoringAction} from './episode-authoring.js';
 import {BILLING_ACTIONS,aiBillingAction} from './ai-billing.js';
 import {imageCatalog} from './image-models.js';
 import {teacherAIAction,paidCompletion} from './teacher-ai.js';
+import {teachingDefaultsAction} from './teaching-defaults.js';
+import {vocabularyAction} from './private-vocabulary.js';
 import {teacherWorkspaceAction, allRows} from './teacher-workspace.js';
 import {episodeSharingAction} from './public-episode.js';
 import {usageSummary} from './usage-summary.js';
@@ -161,6 +163,8 @@ export default async ({ req, res, error }) => {
     if(body.action==='readImageModels'){if(!['teacher','admin'].includes(profile.role))return res.json({error:'Teacher account required'},403);return res.json(await imageCatalog({body,profile,userId,db,databaseId}));}
     if(['generateCharacterRecipes','readEpisodeAuthoring','savePersonalCharacter','generateEpisodeDraft','chatEpisode','generateEpisodeBackground','readEpisodeBackground'].includes(body.action)){try{return res.json(await episodeAuthoringAction({body,profile,userId,db,databaseId}));}catch(e){return res.json({error:e.message},e.code||500);}}
     if(['generateTeacherAI','reconcileAIUsage','readAIAllowance','manageAIAllowance','listAIAllowances'].includes(body.action)){try{return res.json(await teacherAIAction({body,profile,userId,db,databaseId}));}catch(e){return res.json({error:e.message},e.code||500);}}
+    if(['readTeachingDefaults','saveTeachingDefaults'].includes(body.action))return res.json(await teachingDefaultsAction({body,profile,userId,db,databaseId}));
+    if(['listPrivateVocabulary','savePrivateVocabulary'].includes(body.action))return res.json(await vocabularyAction({body,profile,userId,db,databaseId}));
     if(['redeemTeacherInvitation','readTeacherPreferences','saveTeacherPreferences','manageTeacherInvitation','readTeacherInvitation'].includes(body.action)) {try{return res.json(await teacherWorkspaceAction({body,profile,userId,db,databaseId}));}catch(e){return res.json({error:e.message},e.code||500);}}
     if(['readFamilyContacts','saveFamilyContacts'].includes(body.action))return res.json({error:'The family contact form has been retired.'},410);
     if (['usageSummary','teacherData'].includes(body.action)) {

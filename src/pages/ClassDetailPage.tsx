@@ -3,6 +3,8 @@ import { WeeklyMaterialRow } from '@/components/classes/WeeklyMaterialRow';
 import { ClassBanner } from '@/components/classes/ClassBanner';
 import {WorkshopLink as Link} from '@/components/WorkshopLink';
 import {useTeacherPreferences} from "@/services/teacher-preferences";
+import TeachingDefaults from '@/components/teachers/TeachingDefaults';
+import VocabularySchedule from '@/components/teachers/VocabularySchedule';
 import {STONE_CLASS_ID} from '@/services/stone.service';
 import {CreateWritingPromptModal} from '@/components/discussions/CreateWritingPromptModal';
 import { ReadingParticipationExport } from '@/components/reports/ReadingParticipationExport';
@@ -371,6 +373,7 @@ export function ClassDetailPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-5 p-4 sm:space-y-6 sm:p-6">
       <ClassBanner cls={cls} editable={isOwner} />
+      {isOwner&&<><TeachingDefaults key={cls.$id+"defaults"} classId={cls.$id}/><VocabularySchedule key={cls.$id+"vocabulary"} classId={cls.$id}/></>}
       {cls.$id===STONE_CLASS_ID && !isParent && user && <EthicsPresentationBuilder key={`${user.$id}:${cls.$id}`} classId={cls.$id} userId={user.$id} />}
       <AssignedCopywork classId={cls.$id} />
       {cls.$id===STONE_CLASS_ID&&<Link to={`/classes/${cls.$id}/principles`} className="block rounded-xl border border-teal-200 bg-teal-50 p-4 font-semibold text-teal-950">Principles Portfolio · Episode answers for your Principles Presentation →</Link>}

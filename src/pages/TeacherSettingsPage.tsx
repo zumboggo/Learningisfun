@@ -1,4 +1,5 @@
 import TeacherSection from '@/components/teachers/TeacherSection';
+import TeachingDefaults from '@/components/teachers/TeachingDefaults';
 import {Link} from 'react-router-dom';
 import AIBilling from '@/components/teachers/AIBilling';
 import AIAllowance from '@/components/teachers/AIAllowance';
@@ -15,7 +16,7 @@ return <main className="mx-auto max-w-4xl space-y-5 p-4"><h1 className="text-2xl
   <Link className="mt-2 inline-block text-sm font-medium text-blue-700 underline" to="/teacher-access">Open teacher invitation form</Link>
   {preferences?.isOwnerAdmin&&<div className="mt-4 border-t pt-4"><h3 className="font-semibold">Teacher invitations</h3><p>A valid invitation grants immediate teacher access. Each teacher uses a separate personal login password.</p><label className="block">New invitation code<input type="password" autoComplete="new-password" minLength={12} maxLength={128} className="my-3 block w-full border p-2" value={code} onChange={e=>setCode(e.target.value)}/></label><div className="flex gap-3"><Button disabled={code.length<12||busy} onClick={()=>void run(async()=>{await executeLearningContent({action:'manageTeacherInvitation',code});setCode('')})}>Replace and enable code</Button><Button variant="secondary" disabled={busy} onClick={()=>void run(async()=>{await executeLearningContent({action:'manageTeacherInvitation',enabled:false})})}>Disable invitations</Button></div></div>}
 </TeacherSection>
-<TeacherSection title="AI usage and allowance" tone="lavender"><AIBilling/><AIAllowance admin={preferences?.isOwnerAdmin}/></TeacherSection><TeacherSection title="Student and parent accounts" tone="blue"><UserAccountsCard/></TeacherSection></main>}
+<TeacherSection title="AI usage and allowance" tone="lavender"><TeachingDefaults/><AIBilling/><AIAllowance admin={preferences?.isOwnerAdmin}/></TeacherSection><TeacherSection title="Student and parent accounts" tone="blue"><UserAccountsCard/></TeacherSection></main>}
 function UserAccountsCard(){
   const [users,setUsers]=useState<ManagedUser[]>([]),[search,setSearch]=useState(''),[loading,setLoading]=useState(true),[message,setMessage]=useState('');
   const load=async()=>{setLoading(true);try{setUsers((await listManagedUsers()).users)}catch(cause){setMessage(cause instanceof Error?cause.message:'Could not load users.')}finally{setLoading(false)}};
