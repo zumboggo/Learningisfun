@@ -945,6 +945,7 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
   const textDiscussions = useWeeklyTextDiscussions(classId, user?.$id);
   const teacherClasses=useLiveQuery(()=>user?db.classes.where('teacherId').equals(user.$id).toArray():[],[user?.$id]);
   const { vocabulary, error: vocabularyError } = useWeeklyVocabulary(classId, user?.$id);
+  const [hiddenVocabularyWeeks, setHiddenVocabularyWeeks] = useState<Set<string>>(() => new Set());
   const groups = new Map<string, WeeklyMaterial[]>();
   for (const material of materials) {
     const key = weekStart(material.date);
@@ -1024,6 +1025,9 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
           const byKind = <K extends WeeklyMaterial['kind']>(kind: K) => items.filter((item): item is Extract<WeeklyMaterial, { kind: K }> => item.kind === kind);
           const texts = byKind('text'), presentations = byKind('presentation'), notes = byKind('notes'), writingPrompts = byKind('writingPrompt'), discussions = byKind('discussion'), quizzes = byKind('quiz');
           const weekLabel = week === currentWeek ? `This week · ${formatWeek(week)}` : week === upcomingWeek ? `Coming up · ${formatWeek(week)}` : week < currentWeek ? `Earlier · ${formatWeek(week)}` : `Later · ${formatWeek(week)}`;
+          const vocabularyCards = vocabulary.get(week) ?? [];
+          const vocabularyKey = `${classId}:${week}`;
+          const hideDefinitions = !isOwner && !isParent && hiddenVocabularyWeeks.has(vocabularyKey);
           return <div key={week} className="overflow-hidden rounded-xl border border-gray-200 bg-white">
             <div className="flex flex-wrap items-center gap-2 pr-4"><button aria-expanded={isOpen} className="flex min-w-0 flex-1 items-center justify-between gap-3 p-4 text-left hover:bg-gray-50" onClick={() => setOpenWeeks(current => toggleSetValue(current, week))}>
               <span className="font-semibold">{isOpen ? '▾' : '▸'} {weekLabel}</span>
@@ -1034,7 +1038,22 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
             {isOpen && <div className="weekly-board border-t border-slate-100 p-3 sm:p-4">
               {texts.length > 0 && <WeeklyMaterialRow title="Texts" count={texts.length} color="emerald">{texts.map(item => <div key={item.assignment.$id} className="border-t border-emerald-100 px-4 py-2.5 hover:bg-emerald-100/50"><div className="flex items-start gap-3"><span className="weekly-resource-icon" aria-hidden="true">▤</span><TextMaterialLink item={item} compact />{isOwner && <details className="weekly-episode-menu"><summary aria-label={`Options for ${item.text.title}`}>⋮</summary><div><button className="text-sm font-semibold text-emerald-800" onClick={() => setEditingText(item.text)}>Edit text</button></div></details>}<TextDiscussionButton compact discussion={textDiscussions.find(row => row.textId === item.text.$id)} /></div></div>)}</WeeklyMaterialRow>}
               {!isParent&&user&&<EpisodeCards classId={classId} userId={user.$id} preview={isOwner} week={week} compact/>}
-              {Boolean(vocabulary.get(week)?.length) && <WeeklyMaterialRow title="Vocabulary" count={1} color="blue" columns={1}><details><summary className="cursor-pointer px-1 py-1 text-sm font-semibold text-blue-950">Core vocabulary · {vocabulary.get(week)!.length} terms</summary><dl className="grid gap-3 border-t border-blue-200 p-4 sm:grid-cols-2">{vocabulary.get(week)!.map(card => <div key={card.$id} className="rounded-lg bg-white p-3"><dt className="font-semibold text-slate-900"><Markdown content={card.frontMarkdown || card.front}/></dt><dd className="mt-1 text-sm text-slate-700"><Markdown content={card.backMarkdown || card.back}/></dd></div>)}</dl></details></WeeklyMaterialRow>}
+              {vocabularyCards.length > 0 && <WeeklyMaterialRow title="Vocabulary" count={1} color="blue" columns={1}>
+                <details>
+                  <summary className="cursor-pointer px-1 py-1 text-sm font-semibold text-blue-950">Core vocabulary · {vocabularyCards.length} terms</summary>
+                  <div className="border-t border-blue-200 p-4">
+                    {!isOwner && !isParent && <Button type="button" size="sm" variant="secondary" className="mb-3" onClick={() => setHiddenVocabularyWeeks(current => toggleSetValue(current, vocabularyKey))}>
+                      {hideDefinitions ? 'Show definitions' : 'Hide definitions'}
+                    </Button>}
+                    <dl className="grid gap-3 sm:grid-cols-2">
+                      {vocabularyCards.map(card => <div key={card.$id} className="rounded-lg bg-white p-3">
+                        <dt className="font-semibold text-slate-900"><Markdown content={card.frontMarkdown || card.front}/></dt>
+                        <dd hidden={hideDefinitions} className="mt-1 text-sm text-slate-700"><Markdown content={card.backMarkdown || card.back}/></dd>
+                      </div>)}
+                    </dl>
+                  </div>
+                </details>
+              </WeeklyMaterialRow>}
               {presentations.length > 0 && <WeeklyMaterialRow title="Links" count={presentations.length} color="fuchsia">{presentations.map(item => <div key={item.presentation.$id} className="flex items-center gap-3 border-t border-fuchsia-100 px-4 py-2.5"><input aria-label={`Mark ${item.presentation.title} viewed`} type="checkbox" className="h-5 w-5" checked={Boolean(item.presentation.watchedAt)} disabled={!isOwner} onChange={event => void setPresentationWatched(item.presentation.$id, event.target.checked)} />{item.presentation.url.startsWith('presentation-file:')?<PresentationDownload id={item.presentation.$id} className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-fuchsia-950">{item.presentation.title}</span><span className="text-xs text-fuchsia-800">{item.presentation.watchedAt ? 'Viewed' : 'Posted'} · {formatDate(item.date)}</span></PresentationDownload>:<a href={item.presentation.url || undefined} target="_blank" rel="noreferrer" className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-fuchsia-950">{item.presentation.title}</span><span className="text-xs text-fuchsia-800">{item.presentation.watchedAt ? 'Viewed' : 'Posted'} · {formatDate(item.date)}</span></a>}{isOwner && <details className="weekly-episode-menu"><summary aria-label={`Options for ${item.presentation.title}`}>⋮</summary><div><button className="text-sm font-semibold text-red-700" onClick={() => window.confirm('Delete this link?') && void deletePresentationLink(item.presentation.$id)}>Delete link</button></div></details>}</div>)}</WeeklyMaterialRow>}
               {notes.length > 0 && <WeeklyMaterialRow title="Class notes" count={notes.length} color="slate">{notes.map(item => <article key={item.session.$id} className="border-t border-blue-100 px-4 py-3"><div className="mb-2 flex items-center justify-between gap-3"><p className="text-xs font-semibold text-blue-700">{formatDate(item.date)}</p>{isOwner && <Link to={`/classes/${classId}/notes/${item.session.$id}/edit`} className="text-xs font-semibold text-blue-800 underline">Edit notes</Link>}</div><details><summary className="weekly-note-summary">Class notes</summary><Markdown content={item.session.publishedNotesMarkdown} className="mt-3 text-base leading-7 text-gray-800" /></details></article>)}</WeeklyMaterialRow>}
               {writingPrompts.length > 0 && <WeeklyMaterialRow title="Writing prompts" count={writingPrompts.length} color="cyan">{writingPrompts.map(item => <article key={item.session.$id} className="border-t border-cyan-100 px-4 py-3"><div className="mb-2 flex items-center justify-between gap-3"><p className="text-xs font-semibold text-cyan-800">{formatDate(item.date)}</p>{isOwner&&<button className="text-xs font-semibold text-cyan-900 underline" onClick={()=>setEditingWritingPrompt(item.session)}>Edit prompt</button>}</div><p className="mb-2 line-clamp-2 whitespace-pre-wrap text-sm text-gray-800">{item.session.promptMarkdown}</p><Link to={`/presentations/${item.session.$id}/live`} className="font-semibold text-blue-700 underline">Open writing prompt</Link></article>)}</WeeklyMaterialRow>}
