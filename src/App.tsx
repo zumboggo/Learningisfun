@@ -4,6 +4,7 @@ import PrivateEpisodeGate from './components/teachers/PrivateEpisodeGate';
 import PlannerAccess from './components/teachers/PlannerAccess';
 import TeacherAccessPage from './pages/TeacherAccessPage';
 const ChineseDemoPage = lazy(() => import('./pages/ChineseDemoPage'));
+const EpisodeExamplePage = lazy(() => import('@/pages/EpisodeExamplePage'));
 const PublicEpisodePage = lazy(() => import('@/pages/PublicEpisodePage'));
 const PublicQuixotePage = lazy(() => import('@/pages/PublicQuixotePage'));
 const PublicEthicsPage = lazy(() => import('@/pages/PublicEthicsPage'));
@@ -14,7 +15,6 @@ const ActingAnglesPage=lazy(()=>import('./pages/ActingAnglesPage'));
 const AnimationLabPage = lazy(() => import('@/pages/AnimationLabPage'));
 const ActingDemoPage = lazy(() => import('@/pages/ActingDemoPage'));
 const TeacherDataPage = lazy(() => import('@/pages/TeacherDataPage'));
-const AnimatedStudioPage = lazy(() => import('@/pages/AnimatedStudioPage'));
 const AnimatedEpisodePage = lazy(() => import('@/pages/AnimatedEpisodePage'));
 const GamePage = lazy(() => import('@/pages/GamePage'));
 const PrinciplesPortfolioPage = lazy(() => import('@/pages/PrinciplesPortfolioPage'));
@@ -186,6 +186,7 @@ export default function App() {
           <Route path="/create/:type" element={<ProtectedRoute><TeacherRoute><CreatePage /></TeacherRoute></ProtectedRoute>} />
           <Route path="/game/create" element={<ProtectedRoute><TeacherRoute><Suspense fallback={<p>Opening studio…</p>}><LegacyEpisodeCreate /></Suspense></TeacherRoute></ProtectedRoute>} />
           <Route path="/game/play/:assignmentId" element={<ProtectedRoute><Suspense fallback={<p>Opening episode…</p>}><AnimatedEpisodePage /></Suspense></ProtectedRoute>} />
+          <Route path="/game/examples/:slug" element={<ProtectedRoute><TeacherRoute><Suspense fallback={<p>Opening episode…</p>}><EpisodeExamplePage/></Suspense></TeacherRoute></ProtectedRoute>} />
           <Route path="/game/chinese/:slug" element={<ProtectedRoute><TeacherRoute><Suspense fallback={<p>Opening Mandarin story…</p>}><ChineseDemoPage/></Suspense></TeacherRoute></ProtectedRoute>} />
           <Route path="/game" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening The Game…</p>}><GamePage /></Suspense></ProtectedRoute>} />
           <Route path="/classes/:classId/principles" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening portfolio…</p>}><PrinciplesPortfolioPage /></Suspense></ProtectedRoute>} />

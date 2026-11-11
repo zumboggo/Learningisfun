@@ -23,7 +23,7 @@ export default function TeacherExamplePreview({section, id, title}: {section: Ex
   return <Practice item={{...lesson, classId: 'teacher-example', className: 'Teacher example'}} definition={lesson as unknown as LessonDefinition}/>;
 }
 
-function EpisodeExample({id}: {id: string}) {
+export function EpisodeExample({id, cinema = false}: {id: string; cinema?: boolean}) {
   const [data, setData] = useState<{pack: StoryPackage; mediaUrls: Record<string, string>}>();
   const [error, setError] = useState('');
   useEffect(() => {
@@ -39,7 +39,7 @@ function EpisodeExample({id}: {id: string}) {
     return () => {active = false;};
   }, [id]);
   return error ? <p role="alert">{error}</p> : data
-    ? <StoryPlayer pack={data.pack} mediaUrls={data.mediaUrls} status="Teacher example"/>
+    ? <StoryPlayer cinema={cinema} pack={data.pack} mediaUrls={data.mediaUrls} status="Teacher example"/>
     : <p role="status">Opening episode…</p>;
 }
 
