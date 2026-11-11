@@ -16,8 +16,8 @@
     "characters": {
       "Kevin": {
         "name": "Kevin",
-        "version": 1,
-        "provenance": "Kevin is the main student for new classroom episodes. David reports Kevin enthusiastically consented to being part of the app. David approved graphic-novel SVG design C with narrowed neck and lowered head on 2026-10-26. Approved vector reference: characters/kevin/approved-design.svg. Personal source photo is private and not distributed. Shared finite animation controller; no bitmap head.",
+        "version": 2,
+        "provenance": "Kevin is the main student for new classroom episodes. David reports Kevin enthusiastically consented to being part of the app. David approved graphic-novel SVG design C with narrowed neck and lowered head on 2026-10-26. Approved vector reference: characters/kevin/approved-design.svg. Personal source photo is private and not distributed. Shared finite animation controller; no bitmap head. David selected Option A on 2026-11-11: layered curved hair, warm dimensional SVG shading, and identity-specific front, three-quarter and profile artwork. Reference: characters/kevin/approved-option-a.svg. Shared animation controller is unchanged; no raster head. Original design C retained as historical reference.",
         "expressions": {},
         "rig": {
           "version": 2,

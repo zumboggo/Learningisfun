@@ -31,3 +31,22 @@ it('Kevin expressions and extreme poses keep the approved face and articulated l
   expect(container.innerHTML).not.toMatch(/NaN|Infinity/);
  }
 });
+
+it('uses Kevin-specific vector silhouettes and unique paint IDs for every angle',()=>{
+ const {container}=render(<>{(['front','three-quarter','profile'] as const).map(orientation=><CartoonActor key={orientation} character={character} orientation={orientation} reduced/>)}</>);
+ expect(container.querySelector('[data-kevin-face="option-a"]')).not.toBeNull();
+ expect(container.querySelector('[data-vector-design="kevin-option-a-three-quarter"]')).not.toBeNull();
+ expect(container.querySelector('[data-vector-design="kevin-option-a-profile"]')).not.toBeNull();
+ const ids=[...container.querySelectorAll('[id]')].map(e=>e.id);expect(new Set(ids).size).toBe(ids.length);
+ for(const el of container.querySelectorAll('[fill]')){const m=el.getAttribute('fill')?.match(/^url\(#(.+)\)$/);if(m)expect(ids).toContain(m[1]);}
+ expect(container.querySelectorAll('image')).toHaveLength(0);
+});
+it('keeps distinct worried, happy and surprised mouths at every angle and mirrors automatic turns',()=>{
+ const {container,rerender}=render(<CartoonActor character={character} reduced/>);
+ for(const orientation of ['front','three-quarter','profile'] as const){
+  const mouths=[];for(const emotion of ['happy','worried','surprised']){rerender(<CartoonActor character={character} orientation={orientation} emotion={emotion} reduced/>);mouths.push(container.querySelector('[data-mouth]')!.innerHTML);expect(container.innerHTML).not.toMatch(/NaN|Infinity/);}
+  expect(new Set(mouths).size).toBe(3);
+ }
+ rerender(<CartoonActor character={character} orientation="auto" turn={-1} reduced/>);
+ expect(container.querySelector('[data-angle-face]')?.getAttribute('transform')).toBe('translate(240 0) scale(-1 1)');
+});
