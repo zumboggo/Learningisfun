@@ -1,3 +1,4 @@
+import './teacher-workspace.css';
 import {WORKSHOP_CLASS_ID,isWorkshopPath} from '@/services/workshop-context';
 import {GameDisplay} from '@/components/GameDisplay';
 import {isGamePlayerRoute} from '@/services/game-display';
@@ -154,7 +155,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   }
 
   return (
-    <div className={`min-h-screen bg-gray-50 flex flex-col ${sidebarOpen ? 'md:pl-56' : ''}`}>
+    <div className={`teacher-shell min-h-screen bg-white flex flex-col ${sidebarOpen ? 'md:pl-56' : ''}`}>
       <header data-app-chrome className="min-h-16 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-2">
           <button
@@ -200,7 +201,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         </div>
       </header>
 
-      <main className="flex-1 pb-20 md:pb-4">
+      <main className={`flex-1 pb-20 md:pb-4 ${!isGameRoute && !isStudyRoute && !isArticleRoute ? 'teacher-workspace' : ''}`}>
         {sectionViews.length > 0 && (
           <nav id={inPlanning ? 'planning-views' : undefined} hidden={inPlanning && !planningViewsOpen} aria-label={inPlanning ? 'Planning views' : 'Settings views'} data-app-chrome
             className="mx-auto grid max-w-4xl grid-cols-2 gap-2 px-4 pt-4 [&[hidden]]:hidden print:hidden">

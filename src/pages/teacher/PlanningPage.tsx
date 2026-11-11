@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { functions } from '@/lib/appwrite';
 import markup from '@/features/planning/editor.html?raw';
 import styles from '@/features/planning/editor.css?raw';
+import teacherStyles from '@/features/planning/teacher.css?raw';
 import editor from '@/features/planning/editor.js?raw';
 import merge from '@/features/planning/merge.js?raw';
 import sync from '@/features/planning/sync.js?raw';
@@ -18,7 +19,7 @@ export function PlanningPage() {
   const document = useMemo(() => {
     if (!userId || !canPlan) return '';
     const script = `window.PLANNING_USER=${JSON.stringify(userId)};window.PLANNING_ORIGIN=${JSON.stringify(window.location.origin)};\n${editor}\n${merge}\n${sync}`.replace(/<\/script/gi, '<\\/script');
-    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Planning</title><style>${styles}</style></head><body>${isTeacher ? markup : markup.replace(' brainstorming', ' planner')}<script>${script}</script></body></html>`;
+    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Planning</title><style>${styles}\n${isTeacher?teacherStyles:''}</style></head><body>${isTeacher ? markup : markup.replace(' brainstorming', ' planner')}<script>${script}</script></body></html>`;
   }, [userId, canPlan, isTeacher]);
 
   useEffect(() => {

@@ -31,6 +31,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
+      data-button-variant={variant}
       disabled={disabled || loading}
       className={`
         inline-flex items-center justify-center font-medium rounded-lg

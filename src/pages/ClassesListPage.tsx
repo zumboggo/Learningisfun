@@ -1,3 +1,4 @@
+import TeacherSection from '@/components/teachers/TeacherSection';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -79,14 +80,9 @@ export function ClassesListPage() {
       {classes && <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">{visibleClasses.length} {visibleClasses.length === 1 ? 'class' : 'classes'}</p>}
 
       {classes && classes.length > 0 && visibleClasses.length > 0 ? (
-        <div className="grid gap-3 lg:grid-cols-2">
-          {courseGroups.map(([courseName, groupedClasses]) => (
-            <section key={courseName} className="overflow-hidden rounded-2xl border border-gray-300 bg-white shadow-sm">
-              <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3">
-                <h2 className="min-w-0 truncate text-base font-bold tracking-tight text-gray-950 sm:text-lg">{courseName}</h2>
-                {groupedClasses.length > 1 && <span className="shrink-0 rounded-full bg-white px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-gray-200">{groupedClasses.length} sections</span>}
-              </div>
-              <div className="divide-y divide-gray-200">
+        <div className="grid items-start gap-3 lg:grid-cols-2">
+          {courseGroups.map(([courseName, groupedClasses], index) => {
+            const rows = (<div className="divide-y divide-gray-200">
                 {groupedClasses.map(cls => (
                   <div key={cls.$id} className="group flex min-h-16 items-center gap-2 px-3 py-2 transition hover:bg-gray-50 sm:px-4">
                     <Link className="min-w-0 flex-1 rounded-lg px-1 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-950" to={`/classes/${cls.$id}`}>
@@ -98,9 +94,16 @@ export function ClassesListPage() {
                     <Link to={`/classes/${cls.$id}`} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-gray-950 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-950" aria-label={`Open ${cls.courseName}, ${cls.name}`}><ArrowIcon /></Link>
                   </div>
                 ))}
+              </div>);
+            return isTeacher ? <TeacherSection key={courseName} title={courseName} tone={(['sage','peach','lavender','blue'] as const)[index%4]} defaultOpen meta={`${groupedClasses.length} ${groupedClasses.length===1?'section':'sections'}`}>
+              {rows}
+            </TeacherSection> : (<section key={courseName} className="overflow-hidden rounded-2xl border border-gray-300 bg-white shadow-sm">
+              <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3">
+                <h2 className="min-w-0 truncate text-base font-bold tracking-tight text-gray-950 sm:text-lg">{courseName}</h2>
+                {groupedClasses.length > 1 && <span className="shrink-0 rounded-full bg-white px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-gray-200">{groupedClasses.length} sections</span>}
               </div>
-            </section>
-          ))}
+{rows}</section>);
+          })}
         </div>
       ) : (
         <Card className="text-center py-8">

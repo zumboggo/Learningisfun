@@ -17,7 +17,12 @@ it('restores an unsent entry and reports saved completion when coaching is unava
 });
 it('lets a teacher inspect original and revised evidence for their section',async()=>{
  auth.isTeacher=true;request.mockResolvedValueOnce({items:[{...item,className:'Blue',courseName:'World Literature',releaseAt:'2026-11-09T00:00:00+08:00'},{...item,classId:'red',className:'Red',courseName:'World Literature',assignedOn:'2026-11-04'}]}).mockResolvedValueOnce({rubric:['Summary'],rows:[{name:'Example learner',studentId:'1',revision:3,state:{outcome:'Demonstrated with support',checks:[],step:4,submissions:[{text:'First draft'},{text:'Second draft',feedback:'Improved summary',criteria:[true]}]}}]});
- render(<LessonsPage/>);const summary=await screen.findByText('Annotated entry');expect(screen.getAllByText('Annotated entry')).toHaveLength(1);expect(summary.closest('details')).not.toHaveAttribute('open');fireEvent.click(summary);expect(screen.getByText('Release: Nov 9, 2026')).toBeVisible();expect(screen.getByText('Assigned: Nov 4, 2026')).toBeVisible();fireEvent.click(screen.getAllByRole('button',{name:'Student progress'})[1]);expect(request).toHaveBeenLastCalledWith(expect.objectContaining({classId:'red',action:'lessonRoster'}));fireEvent.click(await screen.findByText(/Example learner/));expect(screen.getByText('First draft')).toBeVisible();expect(screen.getByText('Second draft')).toBeVisible();expect(screen.getByText('Improved summary')).toBeVisible();
+ render(<LessonsPage/>);await screen.findAllByText('Annotated entry');
+ const groups=screen.getByRole('region',{name:'Lessons by class'}).querySelectorAll('.teacher-section');
+ expect(groups).toHaveLength(2);expect(groups[0]).toHaveAttribute('open');expect(groups[1]).not.toHaveAttribute('open');
+ fireEvent.click(groups[1].querySelector('summary')!);
+ expect(screen.getByText('Release: Nov 9, 2026')).toBeVisible();expect(screen.getByText('Assigned: Nov 4, 2026')).toBeVisible();
+ fireEvent.click(within(groups[1] as HTMLElement).getByRole('button',{name:'Student progress'}));expect(request).toHaveBeenLastCalledWith(expect.objectContaining({classId:'red',action:'lessonRoster'}));fireEvent.click(await screen.findByText(/Example learner/));expect(screen.getByText('First draft')).toBeVisible();expect(screen.getByText('Second draft')).toBeVisible();expect(screen.getByText('Improved summary')).toBeVisible();
 });
 
 it('shows the labeled model for teaching and folds it for the next recall question',async()=>{
@@ -78,7 +83,7 @@ it('filters assigned lessons by class and title, and clears an empty search',asy
  render(<LessonsPage/>);await screen.findByText('Making an argument');
  const filter=screen.getByLabelText('Filter by class');
  expect(within(filter).getAllByRole('option').map(option=>option.textContent)).toEqual(['All classes','History','Writing · Section 1','Writing · Section 2']);
- fireEvent.change(filter,{target:{value:'history'}});expect(screen.queryByText('Making an argument')).toBeNull();expect(screen.getByText('Annotated entry')).toBeVisible();fireEvent.change(screen.getByLabelText('Search lessons'),{target:{value:'no match'}});expect(screen.getByText('No matching lessons')).toBeVisible();fireEvent.click(screen.getByText('Clear filters'));expect(screen.getByText('Making an argument')).toBeVisible();
+ fireEvent.change(filter,{target:{value:'history'}});expect(screen.queryByText('Making an argument')).toBeNull();expect(screen.getByText('Annotated entry')).toBeVisible();fireEvent.change(screen.getByLabelText('Search lessons'),{target:{value:'no match'}});expect(screen.getByText('No matching lessons')).toBeVisible();fireEvent.click(screen.getByText('Clear filters'));expect(screen.getByText('Making an argument')).toBeInTheDocument();
 });
 it('opens drafts directly without creating a record or requesting AI',async()=>{
  auth.isTeacher=true;request.mockImplementation(async b=>b.action==='lessonLibrary'?{items:[]}:b.action==='lessonBuilderLibrary'?{drafts:[{id:'draft',title:'A saved idea'}],classes:[]}:Promise.reject(Error('Unexpected mutation')));

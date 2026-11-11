@@ -1,3 +1,4 @@
+import TeacherSection from '@/components/teachers/TeacherSection';
 import {ensureDeckCards} from '@/services/flashcard-cache';
 import { StudentVocabularyChooser } from '@/components/StudentVocabularyChooser';
 import { useEffect, useMemo, useState } from 'react';
@@ -310,21 +311,19 @@ export function DecksListPage() {
       )}
 
       {isTeacher && teacherDecks.length > 0 && (
-        <section className="mb-6">
-          <h2 className="text-lg font-semibold mb-3">{isTeacher ? 'My decks' : 'Assigned'}</h2>
+        <TeacherSection title="My decks" defaultOpen meta={teacherDecks.length}>
           <div className="space-y-3">
             {teacherDecks.map(renderDeck)}
           </div>
-        </section>
+        </TeacherSection>
       )}
 
       {isTeacher && personalDecks.length > 0 && (
-        <section>
-          <h2 className="text-lg font-semibold mb-3">My Cards</h2>
+        <TeacherSection title="My Cards" tone="lavender" meta={personalDecks.length}>
           <div className="space-y-3">
             {personalDecks.map(renderDeck)}
           </div>
-        </section>
+        </TeacherSection>
       )}
 
       {!isTeacher && personalDecks.length > 0 && <section className="mb-6"><h2 className="mb-3 text-lg font-semibold">My decks</h2><p className="mb-3 text-sm text-slate-500">Your private decks. Edit cards in a table, add new rows, export, or delete them.</p><div className="space-y-3">{personalDecks.map(renderDeck)}</div></section>}

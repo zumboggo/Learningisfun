@@ -1,3 +1,4 @@
+import TeacherSection from './TeacherSection';
 import {lazy, Suspense, useState} from 'react';
 
 const ExamplePreview = lazy(() => import('./TeacherExamplePreview'));
@@ -23,8 +24,7 @@ export type ExampleSection = keyof typeof examples;
 export default function TeacherExamples({section}: {section: ExampleSection}) {
   const [selected, setSelected] = useState<string | null>(null);
   const example = examples[section].find(item => item.id === selected);
-  return <section aria-label="Examples for teachers" className="space-y-3 rounded-2xl border border-teal-200 bg-teal-50 p-4">
-    <h2 className="text-lg font-bold text-teal-950">Examples for teachers</h2>
+  return <section aria-label="Examples for teachers" className={`teacher-examples ${selected?'teacher-example-open':''}`}><TeacherSection title="Examples for teachers" defaultOpen={section==='lessons'} tone="blue">
     <p className="text-sm text-teal-900">Explore a finished example to see what you can create for your classes.</p>
     {example ? <>
       <button className="rounded-lg border border-teal-700 bg-white px-4 py-2 font-semibold" onClick={() => setSelected(null)}>← All examples</button>
@@ -40,5 +40,5 @@ export default function TeacherExamples({section}: {section: ExampleSection}) {
         <span className="mt-3 block text-sm font-semibold text-teal-800">Open example →</span>
       </button>
     )}</div>}
-  </section>;
+  </TeacherSection></section>;
 }

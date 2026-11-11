@@ -1,0 +1,12 @@
+@media screen {
+:root,body{background:#fff;color:#253a34;font-family:system-ui,sans-serif}
+main{max-width:1280px;padding:24px clamp(16px,3vw,40px)}
+h1,.intro h1{font-family:'Iowan Old Style',Georgia,serif;font-size:clamp(32px,3vw,44px);font-weight:400;letter-spacing:-.03em}
+button,input,select,textarea,dialog{border-color:#d4dfd9}
+button,dialog,.size-label select,#boards-menu{background:white}
+.primary{background:#2e6255;border-color:#2e6255;color:white}.primary:hover{background:#234b40}
+.planning-sheet{box-shadow:none;border:1px solid #d4dfd9;border-radius:14px}
+.card{background:var(--card);border-color:var(--line);border-radius:6px}
+.card.empty{background:#fff}.row-label{background:var(--card);border-color:var(--line)}
+.row-label textarea{background:transparent}.board-entry.selected{background:#e5eedf}
+}
