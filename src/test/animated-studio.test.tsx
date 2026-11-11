@@ -58,3 +58,19 @@ it('only exposes assignment for the exact published draft, including edits durin
  fireEvent.change(screen.getByLabelText('Episode title'),{target:{value:'Edited after publication'}});
  expect(screen.queryByLabelText('Assign to class')).not.toBeInTheDocument();
 });
+
+it('reopens a submitted paragraph with the pencil and resubmits without losing story progress',()=>{
+ const writingPack={...pack,profile:'english-corner',writing:{prompts:['Explain a change.','Explain a friendship.','Explain a decision.']}};
+ const {story}=validatePackage(writingPack);let state=settleStory(story,initialStoryState(story,1));const steps:(string|null)[]=[];
+ while(!state.ended){const n=story.nodes[state.cursor],option=n.type==='choice'?n.options[0].id:null;steps.push(option);state=advanceStory(story,state,option);}
+ const quizzes=[pack.quiz.map((q:{answer:number})=>q.answer)],saved=vi.fn();
+ render(<StoryPlayer pack={writingPack} initial={{steps,seed:1,quizzes,writing:{question:1,text:'My original answer.',submitted:true,revision:2}}} onProgress={saved}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Edit your answer'}));
+ expect(screen.getByRole('textbox',{name:'Your paragraph'})).toHaveValue('My original answer.');
+ expect(screen.getByRole('radio',{name:'Explain a friendship.'})).toBeChecked();
+ fireEvent.change(screen.getByRole('textbox',{name:'Your paragraph'}),{target:{value:'My revised answer.'}});
+ fireEvent.click(screen.getByRole('button',{name:'Submit paragraph for teacher review'}));
+ expect(saved.mock.lastCall?.[0]).toEqual({steps,seed:1,quizzes,writing:{question:1,text:'My revised answer.',submitted:true,revision:5}});
+ expect(screen.getByText('My revised answer.')).toBeInTheDocument();
+ expect(screen.getByRole('button',{name:'Edit your answer'})).toBeInTheDocument();
+});

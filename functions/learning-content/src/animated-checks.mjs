@@ -101,7 +101,13 @@ test('English Corner writing is version/identity scoped, resumable and required 
  await assert.rejects(call({...body,writing:{...writing,text:' ',submitted:true,revision:2}},'student'),/Invalid paragraph/);
  const submitted={...writing,submitted:true,revision:2};assert.equal((await call({...body,writing:submitted},'student')).complete,true);
  assert.equal((await call({...body,writing:submitted},'student')).complete,true);
- await assert.rejects(call({...body,writing:{...submitted,text:'overwrite',revision:3}},'student'),/replay/);
+ const reopened={...submitted,submitted:false,revision:3};
+ assert.equal((await call({...body,writing:reopened},'student')).complete,false);
+ await assert.rejects(call({...body,writing:submitted},'student'),/another device/);
+ const revised={...reopened,text:'My revised answer with a specific detail.',submitted:true,revision:4};
+ const saved=await call({...body,writing:revised},'student');
+ assert.equal(saved.complete,true);assert.deepEqual(saved.writing,revised);assert.deepEqual(saved.steps,steps);assert.deepEqual(saved.quizzes,body.quizzes);
+ assert.deepEqual((await call({action:'animatedRead',assignmentId:a.assignmentId},'student')).attempts[0].writing,revised);
  await assert.rejects(call({...body,writing:submitted},'student','outsider'),/not available/);
  const replay=await call({...base,attemptId:'separate'},'student');assert.equal(replay.writing,undefined);
 });

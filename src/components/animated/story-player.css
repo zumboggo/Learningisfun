@@ -202,3 +202,5 @@
 .story-writing p { overflow-wrap:anywhere; }
 
 .animated-story.story-cinema .story-writing strong { color:#fff2c6; opacity:1; text-transform:none; letter-spacing:normal; }
+
+.story-writing-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.animated-story .story-writing-heading .story-writing-edit{display:inline-flex;align-items:center;justify-content:center;flex:0 0 44px;width:44px;min-height:44px;padding:10px;margin:0}
