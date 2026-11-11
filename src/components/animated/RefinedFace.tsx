@@ -6,7 +6,7 @@ export default function RefinedFace({gazeX=0,gazeY=0,turn=0,face,hairStyle,skin,
  const featureStyle={transform:`translateX(${turn*6}px)`,transition:reduced?'none':'transform 280ms ease-out'};
  const soft=face==='spirited',pony=hairStyle==='ponytail',warm=['happy','relieved'].includes(emotion),eager=['excited','proud'].includes(emotion),smile=warm||eager||laughing;
  const ink=tone(hairBase,-.28),shadow=tone(skinBase,-.25),light=tone(skinBase,.32);
- const outline=soft?'M 82 89 Q 118 62 157 88 L 155 123 Q 153 139 144 149 L 129 166 Q 120 174 111 168 L 96 154 Q 85 143 83 126 Z':'M 82 87 Q 120 63 158 88 L 155 121 L 149 136 L 145 148 L 129 168 Q 121 174 111 168 L 97 155 L 90 140 L 85 122 Z';
+ const outline=soft?'M 82 89 Q 118 62 157 88 L 155 123 Q 153 139 144 149 L 129 166 Q 120 174 111 168 L 96 154 Q 85 143 83 126 Z':'M 82 87 Q 120 63 158 88 Q 159 106 155 121 Q 151 137 145 148 Q 138 160 129 168 Q 121 174 111 168 Q 102 163 97 155 Q 89 144 85 122 Z';
  const eye=(x:number)=>startled?`M ${x-10} 121 Q ${x} 107 ${x+10} 120 Q ${x} 136 ${x-10} 121 Z`:firm?`M ${x-10} 119 Q ${x} 117 ${x+10} 121 Q ${x} 130 ${x-10} 119 Z`:warm?`M ${x-10} 121 Q ${x} 113 ${x+10} 120 Q ${x} 127 ${x-10} 121 Z`:`M ${x-10} 121 Q ${x} ${soft?111:113} ${x+10} 120 Q ${x} ${soft?133:130} ${x-10} 121 Z`;
  return <g data-refined-face={face} data-expression={warm?'family-warmth':eager?'reward':emotion} strokeLinejoin="round" strokeLinecap="round">
  <defs><clipPath id={`${id}-face-clip`}><path d={outline}/></clipPath>{[102,138].map(x=><clipPath key={x} id={`${id}-eye-${x}`}><path d={eye(x)}/></clipPath>)}</defs>

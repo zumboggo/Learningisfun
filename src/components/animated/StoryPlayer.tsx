@@ -1,3 +1,5 @@
+import EncounterControls from './EncounterControls';
+import {readEncounters} from './encounters';
 import {ChineseReading,type ChineseSupport} from './ChineseReading';
 import './chinese-reading.css';
 import StoryInterlude from './StoryInterlude';
@@ -17,22 +19,25 @@ import StoryPanel from './StoryPanel';
 export interface StoryWriting {question:number;text:string;submitted:boolean;revision:number}
 export interface StoryProgress {writing?:StoryWriting;choicePauseUntil?:number;steps:(string|null)[];quizzes:number[][];seed:number}
 export default function StoryPlayer({pack,mediaUrls,initial,onProgress,onReplay,debug=false,studentName,endContent,cinema=false,notebook,tools,status}:{pack:StoryPackage & {chinese?:ChineseSupport};mediaUrls?:Record<string,string>;initial?:StoryProgress;onProgress?:(p:StoryProgress)=>void;onReplay?:()=>void;debug?:boolean;studentName?:string;endContent?:ReactNode;cinema?:boolean;notebook?:ReactNode;tools?:ReactNode;status?:string}){
- const chinese=pack.chinese;
- const [pinyin,setPinyin]=useState(true),[gloss,setGloss]=useState(true),[autoVoice,setAutoVoice]=useState(false),[voiceError,setVoiceError]=useState('');
+ const chinese=pack.profile==='chinese'?pack.chinese:undefined;
+ const [encounters,setEncounters]=useState(readEncounters),[encounter,setEncounter]=useState(0),[autoVoice,setAutoVoice]=useState(false),[voiceError,setVoiceError]=useState('');
+ const encounterNext=useRef<()=>void>(()=>{});
+ const activeSupport=encounters.items[Math.min(encounter,encounters.count-1)];
+ useEffect(()=>{try{localStorage.setItem('lif-chinese-encounters-v1',JSON.stringify(encounters));}catch{/* Optional storage. */}},[encounters]);
  const voice=useRef<HTMLAudioElement|null>(null);
  const voiceGeneration=useRef(0);
  const [introDone,setIntroDone]=useState(!!initial?.steps.length),[introPlaying,setIntroPlaying]=useState(false);
  const introVideo=useRef<HTMLVideoElement>(null);
  const stopVoice=()=>{voiceGeneration.current++;voice.current?.pause();voice.current=null;setSpeaking(false);};
  const playVoice=(text:string,actor='I')=>{
-  stopVoice();introVideo.current?.pause();setVoiceError('');const path=chinese?.audio[actor+'|'+text];if(!path)return;
-  const token=voiceGeneration.current,a=new Audio(import.meta.env.BASE_URL+path);voice.current=a;
+  stopVoice();introVideo.current?.pause();setVoiceError('');const path=chinese?.audio[actor+'|'+text];if(!path){setVoiceError('No recording for this line. Reading controls remain available.');return;}
+  const token=voiceGeneration.current,a=new Audio(/^(data:audio\/|https?:\/\/|blob:)/.test(path)?path:import.meta.env.BASE_URL+path);voice.current=a;a.playbackRate=encounters.rate;
   a.onplay=()=>{if(token===voiceGeneration.current)setSpeaking(actor!=='I'&&!chinese?.recordedLines?.includes(text));};
-  a.onended=()=>{if(token===voiceGeneration.current)setSpeaking(false);};
+  a.onended=()=>{if(token===voiceGeneration.current){setSpeaking(false);if(autoVoice)encounterNext.current();}};
   a.onerror=()=>{if(token===voiceGeneration.current){setSpeaking(false);setVoiceError('Audio unavailable. You can keep reading and try replay.');}};
   void a.play().catch(()=>{if(token===voiceGeneration.current){setSpeaking(false);setVoiceError('Tap Listen to play the Mandarin audio.');}});
  };
- const renderLine=(text:string,interactive=false)=>chinese?<ChineseReading text={text} line={chinese.lines[text]} pinyin={pinyin} gloss={gloss} interactive={interactive}/>:taxiWording(text);
+ const renderLine=(text:string,interactive=false)=>chinese?<ChineseReading text={text} line={chinese.lines[text]} key={text+encounter} characters={current?.type==='choice'?encounters.items[0].characters:activeSupport.characters} pinyin={current?.type==='choice'?encounters.items[0].pinyin:activeSupport.pinyin} gloss={current?.type==='choice'?encounters.items[0].gloss:activeSupport.gloss} interactive={interactive}/>:taxiWording(text);
  const displayPack=useMemo(()=>({...pack,assets:{...pack.assets,characters:Object.fromEntries(Object.entries(pack.assets.characters).map(([id,actor])=>[id,{...actor,name:taxiWording(actor.name)}]))}}),[pack]);
  const [previousSimulation,setPreviousSimulation]=useState<SimulationResult|null>(null);
  const compiled=useMemo(()=>validatePackage(pack),[pack]);const story=compiled.story;
@@ -65,17 +70,21 @@ export default function StoryPlayer({pack,mediaUrls,initial,onProgress,onReplay,
  const taxiClip=accepted&&!state?.ended?taxiCursors[state?.cursor]:undefined;
  useEffect(()=>{if(taxiClip||interlude){motion.current?.abort();setResponses({});audio.current?.pause();setMusic(false);}},[taxiClip,interlude]);
  useEffect(()=>{
-  if(chinese&&accepted&&introDone&&autoVoice&&current?.type==='say'&&!state.ended)playVoice(current.text,current.actor);
+  if(!chinese||!accepted||!introDone||!autoVoice||state.ended||panel||taxiClip||interlude||!['say','act'].includes(current?.type))return;
+  if(activeSupport.audio&&chinese.audio[current.actor+'|'+current.text])playVoice(current.text,current.actor);
+  else {if(activeSupport.audio)setVoiceError('No recording for this line; using the reading timer.');const t=setTimeout(()=>encounterNext.current(),encounters.readingSeconds*1000);return()=>clearTimeout(t);}
   return()=>{voiceGeneration.current++;voice.current?.pause();voice.current=null;};
- // The current beat owns one recording; all navigation cancels it.
+ // Each encounter owns its audio and timer; changes cancel the previous one.
  // eslint-disable-next-line react-hooks/exhaustive-deps
- },[state?.cursor,accepted,introDone,autoVoice]);
- useEffect(()=>{const hide=()=>{if(document.hidden){stopVoice();introVideo.current?.pause();}};document.addEventListener('visibilitychange',hide);return()=>document.removeEventListener('visibilitychange',hide);},[]);
- const languageControls=chinese&&<div className="mandarin-controls" aria-label="Mandarin reading supports"><button aria-pressed={pinyin} onClick={()=>setPinyin(v=>!v)}>Pinyin</button><button aria-pressed={gloss} onClick={()=>setGloss(v=>!v)}>English meanings</button><button aria-pressed={autoVoice} onClick={()=>{stopVoice();setAutoVoice(v=>!v);}}>Auto audio {autoVoice?'on':'off'}</button><button onClick={stopVoice}>Stop audio</button><span>Tap a phrase to reveal hidden help.</span>{voiceError&&<span role="status">{voiceError}</span>}</div>;
+ },[state?.cursor,accepted,introDone,autoVoice,encounter,encounters,panel,taxiClip,interlude]);
+ useEffect(()=>{const hide=()=>{if(document.hidden){stopVoice();setAutoVoice(false);introVideo.current?.pause();}};document.addEventListener('visibilitychange',hide);return()=>document.removeEventListener('visibilitychange',hide);},[]);
+ const languageControls=chinese&&<EncounterControls value={encounters} current={encounter} automatic={autoVoice} error={voiceError} onChange={v=>{stopVoice();setEncounters(v);setEncounter(n=>Math.min(n,v.count-1));}} onAutomatic={()=>{stopVoice();setAutoVoice(v=>!v);}} onStop={()=>{stopVoice();setAutoVoice(false);}}/>;
  const save=(p:StoryProgress)=>{setProgress(p);onProgress?.(p);};
  const cancel=()=>{stopVoice();generation.current++;motion.current?.abort();clearTimeout(timer.current);root.current?.getAnimations?.({subtree:true}).forEach(a=>a.cancel());setResponses({});lock.current=false;setBusy(false);};
- const replay=()=>{if(onReplay){onReplay();return;}if(onProgress)return;setPreviousSimulation(simulation);cancel();setState(settleStory(story,initialStoryState(story,progress.seed)));setProgress({steps:[],quizzes:[],seed:progress.seed});setAnswers([-1,-1,-1,-1]);setShowHistory(false);setPanel(null);root.current?.scrollIntoView?.({block:'start',behavior:'instant'});};
+ const replay=()=>{setEncounter(0);if(onReplay){onReplay();return;}if(onProgress)return;setPreviousSimulation(simulation);cancel();setState(settleStory(story,initialStoryState(story,progress.seed)));setProgress({steps:[],quizzes:[],seed:progress.seed});setAnswers([-1,-1,-1,-1]);setShowHistory(false);setPanel(null);root.current?.scrollIntoView?.({block:'start',behavior:'instant'});};
  const back=()=>{
+  if(chinese&&encounter>0){stopVoice();setEncounter(n=>n-1);return;}
+  setEncounter(0);
   const position=onProgress?viewStep:progress.steps.length;
   if(!story||!position||choicePause.current>Date.now())return;
   cancel();setSpeaking(false);setAnswers([-1,-1,-1,-1]);
@@ -87,6 +96,8 @@ export default function StoryPlayer({pack,mediaUrls,initial,onProgress,onReplay,
  const animate=async(el:HTMLElement|null,frames:Keyframe[],duration=420)=>{if(reduced||motionPaused||!el?.animate)return;const animation=el.animate(frames,{duration,easing:'ease-in-out'});try{await animation.finished;}catch{/* Navigation cancels effects. */}};
  const reviewing=!!onProgress&&viewStep<progress.steps.length;
  const advance=async(option:string|null)=>{if(lock.current||state.ended||choicePause.current>Date.now())return;
+  if(chinese&&['say','act'].includes(current?.type)&&encounter<encounters.count-1){stopVoice();setEncounter(n=>n+1);return;}
+  setEncounter(0);
   if(reviewing){
    if(option!==progress.steps[viewStep])return;
    cancel();setViewStep(viewStep+1);setState(replayStory(story,progress.steps.slice(0,viewStep+1),progress.seed));return;
@@ -103,6 +114,7 @@ export default function StoryPlayer({pack,mediaUrls,initial,onProgress,onReplay,
   if(root.current)void playSceneMotion(root.current,cues,story.nodes[next.cursor],reduced||motionPaused,setResponses,controller.signal);
   if(token!==generation.current)return;lock.current=false;setBusy(false);root.current?.querySelector<HTMLButtonElement>('[data-next]')?.focus();
  };
+ encounterNext.current=()=>{void advance(null);};
  // Follow the current legal beat and panel state without retaining a stale callback.
  useEffect(()=>{
   if(!accepted||panel)return;

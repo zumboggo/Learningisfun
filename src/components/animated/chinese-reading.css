@@ -6,3 +6,5 @@
 .story-cinema .story-options button.mandarin-listen{min-height:0;width:auto;padding:.4rem .7rem;font-size:.85rem;background:#eaf4ee;color:#153e35;border-color:#8ba99c}
 .story-cinema .story-dialogue>button.mandarin-listen{display:inline-block;width:auto;margin-top:.7rem;padding:.4rem .8rem;color:#153e35}
 .story-dialogue .mandarin-chunk{letter-spacing:normal}
+
+.encounter-settings{display:grid;gap:.8rem;max-width:40rem;padding:1rem 0}.encounter-settings label{display:flex;align-items:center;gap:.5rem}.encounter-settings fieldset{display:flex;flex-wrap:wrap;gap:1rem;border:1px solid #8ba99c;padding:.8rem}.encounter-settings select{background:white;color:#153e35;padding:.4rem}.mandarin-controls details{flex:1;min-width:12rem}.mandarin-controls summary{cursor:pointer}.mandarin-hidden{display:block;font-style:italic;padding:1rem}.episode-language{display:flex;gap:.5rem;margin:1rem 0}.episode-language button{border:1px solid #95b4aa;border-radius:999px;padding:.7rem 1.2rem}.episode-language button[aria-pressed=true]{background:#174b40;color:white}

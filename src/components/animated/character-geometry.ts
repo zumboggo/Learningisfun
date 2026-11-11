@@ -6,11 +6,11 @@ export function armGeometry(side:'left'|'right',upperDegrees:number,forearmDegre
  return {x,y,ex,ey,wx,wy,a,b,path:`M ${x} ${y} L ${before.x} ${before.y} Q ${ex} ${ey} ${after.x} ${after.y} L ${wx} ${wy}`};
 }
 export const FACE_PATHS:Record<string,string>={
- lean:'M 83 88 Q 120 65 157 88 L 153 127 Q 149 138 144 145 L 129 166 Q 120 173 111 166 L 96 145 Q 91 136 87 124 Z',
- broad:'M 80 88 Q 120 61 160 88 L 158 137 L 149 162 Q 120 180 91 162 L 82 137 Z',
+ lean:'M 83 88 Q 120 65 157 88 Q 156 113 153 127 Q 149 138 144 145 Q 136 159 129 166 Q 120 173 111 166 Q 101 154 96 145 Q 91 136 87 124 Z',
+ broad:'M 80 88 Q 120 61 160 88 Q 162 115 158 137 Q 156 152 149 162 Q 120 180 91 162 Q 84 152 82 137 Z',
  oval:'M 82 88 Q 120 62 158 88 L 156 132 Q 153 157 130 172 Q 120 178 110 172 Q 87 157 84 132 Z',
  round:'M 82 88 Q 120 62 158 88 L 157 132 Q 156 157 139 167 Q 120 178 101 167 Q 84 157 83 132 Z',
- angular:'M 82 88 Q 120 62 158 88 L 156 135 L 145 155 L 128 172 Q 120 177 112 172 L 95 155 L 84 135 Z',
+ angular:'M 82 88 Q 120 62 158 88 Q 160 116 156 135 Q 152 147 145 155 Q 135 167 128 172 Q 120 177 112 172 Q 105 167 95 155 Q 88 147 84 135 Z',
 };
 
 export function heldPropPose(prop?:string){return prop==='lance'?'lance-hold':['phone','rubber-duck'].includes(prop||'')?'phone-hold':['sword','pool-noodle'].includes(prop||'')?'sword-hold':prop==='bow'?'bow-hold':'relaxed';}
