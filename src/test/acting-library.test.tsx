@@ -17,7 +17,7 @@ it('restart cancels a pending exit without recording a stale advance',async()=>{
 
 import {gestureEnvelope} from '@/components/animated/CartoonActor';
 it('finite gestures prepare, emphasize, hold and settle without a repeating pulse',()=>{expect(gestureEnvelope(0)).toBeCloseTo(0);expect(gestureEnvelope(180)).toBeCloseTo(-.08);expect(gestureEnvelope(650)).toBe(1);expect(gestureEnvelope(1000)).toBe(1);expect(gestureEnvelope(1500)).toBeGreaterThan(0);expect(gestureEnvelope(1900)).toBe(0);expect(gestureEnvelope(8000)).toBe(0);});
-it('cartoon skins validate only the shared palette and render continuous arms',()=>{expect(validateRig(pack.assets.characters.Lin.rig)).toBeNull();expect(validateRig({version:2,preset:'cartoon-v1',palette:{skin:'url(attack)'}})).not.toBeNull();const {container}=render(<PuppetActor character={pack.assets.characters.Lin} reduced/>);expect(container.querySelectorAll('[data-arm]')).toHaveLength(2);expect(container.querySelectorAll('[data-illustrated-head]')).toHaveLength(1);expect(container.querySelector('.cartoon-chest')).toBeNull();});
+it('cartoon skins validate only the shared palette and render continuous arms',()=>{expect(validateRig(pack.assets.characters.Lin.rig)).toBeNull();expect(validateRig({version:2,preset:'cartoon-v1',palette:{skin:'url(attack)'}})).not.toBeNull();const {container}=render(<PuppetActor character={pack.assets.characters.Lin} reduced/>);expect(container.querySelectorAll('[data-arm]')).toHaveLength(2);expect(container.querySelectorAll('image')).toHaveLength(0);expect(container.querySelector('[data-classroom-identity]')).not.toBeNull();});
 
 it('manga styling is optional and does not change the rig or legal cues',()=>{const rig=structuredClone(pack.assets.characters.Lin.rig);expect(rig.style).toBe('manga');expect(validateRig(rig)).toBeNull();delete rig.style;expect(validateRig(rig)).toBeNull();rig.style='unknown';expect(validateRig(rig)).toContain('style');});
 
@@ -48,12 +48,12 @@ it('expressive reactions compile, put shocked hands at the cheeks, and keep hand
  for(const response of ['shock','rage','laugh','excited','scared','facepalm','proud','plead','disappointed'])expect(compileStory(`story 2\nshow Lin neutral center\nreact Lin ${response}\nLin: Oh!\nend`,pack.assets).errors).toEqual([]);
  for(const side of ['left','right'] as const){const wrist=armGeometry(side,POSES.shock[side+'UpperArm'],POSES.shock[side+'Forearm']);expect(wrist.wy).toBeGreaterThan(140);expect(wrist.wy).toBeLessThan(170);expect(wrist.wx).toBeGreaterThan(85);expect(wrist.wx).toBeLessThan(155);}
  const {container,rerender}=render(<PuppetActor character={pack.assets.characters.Lin} emotion="shocked" reduced/>);
- expect(container.querySelector('[data-mouth] ellipse')).toHaveAttribute('ry','9');
+ expect(container.querySelector('[data-mouth] path')).toHaveAttribute('fill','#633e35');
  expect(container.querySelector('.puppet-face')!.compareDocumentPosition(container.querySelector('[data-arm]')!)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
  rerender(<PuppetActor character={pack.assets.characters.Lin} emotion="angry" reduced/>);
  expect(container.querySelectorAll('[data-hand="fist"]')).toHaveLength(2);
  rerender(<PuppetActor character={pack.assets.characters.Lin} emotion="neutral" response="laugh" reduced/>);
- expect(container.querySelector('[data-mouth] path')).toHaveAttribute('fill','#815250');
+ expect(container.querySelector('[data-mouth] path')).toHaveAttribute('fill','#633e35');
 });
 it('anger swings both arms and a laughter burst settles instead of looping',()=>{
  vi.useFakeTimers();

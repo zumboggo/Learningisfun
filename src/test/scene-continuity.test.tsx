@@ -41,10 +41,10 @@ it('an unrelated cursor change does not repeat an emotional gesture',()=>{
 it('listener gaze uses stage position and accounts for mirrored facing',()=>{
  const {story}=compileStory(script,pack.assets);const state=replayStory(story,[null],1);
  const {container,rerender}=render(<StoryStage pack={pack} state={state} current={story.nodes[state.cursor]} speaking={false} reduced/>);
- expect(container.querySelector('[data-actor="Lin"] [data-gaze-pupil]')).toHaveStyle({transform:'translate(2.5px, 0px)'});
+ expect(container.querySelector('[data-actor="Lin"] [data-angle-eye="near"] ellipse')).toHaveAttribute('cx','103.4');
  state.stage.actors.Lin.facing=-1;
  rerender(<StoryStage pack={pack} state={state} current={story.nodes[state.cursor]} speaking={false} reduced/>);
- expect(container.querySelector('[data-actor="Lin"] [data-gaze-pupil]')).toHaveStyle({transform:'translate(-2.5px, 0px)'});
+ expect(container.querySelector('[data-actor="Lin"] [data-angle-eye="near"] ellipse')).toHaveAttribute('cx','100.6');
 });
 it('cancellation stops both bodies and prevents another strike or stale response update',async()=>{
  const root=document.createElement('div');root.innerHTML='<div class="story-stage"><div data-actor="Lin"></div><div data-actor="Hepting" data-impact="anchored"></div></div>';

@@ -2,7 +2,7 @@
   {
     "id": "Kevin",
     "name": "Kevin",
-    "version": 2,
+    "version": 3,
     "finish": "polished",
     "palette": {
       "skin": "#dca678",
@@ -17,14 +17,14 @@
       "outfit": "uniform",
       "face": "kevin"
     },
-    "provenance": "Kevin is the main student for new classroom episodes. David reports Kevin enthusiastically consented to being part of the app. David approved graphic-novel SVG design C with narrowed neck and lowered head on 2026-10-26. Approved vector reference: characters/kevin/approved-design.svg. Personal source photo is private and not distributed. Shared finite animation controller; no bitmap head. David selected Option A on 2026-11-11: layered curved hair, warm dimensional SVG shading, and identity-specific front, three-quarter and profile artwork. Reference: characters/kevin/approved-option-a.svg. Shared animation controller is unchanged; no raster head. Original design C retained as historical reference."
+    "provenance": "Kevin is the main student for new classroom episodes. David reports Kevin enthusiastically consented to being part of the app. David approved graphic-novel SVG design C with narrowed neck and lowered head on 2026-10-26. Approved vector reference: characters/kevin/approved-design.svg. Personal source photo is private and not distributed. Shared finite animation controller; no bitmap head. David selected Option A on 2026-11-11: layered curved hair, warm dimensional SVG shading, and identity-specific front, three-quarter and profile artwork. Reference: characters/kevin/approved-option-a.svg. Shared animation controller is unchanged; no raster head. Original design C retained as historical reference. Turned-view correction, 2026-11-11: swept hair, a single three-quarter nose and fuller profile proportions."
   },
   {
     "id": "Lin",
     "name": "Lin",
-    "version": 7,
+    "version": 8,
     "finish": "hybrid",
-    "provenance": "Original reusable illustrated character; students are fictional, not real student likenesses. Teacher identity follows the previously authorized character design. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json.",
+    "provenance": "Original reusable illustrated character; students are fictional, not real student likenesses. Teacher identity follows the previously authorized character design. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json. Rounded SVG artwork update, 2026-11-11: identity-specific shaded faces and layered hair across front, three-quarter and profile, using shared expressions and motion. Embedded hybrid artwork is retained for compatibility with older players.",
     "palette": {
       "skin": "#efcba9",
       "hair": "#302e35",
@@ -95,7 +95,7 @@
   {
     "id": "Hepting",
     "name": "Mr. Hepting",
-    "version": 6,
+    "version": 7,
     "palette": {
       "skin": "#e5b495",
       "hair": "#514038",
@@ -121,7 +121,7 @@
         155
       ]
     },
-    "provenance": "Original reusable illustrated character; students are fictional, not real student likenesses. Teacher identity follows the previously authorized character design. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json.",
+    "provenance": "Original reusable illustrated character; students are fictional, not real student likenesses. Teacher identity follows the previously authorized character design. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json. Rounded SVG artwork update, 2026-11-11: identity-specific shaded faces and layered hair across front, three-quarter and profile, using shared expressions and motion. Embedded hybrid artwork is retained for compatibility with older players.",
     "viewAssets": {
       "three-quarter": {
         "path": "public/stories/animated/heads/angles-v1/hepting-three-quarter.webp",
@@ -170,7 +170,7 @@
   {
     "id": "Mei",
     "name": "Mei",
-    "version": 5,
+    "version": 6,
     "palette": {
       "skin": "#efc6a3",
       "hair": "#292b31",
@@ -194,7 +194,7 @@
         174
       ]
     },
-    "provenance": "Original reusable illustrated character; students are fictional, not real student likenesses. Teacher identity follows the previously authorized character design. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json.",
+    "provenance": "Original reusable illustrated character; students are fictional, not real student likenesses. Teacher identity follows the previously authorized character design. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json. Rounded SVG artwork update, 2026-11-11: identity-specific shaded faces and layered hair across front, three-quarter and profile, using shared expressions and motion. Embedded hybrid artwork is retained for compatibility with older players.",
     "viewAssets": {
       "three-quarter": {
         "path": "public/stories/animated/heads/angles-v1/mei-three-quarter.webp",
@@ -243,9 +243,9 @@
   {
     "id": "Yeyul",
     "name": "Yeyul",
-    "version": 6,
+    "version": 7,
     "finish": "hybrid",
-    "provenance": "Original reusable illustrated character; students are fictional, not real student likenesses. Teacher identity follows the previously authorized character design. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json.",
+    "provenance": "Original reusable illustrated character; students are fictional, not real student likenesses. Teacher identity follows the previously authorized character design. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json. Rounded SVG artwork update, 2026-11-11: identity-specific shaded faces and layered hair across front, three-quarter and profile, using shared expressions and motion. Embedded hybrid artwork is retained for compatibility with older players.",
     "palette": {
       "skin": "#eac09c",
       "hair": "#293338",
@@ -309,7 +309,7 @@
   {
     "id": "Jordan",
     "name": "Jordan",
-    "version": 4,
+    "version": 5,
     "palette": {
       "skin": "#c88e68",
       "hair": "#392b27",
@@ -322,7 +322,7 @@
       "outfit": "uniform",
       "face": "angular"
     },
-    "provenance": "Fictional Grade 11 classmate assembled from shared manga components; not a real student likeness. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json.",
+    "provenance": "Fictional Grade 11 classmate assembled from shared manga components; not a real student likeness. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json. Rounded SVG artwork update, 2026-11-11: identity-specific shaded faces and layered hair across front, three-quarter and profile, using shared expressions and motion. Embedded hybrid artwork is retained for compatibility with older players.",
     "finish": "hybrid",
     "headAsset": {
       "path": "public/stories/animated/heads/hybrid-v1/jordan.webp",

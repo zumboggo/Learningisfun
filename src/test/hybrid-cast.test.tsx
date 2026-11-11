@@ -1,5 +1,5 @@
 import {afterEach,expect,it} from 'vitest';
-import {cleanup,fireEvent,render} from '@testing-library/react';
+import {cleanup,render} from '@testing-library/react';
 import {readFileSync} from 'node:fs';
 import {createCharacter} from '../../functions/learning-content/src/character-builder.js';
 import {validateRig,packageAssetEntries,packageContentBytes,EMOTIONS} from '../../functions/learning-content/src/acting-library.js';
@@ -17,12 +17,12 @@ it('defaults new characters to polished SVG, retaining chosen colours and legacy
  expect(container.querySelector('linearGradient[id$="-skin"]')).toHaveAttribute('gradientUnits','userSpaceOnUse');
  delete c.rig.finish;rerender(<CartoonActor character={c} reduced/>);expect(container.querySelector('svg')).toHaveAttribute('data-finish','flat');expect(container.querySelectorAll('defs')).toHaveLength(0);
 });
-it('each recurring character embeds one valid head and keeps all expressions and teacher details',()=>{
+it('each recurring character retains a valid legacy head and renders vector expressions and teacher details',()=>{
  for(const c of cast){expect(validateRig(c.rig)).toBeNull();expect(c.rig.finish).toBe('hybrid');
   const {container,rerender,unmount}=render(<CartoonActor character={c} reduced/>);
-  for(const emotion of EMOTIONS){rerender(<CartoonActor character={c} emotion={emotion} reduced/>);expect(container.querySelectorAll('[data-illustrated-head]')).toHaveLength(1);expect(container.querySelectorAll('[data-arm]')).toHaveLength(2);expect(container.querySelectorAll('[data-mouth]')).toHaveLength(1);}
+  for(const emotion of EMOTIONS){rerender(<CartoonActor character={c} emotion={emotion} reduced/>);expect(container.querySelectorAll('[data-vector-design]')).toHaveLength(1);expect(container.querySelectorAll('[data-arm]')).toHaveLength(2);expect(container.querySelectorAll('[data-mouth]')).toHaveLength(1);}
   if(c.name==='Mr. Hepting'){expect(container.querySelectorAll('[data-glasses]')).toHaveLength(1);expect(container.querySelectorAll('[data-facial-hair]')).toHaveLength(1);}
-  fireEvent.error(container.querySelector('image')!);expect(container.querySelectorAll('image')).toHaveLength(0);expect(container.querySelectorAll('[data-mouth]')).toHaveLength(1);unmount();
+  expect(container.querySelectorAll('image')).toHaveLength(0);expect(container.querySelectorAll('[data-mouth]')).toHaveLength(1);unmount();
  }
 });
 it('hybrid images are budgeted, validated and included in portable episode ZIPs',async()=>{

@@ -1,7 +1,7 @@
 {
   "name": "Jordan",
-  "version": 4,
-  "provenance": "Fictional Grade 11 classmate assembled from shared manga components; not a real student likeness. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json.",
+  "version": 5,
+  "provenance": "Fictional Grade 11 classmate assembled from shared manga components; not a real student likeness. Hybrid head generated with built-in imagegen, 2026-10-13. Shared SVG face and polished body. See heads/hybrid-v1/provenance.json. Rounded SVG artwork update, 2026-11-11: identity-specific shaded faces and layered hair across front, three-quarter and profile, using shared expressions and motion. Embedded hybrid artwork is retained for compatibility with older players.",
   "expressions": {},
   "rig": {
     "version": 2,

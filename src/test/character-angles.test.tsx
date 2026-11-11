@@ -25,7 +25,7 @@ it('counts embedded angle images and validates bounded anchors',()=>{
  const rig=structuredClone(hepting.rig);rig.views.profile.src='https://example.com/head.webp';expect(validateRig(rig)).not.toBeNull();
 });
 it('renders a one-eye profile with glasses/beard, mirror and contact fallback',()=>{
- const {container,rerender}=render(<CartoonActor character={hepting} orientation="profile" reduced/>);expect(container.querySelectorAll('[data-angle-eye]')).toHaveLength(1);expect(container.querySelector('[data-angle-glasses]')).not.toBeNull();expect(container.querySelector('[data-angle-beard]')).not.toBeNull();expect(container.querySelector('[data-angle-artwork]')).not.toBeNull();
+ const {container,rerender}=render(<CartoonActor character={hepting} orientation="profile" reduced/>);expect(container.querySelectorAll('[data-angle-eye]')).toHaveLength(1);expect(container.querySelector('[data-angle-glasses]')).not.toBeNull();expect(container.querySelector('[data-angle-beard]')).not.toBeNull();expect(container.querySelector('[data-vector-design="classroom-hepting-profile"]')).not.toBeNull();
  rerender(<CartoonActor character={kevin} turn={-1} reduced/>);expect(container.querySelector('[data-angle-face]')).toHaveAttribute('transform','translate(240 0) scale(-1 1)');expect(container.querySelectorAll('[data-angle-eye]')).toHaveLength(2);
  rerender(<CartoonActor character={kevin} orientation="profile" prop="sword" reduced/>);expect(container.querySelector('.cartoon-actor')).toHaveAttribute('data-angle','front');expect(container.querySelector('[data-prop="sword"]')).not.toBeNull();
 });
