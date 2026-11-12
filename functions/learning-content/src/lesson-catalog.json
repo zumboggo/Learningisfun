@@ -2869,5 +2869,276 @@
       ],
       "delayedCheck": "Next class, without the model, reconstruct the five moves. New issue: should group projects use one shared grade or separate individual grades? Justify two criteria, explain one evidence-to-criterion warrant, and write two sentences weighing collaboration against individual accountability. Do not reuse phone-policy claims."
     }
+  },
+  {
+    "id": "world-lit-bibliography-part-2-v1",
+    "title": "Annotated Bibliography Part 2",
+    "objective": "Write and revise a first source annotation that accurately summarizes an idea, tests the source’s evidence, and connects it to a specific scene and tentative answer.",
+    "classIds": [
+      "09d7f0a7-4c29-462c-820f-e11ea914d375",
+      "b0496f4d-5fe7-4cc2-8940-d1ba2e50a28c"
+    ],
+    "minutes": 15,
+    "stages": [
+      {
+        "title": "Summarize the idea you came for",
+        "shortTitle": "Summarize",
+        "explanation": "You tell your partner that Beowulf’s life matters because he wins. They point to the moment he wins and dies. Your MLA citation lets them find Debamitra Kar’s chapter. The annotation lets them see what you learned from it, what you trust, and whether your answer needs to change.",
+        "model": "Set up the research — Question — How do Beowulf and The Epic of Gilgamesh define a lasting achievement? My first guess is that both heroes want to be remembered for their victories. I think public recognition is what makes their lives feel meaningful.\n\nCitation already in place — Kar, Debamitra. “Beowulf.” English Literature up to 1590, ebooks.inflibnet.ac.in/engp01/chapter/beowulf/. The annotation below focuses on the chapter’s discussion of leadership and Hrothgar’s speech.\n\nSummarize — Kar reads Beowulf as a poem that uses its heroes’ speeches to ask what makes a good leader. After Beowulf defeats Grendel’s mother, Hrothgar warns him that strength is temporary and that pride can distort how a leader sees himself. On Kar’s reading, this speech makes the victory an occasion to think about how a warrior should use his power.\n\nEvaluate — Kar quotes the speech directly, so I can check how Hrothgar moves from praise to a warning about age and death. That shift supports Kar’s claim that the poem uses speeches to teach about leadership. The example is persuasive about what Hrothgar teaches here. I would need to examine Beowulf’s later choices to see how far the lesson explains his career as king.\n\nConnect — I would compare Hrothgar’s warning after the fight with Gilgamesh’s return to Uruk, when his attention turns to the city wall. My first answer emphasized being remembered for winning. These scenes make me ask whether a hero earns a lasting reputation by doing something that helps his people after his own strength is gone.",
+        "modelRows": [
+          [
+            "Set up the research",
+            "Question — How do Beowulf and The Epic of Gilgamesh define a lasting achievement? My first guess is that both heroes want to be remembered for their victories. I think public recognition is what makes their lives feel meaningful."
+          ],
+          [
+            "Citation already in place",
+            "Kar, Debamitra. “Beowulf.” English Literature up to 1590, ebooks.inflibnet.ac.in/engp01/chapter/beowulf/. The annotation below focuses on the chapter’s discussion of leadership and Hrothgar’s speech."
+          ],
+          [
+            "Summarize",
+            "Kar reads Beowulf as a poem that uses its heroes’ speeches to ask what makes a good leader. After Beowulf defeats Grendel’s mother, Hrothgar warns him that strength is temporary and that pride can distort how a leader sees himself. On Kar’s reading, this speech makes the victory an occasion to think about how a warrior should use his power."
+          ],
+          [
+            "Evaluate",
+            "Kar quotes the speech directly, so I can check how Hrothgar moves from praise to a warning about age and death. That shift supports Kar’s claim that the poem uses speeches to teach about leadership. The example is persuasive about what Hrothgar teaches here. I would need to examine Beowulf’s later choices to see how far the lesson explains his career as king."
+          ],
+          [
+            "Connect",
+            "I would compare Hrothgar’s warning after the fight with Gilgamesh’s return to Uruk, when his attention turns to the city wall. My first answer emphasized being remembered for winning. These scenes make me ask whether a hero earns a lasting reputation by doing something that helps his people after his own strength is gone."
+          ]
+        ],
+        "questions": [
+          {
+            "prompt": "Which line summarizes Kar’s interpretation?",
+            "options": [
+              "Hrothgar speaks after the fight.",
+              "Kar reads Hrothgar’s warning as a lesson about leadership.",
+              "The chapter gives me a scene to compare with Uruk."
+            ],
+            "answers": [
+              "Kar reads Hrothgar’s warning as a lesson about leadership."
+            ],
+            "hint": "Look for what the source says the scene means.",
+            "explanation": "The timing is plot context. Kar’s idea is that the speech teaches something about leadership.",
+            "alternate": {
+              "prompt": "A critic says the empty hall makes a king’s power look fragile. Which sentence summarizes her idea?",
+              "options": [
+                "The hall is empty.",
+                "I will compare two halls.",
+                "The critic sees the empty hall as a sign that power can collapse."
+              ],
+              "answers": [
+                "The critic sees the empty hall as a sign that power can collapse."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "Say or write one sentence beginning “Kar reads the warning as…” Put the idea in your own words, then compare.",
+              "sample": "Kar sees the warning as a lesson for a successful warrior about the limits of his power."
+            }
+          },
+          {
+            "prompt": "What should you write down when saving a quotation from a source?",
+            "options": [
+              "Exact words, who said them, the page or section, and enough context to check the meaning.",
+              "The sentence and the search-engine result title.",
+              "The exact words and your own interpretation alone."
+            ],
+            "answers": [
+              "Exact words, who said them, the page or section, and enough context to check the meaning."
+            ],
+            "hint": "Could a partner find the words and tell who actually spoke?",
+            "explanation": "A source may quote the novel or a character. Keep that voice distinct from the critic’s and verify literary quotations in your edition.",
+            "alternate": {
+              "prompt": "A PDF quotes a translation of Gilgamesh. What should your notes capture?",
+              "options": [
+                "The wording and the PDF file name.",
+                "The wording, speaker, translation if identified, and where to verify the passage.",
+                "Only the article author’s surname."
+              ],
+              "answers": [
+                "The wording, speaker, translation if identified, and where to verify the passage."
+              ]
+            }
+          }
+        ],
+        "teachFirst": true,
+        "sourceUrl": "https://ebooks.inflibnet.ac.in/engp01/chapter/beowulf/"
+      },
+      {
+        "title": "Evaluate the evidence behind a claim",
+        "shortTitle": "Evaluate",
+        "explanation": "“This source is extremely credible because it looks extremely credible.” That review could describe a menu. Give the reader something they can check. Name one claim, point to the author’s evidence, and explain what it supports and where its reach ends.",
+        "model": "Claim + evidence — Kar says the poem teaches leadership through speeches. Hrothgar’s warning that strength fades gives Kar something specific to point to.\n\nWhat it supports — A warning delivered just after a victory supports the idea that a hero needs guidance even at his strongest.\n\nWhere it stops — A speech shows what Hrothgar urges. To judge whether Beowulf lives by it, check what he does later. A limitation can be about the reach of the evidence.",
+        "modelRows": [
+          [
+            "Claim + evidence",
+            "Kar says the poem teaches leadership through speeches. Hrothgar’s warning that strength fades gives Kar something specific to point to."
+          ],
+          [
+            "What it supports",
+            "A warning delivered just after a victory supports the idea that a hero needs guidance even at his strongest."
+          ],
+          [
+            "Where it stops",
+            "A speech shows what Hrothgar urges. To judge whether Beowulf lives by it, check what he does later. A limitation can be about the reach of the evidence."
+          ]
+        ],
+        "questions": [
+          {
+            "prompt": "Which evaluation explains why the evidence matters?",
+            "options": [
+              "The chapter is reliable because its writer has a title.",
+              "The chapter uses a speech and therefore proves its whole argument.",
+              "The warning about fading strength supports Kar’s reading of this speech as advice about power."
+            ],
+            "answers": [
+              "The warning about fading strength supports Kar’s reading of this speech as advice about power."
+            ],
+            "hint": "Pair the precise detail with the precise claim it supports.",
+            "explanation": "The warning directly supports a reading of the speech. A title or a quotation by itself tells us less.",
+            "alternate": {
+              "prompt": "A scholar says Enkidu’s death changes Gilgamesh’s priorities. Which evaluation tests the evidence?",
+              "options": [
+                "The move from seeking fame to seeking survival after the death supports the proposed shift.",
+                "The scholar knows more about the epic than I do.",
+                "One death proves that grief explains all of Gilgamesh’s actions."
+              ],
+              "answers": [
+                "The move from seeking fame to seeking survival after the death supports the proposed shift."
+              ]
+            }
+          },
+          {
+            "prompt": "How far does the evidence about the funeral reach?",
+            "options": [
+              "It establishes that Beowulf’s people praise him publicly, while leaving his private motives open.",
+              "It proves that Beowulf always fought for praise.",
+              "It gives us no evidence about reputation."
+            ],
+            "answers": [
+              "It establishes that Beowulf’s people praise him publicly, while leaving his private motives open."
+            ],
+            "hint": "Whose words are we hearing at the funeral?",
+            "explanation": "The mourners’ praise shows public reputation. Their words give limited access to the hero’s motives.",
+            "alternate": {
+              "prompt": "People celebrate a hero’s return. What can their celebration establish?",
+              "options": [
+                "The hero acted only to win their approval.",
+                "The community values the deed, while the hero’s own reasons remain open.",
+                "The hero’s deed solved every problem."
+              ],
+              "answers": [
+                "The community values the deed, while the hero’s own reasons remain open."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "Try one missing move. Claim: the funeral makes reputation public. Evidence: the mourners praise Beowulf aloud. Supply the limit in one sentence, then compare.",
+              "sample": "The praise shows how the mourners remember him. His own reasons for fighting need evidence from another scene."
+            }
+          }
+        ],
+        "teachFirst": true,
+        "sourceUrl": "https://scholar.google.com/",
+        "image": {
+          "path": "lessons/bibliography-part-2-evidence.webp",
+          "alt": "A magnifying glass singles out one line of evidence in an article. An arrow leads from that line to a particular passage in an epic, illustrated with a dragon scene.",
+          "caption": "Test what the underlined evidence can show. Then explain how that finding helps you read a specific scene. AI-generated illustration."
+        }
+      },
+      {
+        "title": "Connect the source to a scene and your answer",
+        "shortTitle": "Connect",
+        "explanation": "Your reader needs to see where the idea could enter your essay. Name the scene, say what the source helps you notice there, and decide how that affects your tentative answer. A source that makes you qualify your answer has earned its place.",
+        "model": "From source to scene — Kar’s reading of the speech gives me a question to ask when Wiglaf joins the dragon fight. Does the scene reward individual courage, or does it show how much a leader depends on others?\n\nFrom scene to answer — Wiglaf’s help complicates my claim that Beowulf’s meaningful achievement is an individual victory. I would compare his help with Enkidu joining Gilgamesh in the Cedar Forest.\n\nFind sources — On scholar.google.com, search a title in quotation marks plus an idea: “Beowulf” kingship, “Epic of Gilgamesh” mortality, or “The Alchemist” “Paulo Coelho” fate. Try the PDF link or All versions for full text. CORE (core.ac.uk) searches open research copies. JSTOR (jstor.org) has free and open articles and chapters; check access before choosing.\n\nUse Google Sites as a lead — Search Google for site:sites.google.com “Beowulf” heroic code to find public pages hosted on Google Sites. Follow a teacher or project page’s references to the original article, edition, or institution. Check the byline, evidence and full text before using a page as a source.",
+        "modelRows": [
+          [
+            "From source to scene",
+            "Kar’s reading of the speech gives me a question to ask when Wiglaf joins the dragon fight. Does the scene reward individual courage, or does it show how much a leader depends on others?"
+          ],
+          [
+            "From scene to answer",
+            "Wiglaf’s help complicates my claim that Beowulf’s meaningful achievement is an individual victory. I would compare his help with Enkidu joining Gilgamesh in the Cedar Forest."
+          ],
+          [
+            "Find sources",
+            "On scholar.google.com, search a title in quotation marks plus an idea: “Beowulf” kingship, “Epic of Gilgamesh” mortality, or “The Alchemist” “Paulo Coelho” fate. Try the PDF link or All versions for full text. CORE (core.ac.uk) searches open research copies. JSTOR (jstor.org) has free and open articles and chapters; check access before choosing."
+          ],
+          [
+            "Use Google Sites as a lead",
+            "Search Google for site:sites.google.com “Beowulf” heroic code to find public pages hosted on Google Sites. Follow a teacher or project page’s references to the original article, edition, or institution. Check the byline, evidence and full text before using a page as a source."
+          ]
+        ],
+        "questions": [
+          {
+            "prompt": "Which connection tells a reader how to use the source?",
+            "options": [
+              "Kar is useful because my essay is also about Beowulf.",
+              "Kar’s focus on leadership helps me ask whether Wiglaf’s help complicates the idea that a hero succeeds alone.",
+              "Kar’s chapter could go in my second paragraph."
+            ],
+            "answers": [
+              "Kar’s focus on leadership helps me ask whether Wiglaf’s help complicates the idea that a hero succeeds alone."
+            ],
+            "hint": "Look for a scene and the effect on an answer.",
+            "explanation": "Wiglaf’s action provides a place to test a specific idea about heroism.",
+            "alternate": {
+              "prompt": "Which connection makes a critic’s reading of omens usable?",
+              "options": [
+                "The critic also discusses Santiago.",
+                "The article is useful for paragraph three.",
+                "I’ll use the hawk scene to ask whether purpose in The Alchemist comes from pursuing a dream or also from responding to danger facing others."
+              ],
+              "answers": [
+                "I’ll use the hawk scene to ask whether purpose in The Alchemist comes from pursuing a dream or also from responding to danger facing others."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "Try one missing move. Source idea: allies help heroes achieve their goals. Scene: Enkidu joins the expedition. My tentative answer: meaningful achievements are individual. Write the effect on my answer, then compare.",
+              "sample": "Enkidu’s participation makes me qualify my answer: the expedition may bring Gilgamesh fame, but that achievement depends on shared effort."
+            }
+          },
+          {
+            "prompt": "Which set fits the assignment if you compare Beowulf and The Alchemist?",
+            "options": [
+              "Two Beowulf analyses and two plot summaries of The Alchemist.",
+              "Four sources that all repeat your tentative answer.",
+              "One analysis of each work, one useful historical source, and one philosophical source that challenges your answer."
+            ],
+            "answers": [
+              "One analysis of each work, one useful historical source, and one philosophical source that challenges your answer."
+            ],
+            "hint": "Check coverage, source type and disagreement.",
+            "explanation": "This set covers both works with analysis, and one source puts pressure on the tentative answer.",
+            "alternate": {
+              "prompt": "A search result on Gilgamesh sounds perfect, but only its abstract is available. What should you do?",
+              "options": [
+                "Find and read the full text or choose a readable source with evidence you can assess.",
+                "Annotate the abstract as though you read the article.",
+                "Use a plot summary to fill the gap."
+              ],
+              "answers": [
+                "Find and read the full text or choose a readable source with evidence you can assess."
+              ]
+            }
+          }
+        ],
+        "teachFirst": true,
+        "sourceUrl": "https://about.jstor.org/products/jstor-platform/whats-on-jstor/open-and-free/"
+      }
+    ],
+    "final": {
+      "shortTitle": "Draft and revise",
+      "title": "Write your first annotation",
+      "prompt": "Use Ira Spar’s source card and open his essay to check your evidence. Choose one question. A — What makes an achievement last in Gilgamesh and Beowulf? Start from the idea that great deeds earn lasting fame. B — How does facing a limit change what a hero values in Gilgamesh and The Alchemist? Start from the idea that a hero finds meaning by persisting until the original goal is achieved.\n\nThe MLA citation is supplied. Draft 150–200 words of annotation, with or without the labels Summarize, Evaluate and Connect. Explain Spar’s idea in your own words, test one specific claim against the evidence he gives, and name a limitation. Connect the idea to a specific scene and explain how it supports, challenges or refines the starting answer. Use the feedback to revise one sentence where you can make your reasoning more precise.\n\nFor submission, start with your own question, two literary works and a tentative answer of two or three sentences. Include four outside sources in alphabetical order by author (or title if unsigned), each with an MLA citation and 150–200 words of annotation. Include at least two literary analyses covering both works across the set, and at least one source that challenges or complicates your thinking. Test a specific claim in at least one entry. Read each source or the relevant chapter and identify its scope. Plot summaries can orient you. Keep them outside your four entries. Use at least three sources in the essay. Finish with a separate 150–200-word reflection in connected prose about how your answer changed, where sources differ, and what is still open and which passages you’ll revisit.",
+      "source": "Spar, Ira. “Gilgamesh.” Heilbrunn Timeline of Art History, The Metropolitan Museum of Art, Apr. 2009, www.metmuseum.org/essays/gilgamesh/.\n\nRead the section from the recasting of Enkidu as companion through Gilgamesh’s return to Uruk. In that section, Spar argues that the later epic turns a reckless king’s quest into a lesson about what a mortal can leave behind. After Enkidu dies, Gilgamesh searches for a way to escape death. Uta-napishtim explains that mortals die. Spar points to the king’s attention to Uruk’s defensive wall on his return and reads it as a sign that achievements for his people and his god can outlast him. That reading interprets a detail in the ending. Check the wording of the final scene in your own translation to see how explicitly it shows a change of mind.\n\nScene reminders for comparison. A — In Beowulf’s final battle, Wiglaf helps defeat the dragon. The Geats later honor their king at his funeral. B — Near the end of The Alchemist, Santiago learns from a robber’s dream that the treasure may be back in Spain. He returns to the place where his journey began. These reminders are paraphrases.",
+      "sourceUrl": "https://www.metmuseum.org/essays/gilgamesh",
+      "rubric": [
+        "Summarize accurately: Paraphrases Spar’s relevant interpretation about mortality, maturity or enduring accomplishments, with attribution and a clear sense of scope. Avoid rewarding a plot recap alone.",
+        "Evaluate evidence and limits: Names a specific claim and the evidence behind it, such as the narrative movement from Enkidu’s death through the failed quest to the wall. Explains how strongly a detail supports the claim and names a relevant limit. Credit a reason tied to Spar’s method or publication where explained, not prestige alone.",
+        "Connect to the research question: Explains how Spar’s interpretation helps examine a specific scene in one or both works and how it supports, complicates or revises the tentative answer. Accept either question and other grounded readings of the scenes.",
+        "Write a usable annotation: Aims for 150–200 words of coherent annotation beneath the supplied citation. Accept headings or connected prose. Assess original wording and attribution. Do not require retyping the citation, quoting, or completing the full bibliography and reflection here."
+      ],
+      "delayedCheck": "Next class, try this with a source you have not annotated. Say its idea in your own words. Then complete “This detail supports the claim because …” and “I would test that idea against the moment when …” before checking your notes."
+    }
   }
 ]
