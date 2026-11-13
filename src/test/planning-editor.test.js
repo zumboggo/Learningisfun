@@ -402,3 +402,28 @@ test('cancelled task drag leaves both task and card unchanged', () => {
  for(const [type,x] of [['pointerdown',10],['pointermove',300],['pointercancel',300],['pointerup',300]])grip.dispatchEvent(new win.MouseEvent(type,{button:0,clientX:x,clientY:100}));
  expect(doc.querySelector('[aria-label="Task 1"]').value).toBe('Stay here');expect(doc.querySelector('[data-slot="0"]').textContent).toContain('+');expect(doc.querySelector('.todo-drop-target')).toBeNull();dom.window.close();
 });
+
+test('column archive confirms, preserves full content and clears only the selected column', () => {
+ const dom=evaluate('archive-column', `state.rows[0]='My topic';state.cards[0]='Unfinished\\n---\\nPresenter notes';state.cards[9]='Finished';state.cardDone[9]=true;state.cards[10]='Other column';state.notes[0]='Keep task';render();`);
+ const win=dom.window,doc=win.document;
+ let question='';win.confirm=text=>{question=text;return false};
+ const before=win.localStorage.getItem('learning-planning:archive-column');
+ doc.querySelector('[aria-label="Archive column 1"]').click();
+ expect(question).toBe('Are you sure you want to archive the whole column?');expect(win.localStorage.getItem('learning-planning:archive-column')).toBe(before);
+ win.confirm=()=>true;doc.querySelector('[aria-label="Archive column 1"]').click();
+ const load=()=>JSON.parse(win.localStorage.getItem('learning-planning:archive-column')).boards[0].data;
+ expect(load().archive.map(item=>item.text)).toEqual(['My topic','Unfinished\n---\nPresenter notes','Finished']);
+ expect(load().rows[0]).toBe('');expect(load().cards.slice(0,10)).toEqual(Array(10).fill(''));expect(load().cardDone[9]).toBe(false);
+ expect(load().cards[10]).toBe('Other column');expect(load().notes[0]).toBe('Keep task');
+ doc.querySelector('[aria-label="Archive column 1"]').click();expect(load().archive).toHaveLength(3);
+ const reopened=open('archive-column',{'learning-planning:archive-column':win.localStorage.getItem('learning-planning:archive-column')});
+ reopened.win.document.querySelector('#archive-dialog').showModal=()=>{};reopened.win.document.querySelector('#open-archive').click();
+ expect(reopened.win.document.querySelector('#archive-list').textContent).toContain('Presenter notes');reopened.dom.window.close();dom.window.close();
+});
+
+test('column archive restores title, cards and flags if saving fails', () => {
+ const dom=evaluate('archive-failure', `state.rows[0]='Keep title';state.cards[0]='Keep card';state.cardDone[0]=true;render();window.currentState=()=>state;`);
+ dom.window.Storage.prototype.setItem=()=>{throw Error('Quota')};
+ dom.window.document.querySelector('[aria-label="Archive column 1"]').click();
+ expect(dom.window.currentState().rows[0]).toBe('Keep title');expect(dom.window.currentState().cards[0]).toBe('Keep card');expect(dom.window.currentState().cardDone[0]).toBe(true);expect(dom.window.currentState().archive).toHaveLength(0);dom.window.close();
+});

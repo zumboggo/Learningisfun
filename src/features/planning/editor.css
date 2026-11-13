@@ -118,3 +118,6 @@ html,body{margin:0;min-height:100%;}main{padding-top:20px;}
 #presenter-notes{background:#fffefa;font-family:Georgia,Charter,serif;font-size:23px;line-height:1.65}
 #board .card.todo-drop-target{outline:3px solid #326b56;outline-offset:2px;background:#edf6ee;box-shadow:0 0 0 6px #326b5620}
 @media(max-width:600px){#presenter-slide{font-size:27px;padding:24px}#presenter-notes{font-size:21px}}
+
+.row-caption .archive-column{font-size:10px;line-height:16px;padding:2px 6px;margin-left:auto;background:transparent;border-color:#d3dcd5;color:#657568}.row-caption .archive-column:hover{background:#f1e9dd;color:#644d35}.row-caption .archive-column+.row-grip{margin-left:4px}
+@media print{.archive-column{display:none!important}}

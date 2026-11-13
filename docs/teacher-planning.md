@@ -43,3 +43,5 @@ The column md button copies its bold heading and all nonempty cards—including 
 Slides use Georgia on warm white with centered text; overflowing content remains scrollable from its beginning. Presenter mode gives two thirds of its desktop content area to the slide and one third to notes, with matching typography and stacked panes on phones.
 
 Drag a task by its grip onto a card to move its full text out of the checklist. Empty cards inherit the task’s completion state. Occupied cards retain their text, append the task with a blank line, and become unfinished. Successful moves persist together; failed saves restore the original task and card. Pointer cancellation leaves both unchanged.
+
+Each column has an Archive button with the exact confirmation “Are you sure you want to archive the whole column?” Confirming preserves the title and all nonempty cards (finished or unfinished, including presenter notes) in the existing archive, then clears that column’s title, cards and completion flags. Other columns and to-dos stay untouched. Cancel does nothing; failed local persistence rolls the entire operation back.
