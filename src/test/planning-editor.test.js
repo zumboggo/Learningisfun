@@ -295,7 +295,8 @@ test('Refresh closes gaps in every column without mixing topics or changing orde
  const dom=evaluate('compact', `state.cards[2]='First';state.cards[8]='Second';state.cards[19]='Other topic';state.cards[79]='Last topic';refreshPlanner();window.result=JSON.parse(JSON.stringify(state));refreshPlanner();window.again=JSON.parse(JSON.stringify(state));`);
  expect(dom.window.result.cards.slice(0,10)).toEqual(['First','Second',...Array(8).fill('')]);
  expect(dom.window.result.cards[10]).toBe('Other topic');
- expect(dom.window.result.cards[70]).toBe('Last topic');
+ expect(dom.window.result.cards[20]).toBe('Last topic');
+ expect(dom.window.result.cards[70]).toBe('');
  expect(dom.window.again).toEqual(dom.window.result);
  const saved=dom.window.localStorage.getItem('learning-planning:compact');
  const reopened=open('compact',{'learning-planning:compact':saved});
@@ -426,4 +427,18 @@ test('column archive restores title, cards and flags if saving fails', () => {
  dom.window.Storage.prototype.setItem=()=>{throw Error('Quota')};
  dom.window.document.querySelector('[aria-label="Archive column 1"]').click();
  expect(dom.window.currentState().rows[0]).toBe('Keep title');expect(dom.window.currentState().cards[0]).toBe('Keep card');expect(dom.window.currentState().cardDone[0]).toBe(true);expect(dom.window.currentState().archive).toHaveLength(0);dom.window.close();
+});
+
+test('Refresh moves populated columns left in order and preserves named empty topics', () => {
+ const dom=evaluate('column-gaps', `state.rows[1]='Title only';state.rows[3]='Topic';state.cards[35]='Full note';state.cards[60]='Unnamed topic';state.rows[8]='Hidden title';state.cards[80]='Hidden note';refreshPlanner();window.result=JSON.parse(JSON.stringify(state));`);
+ const result=dom.window.result;
+ expect(result.rows.slice(0,4)).toEqual(['Title only','Topic','','']);
+ expect(result.cards[10]).toBe('Full note');expect(result.cards[20]).toBe('Unnamed topic');
+ expect(result.cards.slice(30,80)).toEqual(Array(50).fill(''));
+ expect(result.rows[8]).toBe('Hidden title');expect(result.cards[80]).toBe('Hidden note');
+ expect(dom.window.document.querySelector('#refresh-planner').closest('header')).not.toBeNull();
+ expect(dom.window.document.querySelectorAll('#refresh-planner')).toHaveLength(1);
+ expect(dom.window.document.querySelector('[aria-label="Archive column 1"] svg')).not.toBeNull();
+ expect(dom.window.document.querySelector('[aria-label="Expand column 1"] svg')).not.toBeNull();
+ dom.window.close();
 });
