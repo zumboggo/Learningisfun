@@ -1,0 +1,70 @@
+/* Option B studio palette, shared across student routes. Game scenes keep their own art. */
+.student-studio {
+ --teacher-ink:#243b34;--teacher-muted:#586b63;--teacher-green:#2e6255;
+ --teacher-line:#d6e0da;--teacher-sage:#e6eedf;--teacher-peach:#fbebe1;
+ --teacher-lavender:#eee8fb;--teacher-blue:#e6f0fb;
+ --s-ink:#243b34;--s-ink-soft:#586b63;--s-ink-faint:#64756c;
+ --s-line:#d6e0da;--s-surface:#fff;--s-shadow:none;--s-accent:#2e6255;
+ --s-radius:14px;--s-radius-sm:9px;
+ background:#fff;color:var(--s-ink);
+}
+.student-studio .student-main {padding-top:1.5rem}
+.student-workspace {
+ --color-blue-600:#2e6255;--color-blue-700:#245044;--color-blue-800:#1c4036;
+ --color-blue-50:#eff6ef;--color-blue-100:#e6eedf;--color-blue-200:#cbdcc9;
+ background:#fff;min-width:0;
+}
+.student-studio .student-workspace h1, .student-studio .student-workspace .lesson-library-head h1 {font-family:'Iowan Old Style',Georgia,serif;font-size:clamp(2rem,3.2vw,2.8rem);font-weight:400;letter-spacing:-.035em;line-height:1.15;color:var(--s-ink)}
+.student-workspace :is(.app-card,.student-card,.student-study-card,.student-ready-card,.student-progress-details,.student-continue-card,.lesson-practice,.lesson-model) {background:#fff;border:1px solid var(--s-line);border-radius:14px;box-shadow:none;backdrop-filter:none}
+.student-workspace .student-home-hero {background:var(--teacher-sage);border:1px solid var(--s-line);border-radius:14px;box-shadow:none}
+.student-workspace .student-home-hero-heading {font-family:'Iowan Old Style',Georgia,serif;font-weight:400}
+.student-workspace .student-continue-card:nth-child(4n+1) {background:var(--teacher-peach)}
+.student-workspace .student-continue-card:nth-child(4n+2) {background:var(--teacher-lavender)}
+.student-workspace .student-continue-card:nth-child(4n+3) {background:var(--teacher-blue)}
+.student-workspace .student-continue-card:nth-child(4n+4) {background:var(--teacher-sage)}
+.student-workspace .student-progress-details > summary {background:var(--teacher-lavender);border-radius:13px;padding:1rem;cursor:pointer;min-height:50px}
+.student-workspace .student-progress-details[open] > summary {border-radius:13px 13px 0 0}
+.student-workspace [data-button-variant=primary],.student-workspace .lesson-create {background:var(--teacher-green);color:white;border:1px solid var(--teacher-green);min-height:44px;border-radius:9px}
+.student-workspace [data-button-variant=primary]:hover:not(:disabled),.student-workspace .lesson-create:hover {background:#234b40}
+.student-workspace [data-button-variant=secondary] {background:white;color:var(--teacher-green);border:1px solid #b9cec3;min-height:44px;border-radius:9px}
+.student-workspace [data-button-variant=secondary]:hover:not(:disabled) {background:#eff5ef}
+.student-studio :is(button,input,select,textarea,a,summary):focus-visible {outline:3px solid #387b69;outline-offset:3px}
+.student-workspace :is(input,select,textarea):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]) {border-color:var(--s-line)}
+.student-workspace input:is([type=checkbox],[type=radio]) {accent-color:var(--teacher-green)}
+.student-workspace .lesson-library {background:white}
+.student-workspace .lesson-student-row + .lesson-student-row {margin-top:.75rem}
+.student-workspace .lesson-band {background:var(--teacher-sage);color:var(--s-ink)}
+.student-workspace .lesson-model summary {background:var(--teacher-peach);color:var(--s-ink)}
+.student-workspace .lesson-model-body {background:white}
+.student-workspace .reddit-pinned-prompt {background:var(--teacher-lavender);border-color:var(--s-line);box-shadow:none}
+.student-workspace :is(.reddit-feed,.reddit-composer) {background:white;border-color:var(--s-line);box-shadow:none}
+.student-workspace .reddit-reply-composer {background:var(--teacher-blue)}
+.student-workspace .dangerous-writing:not(.dangerous-writing-focus) {background:white;border-color:var(--s-line);border-radius:14px;box-shadow:none}
+.student-workspace .writing-toolbar {background:var(--teacher-sage);border-radius:13px 13px 0 0}
+.student-studio .student-floating-nav {background:white;border:1px solid var(--s-line);border-radius:14px;box-shadow:0 4px 16px #243b3412;backdrop-filter:none;padding:4px}
+.student-studio .student-floating-nav-item {color:#586b63;min-height:44px;border-radius:9px}
+.student-studio .student-floating-nav-item:hover {background:#f2f6ef}
+.student-studio .student-floating-nav-item-active {background:var(--teacher-sage);color:#214b3d}
+@media(min-width:900px) {
+ .student-studio {padding-left:12rem}
+ .student-studio .student-floating-nav {inset:0 auto 0 0;transform:none;width:12rem;border:0;border-right:1px solid var(--s-line);border-radius:0;box-shadow:none;display:flex;flex-direction:column;align-items:stretch;gap:.35rem;padding:2rem .75rem;overflow-y:auto}
+ .student-studio .student-floating-nav:before {content:'Learning is Fun';font-family:Georgia,serif;font-size:1.35rem;color:#243b34;margin:0 .65rem 1.5rem}
+ .student-studio .student-floating-nav-item {flex-direction:row;justify-content:flex-start;gap:.8rem;text-align:left;padding:.75rem;font-size:.95rem}
+ .student-studio .student-main:not(.student-main-study):not(.student-main-article) {max-width:74rem;padding-inline:clamp(1.5rem,3vw,3rem)}
+ .student-studio > [data-app-chrome]:first-child {max-width:74rem;padding-inline:clamp(1.5rem,3vw,3rem)}
+}
+@media(max-width:600px) {
+ .student-studio .student-floating-nav {width:calc(100% - 1rem)}
+ .student-workspace .teacher-week-group .app-card > .flex {flex-wrap:wrap}
+ .student-workspace .teacher-section > summary {overflow-wrap:anywhere}
+}
+@media print {.student-studio{padding-left:0;background:white}.student-studio .student-floating-nav{display:none}}
+/* Existing class-material disclosures use the same pastel header / white body. */
+.student-workspace details.overflow-hidden {border-color:var(--s-line);border-radius:14px;box-shadow:none}
+.student-workspace details.overflow-hidden > summary {background:var(--teacher-sage);min-height:50px;color:var(--s-ink)}
+.student-workspace details.overflow-hidden:nth-of-type(3n+2) > summary {background:var(--teacher-peach)}
+.student-workspace details.overflow-hidden:nth-of-type(3n+3) > summary {background:var(--teacher-lavender)}
+.student-workspace details.overflow-hidden > div {background:white}
+
+.student-workspace :is(a.bg-orange-900,a.bg-teal-900,button.bg-teal-800){background:var(--teacher-green);border-radius:9px;min-height:44px}
+.student-workspace :is(article.bg-orange-50,label.bg-orange-50){background:var(--teacher-peach);border-color:var(--s-line)}

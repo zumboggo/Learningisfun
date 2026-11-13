@@ -1,4 +1,5 @@
 import './teacher-workspace.css';
+import './student-workspace.css';
 import {WORKSHOP_CLASS_ID,isWorkshopPath} from '@/services/workshop-context';
 import {GameDisplay} from '@/components/GameDisplay';
 import {isGamePlayerRoute} from '@/services/game-display';
@@ -103,7 +104,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   if(isActualTeacher&&isWorkshopPath(location.pathname,location.search)&&!workshopAccess?.owner&&!workshopAccess?.enrolled&&location.pathname!=='/workshop')return <main className="mx-auto max-w-lg space-y-4 p-6"><p>{workshopError||'Join Lifeplus Workshop before opening its materials.'}</p><Link to="/workshop">Join workshop</Link><Link className="ml-4" to="/classes">Return to teaching</Link></main>;
   if (!isTeacher) {
     return (
-      <div className={`student-shell min-h-screen ${location.pathname==='/lessons'?'lessons-layout':''}`}>
+      <div className={`student-shell min-h-screen ${!isParent ? 'student-studio' : ''}`}>
         {/* Account controls sit in the page flow rather than floating over the
             hero, so nothing overlaps on narrow screens. */}
         <div data-app-chrome className={`${isStudyRoute ? 'hidden' : 'flex'} mx-auto w-full max-w-[46rem] items-center justify-end gap-3 px-[clamp(1rem,4vw,1.5rem)] pt-3`}>
@@ -129,7 +130,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           </button>
         </div>
 
-        <main className={`student-main ${isArticleRoute ? 'student-main-article' : ''} ${isStudyRoute ? 'student-main-study' : ''}`}>
+        <main className={`student-main ${!isParent && !isGameRoute ? 'student-workspace' : ''} ${isArticleRoute ? 'student-main-article' : ''} ${isStudyRoute ? 'student-main-study' : ''}`}>
           {content}
         </main>
 

@@ -1,4 +1,4 @@
-import TeacherSection from '@/components/teachers/TeacherSection';
+import StudioSection from '@/components/common/StudioSection';
 import {useNavigate} from 'react-router-dom';
 import TeacherExamples from '@/components/teachers/TeacherExamples';
 import {previewState,previewView,previewAnswer,type LessonDefinition} from '@/services/lesson-authoring';
@@ -46,12 +46,22 @@ function TeacherLibrary({items,onChoose,onEdit,busy,expandAll=false}:{expandAll?
  const groups=new Map<string,Item[]>();
  for(const item of items){const rows=groups.get(item.classId)||[];rows.push(item);groups.set(item.classId,rows);}
  const labels=classFilterLabels(items,true);
- return <section aria-label="Lessons by class" className="teacher-lesson-groups">{[...groups.entries()].sort(([a],[b])=>(labels.get(a)||a).localeCompare(labels.get(b)||b)).map(([classId,rows],index)=><TeacherSection key={classId} title={labels.get(classId)||rows[0].className} tone={(['sage','peach','lavender','blue'] as const)[index%4]} defaultOpen={expandAll||index===0} meta={`${rows.length} ${rows.length===1?'lesson':'lessons'}`}>
+ return <section aria-label="Lessons by class" className="teacher-lesson-groups">{[...groups.entries()].sort(([a],[b])=>(labels.get(a)||a).localeCompare(labels.get(b)||b)).map(([classId,rows],index)=><StudioSection key={classId} title={labels.get(classId)||rows[0].className} tone={(['sage','peach','lavender','blue'] as const)[index%4]} defaultOpen={expandAll||index===0} meta={`${rows.length} ${rows.length===1?'lesson':'lessons'}`}>
  {rows.sort((a,b)=>a.title.localeCompare(b.title)).map((item,index)=><details open={index===0} key={item.id} className="teacher-lesson-row">
  <summary><span className="teacher-lesson-title">{item.title}</span><span className="lesson-meta">{item.minutes} min{dueLabel(item)}</span></summary>
  <div className="teacher-lesson-body"><p>{item.objective}</p><LessonDates item={item}/><div className="lesson-row-actions"><button onClick={()=>onChoose({item,report:false})}>Preview lesson</button><button onClick={()=>onChoose({item,report:true})}>Student progress</button><button disabled={busy} onClick={()=>onEdit(item)}>Edit with AI</button></div></div>
  </details>)}
- </TeacherSection>)}</section>;
+ </StudioSection>)}</section>;
+}
+
+function StudentLibrary({items,onChoose}:{items:Item[];onChoose:(selection:{item:Item;report:boolean})=>void}){
+ const labels=classFilterLabels(items,false);
+ return <section aria-label="Lessons by class">{[...labels].map(([classId,title],index)=>{
+  const rows=items.filter(item=>item.classId===classId);
+  return <StudioSection key={classId} title={title} defaultOpen tone={(['sage','peach','lavender','blue'] as const)[index%4]} meta={`${rows.length} ${rows.length===1?'lesson':'lessons'}`}>
+   {rows.map(i=><article className="lesson-student-row" key={i.id+i.classId}><div><p className="lesson-meta">{i.minutes} min{dueLabel(i)}</p><h2>{i.title}</h2><p>{i.objective}</p></div><button className="lesson-create" onClick={()=>onChoose({item:i,report:false})}>Open lesson</button></article>)}
+  </StudioSection>;
+ })}</section>;
 }
 
 function Library({teacher}:{teacher:boolean}){
@@ -74,7 +84,7 @@ function Library({teacher}:{teacher:boolean}){
  {editing&&<p role="status">Opening a revision draft… Existing student work stays with the original version.</p>}
  {error&&<p role="alert" className="lesson-empty">{error} <button onClick={()=>{setError('');setLoad(load+1)}}>Retry</button></p>}
  {choice&&item?<><button className={secondary} onClick={()=>choose(null)}>← All lessons</button>{teacher&&<button className={secondary} disabled={editing} onClick={()=>void editAssigned(item)}>Edit with AI</button>}{choice.report?<Report item={item}/>:<Practice item={item}/>}</>:
- !items?(!error&&<p className="lesson-empty" role="status">Loading lessons…</p>):!filtered.length?<div className="lesson-empty"><h2>{items.length?'No matching lessons':'No assigned lessons yet'}</h2><p>{items.length?'Try another title or class.':teacher?'Create a lesson or open Drafts to continue one.':'Your assigned lessons will appear here.'}</p>{items.length>0&&<button onClick={()=>{setQuery('');setClassFilter('')}}>Clear filters</button>}</div>:<><p className="lesson-result-count">{lessonCount} {lessonCount===1?'lesson':'lessons'}</p>{teacher?<TeacherLibrary key={query+classFilter} expandAll={!!query||!!classFilter} items={filtered} onChoose={choose} busy={editing} onEdit={item=>void editAssigned(item)}/>:filtered.map(i=><article className="lesson-student-row" key={i.id+i.classId}><div><p className="lesson-meta">{i.className} · {i.minutes} min{dueLabel(i)}</p><h2>{i.title}</h2><p>{i.objective}</p></div><button className="lesson-create" onClick={()=>choose({item:i,report:false})}>Open lesson</button></article>)}</>}
+ !items?(!error&&<p className="lesson-empty" role="status">Loading lessons…</p>):!filtered.length?<div className="lesson-empty"><h2>{items.length?'No matching lessons':'No assigned lessons yet'}</h2><p>{items.length?'Try another title or class.':teacher?'Create a lesson or open Drafts to continue one.':'Your assigned lessons will appear here.'}</p>{items.length>0&&<button onClick={()=>{setQuery('');setClassFilter('')}}>Clear filters</button>}</div>:<><p className="lesson-result-count">{lessonCount} {lessonCount===1?'lesson':'lessons'}</p>{teacher?<TeacherLibrary key={query+classFilter} expandAll={!!query||!!classFilter} items={filtered} onChoose={choose} busy={editing} onEdit={item=>void editAssigned(item)}/>:<StudentLibrary key={query+classFilter} items={filtered} onChoose={choose}/>}</>}
  </div>{teacher&&!choice&&<aside className="teacher-library-aside"><TeacherExamples section="lessons"/></aside>}</div>
  </div>;
 }

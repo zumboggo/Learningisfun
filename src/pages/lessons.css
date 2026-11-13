@@ -21,15 +21,6 @@
 .lesson-model dt{color:#825311;font-size:.79rem;font-weight:750}.lesson-model dd{font-family:Georgia,serif;font-size:1.08rem;line-height:1.45}
 .lesson-model a{color:#135f53;text-decoration:underline;font-weight:650}
 .lesson-studio :focus-visible{outline:3px solid #2578a3;outline-offset:2px}
-@media (min-width:900px){
-.lessons-layout{padding-left:11rem}
-.lessons-layout .student-main{max-width:74rem}
-.lessons-layout>[data-app-chrome]:first-child{max-width:74rem}
-.lessons-layout .student-floating-nav{inset:0 auto 0 0;transform:none;border:0;border-radius:0;background:#202e35;width:11rem;display:flex;flex-direction:column;align-items:stretch;gap:.3rem;padding:2rem .75rem}
-.lessons-layout .student-floating-nav:before{content:'LEARNING IS FUN';color:#e1f2e9;letter-spacing:.12em;font-size:.75rem;font-weight:800;margin:0 .65rem 2rem}
-.lessons-layout .student-floating-nav-item{flex-direction:row;gap:.8rem;text-align:left;border-radius:.55rem;padding:.75rem;color:#eef4f2;font-size:.93rem}
-.lessons-layout .student-floating-nav-item-active{background:#126857;color:white}
-}
 @media(max-width:550px){.lesson-model dl>div{grid-template-columns:1fr;gap:.25rem}.lesson-trail li{font-size:.73rem}.lesson-trail b{display:grid;margin-bottom:.35rem}.lesson-question button{width:100%}.lesson-model summary span{font-size:.74rem}}
 .lesson-model-body dl{margin:0 0 .85rem}
 .lesson-explanation{margin:.8rem 0}

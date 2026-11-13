@@ -1,4 +1,4 @@
-import TeacherSection from '@/components/teachers/TeacherSection';
+import StudioSection from '@/components/common/StudioSection';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -95,14 +95,9 @@ export function ClassesListPage() {
                   </div>
                 ))}
               </div>);
-            return isTeacher ? <TeacherSection key={courseName} title={courseName} tone={(['sage','peach','lavender','blue'] as const)[index%4]} defaultOpen meta={`${groupedClasses.length} ${groupedClasses.length===1?'section':'sections'}`}>
+            return <StudioSection key={courseName} title={courseName} tone={(['sage','peach','lavender','blue'] as const)[index%4]} defaultOpen meta={`${groupedClasses.length} ${groupedClasses.length===1?'section':'sections'}`}>
               {rows}
-            </TeacherSection> : (<section key={courseName} className="overflow-hidden rounded-2xl border border-gray-300 bg-white shadow-sm">
-              <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3">
-                <h2 className="min-w-0 truncate text-base font-bold tracking-tight text-gray-950 sm:text-lg">{courseName}</h2>
-                {groupedClasses.length > 1 && <span className="shrink-0 rounded-full bg-white px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-gray-200">{groupedClasses.length} sections</span>}
-              </div>
-{rows}</section>);
+            </StudioSection>;
           })}
         </div>
       ) : (

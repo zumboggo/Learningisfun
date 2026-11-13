@@ -40,10 +40,10 @@
 .teacher-page-head {display:flex;align-items:center;justify-content:space-between;gap:1.5rem;margin-bottom:1.5rem}
 .teacher-page-head p {max-width:65ch;margin-top:.6rem;line-height:1.6}
 .teacher-page-head > div:last-child {flex-shrink:0}
-.teacher-section {--section-tint:var(--teacher-sage);border:1px solid var(--teacher-line);border-radius:14px;background:white;min-width:0;margin-bottom:1rem}
-.teacher-tone-peach {--section-tint:var(--teacher-peach)}
-.teacher-tone-lavender {--section-tint:var(--teacher-lavender)}
-.teacher-tone-blue {--section-tint:var(--teacher-blue)}
+.teacher-section {--section-tint:var(--teacher-sage,#e6eedf);border:1px solid var(--teacher-line,#d6e0da);border-radius:14px;background:white;min-width:0;margin-bottom:1rem}
+.teacher-tone-peach {--section-tint:var(--teacher-peach,#fbebe1)}
+.teacher-tone-lavender {--section-tint:var(--teacher-lavender,#eee8fb)}
+.teacher-tone-blue {--section-tint:var(--teacher-blue,#e6f0fb)}
 .teacher-section > summary {display:flex;align-items:center;gap:.8rem;list-style:none;cursor:pointer;background:var(--section-tint);border-radius:13px;min-height:50px;padding:.85rem 1.1rem;font-size:1rem;font-weight:650;color:#253c34}
 .teacher-section > summary::-webkit-details-marker,.teacher-lesson-row > summary::-webkit-details-marker {display:none}
 .teacher-section > summary:before {content:'';height:8px;width:8px;flex-shrink:0;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);margin-right:.35rem;transition:transform .15s}
@@ -107,3 +107,5 @@
 .teacher-game-classes > button:nth-child(4n+3){background:var(--teacher-lavender);border-color:var(--teacher-line)}
 .teacher-game-classes > button:nth-child(4n+4){background:var(--teacher-blue);border-color:var(--teacher-line)}
 .teacher-workspace a.bg-teal-900{background:var(--teacher-green);border-radius:9px;min-height:44px}
+
+.teacher-section .studio-section-title{font:inherit;line-height:inherit;margin:0;min-width:0}
