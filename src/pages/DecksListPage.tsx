@@ -98,13 +98,14 @@ export function DecksListPage() {
 
   const recommendedDeckIds = useMemo(() => {
     if (!decks?.length || !studentDeckInsights) return [];
-    const due = decks.filter(deck => {
+    const personal=decks.filter(deck=>deck.type==='personal');
+    const due = personal.filter(deck => {
       const insight = studentDeckInsights[deck.$id];
       return insight && (insight.due > 0 || insight.learning > 0);
     }).map(deck => deck.$id);
     if (due.length) return due;
-    const nextNew = decks.find(deck => (studentDeckInsights[deck.$id]?.newCount || 0) > 0);
-    return nextNew ? [nextNew.$id] : decks.slice(0, 1).map(deck => deck.$id);
+    const nextNew = personal.find(deck => (studentDeckInsights[deck.$id]?.newCount || 0) > 0);
+    return nextNew ? [nextNew.$id] : personal.slice(0, 1).map(deck => deck.$id);
   }, [decks, studentDeckInsights]);
   const availableTags = useLiveQuery(async () => {
     if (isTeacher || !decks?.length) return [];
@@ -139,12 +140,12 @@ export function DecksListPage() {
       db.app_metadata.get(`studyDecks_${user.$id}`),
       db.app_metadata.get(`studySessionSize_${user.$id}`),
     ]).then(([savedDecks, savedSize]) => {
-      const available = new Set(decks.map(deck => deck.$id));
+      const available = new Set(decks.filter(deck=>deck.type==='personal').map(deck => deck.$id));
       let ids = recommendedDeckIds;
       if (savedDecks) {
         try { ids = (JSON.parse(savedDecks.value) as string[]).filter(id => available.has(id)); } catch { /* use every deck */ }
       }
-      setSelectedDeckIds(new Set(ids));
+      setSelectedDeckIds(new Set(ids.filter(id=>available.has(id))));
       const parsedSize = Number(savedSize?.value || 30);
       setSessionSize(Math.min(100, Math.max(5, Number.isFinite(parsedSize) ? parsedSize : 30)));
     });
@@ -177,7 +178,7 @@ export function DecksListPage() {
     navigate(`/decks/combined/review?decks=${encodeURIComponent(ids.join(','))}&limit=${sessionSize}&autostart=1`);
   };
   const beginCustomStudy = (preset?: CustomStudyPreset) => {
-    const deckIds = preset?.deckIds || [...(selectedDeckIds || [])];
+    const deckIds = (preset?.deckIds || [...(selectedDeckIds || [])]).filter(id=>personalDecks.some(deck=>deck.$id===id));
     if (!deckIds.length) return;
     const tags = preset?.tags || [...customTags];
     const filter = preset?.filter || customFilter;
@@ -278,20 +279,20 @@ export function DecksListPage() {
       <div className="mb-4 flex flex-wrap items-center gap-3"><Button variant="secondary" size="sm" disabled={refreshing} onClick={() => void refreshDecks()}>{refreshing ? 'Refreshing…' : 'Refresh decks'}</Button><span className="text-sm text-slate-500">Words update Fridays after 09:00 China time, or when you next come online.</span>{refreshMessage && <span role="status" className="text-sm">{refreshMessage}</span>}</div>
       {actionError && <p className="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{actionError}</p>}
 
-      {!isTeacher && user && decks && <StudentVocabularyChooser userId={user.$id} decks={decks} limit={sessionSize}/>}
-      {!isTeacher && decks && decks.length > 0 && (
-        <details className="mb-6"><summary className="cursor-pointer text-sm text-slate-500">Advanced: individual decks and custom study</summary>
+      {user && decks && <StudentVocabularyChooser userId={user.$id} decks={decks} limit={sessionSize} teacher={isTeacher}/>}
+      {!isTeacher && personalDecks.length > 0 && (
+        <details className="mb-6"><summary className="cursor-pointer text-sm text-slate-500">Custom study · my personal decks</summary>
         <section className="mb-6 rounded-2xl border border-blue-100 bg-blue-50/70 p-4 pb-24 sm:pb-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div><p className="text-xs font-bold uppercase tracking-wider text-blue-700">Recommended session</p><h2 className="mt-1 text-xl font-semibold text-slate-900">Choose what to study</h2><p className="mt-1 text-sm text-slate-500">Due decks are selected first. Your choices are remembered.</p></div>
             <div className="flex flex-wrap gap-2 text-xs font-semibold">
               <button className="rounded-lg bg-white px-3 py-2 text-blue-700 shadow-sm" onClick={() => saveStudyDecks(recommendedDeckIds)}>Recommended</button>
-              <button className="rounded-lg bg-white px-3 py-2 text-slate-600 shadow-sm" onClick={() => saveStudyDecks(decks.map(deck => deck.$id))}>All</button>
+              <button className="rounded-lg bg-white px-3 py-2 text-slate-600 shadow-sm" onClick={() => saveStudyDecks(personalDecks.map(deck => deck.$id))}>All</button>
               <button className="rounded-lg bg-white px-3 py-2 text-slate-600 shadow-sm" onClick={() => saveStudyDecks([])}>Clear</button>
             </div>
           </div>
           <div className="mt-4 space-y-2">
-            {decks.map(deck => {
+            {personalDecks.map(deck => {
               const insight = studentDeckInsights?.[deck.$id];
               return (
               <div key={deck.$id} className="flex items-center gap-2 rounded-xl border bg-white p-3">
@@ -311,7 +312,7 @@ export function DecksListPage() {
       )}
 
       {isTeacher && teacherDecks.length > 0 && (
-        <TeacherSection title="My decks" defaultOpen meta={teacherDecks.length}>
+        <TeacherSection title="Manage source decks" meta={teacherDecks.length}>
           <div className="space-y-3">
             {teacherDecks.map(renderDeck)}
           </div>

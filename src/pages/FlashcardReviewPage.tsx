@@ -1,5 +1,6 @@
+import {ensureDeckCards} from '@/services/flashcard-cache';
 import {workshopReturn} from '@/services/workshop-context';
-import { selectedVocabularyCards, type VocabularySelection } from '@/services/student-vocabulary';
+import { CATEGORY_LABELS, FLASHCARD_CATEGORIES, deckVocabularyCategory, vocabularyBuckets, type FlashcardCategory, selectedVocabularyCards, type VocabularySelection } from '@/services/student-vocabulary';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -56,6 +57,8 @@ export function FlashcardReviewPage() {
   const combinedDeckIds = useMemo(() => deckId === 'combined'
     ? [...new Set((searchParams.get('decks') || '').split(',').filter(Boolean))]
     : deckId ? [deckId] : [], [deckId, searchParams]);
+  const category = FLASHCARD_CATEGORIES.includes(searchParams.get('category') as FlashcardCategory) ? searchParams.get('category') as FlashcardCategory : null;
+  const sessionTitle=category?CATEGORY_LABELS[category]:'Mixed decks';
   const sessionLimit = Math.min(200, Math.max(5, Number(searchParams.get('limit') || 30) || 30));
   const customFilter = searchParams.get('filter') as 'all'|'due'|'new'|'difficult'|null;
   const customTags = useMemo(() => (searchParams.get('tags') || '').split('|').map(tag => tag.trim()).filter(Boolean), [searchParams]);
@@ -77,6 +80,8 @@ export function FlashcardReviewPage() {
     return result;
   }, [combinedDeckIds, user?.$id]);
 
+  const startingRef=useRef(false);
+  const [starting,setStarting]=useState(false);
   const [cards, setCards] = useState<FlashcardCard[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -118,20 +123,32 @@ export function FlashcardReviewPage() {
 
   const currentCard = cards[currentIndex];
 
-  const startSession = async (mode: StudyMode) => {
-    if (!combinedDeckIds.length || !user) return;
+  const prepareSession = async (mode: StudyMode) => {
+    if (!user) return;
+    if (!combinedDeckIds.length) {setEmptyMessage(category?`No ${CATEGORY_LABELS[category]} cards have been assigned yet.`:'No cards have been assigned to this class yet.');return;}
     let selection:VocabularySelection|null=null;
     if(searchParams.get('selection')==='vocabulary'){
       try{selection=JSON.parse(sessionStorage.getItem('vocabulary-session:'+user.$id)||'null');}catch{/* fail closed */}
       if(!selection||selection.userId!==user.$id||!Array.isArray(selection.cardIds)||!Array.isArray(selection.deckIds)){setEmptyMessage('This selection expired. Return to Cards and choose what to study again.');return;}
     }
+    if(category){
+      try{
+        const decks=(await db.flashcard_decks.bulkGet(combinedDeckIds)).filter(d=>!!d).filter(d=>d.type!=='personal'&&d.status==='published'&&deckVocabularyCategory(d)===category);
+        const categoryIds=decks.map(d=>d.$id);
+        await Promise.all(categoryIds.map(id=>ensureDeckCards(user.$id,id)));
+        const pool=categoryIds.length?await db.flashcard_cards.where('deckId').anyOf(categoryIds).toArray():[];
+        const categoryCards=vocabularyBuckets(pool,decks)[category].filter(card=>!searchParams.get('week')||card.tags.includes('week:'+searchParams.get('week')));
+        selection={userId:user.$id,deckIds:categoryIds,cardIds:categoryCards.map(card=>card.$id)};
+      }catch(e){setEmptyMessage(e instanceof Error?e.message:'Unable to load class flashcards.');return;}
+    }
+    const queueDeckIds=selection?.deckIds??combinedDeckIds;
     const existingStates = await db.student_card_state.where('userId').equals(user.$id).and(state => combinedDeckIds.includes(state.deckId)).toArray();
     const stateByCard = new Map(existingStates.map(state => [state.cardId, state]));
     const customMode: FlashcardQueueMode = customFilter === 'due' || customFilter === 'new' ? customFilter : 'all';
     const requiresFullPool = Boolean(customFilter || customTags.length);
     // Unlimited practice runs over the whole deck, shuffled, with no cap.
     let queues:FlashcardCard[][];
-    try{queues = await Promise.all(combinedDeckIds.map(id => buildFlashcardQueue(
+    try{queues = await Promise.all(queueDeckIds.map(id => buildFlashcardQueue(
       user.$id, id, mode === 'unlimited' ? 'all' : requiresFullPool ? customMode : mode, mode === 'unlimited' || requiresFullPool ? Number.MAX_SAFE_INTEGER : sessionLimit, selection?new Set(selection.cardIds):undefined,
     )));
     }catch(e){setEmptyMessage(e instanceof Error?e.message:'Unable to download cards.');return;}
@@ -144,7 +161,7 @@ export function FlashcardReviewPage() {
       setEmptyMessage(
         mode === 'due' ? 'No due cards right now.'
           : mode === 'new' ? 'No new cards left in this deck.'
-            : 'No cards available.',
+            : searchParams.get('week') ? 'No core vocabulary is assigned for this week yet.' : category ? `No ${CATEGORY_LABELS[category]} cards are ready right now. Try unlimited study to practise all assigned cards.` : 'No cards available.',
       );
       return;
     }
@@ -159,7 +176,7 @@ export function FlashcardReviewPage() {
     setSessionFinished(0);
     setSessionCardCount(sessionCards.length);
 
-    const studySession = isParent ? null : await startFlashcardStudySession(user.$id, combinedDeckIds[0], classByDeck?.[combinedDeckIds[0]] || null);
+    const studySession = isParent ? null : await startFlashcardStudySession(user.$id, sessionCards[0].deckId, classByDeck?.[sessionCards[0].deckId] || null);
     activeSecondsRef.current = 0;
     setActiveSeconds(0);
     setStudySessionId(studySession?.$id || '');
@@ -175,8 +192,15 @@ export function FlashcardReviewPage() {
     cardStartedAt.current = Date.now();
   };
 
+  const startSession=async(mode:StudyMode)=>{
+    if(startingRef.current)return;
+    startingRef.current=true;setStarting(true);setEmptyMessage('');
+    try{await prepareSession(mode);}catch(error){setEmptyMessage(error instanceof Error?error.message:'Could not start this study session. Please try again.');}
+    finally{startingRef.current=false;setStarting(false);}
+  };
+
   useEffect(() => {
-    if (searchParams.get('autostart') !== '1' || !user || !combinedDeckIds.length || autoStartedRef.current) return;
+    if (searchParams.get('autostart') !== '1' || !user || autoStartedRef.current) return;
     autoStartedRef.current = true;
     void startSession(searchParams.get('mode')==='unlimited'?'unlimited':'mixed');
   }, [combinedDeckIds, searchParams, user]);
@@ -341,7 +365,7 @@ export function FlashcardReviewPage() {
     return (
       <div className="p-4 max-w-lg mx-auto">
         <button onClick={() => navigate(-1)} className="text-gray-500 mb-4">Back</button>
-        <h1 className="text-2xl font-bold mb-2">{isCombined ? 'Mixed deck study' : deck!.title}</h1>
+        <h1 className="text-2xl font-bold mb-2">{isCombined ? sessionTitle : deck!.title}</h1>
         {!isCombined && deck!.description && <p className="text-gray-500 mb-6">{deck!.description}</p>}
 
         {progress && (
@@ -357,8 +381,8 @@ export function FlashcardReviewPage() {
 
         <div className="mb-2 grid grid-cols-3 rounded-lg bg-gray-100 p-1">
           <QueueModeButton label="Mixed" active={selectedQueueMode === 'mixed'} onClick={() => setSelectedQueueMode('mixed')} />
-          <QueueModeButton label={`Due ${progress?.due || 0}`} active={selectedQueueMode === 'due'} onClick={() => setSelectedQueueMode('due')} />
-          <QueueModeButton label={`New ${progress?.newCount || 0}`} active={selectedQueueMode === 'new'} onClick={() => setSelectedQueueMode('new')} />
+          <QueueModeButton label={isCombined?'Due cards':`Due ${progress?.due || 0}`}  active={selectedQueueMode === 'due'} onClick={() => setSelectedQueueMode('due')} />
+          <QueueModeButton label={isCombined?'New cards':`New ${progress?.newCount || 0}`}  active={selectedQueueMode === 'new'} onClick={() => setSelectedQueueMode('new')} />
         </div>
 
         <button
@@ -376,7 +400,7 @@ export function FlashcardReviewPage() {
           </span>
         </button>
 
-        <Button onClick={() => void startSession(selectedQueueMode)} className="w-full" size="lg">
+        <Button loading={starting} disabled={starting} onClick={() => void startSession(selectedQueueMode)} className="w-full" size="lg">
           {selectedQueueMode === 'unlimited' ? 'Start unlimited study' : `Start ${selectedQueueMode} session`}
         </Button>
 
@@ -452,9 +476,9 @@ export function FlashcardReviewPage() {
           <span aria-hidden="true">‹</span>
           <span>{queueMode === 'unlimited' ? 'Finish' : 'Exit'}</span>
         </button>
-        <div className="flashcard-deck-pill" title={isCombined ? 'Mixed deck study' : deck!.title}>
+        <div className="flashcard-deck-pill" title={isCombined ? sessionTitle : deck!.title}>
           <BookIcon />
-          <span>{isCombined ? 'Mixed decks' : deck!.title}</span>
+          <span>{isCombined ? sessionTitle : deck!.title}</span>
         </div>
       </div>
 

@@ -1,61 +1,37 @@
 import StudioSection from '@/components/common/StudioSection';
-import {ensureDeckCards} from '@/services/flashcard-cache';
-import {useEffect,useState} from 'react';
 import {useLiveQuery} from 'dexie-react-hooks';
-import {useNavigate} from 'react-router-dom';
+import {Link} from 'react-router-dom';
 import {db} from '@/db/schema';
-import type {FlashcardCard,FlashcardDeck} from '@/types';
+import type {FlashcardDeck} from '@/types';
 import {classLabel} from '@/utils/helpers';
-import {chinaStudyWeek,vocabularyBuckets,type VocabularySelection} from '@/services/student-vocabulary';
-import {Button} from '@/components/common/Button';
+import {CATEGORY_LABELS,FLASHCARD_CATEGORIES,categoryStudyLink,deckVocabularyCategory} from '@/services/student-vocabulary';
 
-export function StudentVocabularyChooser({userId,decks,limit}:{userId:string;decks:FlashcardDeck[];limit:number}){
- const navigate=useNavigate(),[selected,setSelected]=useState<string[]|null>(null),[error,setError]=useState('');
- const [opened,setOpened]=useState<string[]>([]),[loading,setLoading]=useState('');
- const load=async(id:string,deckIds:string[])=>{setLoading(id);setError('');try{await Promise.all(deckIds.map(deckId=>ensureDeckCards(userId,deckId)));setOpened(old=>[...new Set([...old,id])]);}catch(e){setError(e instanceof Error?e.message:'Could not load cards.');}finally{setLoading('');}};
+/** Three study decks per class; the source cards keep their IDs and review history. */
+export function StudentVocabularyChooser({userId,decks,limit,classId,teacher=false}:{userId:string;decks:FlashcardDeck[];limit:number;classId?:string;teacher?:boolean}){
  const groups=useLiveQuery(async()=>{
-  const memberships=await db.class_members.where('userId').equals(userId).toArray();
-  const ids=[...new Set(memberships.map(m=>m.classId))];
-  const classes=(await db.classes.bulkGet(ids)).filter(c=>Boolean(c));
-  const assignments=ids.length?await db.deck_assignments.where('classId').anyOf(ids).toArray():[];
-  const cards=decks.length?await db.flashcard_cards.where('deckId').anyOf(decks.map(d=>d.$id)).toArray():[];
-  return {classes:classes.map(cls=>{
-   const deckIds=new Set(assignments.filter(a=>a.classId===cls!.$id).map(a=>a.deckId));
-   const owned=decks.filter(d=>deckIds.has(d.$id)&&d.type!=='personal');
-   const buckets=vocabularyBuckets(cards.filter(c=>deckIds.has(c.deckId)),owned);
-   return {id:cls!.$id,label:classLabel(cls!),deckIds:owned.map(d=>d.$id),...buckets};
-  }).sort((a,b)=>a.label.localeCompare(b.label)),personal:decks.filter(d=>d.type==='personal').map(d=>({id:d.$id,label:d.title,cards:cards.filter(c=>c.deckId===d.$id)}))};
- },[userId,decks]);
- useEffect(()=>{let active=true;void db.app_metadata.get('vocabulary-groups:'+userId).then(row=>{
-  if(!active)return;try{const value=JSON.parse(row?.value||'null');setSelected(Array.isArray(value)?value:null);}catch{setSelected(null);}
- });return()=>{active=false;};},[userId]);
- const defaults=groups?.classes.filter(c=>opened.includes(c.id)).map(c=>c.id+':core')||[];
- const chosen=selected??defaults;
- const toggle=(id:string)=>{const next=chosen.includes(id)?chosen.filter(x=>x!==id):[...chosen,id];setSelected(next);void db.app_metadata.put({key:'vocabulary-groups:'+userId,value:JSON.stringify(next)});};
- const selectedCards=[...(groups?.classes.filter(c=>opened.includes(c.id)).flatMap(c=>[...(chosen.includes(c.id+':core')?c.core:[]),...(chosen.includes(c.id+':reference')?c.reference:[])])||[]),...(groups?.personal.filter(d=>opened.includes(d.id)).flatMap(d=>chosen.includes('personal:'+d.id)?d.cards:[])||[])];
- const start=(cards:FlashcardCard[],unlimited=false)=>{
-  if(!cards.length)return;setError('');
-  const selection:VocabularySelection={userId,cardIds:[...new Set(cards.map(c=>c.$id))],deckIds:[...new Set(cards.map(c=>c.deckId))]};
-  try{sessionStorage.setItem('vocabulary-session:'+userId,JSON.stringify(selection));navigate('/decks/combined/review?'+new URLSearchParams({decks:selection.deckIds.join(','),selection:'vocabulary',limit:String(limit),autostart:'1',...(unlimited?{mode:'unlimited'}:{})}));}
-  catch{setError('Unable to start this session. Please allow browser storage and try again.');}
- };
- const week=chinaStudyWeek();
- return <section className="mb-6 space-y-3" aria-label="Class vocabulary">
-  <h2 className="text-xl font-semibold">Choose what to study</h2>
-  <p className="text-sm text-slate-500">Open a class to load its cards. Study uses the collections you have opened; downloaded cards remain available offline.</p>
-  {groups?.classes.map((c,index)=>{
-   const weekly=c.core.filter(card=>card.tags.includes('week:'+week));
-   return <StudioSection key={c.id} title={c.label} defaultOpen tone={(['sage','peach','lavender','blue'] as const)[index%4]}>
-    {!opened.includes(c.id)?<Button className="w-full" disabled={!!loading} onClick={()=>void load(c.id,c.deckIds)}>{loading===c.id?'Loading cards…':'Open vocabulary'}</Button>:<>
-    <Button size="lg" className="mb-3 w-full" disabled={!weekly.length} onClick={()=>start(weekly,true)}>This week's vocab · {weekly.length} {weekly.length===1?'word':'words'}</Button>
-    <p className="mb-3 text-xs text-slate-500">{weekly.length?'Unlimited practice · does not change your review schedule':'No core vocabulary is scheduled for this week.'}</p>
-    <div className="grid grid-cols-2 gap-2">{(['core','reference'] as const).map(kind=><label key={kind} className="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border bg-white p-3 text-sm"><input type="checkbox" checked={chosen.includes(c.id+':'+kind)} onChange={()=>toggle(c.id+':'+kind)}/><span><strong>{kind==='core'?'Core Vocab':'Reference Vocab'}</strong><small className="block text-slate-500">{c[kind].length} cards{kind==='reference'?' · names, dates & details':''}</small></span></label>)}</div>
-    </>}
-   </StudioSection>;
-  })}
-  {groups?.personal.map(d=>!opened.includes(d.id)?<Button key={d.id} disabled={!!loading} onClick={()=>void load(d.id,[d.id])}>Open {d.label}</Button>:<label key={d.id} className="flex min-h-12 items-center gap-3 rounded-xl border p-3 text-sm"><input type="checkbox" checked={chosen.includes('personal:'+d.id)} onChange={()=>toggle('personal:'+d.id)}/>{d.label} · {d.cards.length} cards · My deck</label>)}
-  {error&&<p role="alert" className="text-red-700">{error}</p>}
-  <Button size="lg" className="w-full bg-blue-600" disabled={!selectedCards.length} onClick={()=>start(selectedCards)}>Study Now</Button>
-  <p className="text-center text-xs text-slate-500">Study up to {limit} cards from all selected collections.</p>
+  const memberships=classId||teacher?[]:await db.class_members.where('userId').equals(userId).toArray();
+  const ids=classId?[classId]:[...new Set(memberships.map(m=>m.classId))];
+  const classes=teacher&&!classId?await db.classes.where('teacherId').equals(userId).toArray():(await db.classes.bulkGet(ids)).filter(c=>Boolean(c));
+  const classIds=classes.map(c=>c!.$id);
+  const assignments=classIds.length?await db.deck_assignments.where('classId').anyOf(classIds).toArray():[];
+  return classes.map(cls=>{
+   const assigned=new Set(assignments.filter(a=>a.classId===cls!.$id).map(a=>a.deckId));
+   return {id:cls!.$id,label:classLabel(cls!),deckIds:decks.filter(d=>assigned.has(d.$id)&&d.type!=='personal'&&d.status==='published').map(d=>d.$id)};
+  }).sort((a,b)=>a.label.localeCompare(b.label));
+ },[userId,decks,classId,teacher]);
+ const categoryIds=(ids:string[],kind:typeof FLASHCARD_CATEGORIES[number])=>ids.filter(id=>decks.some(d=>d.$id===id&&deckVocabularyCategory(d)===kind));
+ const allDeckIds=categoryIds([...new Set(groups?.flatMap(c=>c.deckIds)||[])],'core');
+ return <section className="mb-6 space-y-3" aria-label="Class flashcards">
+  <h2 className="text-xl font-semibold">Class flashcards</h2>
+  <p className="text-sm text-slate-500">Study starts with Core Vocabulary. Choose Reference Vocabulary or Other whenever you want to practise those cards.</p>
+  {!groups&&<p role="status">Loading class decks…</p>}
+  {groups?.map((c,index)=><StudioSection key={c.id} title={c.label} defaultOpen tone={(['sage','peach','lavender','blue'] as const)[index%4]}>
+   <div className="grid gap-3 sm:grid-cols-3">{FLASHCARD_CATEGORIES.map(kind=><Link key={kind} to={categoryStudyLink(categoryIds(c.deckIds,kind),kind,limit)} className="rounded-xl border border-slate-200 bg-white p-4 hover:bg-green-50 focus-visible:outline-2" aria-label={`Study ${CATEGORY_LABELS[kind]} · ${c.label}`}>
+    <h3 className="font-semibold">{CATEGORY_LABELS[kind]}</h3><p className="mt-1 text-sm text-slate-500">{kind==='core'?'Your default study deck':kind==='reference'?'Names, dates, and details':'All other assigned flashcards'}</p><span className="mt-3 block text-sm font-semibold text-green-800">Study →</span>
+   </Link>)}</div>
+   <Link className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-green-800" to={categoryStudyLink(categoryIds(c.deckIds,'core'),'core',limit,true)}>This week’s core vocabulary · unlimited practice →</Link>
+  </StudioSection>)}
+  {groups?.length===0&&<p className="text-sm text-slate-500">Join a class to see its three flashcard decks. Your personal decks are available below.</p>}
+  {allDeckIds.length>0&&<Link data-button-variant="primary" className="flex min-h-11 items-center justify-center rounded-lg bg-green-800 px-4 py-3 font-semibold text-white" to={categoryStudyLink(allDeckIds,'core',limit)}>Study Core Vocabulary</Link>}
  </section>;
 }

@@ -1,3 +1,4 @@
+import {StudentVocabularyChooser} from '@/components/StudentVocabularyChooser';
 import { EthicsPresentationBuilder } from '@/components/ethics/EthicsPresentationBuilder';
 import { WeeklyMaterialRow } from '@/components/classes/WeeklyMaterialRow';
 import { ClassBanner } from '@/components/classes/ClassBanner';
@@ -460,6 +461,8 @@ export function ClassDetailPage() {
           <Link to="/discussions?archived=1" className="block text-sm text-blue-700">View archived Discussions</Link>
         </section>
 
+        {user&&deckRows&&<StudentVocabularyChooser userId={user.$id} classId={cls.$id} decks={deckRows.flatMap(row=>row.deck?[row.deck]:[])} limit={30}/>}
+        {isTeacher&&<details><summary className="cursor-pointer py-3 font-semibold">Manage source decks</summary>
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold">
@@ -546,6 +549,7 @@ export function ClassDetailPage() {
             />
           )}
         </section>
+        </details>}
       </div>
 
         </div>

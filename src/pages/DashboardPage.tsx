@@ -1,3 +1,6 @@
+import {StudentVocabularyChooser} from '@/components/StudentVocabularyChooser';
+import {getStudentDecks} from '@/services/flashcard.service';
+import {categoryStudyLink,vocabularyBuckets,deckVocabularyCategory} from '@/services/student-vocabulary';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
@@ -182,9 +185,7 @@ function StudentDashboard() {
   const [showJoin, setShowJoin] = useState(false);
   const [joining, setJoining] = useState(false);
   const [statsExpanded, setStatsExpanded] = useState(false);
-  const [editingDecks, setEditingDecks] = useState(false);
   const [encouragement, setEncouragement] = useState<string | null>(null);
-  const [selectedDeckIds, setSelectedDeckIds] = useState<string[] | null>(null);
   const [studySessionSize, setStudySessionSize] = useState(30);
   const [nickname, setNickname] = useState(user?.name || '');
   const [savingNickname, setSavingNickname] = useState(false);
@@ -200,44 +201,29 @@ function StudentDashboard() {
 
   useEffect(() => {
     if (!user) return;
-    Promise.all([
-      db.app_metadata.get(`studyDecks_${user.$id}`),
-      db.app_metadata.get(`selectedDecks_${user.$id}`),
-    ]).then(([current, legacy]) => {
-      const entry = current || legacy;
-      if (!entry) { setSelectedDeckIds(null); return; }
-      try { setSelectedDeckIds(JSON.parse(entry.value)); }
-      catch { setSelectedDeckIds(null); }
-    });
-  }, [user?.$id]);
-
-  useEffect(() => {
-    if (!user) return;
     void db.app_metadata.get(`studySessionSize_${user.$id}`).then(entry => {
       const value = Number(entry?.value || 30);
       setStudySessionSize(Math.min(100, Math.max(5, Number.isFinite(value) ? value : 30)));
     });
   }, [user?.$id]);
 
-  const saveSelectedDecks = async (ids: string[]) => {
-    if (!user) return;
-    setSelectedDeckIds(ids);
-    await db.app_metadata.put({ key: `studyDecks_${user.$id}`, value: JSON.stringify(ids) });
-  };
-
-  const toggleDeckSelection = (deckId: string) => {
-    const current = selectedDeckIds || [];
-    const next = current.includes(deckId)
-      ? current.filter(id => id !== deckId)
-      : [...current, deckId];
-    void saveSelectedDecks(next);
-  };
-
   const allAssignedDeckIds = useLiveQuery(async () => {
     if (!user || classIds.length === 0) return [];
     const assignments = await db.deck_assignments.where('classId').anyOf(classIds).toArray();
     return [...new Set(assignments.map(a => a.deckId))];
   }, [user?.$id, classIds]);
+
+  const studentDecks=useLiveQuery(()=>user?getStudentDecks(user.$id):[],[user?.$id]);
+  const coreQueue=useLiveQuery(async()=>{
+    if(!user||!allAssignedDeckIds?.length)return {due:0,newCount:0,finished:0};
+    const decks=(await db.flashcard_decks.bulkGet(allAssignedDeckIds)).filter((d):d is FlashcardDeck=>!!d&&d.status==='published'&&d.type!=='personal');
+    const cards=await db.flashcard_cards.where('deckId').anyOf(allAssignedDeckIds).toArray();
+    const core=vocabularyBuckets(cards,decks).core;
+    const states=await db.student_card_state.where('userId').equals(user.$id).toArray();
+    const byId=new Map(states.map(state=>[state.cardId,state]));
+    const todayStart=new Date();todayStart.setHours(0,0,0,0);
+    return {due:core.filter(c=>{const state=byId.get(c.$id);return state&&Date.parse(state.dueDate)<=Date.now();}).length,newCount:core.filter(c=>!byId.has(c.$id)).length,finished:core.filter(c=>{const state=byId.get(c.$id);return state&&state.lastReviewAt>=todayStart.toISOString()&&state.intervalDays>=1;}).length};
+  },[user?.$id,allAssignedDeckIds]);
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -258,9 +244,7 @@ function StudentDashboard() {
     }
     const deckAssignments = await db.deck_assignments.where('classId').anyOf(classIds).toArray();
     const allDeckIds = [...new Set(deckAssignments.map(a => a.deckId))];
-    const deckIds = selectedDeckIds !== null
-      ? allDeckIds.filter(id => selectedDeckIds.includes(id))
-      : allDeckIds;
+    const deckIds = allDeckIds;
 
     const cards = deckIds.length
       ? await db.flashcard_cards.where('deckId').anyOf(deckIds).toArray()
@@ -353,7 +337,7 @@ function StudentDashboard() {
       longestStreak: longest,
       studyHeatmap: heatmap,
     };
-  }, [user?.$id, classIds, selectedDeckIds]);
+  }, [user?.$id, classIds]);
 
   const doNow = useLiveQuery(async () => {
     if (!user || classIds.length === 0) return { sessions: [], decks: [] };
@@ -417,12 +401,12 @@ function StudentDashboard() {
     knownGrowth: [],
     deckMakeup: [],
   };
-  const activeDeckIds = (allAssignedDeckIds || []).filter(id => selectedDeckIds === null || selectedDeckIds.includes(id));
-  const readyCardCount = Math.min(studySessionSize, stats.dueCards + stats.newCards);
+  const activeDeckIds = (studentDecks||[]).filter(d=>d.type!=='personal'&&deckVocabularyCategory(d)==='core').map(d=>d.$id);
+  const readyCardCount = Math.min(studySessionSize, (coreQueue?.due||0) + (coreQueue?.newCount||0));
   const estimatedMinutes = Math.max(1, Math.ceil(readyCardCount / 4));
   const startToday = () => {
-    if (!activeDeckIds.length || readyCardCount === 0) { navigate('/decks'); return; }
-    navigate(`/decks/combined/review?decks=${encodeURIComponent(activeDeckIds.join(','))}&limit=${studySessionSize}&autostart=1`);
+    if (!activeDeckIds.length) { navigate('/decks'); return; }
+    navigate(categoryStudyLink(activeDeckIds,'core',studySessionSize));
   };
   const continueItems = [
     ...(doNow?.sessions || []).map(session => ({
@@ -433,14 +417,7 @@ function StudentDashboard() {
       action: session.discussionType === 'presentation' ? 'Continue writing' : 'Open discussion',
       status: session.discussionType === 'presentation' ? 'writing' : 'discussion',
     })),
-    ...(doNow?.decks || []).map(({ assignment, deck }) => ({
-      id: assignment.$id,
-      title: deck?.title || 'Flashcard deck',
-      detail: assignment.dailyTarget ? `${assignment.dailyTarget} cards suggested` : 'Build long-term memory',
-      to: `/decks/${assignment.deckId}/review`,
-      action: 'Study cards',
-      status: 'cards',
-    })),
+    ...(activeDeckIds.length?[{id:'core-vocabulary',title:'Core Vocabulary',detail:'Your default flashcard study',to:categoryStudyLink(activeDeckIds,'core',studySessionSize),action:'Study core vocabulary',status:'cards'}]:[]),
   ].slice(0, 3);
 
   return (
@@ -486,19 +463,19 @@ function StudentDashboard() {
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-600">Today</p>
             <h2 id="ready-heading" className="mt-1 text-2xl font-bold text-slate-950">
-              {readyCardCount > 0 ? `${readyCardCount} cards · about ${estimatedMinutes} min` : 'You are caught up'}
+              {readyCardCount > 0 ? `${readyCardCount} cards · about ${estimatedMinutes} min` : 'Core Vocabulary'}
             </h2>
-            <p className="mt-1 text-sm text-slate-600">{activeDeckIds.length} selected {activeDeckIds.length === 1 ? 'deck' : 'decks'}</p>
+            <p className="mt-1 text-sm text-slate-600">Core Vocabulary · your default study deck</p>
           </div>
           <Button onClick={() => setShowJoin(true)} size="sm" variant="secondary" className="bg-white/80">Join class</Button>
         </div>
         <div className="mt-5 grid grid-cols-3 gap-2" aria-label="Today's flashcard queue">
-          <TodayStat value={stats.dueCards} label="Ready" tone="blue" />
-          <TodayStat value={stats.newCards} label="New" tone="violet" />
-          <TodayStat value={stats.finishedToday} label="Finished" tone="green" />
+          <TodayStat value={coreQueue?.due||0} label="Ready" tone="blue" />
+          <TodayStat value={coreQueue?.newCount||0} label="New" tone="violet" />
+          <TodayStat value={coreQueue?.finished||0} label="Finished" tone="green" />
         </div>
         <Button size="lg" className="mt-5 w-full bg-blue-600" onClick={startToday}>
-          {readyCardCount > 0 ? `Study ${readyCardCount} cards` : 'Choose decks or practise more'}
+          Study Core Vocabulary
         </Button>
         {stats.flashcardsToday > 0 && <p className="mt-3 text-center text-sm font-medium text-emerald-700">You reviewed {stats.flashcardsToday} cards today. Keep building the memory.</p>}
       </section>
@@ -556,43 +533,8 @@ function StudentDashboard() {
         </div>
       </details>
 
-      <div className="student-section">
-        <div className="student-section-head">
-          <h2 className="student-title">My decks</h2>
-          {allAssignedDeckIds && allAssignedDeckIds.length > 0 && (
-            <button
-              onClick={() => setEditingDecks(!editingDecks)}
-              className="text-xs font-semibold text-slate-500 hover:text-slate-800"
-            >
-              {editingDecks ? 'Done' : 'Choose decks'}
-            </button>
-          )}
-        </div>
-        {allAssignedDeckIds && allAssignedDeckIds.length > 0 ? (
-          <div className="space-y-2">
-            {allAssignedDeckIds.map(deckId => {
-              const entry = doNow?.decks.find(d => d.deck?.$id === deckId);
-              const deck = entry?.deck;
-              const assignment = entry?.assignment;
-              const isSelected = selectedDeckIds === null || selectedDeckIds.includes(deckId);
-              return (
-                <DeckRow
-                  key={deckId}
-                  deckId={deckId}
-                  title={deck?.title || 'Unknown deck'}
-                  description={deck?.description}
-                  dailyTarget={assignment?.dailyTarget}
-                  selected={isSelected}
-                  editing={editingDecks}
-                  onToggle={() => toggleDeckSelection(deckId)}
-                />
-              );
-            })}
-          </div>
-        ) : (
-          <p className="text-sm text-slate-400">No flashcard decks assigned yet.</p>
-        )}
-      </div>
+      {user&&studentDecks&&<StudentVocabularyChooser userId={user.$id} decks={studentDecks} limit={studySessionSize}/>}
+      <Link to="/decks" className="text-sm font-semibold text-green-800">My personal decks · create, upload, or study →</Link>
 
       <div className="student-section">
         <button
@@ -643,58 +585,6 @@ function StudentDashboard() {
           />
         </div>
       </div>
-    </div>
-  );
-}
-
-/**
- * A deck in the student's list. The selection checkbox only appears while
- * editing; the rest of the time the row is a plain tap target so the home
- * screen stays uncluttered.
- */
-function DeckRow({ deckId, title, description, dailyTarget, selected, editing, onToggle }: {
-  deckId: string;
-  title: string;
-  description?: string;
-  dailyTarget?: number | null;
-  selected: boolean;
-  editing: boolean;
-  onToggle: () => void;
-}) {
-  const body = (
-    <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
-      <div className="min-w-0">
-        <h3 className="truncate text-sm font-semibold text-slate-800">{title}</h3>
-        {description && <p className="truncate text-xs text-slate-400">{description}</p>}
-      </div>
-      {dailyTarget && (
-        <span className="shrink-0 text-xs font-semibold text-slate-400">{dailyTarget}/day</span>
-      )}
-    </div>
-  );
-
-  return (
-    <div
-      className={`student-card flex items-center gap-3 px-4 py-3 transition-opacity ${
-        editing && !selected ? 'opacity-50' : ''
-      }`}
-    >
-      {editing && (
-        <button
-          onClick={onToggle}
-          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
-            selected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 hover:border-blue-400'
-          }`}
-          aria-label={selected ? `Stop counting ${title}` : `Count ${title}`}
-        >
-          {selected && (
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          )}
-        </button>
-      )}
-      {editing ? body : <Link to={`/decks/${deckId}/review`} className="flex min-w-0 flex-1">{body}</Link>}
     </div>
   );
 }

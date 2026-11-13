@@ -1,42 +1,43 @@
-vi.mock('@/services/flashcard-cache',()=>({ensureDeckCards:vi.fn(async()=>{})}));
 import {afterEach,expect,it,vi} from 'vitest';
-import {cleanup,fireEvent,render,screen,waitFor} from '@testing-library/react';
+import {cleanup,render,screen} from '@testing-library/react';
+import {MemoryRouter} from 'react-router-dom';
 import type {FlashcardCard,FlashcardDeck} from '@/types';
-import {chinaStudyWeek,vocabularyBuckets,selectedVocabularyCards} from '@/services/student-vocabulary';
+import {chinaStudyWeek,vocabularyBuckets,selectedVocabularyCards,categoryStudyLink} from '@/services/student-vocabulary';
 import {StudentVocabularyChooser} from '@/components/StudentVocabularyChooser';
-const mock=vi.hoisted(()=>({navigate:vi.fn(),put:vi.fn(),groups:{classes:[] as unknown[],personal:[] as unknown[]}}));
-vi.mock('react-router-dom',()=>({useNavigate:()=>mock.navigate}));
+const mock=vi.hoisted(()=>({groups:[] as unknown[]}));
 vi.mock('dexie-react-hooks',()=>({useLiveQuery:()=>mock.groups}));
-vi.mock('@/db/schema',()=>({db:{app_metadata:{get:async()=>undefined,put:mock.put}}}));
-const deck={$id:'deck',title:'Literature',type:'teacher'} as FlashcardDeck;
-const card=(id:string,tags:string[]=[],deckId='deck')=>({$id:id,deckId,front:id,back:'Definition',tags} as FlashcardCard);
-afterEach(()=>{cleanup();vi.useRealTimers();sessionStorage.clear();mock.navigate.mockClear();});
-it('groups mixed decks without moving cards or duplicating shared cards',()=>{
- const cards=[card('term'),card('person',['NAME']),card('date',['DATE']),card('detail',['REFERENCE'])];
- const buckets=vocabularyBuckets([...cards,cards[0]],[deck]);
+const deck=(id:string,title:string,type='teacher')=>({$id:id,title,type,status:'published'} as FlashcardDeck);
+const card=(id:string,deckId:string,tags:string[]=[])=>({$id:id,deckId,front:id,back:'Definition',tags} as FlashcardCard);
+afterEach(cleanup);
+it('combines every other assigned deck into Other and preserves original card IDs',()=>{
+ const decks=[deck('c','WL · Core Vocabulary'),deck('r','WL · Reference Vocabulary'),deck('essay','Essay writing'),deck('memory','Memory and recall')];
+ const cards=[card('term','c'),card('person','r'),card('writing','essay',['NAME']),card('recall','memory')];
+ const buckets=vocabularyBuckets([...cards,cards[3]],decks);
  expect(buckets.core.map(c=>c.$id)).toEqual(['term']);
- expect(buckets.reference).toHaveLength(3);
- expect(cards.every(c=>c.deckId==='deck')).toBe(true);
- expect(vocabularyBuckets([card('ref',[],'reference')],[{$id:'reference',title:'Reference Vocabulary'} as FlashcardDeck]).reference).toHaveLength(1);
+ expect(buckets.reference.map(c=>c.$id)).toEqual(['person']);
+ expect(buckets.other.map(c=>c.$id)).toEqual(['writing','recall']);
+ expect(cards.map(c=>c.deckId)).toEqual(['c','r','essay','memory']);
 });
 it('uses Monday in China rather than the device timezone',()=>{
  expect(chinaStudyWeek(new Date('2026-09-20T15:59:59Z'))).toBe('2026-09-14');
  expect(chinaStudyWeek(new Date('2026-09-20T16:00:00Z'))).toBe('2026-09-21');
 });
 it('keeps a stored selection within its specified decks and card IDs',()=>{
- expect(selectedVocabularyCards([card('a'),card('a'),card('b'),card('c',[],'other')],{userId:'u',deckIds:['deck'],cardIds:['a','c']})).toHaveLength(1);
+ expect(selectedVocabularyCards([card('a','d'),card('a','d'),card('b','d'),card('c','other')],{userId:'u',deckIds:['d'],cardIds:['a','c']})).toHaveLength(1);
 });
-it('launches only this week in unlimited mode, and Study Now combines checked collections',async()=>{
- const week=chinaStudyWeek();
- mock.groups={classes:[{id:'class',label:'Literature',deckIds:['deck'],core:[card('weekly',['week:'+week]),card('old',['week:2020-01-06'])],reference:[card('person',['NAME'])]}],personal:[]};
- render(<StudentVocabularyChooser userId="u" decks={[deck]} limit={30}/>);
- fireEvent.click(screen.getByRole('button',{name:'Open vocabulary'}));
- await waitFor(()=>expect(screen.getByRole('button',{name:"This week's vocab · 1 word"})).toBeEnabled());
- fireEvent.click(screen.getByRole('button',{name:/This week's vocab/}));
- expect(mock.navigate.mock.lastCall?.[0]).toContain('mode=unlimited');
- expect(JSON.parse(sessionStorage.getItem('vocabulary-session:u')!).cardIds).toEqual(['weekly']);
- fireEvent.click(screen.getByRole('checkbox',{name:/Reference Vocab/}));
- fireEvent.click(screen.getByRole('button',{name:'Study Now'}));
- expect(new Set(JSON.parse(sessionStorage.getItem('vocabulary-session:u')!).cardIds)).toEqual(new Set(['weekly','old','person']));
- expect(mock.navigate.mock.lastCall?.[0]).not.toContain('unlimited');
+it('shows exactly three class categories, defaults to Core, and does not expose source decks',()=>{
+ const decks=[deck('c','WL · Core Vocabulary'),deck('r','WL · Reference Vocabulary'),deck('essay','Essay writing'),deck('memory','Memory and recall'),deck('personal','My upload','personal')];
+ mock.groups=[{id:'class',label:'Literature',deckIds:['c','r','essay','memory']}];
+ render(<MemoryRouter><StudentVocabularyChooser userId="u" decks={decks} limit={30}/></MemoryRouter>);
+ expect(screen.getAllByRole('heading',{level:3}).map(h=>h.textContent)).toEqual(['Core Vocabulary','Reference Vocabulary','Other']);
+ expect(screen.queryByText('Essay writing')).not.toBeInTheDocument();
+ expect(screen.getByRole('link',{name:'Study Other · Literature'})).toHaveAttribute('href',categoryStudyLink(['essay','memory'],'other',30));
+ expect(screen.getByRole('link',{name:'Study Core Vocabulary'})).toHaveAttribute('href',categoryStudyLink(['c'],'core',30));
+ expect(screen.getByRole('link',{name:/This week’s core/})).toHaveAttribute('href',categoryStudyLink(['c'],'core',30,true));
+});
+it('keeps the three categories visible even before cards are downloaded or assigned',()=>{
+ mock.groups=[{id:'class',label:'Literature',deckIds:[]}];
+ render(<MemoryRouter><StudentVocabularyChooser userId="u" decks={[]} limit={30}/></MemoryRouter>);
+ expect(screen.getAllByRole('heading',{level:3})).toHaveLength(3);
+ expect(screen.getByRole('link',{name:'Study Core Vocabulary · Literature'})).toHaveAttribute('href',categoryStudyLink([]));
 });

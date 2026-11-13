@@ -1,16 +1,28 @@
 import type {FlashcardCard,FlashcardDeck} from '@/types';
+export const FLASHCARD_CATEGORIES=['core','reference','other'] as const;
+export type FlashcardCategory=typeof FLASHCARD_CATEGORIES[number];
+export const CATEGORY_LABELS:Record<FlashcardCategory,string>={core:'Core Vocabulary',reference:'Reference Vocabulary',other:'Other'};
 export const chinaStudyWeek=(now=new Date())=>{
  const d=new Date(now.getTime()+8*60*60*1000);
  d.setUTCDate(d.getUTCDate()-(d.getUTCDay()+6)%7);
  return d.toISOString().slice(0,10);
 };
-export function isReferenceCard(card:FlashcardCard,deck:FlashcardDeck){
- return /\breference\b/i.test(deck.title)||card.tags.some(tag=>/^(reference|name|names|date|dates|detail|details)$/i.test(tag));
+/** Whole assigned decks are combined without changing card IDs or review history. */
+export function deckVocabularyCategory(deck:FlashcardDeck):FlashcardCategory{
+ if(/\breference\s+vocab(?:ulary)?\b/i.test(deck.title))return 'reference';
+ if(/\bcore\s+vocab(?:ulary)?\b/i.test(deck.title))return 'core';
+ return 'other';
 }
 export function vocabularyBuckets(cards:FlashcardCard[],decks:FlashcardDeck[]){
  const byId=new Map(decks.map(d=>[d.$id,d]));
- const unique=[...new Map(cards.map(card=>[card.$id,card])).values()].filter(c=>byId.has(c.deckId));
- return {core:unique.filter(c=>!isReferenceCard(c,byId.get(c.deckId)!)),reference:unique.filter(c=>isReferenceCard(c,byId.get(c.deckId)!))};
+ const buckets:Record<FlashcardCategory,FlashcardCard[]>={core:[],reference:[],other:[]};
+ for(const card of new Map(cards.map(card=>[card.$id,card])).values()){
+  const deck=byId.get(card.deckId);if(deck)buckets[deckVocabularyCategory(deck)].push(card);
+ }
+ return buckets;
+}
+export function categoryStudyLink(deckIds:string[],category:FlashcardCategory='core',limit=30,weekly=false){
+ return '/decks/combined/review?'+new URLSearchParams({decks:[...new Set(deckIds)].join(','),category,limit:String(limit),autostart:'1',...(weekly?{week:chinaStudyWeek(),mode:'unlimited'}:{})});
 }
 export interface VocabularySelection {userId:string;cardIds:string[];deckIds:string[]}
 export function selectedVocabularyCards(cards:FlashcardCard[],selection:VocabularySelection){
