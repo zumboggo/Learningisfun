@@ -106,6 +106,15 @@ html,body{margin:0;min-height:100%;}main{padding-top:20px;}
 #column-presentation{position:fixed;inset:0;margin:0;width:100%;max-width:none;height:100dvh;max-height:none;border:0;border-radius:0;padding:24px;background:#f4f8f5;overflow:auto}
 .presentation-header{display:flex;align-items:center;justify-content:space-between;gap:16px}.presentation-header h2{margin:5px 0 16px;overflow-wrap:anywhere}.presentation-header>div{min-width:0}.presentation-header button{flex-shrink:0}
 .presentation-controls{display:flex;align-items:center;flex-wrap:wrap;gap:12px}.presentation-controls button:disabled{opacity:.4;cursor:default}#presentation-count{font-variant-numeric:tabular-nums}#presentation-status{font-size:13px;line-height:1.5;color:#526d60}
-.presenter-panes{display:grid;grid-template-columns:1fr 1fr;gap:24px}.presenter-panes section{min-width:0}.presenter-panes h3{font-size:14px;margin:12px 0}.presenter-panes section>div{height:calc(100dvh - 235px);min-height:220px;overflow:auto;overscroll-behavior:contain;white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #cbd9cf;border-radius:12px;background:white;padding:24px;font-size:24px;line-height:1.6}#presenter-notes{background:#fffdf4;font-size:21px}
+.presenter-panes{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:24px}.presenter-panes section{min-width:0}.presenter-panes h3{font-size:14px;margin:12px 0}.presenter-panes section>div{height:calc(100dvh - 235px);min-height:220px;overflow:auto;overscroll-behavior:contain;white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #cbd9cf;border-radius:12px;background:white;padding:24px;font-size:24px;line-height:1.6}#presenter-notes{background:#fffdf4;font-size:21px}
 @media(max-width:600px){#column-presentation{padding:16px}.presentation-header button,.presentation-controls button{font-size:12px;padding:8px}.presenter-panes{grid-template-columns:1fr;gap:12px}.presenter-panes section>div{height:40dvh;padding:18px;font-size:21px}.column-controls{gap:3px}.column-controls button{padding:3px 6px}}
 @media print{.column-controls,#column-presentation{display:none!important}#board .row-label{height:15mm}}
+
+/* A quiet slide canvas with readable speaker notes alongside it. */
+#column-presentation{background:#eeeDEA;color:#292722}
+.presenter-panes section>div{font-family:Georgia,Charter,serif;background:#fffefa;color:#292722;border-color:#d8d4cc;box-shadow:0 4px 18px #2927220a}
+#presenter-slide{display:flex;flex-direction:column;text-align:center;font-size:clamp(26px,3.3vw,46px);line-height:1.4;padding:32px}
+#presenter-slide p{margin:auto 0;flex-shrink:0;width:100%}
+#presenter-notes{background:#fffefa;font-family:Georgia,Charter,serif;font-size:23px;line-height:1.65}
+#board .card.todo-drop-target{outline:3px solid #326b56;outline-offset:2px;background:#edf6ee;box-shadow:0 0 0 6px #326b5620}
+@media(max-width:600px){#presenter-slide{font-size:27px;padding:24px}#presenter-notes{font-size:21px}}

@@ -122,7 +122,7 @@ function openAudience(){
  audienceWindow=window.open('about:blank','_blank','popup,width=1100,height=760');
  if(!audienceWindow){$('#presentation-status').textContent='Audience window blocked. Allow pop-ups, then select Open audience window.';return}
  const doc=audienceWindow.document;
- doc.open();doc.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Audience presentation</title><style>*{box-sizing:border-box}body{margin:0;background:#f6f8f5;color:#20382c;font-family:system-ui,sans-serif;height:100dvh;display:flex;flex-direction:column}header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 24px;border-bottom:1px solid #d4dfd6;font-size:14px}button{font:inherit;padding:8px 12px;border:1px solid #b8cabc;border-radius:8px;background:white;cursor:pointer}main{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:clamp(24px,6vw,90px);font-size:clamp(28px,4vw,62px);line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere}button:focus-visible,main:focus-visible{outline:3px solid #47795e}</style></head><body><header><span id="audience-title"></span><span id="audience-count"></span><button id="audience-fullscreen">Full screen</button></header><main id="audience-slide" tabindex="0" aria-label="Current slide"></main></body></html>');doc.close();
+ doc.open();doc.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Audience presentation</title><style>*{box-sizing:border-box}body{margin:0;background:#fffefa;color:#292722;font-family:system-ui,sans-serif;height:100dvh;display:flex;flex-direction:column}header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 24px;border-bottom:1px solid #d4dfd6;font-size:14px}button{font:inherit;padding:8px 12px;border:1px solid #b8cabc;border-radius:8px;background:white;cursor:pointer}main{display:flex;flex-direction:column;text-align:center;font-family:Georgia,Charter,serif;flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:clamp(24px,6vw,90px);font-size:clamp(28px,4vw,62px);line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere}main p{margin:auto 0;flex-shrink:0;width:100%}button:focus-visible,main:focus-visible{outline:3px solid #47795e}</style></head><body><header><span id="audience-title"></span><span id="audience-count"></span><button id="audience-fullscreen">Full screen</button></header><main id="audience-slide" tabindex="0" aria-label="Current slide"></main></body></html>');doc.close();
  doc.getElementById('audience-fullscreen').onclick=async()=>{try{if(doc.fullscreenElement)await doc.exitFullscreen();else await doc.documentElement.requestFullscreen()}catch{doc.getElementById('audience-fullscreen').textContent='Use browser full screen'}};
  doc.addEventListener('keydown',presentationKeys);
  $('#presentation-status').textContent='Move the audience window to your projector or second display. Notes stay here.';
@@ -130,12 +130,12 @@ function openAudience(){
 }
 function renderSlide(){
  if(!presentation)return;const slide=presentation.slides[presentation.index],count=(presentation.index+1)+' / '+presentation.slides.length;
- $('#presentation-count').textContent=count;$('#presenter-slide').textContent=slide.text||'(Blank audience slide)';$('#presenter-notes').textContent=slide.notes||'No presenter notes for this slide.';
+ $('#presentation-count').textContent=count;const previewText=document.createElement('p');previewText.textContent=slide.text||'(Blank audience slide)';$('#presenter-slide').replaceChildren(previewText);$('#presenter-notes').textContent=slide.notes||'No presenter notes for this slide.';
  $('#presenter-slide').scrollTop=0;$('#presenter-notes').scrollTop=0;
  $('#previous-slide').disabled=presentation.index===0;$('#next-slide').disabled=presentation.index===presentation.slides.length-1;
  if(audienceWindow&&!audienceWindow.closed){
   const doc=audienceWindow.document;doc.getElementById('audience-title').textContent=presentation.title;doc.getElementById('audience-count').textContent=count;
-  const content=doc.getElementById('audience-slide');content.textContent=slide.text;content.scrollTop=0;
+  const content=doc.getElementById('audience-slide');const text=doc.createElement('p');text.textContent=slide.text;content.replaceChildren(text);content.scrollTop=0;
  }
 }
 function stepSlide(delta){if(!presentation)return;const next=Math.max(0,Math.min(presentation.slides.length-1,presentation.index+delta));if(next!==presentation.index){presentation.index=next;renderSlide()}}
@@ -186,30 +186,51 @@ function moveTodo(from,to){
   renderTodos();save();
   $('#todo-list').querySelector(`[data-todo="${to}"] .todo-grip`).focus();
 }
+function moveTodoToCard(index,slot){
+ const lines=(state.notes[0]||'').split('\n');
+ if(!visibleSlots().includes(slot)||!lines[index]?.trim())return;
+ const previous=JSON.parse(JSON.stringify(state)),text=lines[index];
+ const occupied=!!state.cards[slot].trim();
+ state.cards[slot]=occupied?state.cards[slot]+'\n\n'+text:text;
+ state.cardDone[slot]=occupied?false:state.todoChecked[index]===true;
+ lines.splice(index,1);state.todoChecked.splice(index,1);state.notes[0]=lines.join('\n');
+ if(!save()){
+  state=previous;library.boards.find(board=>board.id===currentId).data=state;
+  render();toast('Task was not moved: storage unavailable.');return;
+ }
+ render();document.querySelector(`[data-slot="${slot}"]`)?.focus({preventScroll:true});
+ toast(occupied?'Task added to card. Existing text kept.':'Task moved to card.');
+}
 function setupTodoDrag(row,grip,index){
-  let origin=null,target=index;
-  const clear=()=>{origin=null;document.querySelectorAll('.todo-row').forEach(item=>item.classList.remove('todo-dragging','todo-over'))};
-  grip.onpointerdown=e=>{
-    if(e.button!==0)return;
-    origin={x:e.clientX,y:e.clientY};target=index;
-    grip.setPointerCapture(e.pointerId);e.preventDefault();
-  };
-  grip.onpointermove=e=>{
-    if(!origin||Math.hypot(e.clientX-origin.x,e.clientY-origin.y)<6)return;
-    row.classList.add('todo-dragging');
-    const list=$('#todo-list'),bounds=list.getBoundingClientRect();
-    if(e.clientY<bounds.top+28)list.scrollTop-=12;
-    else if(e.clientY>bounds.bottom-28)list.scrollTop+=12;
-    const destination=document.elementFromPoint(e.clientX,e.clientY)?.closest('.todo-row');
-    document.querySelectorAll('.todo-row').forEach(item=>item.classList.remove('todo-over'));
-    if(destination&&list.contains(destination)){target=Number(destination.dataset.todo);destination.classList.add('todo-over')}
-  };
-  grip.onpointerup=()=>{if(!origin)return;const to=target;clear();moveTodo(index,to)};
-  grip.onpointercancel=clear;grip.onlostpointercapture=clear;
-  grip.onkeydown=e=>{
-    if(e.key!=='ArrowUp'&&e.key!=='ArrowDown')return;
-    e.preventDefault();moveTodo(index,index+(e.key==='ArrowUp'?-1:1));
-  };
+ let origin=null,target=index,cardTarget=null,moved=false;
+ const clear=()=>{origin=null;cardTarget=null;document.querySelectorAll('.todo-row').forEach(item=>item.classList.remove('todo-dragging','todo-over'));document.querySelectorAll('.todo-drop-target').forEach(item=>item.classList.remove('todo-drop-target'))};
+ grip.onpointerdown=e=>{
+  if(e.button!==0)return;
+  origin={x:e.clientX,y:e.clientY};target=index;cardTarget=null;moved=false;
+  grip.setPointerCapture(e.pointerId);e.preventDefault();
+ };
+ grip.onpointermove=e=>{
+  if(!origin||Math.hypot(e.clientX-origin.x,e.clientY-origin.y)<6&&!moved)return;
+  moved=true;row.classList.add('todo-dragging');
+  const list=$('#todo-list'),bounds=list.getBoundingClientRect();
+  if(e.clientX>=bounds.left&&e.clientX<=bounds.right){
+   if(e.clientY<bounds.top+28)list.scrollTop-=12;
+   else if(e.clientY>bounds.bottom-28)list.scrollTop+=12;
+  }
+  if(e.clientY<48)window.scrollBy(0,-18);else if(e.clientY>window.innerHeight-48)window.scrollBy(0,18);
+  const hit=document.elementFromPoint(e.clientX,e.clientY),destination=hit?.closest('.todo-row'),card=hit?.closest('#board .card');
+  document.querySelectorAll('.todo-row').forEach(item=>item.classList.remove('todo-over'));
+  document.querySelectorAll('.todo-drop-target').forEach(item=>item.classList.remove('todo-drop-target'));
+  cardTarget=card?Number(card.dataset.slot):null;target=index;
+  if(card)card.classList.add('todo-drop-target');
+  else if(destination&&list.contains(destination)){target=Number(destination.dataset.todo);destination.classList.add('todo-over')}
+ };
+ grip.onpointerup=()=>{if(!origin)return;const to=target,slot=cardTarget,wasMoved=moved;clear();if(wasMoved&&slot!==null)moveTodoToCard(index,slot);else moveTodo(index,to)};
+ grip.onpointercancel=clear;grip.onlostpointercapture=clear;
+ grip.onkeydown=e=>{
+  if(e.key!=='ArrowUp'&&e.key!=='ArrowDown')return;
+  e.preventDefault();moveTodo(index,index+(e.key==='ArrowUp'?-1:1));
+ };
 }
 function renderTodos(focusIndex){
   mergeAdditionalNotes(state);
@@ -220,7 +241,7 @@ function renderTodos(focusIndex){
   lines.forEach((text,index)=>{
     const row=document.createElement('div');row.className='todo-row';row.dataset.todo=index;
     const grip=document.createElement('button');grip.type='button';grip.className='todo-grip';grip.textContent='⠿';
-    grip.setAttribute('aria-label','Reorder task '+(index+1));grip.title='Drag to reorder; or use the up and down arrow keys';
+    grip.setAttribute('aria-label','Reorder task '+(index+1));grip.title='Drag to reorder or move into a card; use up and down arrow keys to reorder';
     setupTodoDrag(row,grip,index);
     const check=document.createElement('input');check.type='checkbox';check.checked=state.todoChecked[index]===true;
     check.setAttribute('aria-label','Complete task '+(index+1));

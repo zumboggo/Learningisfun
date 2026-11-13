@@ -375,3 +375,30 @@ test('column md copies all text without downloading a file', async () => {
  expect(dom.window.document.querySelector('#toast').textContent).toBe('Column copied');
  dom.window.close();
 });
+
+test('dragging a task into a card moves its full text and preserves existing card text', () => {
+ const dom=evaluate('task-card', `state.notes[0]='Move this full task\\nKeep this task';state.cards[0]='Existing note';render();`);
+ const win=dom.window,doc=win.document,grip=doc.querySelector('.todo-grip');
+ grip.setPointerCapture=()=>{};doc.elementFromPoint=()=>doc.querySelector('[data-slot="0"]');
+ for(const [type,x] of [['pointerdown',10],['pointermove',300]])grip.dispatchEvent(new win.MouseEvent(type,{button:0,clientX:x,clientY:100}));
+ expect(doc.querySelector('[data-slot="0"]').classList.contains('todo-drop-target')).toBe(true);
+ grip.dispatchEvent(new win.MouseEvent('pointerup',{button:0,clientX:300,clientY:100}));
+ const data=JSON.parse(win.localStorage.getItem('learning-planning:task-card')).boards[0].data;
+ expect(data.cards[0]).toBe('Existing note\n\nMove this full task');expect(data.notes[0]).toBe('Keep this task');expect(data.cardDone[0]).toBe(false);
+ expect(doc.querySelector('.todo-drop-target')).toBeNull();dom.window.close();
+});
+
+test('task-to-card moves retain completion in empty cards and roll back failed saves', () => {
+ const dom=evaluate('task-safe', `state.notes[0]='Completed task\\nPending task';state.todoChecked=[true,false];moveTodoToCard(0,4);window.currentState=()=>state;window.moveTask=moveTodoToCard;`);
+ expect(dom.window.currentState().cards[4]).toBe('Completed task');expect(dom.window.currentState().cardDone[4]).toBe(true);
+ dom.window.Storage.prototype.setItem=()=>{throw Error('Quota')};
+ dom.window.moveTask(0,5);
+ expect(dom.window.currentState().notes[0]).toBe('Pending task');expect(dom.window.currentState().cards[5]).toBe('');dom.window.close();
+});
+
+test('cancelled task drag leaves both task and card unchanged', () => {
+ const dom=evaluate('task-cancel', `state.notes[0]='Stay here';render();`),win=dom.window,doc=win.document,grip=doc.querySelector('.todo-grip');
+ grip.setPointerCapture=()=>{};doc.elementFromPoint=()=>doc.querySelector('[data-slot="0"]');
+ for(const [type,x] of [['pointerdown',10],['pointermove',300],['pointercancel',300],['pointerup',300]])grip.dispatchEvent(new win.MouseEvent(type,{button:0,clientX:x,clientY:100}));
+ expect(doc.querySelector('[aria-label="Task 1"]').value).toBe('Stay here');expect(doc.querySelector('[data-slot="0"]').textContent).toContain('+');expect(doc.querySelector('.todo-drop-target')).toBeNull();dom.window.close();
+});
