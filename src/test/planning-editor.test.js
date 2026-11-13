@@ -143,14 +143,14 @@ test('note completion is reversible, survives reload and follows card and row mo
   dom.window.close();reopened.dom.window.close();
 });
 
-test('Refresh archives full completed text, keeps unfinished positions, and is idempotent across reload', () => {
+test('Refresh archives full completed text, compacts unfinished cards, and is idempotent across reload', () => {
   const dom=evaluate('alice', "state.cards[0]='Completed note with more than eight words that must all survive';state.cardDone[0]=true;state.cards[7]='Keep in cell eight';state.notes=['Done task\\nPending task\\nAnother done task','Keep other notes'];state.todoMode=true;state.todoChecked=[true,false,true];render();");
   const win=dom.window,doc=win.document;
   doc.querySelector('#refresh-planner').click();
   const load=()=>JSON.parse(win.localStorage.getItem('learning-planning:alice')).boards[0].data;
   expect(load().archive).toHaveLength(3);
-  expect(load().cards[0]).toBe('');expect(load().cardDone[0]).toBe(false);
-  expect(load().cards[7]).toBe('Keep in cell eight');
+  expect(load().cards[0]).toBe('Keep in cell eight');expect(load().cardDone[0]).toBe(false);
+  expect(load().cards[7]).toBe('');
   expect(load().notes).toEqual(['Pending task\nKeep other notes','']);
   doc.querySelector('#refresh-planner').click();expect(load().archive).toHaveLength(3);
   const reopened=open('alice',{'learning-planning:alice':win.localStorage.getItem('learning-planning:alice')});
@@ -162,12 +162,13 @@ test('Refresh archives full completed text, keeps unfinished positions, and is i
 });
 
 test('Refresh rolls back when local persistence fails', () => {
-  const dom=evaluate('alice', "state.cards[0]='Keep safe';state.cardDone[0]=true;save();window.currentState=()=>state;");
+  const dom=evaluate('alice', "state.cards[0]='Keep safe';state.cardDone[0]=true;state.cards[7]='Keep original position on failure';save();window.currentState=()=>state;");
   dom.window.Storage.prototype.setItem=()=>{throw new Error('Quota exceeded');};
   dom.window.document.querySelector('#refresh-planner').click();
   expect(dom.window.currentState().cards[0]).toBe('Keep safe');
   expect(dom.window.currentState().cardDone[0]).toBe(true);
   expect(dom.window.currentState().archive).toHaveLength(0);
+  expect(dom.window.currentState().cards[7]).toBe('Keep original position on failure');
   dom.window.close();
 });
 
@@ -287,5 +288,40 @@ test('Markdown option downloads and copies identical text, reporting clipboard f
  await button.onclick();
  expect(dom.window.exports).toHaveLength(2);
  expect(dom.window.document.querySelector('#toast').textContent).toContain('Clipboard unavailable');
+ dom.window.close();
+});
+
+test('Refresh closes gaps in every column without mixing topics or changing order', () => {
+ const dom=evaluate('compact', `state.cards[2]='First';state.cards[8]='Second';state.cards[19]='Other topic';state.cards[79]='Last topic';refreshPlanner();window.result=JSON.parse(JSON.stringify(state));refreshPlanner();window.again=JSON.parse(JSON.stringify(state));`);
+ expect(dom.window.result.cards.slice(0,10)).toEqual(['First','Second',...Array(8).fill('')]);
+ expect(dom.window.result.cards[10]).toBe('Other topic');
+ expect(dom.window.result.cards[70]).toBe('Last topic');
+ expect(dom.window.again).toEqual(dom.window.result);
+ const saved=dom.window.localStorage.getItem('learning-planning:compact');
+ const reopened=open('compact',{'learning-planning:compact':saved});
+ expect(reopened.win.document.querySelector('[data-slot="10"]').textContent).toContain('Other topic');
+ reopened.dom.window.close();dom.window.close();
+});
+
+test('expanded column is read-only, preserves full text and returns focus and scroll', () => {
+ const dom=evaluate('expand', `state.rows[2]='Speaking notes';state.cards[20]='Full text beyond the preview limit with all details.\\nAnother line';state.cards[22]='Done point';state.cardDone[22]=true;render();`);
+ const win=dom.window,doc=win.document,dialog=doc.querySelector('#expanded-column');
+ dialog.showModal=()=>dialog.setAttribute('open','');
+ dialog.close=()=>{dialog.removeAttribute('open');dialog.dispatchEvent(new win.Event('close'))};
+ Object.defineProperty(win,'scrollY',{value:450});win.scrollTo=(x,y)=>{win.returnedTo=[x,y]};
+ const before=win.localStorage.getItem('learning-planning:expand');
+ doc.querySelector('[aria-label="Expand column 3"]').click();
+ expect(dialog.open).toBe(true);
+ expect(doc.querySelector('#expanded-title').textContent).toBe('Speaking notes');
+ expect(dialog.querySelectorAll('.expanded-card')).toHaveLength(2);
+ expect(dialog.querySelector('.expanded-card p').textContent).toBe('Full text beyond the preview limit with all details.\nAnother line');
+ expect(dialog.querySelectorAll('textarea,input,[contenteditable],.card')).toHaveLength(0);
+ expect(dialog.querySelectorAll('.dealt-with')).toHaveLength(1);
+ doc.querySelector('#close-expanded').click();
+ expect(dialog.open).toBe(false);
+ expect(doc.activeElement.getAttribute('aria-label')).toBe('Expand column 3');
+ expect(win.returnedTo).toEqual([0,450]);
+ expect(doc.documentElement.style.overflow).toBe('');
+ expect(win.localStorage.getItem('learning-planning:expand')).toBe(before);
  dom.window.close();
 });

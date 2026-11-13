@@ -89,3 +89,15 @@ html,body{margin:0;min-height:100%;}main{padding-top:20px;}
 @media(max-width:900px){#board{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){main{padding:0 12px}.planning-sheet{padding:12px}.notes-column #todo-list{min-height:120px}#board .card{height:76px;font-size:12px}}
 @media print{#board{grid-template-columns:repeat(4,minmax(0,1fr));gap:6mm 2mm}#board .row{gap:1.5mm;break-inside:avoid}#board .row-label{height:15mm;padding:1mm}#board .card{height:12mm;padding:1mm;font-size:7pt}#board .row-label textarea{font-size:8pt}.planning-sheet{padding:8mm;grid-template-columns:48mm minmax(0,1fr);gap:5mm}}
+
+.row-caption .expand-column{padding:3px 7px;font-size:11px;line-height:20px;margin-left:auto;cursor:pointer}
+.row-caption .row-grip{margin-left:6px}
+#expanded-column{position:fixed;inset:0;margin:0;width:100%;max-width:none;height:100dvh;max-height:none;border:0;border-radius:0;padding:0 28px 28px;background:#f4f8f5;overflow:auto;overscroll-behavior:contain}
+.expanded-header{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:20px 0;background:#f4f8f5;border-bottom:1px solid #d3dfd7;margin-bottom:24px}
+.expanded-header h2{margin:6px 0 0;font-size:28px;overflow-wrap:anywhere}.expanded-header>div{min-width:0}.expanded-header button{flex-shrink:0}
+#expanded-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;align-items:start}
+.expanded-card{padding:24px;border:1px solid #ccd9d0;border-radius:12px;background:white;min-width:0;box-shadow:0 3px 12px #253b4b08}
+.expanded-number{font-size:12px;font-weight:600;color:#657e70}.expanded-card p{font-size:clamp(19px,2vw,25px);line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;margin:12px 0 0}.expanded-card.dealt-with p{text-decoration:line-through;color:#758078}
+@media(max-width:1100px){#expanded-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){#expanded-column{padding:0 16px 20px}#expanded-cards{grid-template-columns:1fr;gap:16px}.expanded-header{gap:12px;padding:14px 0}.expanded-header h2{font-size:22px}.expanded-header button{font-size:13px;padding:10px}.expanded-card{padding:20px}}
+@media print{.expand-column,#expanded-column{display:none!important}}
