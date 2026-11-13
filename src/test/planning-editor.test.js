@@ -257,3 +257,35 @@ test('calendar saves full notes, limits previews, navigates years, and restores 
  expect(JSON.parse(restored.win.localStorage.getItem('learning-planning:calendar')).boards[0].data.calendar).toEqual(JSON.parse(saved).boards[0].data.calendar);
  restored.dom.window.close();dom.window.close();
 });
+
+test('Markdown exports unfinished content in board order with full text and line breaks', () => {
+ const dom=evaluate('markdown', `
+  state.title='My *board*';state.notes[0]='First task\\nFinished task\\n\\nLast task';state.todoChecked=[false,true,false,false];
+  state.rows[0]='Ideas';state.cards[0]='Full text beyond the eight word preview limit stays here.\\nSecond line';
+  state.cards[1]='Finished card';state.cardDone[1]=true;
+  state.rows[1]='Empty topic';state.rows[2]='Next topic';state.cards[20]='Next card';
+  state.footerNote='Private closing note';state.calendar={secret:{text:'Calendar only'}};
+  window.markdown=boardMarkdown();
+ `);
+ expect(dom.window.markdown).toBe('**My \\*board\\***\n\n**To-dos**\n\n- [ ] First task\n- [ ] Last task\n\n**Ideas**\n\n- Full text beyond the eight word preview limit stays here\\.  \n  Second line\n\n**Next topic**\n\n- Next card\n');
+ dom.window.close();
+});
+
+test('Markdown option downloads and copies identical text, reporting clipboard failure honestly', async () => {
+ const dom=evaluate('markdown-click', `
+  state.title='Export me';state.cards[0]='Keep this';
+  window.exports=[];download=(text,type,ext)=>window.exports.push({text,type,ext});
+  Object.defineProperty(navigator,'clipboard',{value:{writeText:async text=>{window.copied=text}},configurable:true});
+ `);
+ const button=dom.window.document.querySelector('#export-markdown');
+ await button.onclick();
+ expect(dom.window.exports[0]).toEqual({text:dom.window.copied,type:'text/markdown;charset=utf-8',ext:'md'});
+ expect(dom.window.copied).toContain('**Column 1**\n\n- Keep this');
+ expect(dom.window.document.querySelector('#toast').textContent).toBe('Markdown downloaded and copied.');
+ dom.window.navigator.clipboard.writeText=async()=>{throw Error('Denied')};
+ dom.window.document.execCommand=()=>false;
+ await button.onclick();
+ expect(dom.window.exports).toHaveLength(2);
+ expect(dom.window.document.querySelector('#toast').textContent).toContain('Clipboard unavailable');
+ dom.window.close();
+});

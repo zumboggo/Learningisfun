@@ -245,6 +245,29 @@ $('#csv-file').onchange=async e=>{
 function cleanCell(s){return s.replace(/[\t\r\n]+/g,' ')}
 function matrix(){return Array.from({length:state.rowCount},(_,r)=>state.cards.slice(r*10,r*10+state.columnCount))}
 function download(data,type,ext){const url=URL.createObjectURL(new Blob([data],{type}));const a=document.createElement('a');a.href=url;a.download=(state.title.trim().replace(/[^\p{L}\p{N} _-]/gu,'').slice(0,70)||'Brainstorming')+'.'+ext;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000)}
+// Escape literal board text so punctuation cannot change the exported structure.
+function markdownText(text){return text.replace(/\\/g,'\\\\').replace(/([`*_{}\[\]()#+.!|>~-])/g,'\\$1').replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+function boardMarkdown(){
+ const heading=text=>'**'+markdownText(text.trim().replace(/\s*\n\s*/g,' '))+'**';
+ const item=text=>markdownText(text.trim().replace(/\r\n?/g,'\n')).split('\n').join('  \n  ');
+ const sections=[heading(state.title||'Brainstorming'),'**To-dos**'];
+ const todos=(state.notes[0]||'').split('\n').filter((text,index)=>text.trim()&&!state.todoChecked[index]);
+ if(todos.length)sections[1]+='\n\n'+todos.map(text=>'- [ ] '+item(text)).join('\n');
+ for(let r=0;r<state.rowCount;r++){
+  const cards=state.cards.slice(r*10,r*10+state.columnCount).filter((text,c)=>text.trim()&&!state.cardDone[r*10+c]);
+  if(cards.length)sections.push(heading(state.rows[r]||'Column '+(r+1))+'\n\n'+cards.map(text=>'- '+item(text)).join('\n'));
+ }
+ return sections.join('\n\n')+'\n';
+}
+$('#export-markdown').onclick=async()=>{
+ const text=boardMarkdown();
+ // Start clipboard access during the click, before downloading the identical text.
+ const copied=(async()=>{try{await navigator.clipboard.writeText(text);return true}catch{
+  const input=document.createElement('textarea');input.value=text;input.style.position='fixed';input.style.opacity='0';document.body.append(input);input.select();
+  try{return document.execCommand('copy')}catch{return false}finally{input.remove()}
+ }})();
+ try{download(text,'text/markdown;charset=utf-8','md');toast(await copied?'Markdown downloaded and copied.':'Markdown downloaded. Clipboard unavailable; copy the text from the file.')}catch{toast(await copied?'Markdown copied. Download unavailable; paste into a text file.':'Could not export Markdown. Please try again.')}
+};
 $('#csv').onclick=()=>{const csv=matrix().map(row=>row.map(s=>'"'+s.replace(/"/g,'""')+'"').join(',')).join('\r\n');download('\ufeff'+csv,'text/csv;charset=utf-8','csv');toast('CSV exported · '+dimensionsText())};
 $('#copy').onclick=async()=>{const rows=matrix(),plain=rows.map(r=>r.map(cleanCell).join('\t')).join('\n');const escape=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');const html='<table>'+rows.map(r=>'<tr>'+r.map(s=>'<td>'+escape(cleanCell(s))+'</td>').join('')+'</tr>').join('')+'</table>';try{if(window.ClipboardItem&&navigator.clipboard.write){await navigator.clipboard.write([new ClipboardItem({'text/plain':new Blob([plain],{type:'text/plain'}),'text/html':new Blob([html],{type:'text/html'})})])}else await navigator.clipboard.writeText(plain);toast('Copied! Paste into a spreadsheet for '+(state.rowCount*state.columnCount)+' cells.')}catch{try{await navigator.clipboard.writeText(plain);toast('Copied · '+dimensionsText())}catch{const ta=document.createElement('textarea');ta.value=plain;document.body.append(ta);ta.select();const ok=document.execCommand('copy');ta.remove();toast(ok?'Copied · '+dimensionsText():'Clipboard blocked. Use Export as CSV instead.')}}};
 // A dependency-free A4 PDF, using embedded JPEG pages to preserve any script or font.
