@@ -28,6 +28,10 @@ it('keeps enrollment errors visible without changing the teacher account', async
 it('carries workshop context through learning links and leaves teaching navigation and queued context intact', () => {
   window.location.hash = `#/classes/${WORKSHOP_CLASS_ID}`;
   expect(workshopLink('/texts/guide?paragraph=2')).toBe(`/texts/guide?paragraph=2&workshop=${WORKSHOP_CLASS_ID}`);
+  expect(workshopLink('/lessons')).toBe(`/lessons?workshop=${WORKSHOP_CLASS_ID}`);
+  expect(workshopPayload({ action: 'lessonLibrary' })).toMatchObject({ workshop: true });
+  expect(workshopPayload({ action: 'lessonAnswer' })).toMatchObject({ workshop: true });
+  expect(workshopPayload({ action: 'lessonRoster' })).not.toHaveProperty('workshop');
   expect(workshopLink('/classes')).toBe('/classes'); expect(workshopLink('/settings')).toBe('/settings');
   expect(workshopPayload({ action: 'readTexts' })).toMatchObject({ workshop: true });
   expect(workshopPayload({ action: 'mutate', workshop: false })).toMatchObject({ workshop: false });

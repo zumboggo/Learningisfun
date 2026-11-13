@@ -1,0 +1,44 @@
+{
+  "classId": "5a726282-4771-4774-8213-d9329c124bbc",
+  "readings": [
+    {
+      "id": "ws26-copywork",
+      "title": "Copywork: A Greenhouse for Originality",
+      "status": "reused",
+      "paragraphs": 16,
+      "sha256": "7ee2800cb8025148e328a97592282a4338bdcc03d22b5642f573e3a3b704e6b4",
+      "url": "https://zumboggo.github.io/Learningisfun/#/texts/ws26-copywork?classId=5a726282-4771-4774-8213-d9329c124bbc"
+    },
+    {
+      "id": "ws26-qft",
+      "title": "QFT: Give Students a Share in the Discovery",
+      "status": "reused",
+      "paragraphs": 18,
+      "sha256": "de04b97f622eeb9c02b4c644acef8b67a4be7348008c18b40fe620671cc939ee",
+      "url": "https://zumboggo.github.io/Learningisfun/#/texts/ws26-qft?classId=5a726282-4771-4774-8213-d9329c124bbc"
+    },
+    {
+      "id": "ws26-features",
+      "title": "Learning is Fun: Tools, Features, and What You Can Do With Them",
+      "status": "created",
+      "paragraphs": 22,
+      "sha256": "08e8b820134d18317337dd604a5490f8c6f01de104394a86c1bc1e69db29b324",
+      "url": "https://zumboggo.github.io/Learningisfun/#/texts/ws26-features?classId=5a726282-4771-4774-8213-d9329c124bbc"
+    },
+    {
+      "id": "ws26-rubric",
+      "title": "David’s Copywork Analysis Portfolio: Assignment and Rubric",
+      "status": "created",
+      "paragraphs": 40,
+      "sha256": "862350635857b7b33ee02f8ed3830e7e76415836f562535403a1b13cfb450d44",
+      "url": "https://zumboggo.github.io/Learningisfun/#/texts/ws26-rubric?classId=5a726282-4771-4774-8213-d9329c124bbc"
+    }
+  ],
+  "verifiedAt": "2026-11-13T07:53:11.255Z",
+  "deck": {
+    "id": "ws26-copywork-qft-cards",
+    "status": "created",
+    "cards": 14,
+    "url": "https://zumboggo.github.io/Learningisfun/#/decks/ws26-copywork-qft-cards/review?workshop=5a726282-4771-4774-8213-d9329c124bbc"
+  }
+}

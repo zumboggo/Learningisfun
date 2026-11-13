@@ -43,6 +43,24 @@ try {
     for (let retry = 0; retry < 2; retry++) await call(actor.client, { action: 'joinClass', classId: WORKSHOP_CLASS_ID, role: 'student', joinCode: workshop.joinCode });
     assert.equal((await allRows(db, databaseId, 'class_members', [Query.equal('classId', WORKSHOP_CLASS_ID), Query.equal('userId', actor.id)])).length, 1);
     const text = await call(actor.client, reading); assert.equal(text.texts[0].$id, guide.$id); assert(text.paragraphs.length > 40);
+    for (const textId of ['ws26-copywork', 'ws26-qft', 'ws26-features', 'ws26-rubric']) {
+      const material = await call(actor.client, { ...reading, textId });
+      assert(material.texts.some(t => t.$id === textId && t.status === 'published'));
+      assert(material.paragraphs.length > 10);
+    }
+    for (const textId of ['ws26-copywork', 'ws26-qft']) {
+      const discussion = await call(actor.client, { action: 'readReadingDiscussion', workshop: true, classId: WORKSHOP_CLASS_ID, textId });
+      assert.equal(discussion.canWrite, true); assert.equal(discussion.teacher, false);
+    }
+    const lessons = await call(actor.client, { action: 'lessonLibrary', workshop: true });
+    assert(lessons.items.some(l => l.id === 'workshop-copywork-v1'));
+    const lessonRequest = { workshop: true, classId: WORKSHOP_CLASS_ID, lessonId: 'workshop-copywork-v1' };
+    const lesson = await call(actor.client, { ...lessonRequest, action: 'lessonRead' });
+    assert.equal(lesson.previewDefinition, undefined); assert.equal(lesson.state.step, 0);
+    await deny(call(actor.client, { ...lessonRequest, action: 'lessonRoster' }));
+    await deny(call(actor.client, { ...lessonRequest, action: 'lessonRead', classId: '88421c66-9cda-4002-8e15-086312b7805e' }));
+    const deck = await call(actor.client, { action: 'readFlashcardDeck', workshop: true, deckId: 'ws26-copywork-qft-cards' });
+    assert.equal(deck.cards.length, 14);
     await call(actor.client, { action: 'saveReadingQuestionDraft', workshop: true, classId: WORKSHOP_CLASS_ID, textId: guide.$id, draftId: 'private-check', content: 'Temporary private workshop check. Not published.' });
     const discussion = await call(actor.client, { action: 'readReadingDiscussion', workshop: true, classId: WORKSHOP_CLASS_ID, textId: guide.$id });
     assert.equal(discussion.teacher, false); assert.equal(discussion.canWrite, true); assert.equal(discussion.notebook.length, 1);

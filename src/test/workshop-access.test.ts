@@ -21,6 +21,7 @@ beforeEach(() => {
   vi.stubEnv('APPWRITE_API_KEY', 'test-only');
   vi.stubEnv('OWNER_ACCOUNT_ID', 'teacher');
   fixture = harness(); mock.db = fixture.db;
+  fixture.storage.teacher_workspace = [];
   fixture.storage.classes.push({ $id: workshopId, teacherId: 'teacher', courseName: 'Lifeplus Workshop', name: 'Teachers', status: 'active', joinCode: 'ABC123', joinCodeActive: true });
   Object.assign(fixture.storage.classes[0], { joinCode: 'OTHER1', joinCodeActive: true, status: 'active' });
   fixture.storage.users.push({ $id: 'participant', role: 'teacher', name: 'Participant' }, { $id: 'teacher', role: 'teacher' });
@@ -30,6 +31,22 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllEnvs());
 describe('single-class teacher participation', () => {
+  it('lets enrolled teachers practise workshop lessons without granting reports or foreign lessons', async () => {
+    const request = { workshop: true, classId: workshopId, lessonId: 'workshop-copywork-v1' };
+    expect((await invoke({ ...request, action: 'lessonRead' })).code).toBe(403);
+    await join();
+    const library = await invoke({ action: 'lessonLibrary', workshop: true });
+    expect(library.code).toBe(200);
+    expect(library.body.items.map((i: {id: string}) => i.id)).toContain('workshop-copywork-v1');
+    const lesson = await invoke({ ...request, action: 'lessonRead' });
+    expect(lesson.code).toBe(200);
+    expect(lesson.body.previewDefinition).toBeUndefined();
+    const answer = await invoke({ ...request, action: 'lessonAnswer', revision: 0, answer: 'Restore “swallowed” so you can study the author’s actual choice.' });
+    expect(answer.code).toBe(200); expect(answer.body.state.step).toBe(1);
+    expect((await invoke({ ...request, action: 'lessonRoster' })).code).toBe(403);
+    expect((await invoke({ ...request, action: 'lessonEditAssigned' })).code).toBe(403);
+    expect((await invoke({ ...request, action: 'lessonRead', classId: 'blue' })).code).toBe(403);
+  });
   it('requires enrollment and a valid active code, preserves teacher role, and joins idempotently', async () => {
     expect((await invoke({ action: 'readTexts', workshop: true, classIds: [workshopId] })).code).toBe(403);
     expect((await join({ joinCode: 'WRONG1' })).code).toBe(403);

@@ -3140,5 +3140,250 @@
       ],
       "delayedCheck": "Next class, try this with a source you have not annotated. Say its idea in your own words. Then complete “This detail supports the claim because …” and “I would test that idea against the moment when …” before checking your notes."
     }
+  },
+  {
+    "id": "workshop-copywork-v1",
+    "title": "Copywork: Notice a Choice, Make a Choice",
+    "objective": "Copy a short model accurately, explain the effect of specific wording, and transfer one writerly move into original writing.",
+    "classIds": [
+      "5a726282-4771-4774-8213-d9329c124bbc"
+    ],
+    "minutes": 15,
+    "stages": [
+      {
+        "title": "Copy slowly enough to see the choices",
+        "shortTitle": "Copy",
+        "teachFirst": true,
+        "explanation": "A learner says, “I know what good writing looks like. I just cannot make mine do that.” Give the learner something small enough to study. In this 12–15 minute workshop, you will copy a short original paragraph, explain how a choice works, and transfer a move into new writing. Have paper and a pen ready. The copying is done on paper; the app checks your decisions and saves your final application.",
+        "model": "The clock swallowed our last minute. Around the table, pencils tapped, pages whispered, and one stubborn question refused to sit down. We had filled the board with answers; now we needed the courage to erase one. Maya raised her hand. For once, the smallest voice made the largest opening.",
+        "modelRows": [
+          [
+            "Model paragraph",
+            "The clock swallowed our last minute. Around the table, pencils tapped, pages whispered, and one stubborn question refused to sit down. We had filled the board with answers; now we needed the courage to erase one. Maya raised her hand. For once, the smallest voice made the largest opening."
+          ],
+          [
+            "Your turn · 2 minutes",
+            "Copy this paragraph by hand, keeping its wording, punctuation, and sentence breaks. Compare your copy with the source and correct any differences. Typing is an accessible alternative when handwriting is not suitable."
+          ],
+          [
+            "Notice · 1 minute",
+            "Mark three specific choices: a word, a repeated pattern, or a change in sentence length. Draw a line from each observation to the exact wording."
+          ]
+        ],
+        "image": {
+          "path": "lessons/workshop-copywork.webp",
+          "alt": "Three panels connect copying a sentence about a clock swallowing a minute, explaining swallowed as a hungry opponent, and transferring the move to an inbox swallowing a morning.",
+          "caption": "Follow the change from exact words to effect to a new situation. The hungry clock is a metaphor, not a literal event. Original AI-generated teaching illustration."
+        },
+        "questions": [
+          {
+            "prompt": "While copying, you change “swallowed” to “used.” What should you do?",
+            "options": [
+              "Restore “swallowed” so you can study the author’s actual choice.",
+              "Keep the change because the main event is similar."
+            ],
+            "answers": [
+              "Restore “swallowed” so you can study the author’s actual choice."
+            ],
+            "hint": "The task begins by preserving the evidence.",
+            "explanation": "Accurate copying keeps the decisions you are trying to understand.",
+            "alternate": {
+              "prompt": "A learner copies “The gate groaned” as “The gate opened.” What comes first?",
+              "options": [
+                "Leave it: both versions describe a gate.",
+                "Restore “groaned,” then investigate what its sound suggests."
+              ],
+              "answers": [
+                "Restore “groaned,” then investigate what its sound suggests."
+              ]
+            }
+          },
+          {
+            "prompt": "Which margin note identifies a precise choice?",
+            "options": [
+              "“Maya raised her hand” is short after a longer sentence.",
+              "The writer uses good language."
+            ],
+            "answers": [
+              "“Maya raised her hand” is short after a longer sentence."
+            ],
+            "hint": "Point to words or a pattern another reader can locate.",
+            "explanation": "A precise observation gives your explanation evidence to work with.",
+            "alternate": {
+              "prompt": "Which note is precise about “Rain rattled the roof; nobody spoke”?",
+              "options": [
+                "There is a lot of description.",
+                "“Rattled” gives the rain a sharp, repeated sound."
+              ],
+              "answers": [
+                "“Rattled” gives the rain a sharp, repeated sound."
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "title": "Explain what the choice makes the reader notice",
+        "shortTitle": "Explain",
+        "explanation": "“The writer uses imagery. This creates an image. The image is very imagery-like.” The label has gone in a circle and arrived home exhausted. Explain instead what particular words make a reader picture, feel, or understand in this situation. Naming the technique is optional; showing how the wording works is essential.",
+        "model": "“Swallowed” turns time into a consuming force, making the unfinished discussion feel threatened by the clock.",
+        "modelRows": [
+          [
+            "Exact detail",
+            "“swallowed our last minute”"
+          ],
+          [
+            "Effect",
+            "The verb makes time feel like a hungry opponent taking away a final opportunity."
+          ],
+          [
+            "Evidence → explanation",
+            "The verb “swallowed” makes the end of the discussion feel like a loss forced on the group."
+          ],
+          [
+            "Missing move · your turn",
+            "“One stubborn question refused to sit down” gives a question human behaviour. Complete the next thought: This makes the unresolved issue seem… Write or say your own ending before viewing the sample."
+          ]
+        ],
+        "questions": [
+          {
+            "prompt": "Which explanation connects wording to an effect?",
+            "options": [
+              "“Refused to sit down” makes the question seem persistent, resisting an easy ending.",
+              "The question uses personification to interest the reader."
+            ],
+            "answers": [
+              "“Refused to sit down” makes the question seem persistent, resisting an easy ending."
+            ],
+            "hint": "What kind of behaviour does “refused” suggest?",
+            "explanation": "Connect the exact action to the problem in the scene.",
+            "alternate": {
+              "prompt": "Which explanation works for “The silence stood between them”?",
+              "options": [
+                "It uses a technique to make writing better.",
+                "“Stood between” turns silence into a barrier separating the people."
+              ],
+              "answers": [
+                "“Stood between” turns silence into a barrier separating the people."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "Complete the missing explanation of the stubborn question in your own words.",
+              "sample": "The question seems unwilling to disappear just because time is running out; the group cannot comfortably ignore it."
+            }
+          },
+          {
+            "prompt": "A colleague explains only that “smallest” and “largest” are opposites. What useful step is missing?",
+            "options": [
+              "Explain that the contrast gives an overlooked speaker unexpected influence.",
+              "Count the letters in both words."
+            ],
+            "answers": [
+              "Explain that the contrast gives an overlooked speaker unexpected influence."
+            ],
+            "hint": "What changes about Maya’s place in this group?",
+            "explanation": "A feature matters because of what it contributes to the moment.",
+            "alternate": {
+              "prompt": "A paragraph says “The room was full; her place was empty.” What would deepen an observation about contrast?",
+              "options": [
+                "State that full and empty are antonyms.",
+                "Explain how crowded surroundings sharpen the feeling of one person’s absence."
+              ],
+              "answers": [
+                "Explain how crowded surroundings sharpen the feeling of one person’s absence."
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "title": "Borrow a move and make it your own",
+        "shortTitle": "Transfer",
+        "explanation": "Imitation is a deliberate experiment: borrow a useful choice, then make it serve new content. A copied sentence remains someone else’s wording and needs attribution. Your own experiment should develop a new observation, not merely disguise the source. For this workshop, a few sentences are enough; David’s full student assignment asks for two original paragraphs and two distinct moves.",
+        "model": "Model: “The clock swallowed our last minute.” Transfer: “The inbox swallowed my quiet morning.” The shared move gives an object a consuming action; the new sentence describes a different pressure.",
+        "modelRows": [
+          [
+            "Complete model",
+            "The inbox swallowed my quiet morning. Giving the inbox an appetite makes incoming tasks feel like a force consuming time."
+          ],
+          [
+            "One support removed",
+            "A library closes just as someone finds a useful book. Write one sentence giving the closing building a purposeful action; then explain the effect you wanted."
+          ],
+          [
+            "Compare after trying",
+            "“The library pulled the evening out from under my research.” The action makes closing time feel like the removal of support. This is one possible experiment, not a sentence to reproduce."
+          ],
+          [
+            "Less support · 2 minutes",
+            "Choose a different classroom or everyday moment. Borrow contrast, sentence-length change, or personification. Write two sentences and explain the move."
+          ]
+        ],
+        "questions": [
+          {
+            "prompt": "Which response demonstrates meaningful transfer of the “smallest/largest” contrast?",
+            "options": [
+              "“The shortest message carried the heaviest news” uses contrast for a new emotional situation.",
+              "“The smallest voice made the largest opening” with Maya renamed Alex."
+            ],
+            "answers": [
+              "“The shortest message carried the heaviest news” uses contrast for a new emotional situation."
+            ],
+            "hint": "Look for a changed meaning, not just a renamed character.",
+            "explanation": "Transfer makes the technique do new work.",
+            "alternate": {
+              "prompt": "Which transfers “The silence stood between them” into a new situation?",
+              "options": [
+                "The same sentence with one person’s name changed.",
+                "“The unsigned form stood between her and the scholarship” makes paperwork a barrier."
+              ],
+              "answers": [
+                "“The unsigned form stood between her and the scholarship” makes paperwork a barrier."
+              ]
+            },
+            "rehearsal": {
+              "prompt": "Write your own library-closing sentence and a brief explanation before comparing.",
+              "sample": "“The library locked away the answer with its books.” The action makes closing time feel like losing access to a discovery."
+            }
+          },
+          {
+            "prompt": "You have named three techniques in the model. How will you show you can use one?",
+            "options": [
+              "Write an original example, identify the borrowed move, and explain its purpose.",
+              "Add three more technique labels to the model."
+            ],
+            "answers": [
+              "Write an original example, identify the borrowed move, and explain its purpose."
+            ],
+            "hint": "The goal includes using a choice, not just recognizing it.",
+            "explanation": "A new example and its explanation make transfer visible.",
+            "alternate": {
+              "prompt": "After noticing repeated openings in a speech, what would show transfer?",
+              "options": [
+                "List three synonyms for repetition.",
+                "Use repeated openings in a new appeal and explain what they emphasize."
+              ],
+              "answers": [
+                "Use repeated openings in a new appeal and explain what they emphasize."
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "final": {
+      "title": "A fresh passage, then your own writing",
+      "shortTitle": "Try it independently",
+      "prompt": "Spend about 4 minutes, including one revision. Choose either passage below. Copy it on paper, compare carefully, and mark three specific choices. In the response box: (1) identify your chosen passage; (2) quote a short detail and explain its effect in context; (3) write 2–3 original sentences about a different situation, borrowing one move; (4) name that move and explain what it does in your new writing. Add a brief note confirming you compared your handwritten copy. The app cannot inspect handwriting, so check accuracy with a partner or David. Read the feedback and revise one specific part. This practice is not the full six-paragraph Canvas assignment.",
+      "source": "Original workshop models, created for this lesson. A: “The notice promised an open door. Outside it, six families waited in the rain. Inside, the printer warmed its paper.” B: “At first, the garden offered nothing but mud. Then one green hook lifted the soil. We had counted the empty days; the seed had been busy.” Choose one. Both allow analysis of specific wording, contrast, and sentence structure; neither requires outside knowledge.",
+      "sourceUrl": "",
+      "rubric": [
+        "Evidence and effect: Identifies passage A or B, selects exact wording, and plausibly explains its effect in that passage; technique labels alone are insufficient.",
+        "Original transfer: Writes two or three original sentences about a different situation that meaningfully use a move available in the chosen passage; do not reward merely changing names.",
+        "Purpose of the move: Identifies the move in the new writing and explains what it helps the new reader notice or understand.",
+        "Copying reflection: States that the copied passage was compared with the source and mentions checking or correcting wording/punctuation; do not claim to verify handwriting or assess its accuracy from this text response."
+      ],
+      "delayedCheck": "At your next planning session, take a different short passage from your own subject. Without reopening this lesson, copy two sentences, mark a choice, explain its effect, and try that choice in two new sentences. Compare your work with the routine afterward."
+    }
   }
 ]
