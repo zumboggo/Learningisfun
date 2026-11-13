@@ -325,3 +325,53 @@ test('expanded column is read-only, preserves full text and returns focus and sc
  expect(win.localStorage.getItem('learning-planning:expand')).toBe(before);
  dom.window.close();
 });
+
+test('slides split at the first standalone divider and skip blank/completed cards', () => {
+ const dom=evaluate('slides', `state.cards[0]='Audience --- inline\\nSecond line\\n  ---  \\nPrivate notes\\n---\\nMore notes';state.cards[1]='No divider';state.cards[2]='Done';state.cardDone[2]=true;window.slides=columnSlides(0);window.md=columnMarkdown(0);`);
+ expect(dom.window.slides).toEqual([{text:'Audience --- inline\nSecond line',notes:'Private notes\n---\nMore notes'},{text:'No divider',notes:''}]);
+ expect(dom.window.md).toContain('Private notes');expect(dom.window.md).toContain('Done');
+ dom.window.close();
+});
+
+test('presenter navigation sends only audience text, resets scroll and closes audience on return', () => {
+ const dom=evaluate('present', `state.cards[0]='Visible quote\\n---\\nSECRET NOTES';state.cards[2]='Second visible slide';state.cards[3]='Completed';state.cardDone[3]=true;render();`);
+ const audience=new JSDOM('',{url:'https://example.test/'}),win=dom.window,doc=win.document,dialog=doc.querySelector('#column-presentation');
+ let audienceClosed=false;
+ win.open=()=>({document:audience.window.document,closed:false,focus:()=>{},close:()=>{audienceClosed=true}});
+ win.scrollTo=()=>{};dialog.showModal=()=>dialog.setAttribute('open','');dialog.close=()=>{dialog.removeAttribute('open');dialog.dispatchEvent(new win.Event('close'))};
+ doc.querySelector('[aria-label="Play column 1"]').click();
+ expect(dialog.open).toBe(true);expect(doc.querySelector('#presenter-notes').textContent).toBe('SECRET NOTES');
+ expect(audience.window.document.body.textContent).not.toContain('SECRET NOTES');
+ expect(audience.window.document.querySelector('#audience-slide').textContent).toBe('Visible quote');
+ expect(doc.querySelector('#presentation-count').textContent).toBe('1 / 2');
+ audience.window.document.querySelector('#audience-slide').scrollTop=100;
+ dialog.dispatchEvent(new win.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
+ expect(audience.window.document.querySelector('#audience-slide').textContent).toBe('Second visible slide');
+ expect(audience.window.document.querySelector('#audience-slide').scrollTop).toBe(0);
+ expect(doc.querySelector('#next-slide').disabled).toBe(true);
+ audience.window.document.dispatchEvent(new audience.window.KeyboardEvent('keydown',{key:'ArrowLeft'}));
+ expect(doc.querySelector('#presentation-count').textContent).toBe('1 / 2');
+ dialog.dispatchEvent(new win.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+ expect(audienceClosed).toBe(true);expect(doc.activeElement.getAttribute('aria-label')).toBe('Play column 1');
+ dom.window.close();audience.window.close();
+});
+
+test('blocked audience window can be retried and an empty column does not start playback', () => {
+ const dom=evaluate('blocked', `state.cards[0]='Talk';render();`),win=dom.window,doc=win.document,dialog=doc.querySelector('#column-presentation');
+ let calls=0;win.open=()=>{calls++;return null};win.scrollTo=()=>{};
+ dialog.showModal=()=>dialog.setAttribute('open','');dialog.close=()=>{dialog.removeAttribute('open');dialog.dispatchEvent(new win.Event('close'))};
+ doc.querySelector('[aria-label="Play column 1"]').click();
+ expect(doc.querySelector('#presentation-status').textContent).toContain('blocked');
+ doc.querySelector('#open-audience').click();expect(calls).toBe(2);
+ dialog.close();doc.querySelector('[aria-label="Play column 2"]').click();
+ expect(dialog.open).toBe(false);expect(calls).toBe(2);
+ dom.window.close();
+});
+
+test('column md copies all text without downloading a file', async () => {
+ const dom=evaluate('copy-column', `state.rows[0]='Topic';state.cards[0]='Quote\\n---\\nNotes';state.cards[2]='Done card';state.cardDone[2]=true;download=()=>{throw Error('Must not download')};Object.defineProperty(navigator,'clipboard',{value:{writeText:async text=>{window.copied=text}}});render();`);
+ await dom.window.document.querySelector('[aria-label="Copy column 1 as Markdown"]').onclick();
+ expect(dom.window.copied).toContain('**Topic**');expect(dom.window.copied).toContain('Notes');expect(dom.window.copied).toContain('Done card');
+ expect(dom.window.document.querySelector('#toast').textContent).toBe('Column copied');
+ dom.window.close();
+});
