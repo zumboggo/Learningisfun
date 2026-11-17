@@ -26,17 +26,17 @@
   "title": "Do It Again",
   "status": "published",
   "paragraphs": 164,
-  "bodySha256": "a80d5aa8981e4458efed88799d1c7b30503d87900c54841eb92e4ca77e2e022a",
+  "bodySha256": "f9ca7acd1ead65561075a7cf351482f247b6e4586feac0e23a3c5f29f0810587",
   "assignment": {
     "textId": "ws26-do-it-again",
     "classId": "5a726282-4771-4774-8213-d9329c124bbc",
-    "assignedAt": "2026-11-19T12:00:00+08:00",
+    "assignedAt": "2026-11-16T08:00:00+08:00",
     "dueDate": "2026-11-19",
     "isAssignedReading": true,
     "isCopywork": false
   },
   "firstAssignedReading": true,
   "availableDuringWorkshopWeek": true,
-  "verifiedAt": "2026-11-17T03:41:22.085Z",
+  "verifiedAt": "2026-11-17T03:44:42.176Z",
   "url": "https://zumboggo.github.io/Learningisfun/#/texts/ws26-do-it-again?classId=5a726282-4771-4774-8213-d9329c124bbc"
 }

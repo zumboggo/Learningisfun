@@ -15,5 +15,5 @@ for part in parts:
 md='\n\n'.join(out)+'\n'
 assert md.count('](images/')==4
 (root/'reading.md').write_text(md)
-(root/'manifest.json').write_text(json.dumps({'id':'ws26-do-it-again','title':'Do It Again','classId':'5a726282-4771-4774-8213-d9329c124bbc','week':'2026-11-16','dueDate':'2026-11-19','assignedAt':'2026-11-19T12:00:00+08:00','sourceFile': 'Do-It-Again-Workshop-Handout (1).md','sourceSha256':hashlib.sha256(source.encode()).hexdigest(),'readingSha256':hashlib.sha256(md.encode()).hexdigest(),'images':images},indent=2)+'\n')
+(root/'manifest.json').write_text(json.dumps({'id':'ws26-do-it-again','title':'Do It Again','classId':'5a726282-4771-4774-8213-d9329c124bbc','week':'2026-11-16','dueDate':'2026-11-19','assignedAt':'2026-11-16T08:00:00+08:00','sourceFile': 'Do-It-Again-Workshop-Handout (1).md','sourceSha256':hashlib.sha256(source.encode()).hexdigest(),'readingSha256':hashlib.sha256(md.encode()).hexdigest(),'images':images},indent=2)+'\n')
 print('Prepared complete edited handout with four book covers')
