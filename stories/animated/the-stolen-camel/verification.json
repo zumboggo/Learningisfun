@@ -1,0 +1,13 @@
+{
+  "routes": 729,
+  "allOptions": 18,
+  "choicesPerRoute": 6,
+  "words": {
+    "min": 1278,
+    "max": 1349
+  },
+  "replayAndCallbacks": true,
+  "essentialFactsAllRoutes": true,
+  "quizMaximum": 100,
+  "firstPerson": true
+}

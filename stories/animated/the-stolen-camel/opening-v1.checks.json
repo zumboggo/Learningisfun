@@ -1,0 +1,22 @@
+{
+  "source": "/Users/david.hepting/Documents/ChatGPT/Learning is Fun/implementation/stories/animated/the-stolen-camel/opening-native.mp4",
+  "output": "/Users/david.hepting/Documents/ChatGPT/Learning is Fun/implementation/public/stories/shared/the-stolen-camel/opening-v1.mp4",
+  "dimensions": [
+    854,
+    480
+  ],
+  "fps": 24,
+  "hold_seconds": 3.0,
+  "motion_seconds": 6.0,
+  "reaction_hold_seconds": 0.0,
+  "total_seconds": 9.0,
+  "decoded_audio_seconds": 0,
+  "audio_non_silent": false,
+  "audio_starts_after_hold": false,
+  "hold_mean_pixel_difference": 0.0010636221701795473,
+  "sha256": "c5e97ed1072c07f334348fe8beacb9c09a56ab07ee6f36d86bfbaf3a09133a82",
+  "expected_dialogue": "",
+  "speech_check": "Native track flagged; entire audio removed from final file.",
+  "review": "First/motion/end frames inspected; native browser transition checked. Final video silent.",
+  "finalAudioTracks": 0
+}

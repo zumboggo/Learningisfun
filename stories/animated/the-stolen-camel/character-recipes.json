@@ -1,0 +1,62 @@
+[
+  {
+    "id": "Salim",
+    "name": "Salim · my host",
+    "palette": {
+      "skin": "#b77e54",
+      "hair": "#342b24",
+      "shirt": "#ad8751"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "cropped",
+      "facialHair": "full",
+      "outfit": "tunic",
+      "face": "broad",
+      "eyes": "gentle"
+    },
+    "version": 1,
+    "finish": "polished",
+    "provenance": "Original stylized dramatic role; no claim of a documented likeness. Generic costume, not an exact reconstruction. Dialogue and staging provenance in sources."
+  },
+  {
+    "id": "Owner",
+    "name": "The camel’s owner",
+    "palette": {
+      "skin": "#bd895f",
+      "hair": "#39312b",
+      "shirt": "#746856"
+    },
+    "appearance": {
+      "age": "elder",
+      "hair": "swept",
+      "facialHair": "full",
+      "outfit": "robe",
+      "face": "angular",
+      "eyes": "keen"
+    },
+    "version": 1,
+    "finish": "polished",
+    "provenance": "Original stylized dramatic role; no claim of a documented likeness. Generic costume, not an exact reconstruction. Dialogue and staging provenance in sources."
+  },
+  {
+    "id": "Accused",
+    "name": "One of the accused",
+    "palette": {
+      "skin": "#a97855",
+      "hair": "#302b28",
+      "shirt": "#6d816f"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "cropped",
+      "facialHair": "none",
+      "outfit": "tunic",
+      "face": "lean",
+      "eyes": "keen"
+    },
+    "version": 1,
+    "finish": "polished",
+    "provenance": "Original stylized dramatic role; no claim of a documented likeness. Generic costume, not an exact reconstruction. Dialogue and staging provenance in sources."
+  }
+]

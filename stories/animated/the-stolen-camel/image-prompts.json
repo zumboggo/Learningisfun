@@ -1,0 +1,9 @@
+{
+  "tool": "built-in imagegen",
+  "background": "Use case: historical-scene. Create a 16:9 visual-novel background of an early seventh-century western Arabian settlement courtyard near Medina, simple mudbrick walls, palm-trunk shade canopy along the left edge, woven mats and clay water jars at edges, a narrow lane leading toward date palms beyond an open doorway. No people, no animals, no writing, no modern objects, no grand mosque domes or minarets. Clean dark slate outlines, flat muted sand and sage colors, restrained two-tone cel shadows, simplified geometric scenery that matches polished animated vector characters. Eye-level camera with broad clear foreground for standing characters, unobstructed central two-thirds. Background less contrasted than actors; warm late afternoon sunlight. It is an evocative historical setting, not a reconstruction of a specific building.",
+  "opening": "Use case: historical-scene. Wide 16:9 charcoal drawing with a very restrained ochre watercolor wash on textured cream paper. Close scene in a plain seventh-century Arabian courtyard: a single pair of adult medium-brown hands in faded sage-green rough tunic sleeves holds a small empty unglazed clay bowl at waist level, tilted slightly so the empty interior faces the viewer. Crop above forearms and below bowl: no face, no full body. A mudbrick wall and palm-leaf shade blur into charcoal marks behind. One coherent bowl, two anatomically correct hands, no food, no coins, no chains, no blood, no weapons, no text, no modern objects. Emotion: a quiet, difficult disclosure, not begging spectacle. This is the opening frame before the person slowly turns the empty bowl toward us. Clearly hand-drawn charcoal lines and paper grain throughout, simple powerful composition.",
+  "sourceFiles": [
+    "exec-edde1ad4-712d-412e-a1a7-7e6b6e04e27b.png",
+    "exec-8a81161d-7437-4355-96cd-3408f322e529.png"
+  ]
+}

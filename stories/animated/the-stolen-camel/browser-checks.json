@@ -1,0 +1,26 @@
+[
+  {
+    "device": "desktop",
+    "choices": 6,
+    "steps": 61,
+    "resumed": true,
+    "listener": true,
+    "pair": true,
+    "score": 100,
+    "contextParagraphs": 2,
+    "reducedMotion": "no-preference",
+    "errors": []
+  },
+  {
+    "device": "phone",
+    "choices": 6,
+    "steps": 61,
+    "resumed": true,
+    "listener": true,
+    "pair": true,
+    "score": 100,
+    "contextParagraphs": 2,
+    "reducedMotion": "reduce",
+    "errors": []
+  }
+]

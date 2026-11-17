@@ -1,0 +1,11 @@
+{
+  "method": "cached faster-whisper base.en, VAD",
+  "segments": [
+    {
+      "text": " I see most snakes could bloop alignment.",
+      "start": 4.56,
+      "end": 7.56
+    }
+  ],
+  "limitation": "Speech detector cannot establish natural sound quality."
+}

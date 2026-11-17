@@ -1,0 +1,53 @@
+{
+  "model": "prunaai/p-video-2-pro",
+  "version": "7fc65104affa38f28b544b3549506e52f6519d752f528944f4eae2f94cd384b6",
+  "prompt": "Animate this exact charcoal and ochre-wash drawing, preserving charcoal lines and paper grain. One uninterrupted fixed close shot. The hands slowly tilt the empty clay bowl slightly more toward the viewer, hold it still, then settle. Keep exactly two hands and one intact empty bowl. No food appears. No face enters. A quiet consequential disclosure, not melodrama. Native audio: faint dry breeze, slight cloth rustle, soft clay handling. Absolutely no speech, voices, words, whispers, humming, lyrics, narration, or music. No text, cuts, extra objects, or camera motion.",
+  "settings": {
+    "prompt": "Animate this exact charcoal and ochre-wash drawing, preserving charcoal lines and paper grain. One uninterrupted fixed close shot. The hands slowly tilt the empty clay bowl slightly more toward the viewer, hold it still, then settle. Keep exactly two hands and one intact empty bowl. No food appears. No face enters. A quiet consequential disclosure, not melodrama. Native audio: faint dry breeze, slight cloth rustle, soft clay handling. Absolutely no speech, voices, words, whispers, humming, lyrics, narration, or music. No text, cuts, extra objects, or camera motion.",
+    "duration": 6,
+    "resolution": "480p",
+    "mode": "cost",
+    "prompt_upsampler": "off",
+    "aspect_ratio": "16:9",
+    "enable_safety_filter": true
+  },
+  "maximumChargeUsd": 0.06,
+  "paidAttempts": 1,
+  "predictionId": "ebbspayf5nrmw0d1ww0taqazqw",
+  "status": "succeeded",
+  "holdSeconds": 3,
+  "motionSeconds": 6,
+  "metrics": {
+    "billing": {
+      "fps": 24,
+      "mode": "cost",
+      "model_variant": "cost",
+      "resolution_target": "480p",
+      "turbo": true,
+      "video_output_duration_seconds": 6
+    },
+    "fps": 24,
+    "inference_provider": "modal",
+    "metadata": {
+      "execution_time": {
+        "model_execution_time": 1.467,
+        "prompt_upsampler_execution_time": 0,
+        "total_execution_time": 8.286
+      }
+    },
+    "mode": "cost",
+    "model_variant": "cost",
+    "predict_time": 10.164753231,
+    "prompt_upsampler": "off",
+    "prompt_upsampler_fallback": false,
+    "resolution_target": "480p",
+    "total_time": 10.400614415,
+    "turbo": true,
+    "video_output_count": 1,
+    "video_output_duration_seconds": 6
+  },
+  "audioDecision": "Native generated track removed in full after speech recognition flagged possible unwanted speech. Final opening is intentionally silent; original retained privately in authoring assets. No paid retry.",
+  "imageTool": "built-in imagegen",
+  "imageMedium": "charcoal and ochre wash",
+  "finalAudioTracks": 0
+}
