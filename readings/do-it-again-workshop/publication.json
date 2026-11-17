@@ -1,0 +1,42 @@
+{
+  "textId": "ws26-do-it-again",
+  "classId": "5a726282-4771-4774-8213-d9329c124bbc",
+  "images": [
+    {
+      "file": "focus.jpg",
+      "fileId": "img_596c2b2f7f_b556c8e6f5357ed0e4d3",
+      "bytes": 33319
+    },
+    {
+      "file": "orthodoxy.jpg",
+      "fileId": "img_596c2b2f7f_8d2e2078639b583b7cc7",
+      "bytes": 46122
+    },
+    {
+      "file": "make-just-one-change.jpg",
+      "fileId": "img_596c2b2f7f_fa9e14ba9845af152727",
+      "bytes": 56809
+    },
+    {
+      "file": "knowledge-gap.jpg",
+      "fileId": "img_596c2b2f7f_7001a337c2651c79cb91",
+      "bytes": 3675312
+    }
+  ],
+  "title": "Do It Again",
+  "status": "published",
+  "paragraphs": 164,
+  "bodySha256": "a80d5aa8981e4458efed88799d1c7b30503d87900c54841eb92e4ca77e2e022a",
+  "assignment": {
+    "textId": "ws26-do-it-again",
+    "classId": "5a726282-4771-4774-8213-d9329c124bbc",
+    "assignedAt": "2026-11-19T12:00:00+08:00",
+    "dueDate": "2026-11-19",
+    "isAssignedReading": true,
+    "isCopywork": false
+  },
+  "firstAssignedReading": true,
+  "availableDuringWorkshopWeek": true,
+  "verifiedAt": "2026-11-17T03:41:22.085Z",
+  "url": "https://zumboggo.github.io/Learningisfun/#/texts/ws26-do-it-again?classId=5a726282-4771-4774-8213-d9329c124bbc"
+}
