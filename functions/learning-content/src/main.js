@@ -1,3 +1,4 @@
+import {validatePeerRubric,peerRatingData} from './peer-rubric.js';
 import {ethicsPresentationAction} from './ethics-presentation.js';
 import {textAuthoringAction,TEXT_ACTIONS} from './text-authoring.js';
 import {readFlashcardCatalog} from './flashcard-catalog.js';
@@ -1003,7 +1004,8 @@ export default async ({ req, res, error }) => {
       if (targetClass.teacherId !== userId) return res.json({ error: 'Not the class owner' }, 403);
       const title = String(body.title || '').trim(), reviewsRequired = Number(body.reviewsRequired || 3), now = new Date().toISOString();
       if (!title || title.length > 200 || !Number.isInteger(reviewsRequired) || reviewsRequired < 1 || reviewsRequired > 20) return res.json({ error: 'Invalid activity settings' }, 400);
-      const activity = await db.createDocument(databaseId, 'peer_review_activities', ID.unique(), { classId: targetClass.$id, teacherId: userId, title, assignmentType: 'presentation_pvlegs', reviewsRequired, status: 'active', createdAt: now, updatedAt: now });
+      if (body.rubric !== undefined && !validatePeerRubric(body.rubric)) return res.json({ error: 'Add a rubric name, named rows and columns, and non-negative points with a positive maximum for every row.' }, 400);
+      const activity = await db.createDocument(databaseId, 'peer_review_activities', ID.unique(), { classId: targetClass.$id, teacherId: userId, title, ...(body.rubric ? {rubricJson:JSON.stringify(body.rubric)} : {}), assignmentType: 'presentation_pvlegs', reviewsRequired, status: 'active', createdAt: now, updatedAt: now });
       return res.json({ activity: clean(activity) });
     }
 
@@ -1043,12 +1045,12 @@ export default async ({ req, res, error }) => {
         if (!presenterMembership.documents.some(row => row.role === 'student')) return res.json({ error: 'Choose a student in this class' }, 400);
         const prior = await db.listDocuments(databaseId, 'presentation_peer_reviews', [Query.equal('activityId', activity.$id), Query.equal('presenterId', body.presenterId), Query.equal('reviewerId', userId), Query.limit(1)]);
         if (prior.total) return res.json({ error: 'Choose a different presenter next' }, 409);
-        const ratings = body.ratings || {}, keys = ['poise','voice','life','eyeContact','gestures','speed'];
-        if (keys.some(key => ![1,2,3].includes(Number(ratings[key])))) return res.json({ error: 'Complete every PVLEGS rating' }, 400);
+        const ratingData = peerRatingData(activity,body.ratings);
+        if (!ratingData) return res.json({ error: 'Complete every rubric rating' }, 400);
         const strengthComment = String(body.strengthComment || '').trim(), nextStepComment = String(body.nextStepComment || '').trim();
         if (strengthComment.split(/\s+/).length < 3 || nextStepComment.split(/\s+/).length < 3 || strengthComment.length > 1000 || nextStepComment.length > 1000) return res.json({ error: 'Write at least three words for both comments' }, 400);
         const now = new Date().toISOString();
-        await db.createDocument(databaseId, 'presentation_peer_reviews', ID.unique(), { activityId: activity.$id, classId: activity.classId, presenterId: body.presenterId, reviewerId: userId, ...Object.fromEntries(keys.map(key=>[key,Number(ratings[key])])), strengthComment, nextStepComment, moderationStatus: 'visible', flagged: false, flagReason: '', createdAt: now, updatedAt: now });
+        await db.createDocument(databaseId, 'presentation_peer_reviews', ID.unique(), { activityId: activity.$id, classId: activity.classId, presenterId: body.presenterId, reviewerId: userId, ...ratingData, strengthComment, nextStepComment, moderationStatus: 'visible', flagged: false, flagReason: '', createdAt: now, updatedAt: now });
         return res.json({ ok: true });
       }
 
@@ -1063,11 +1065,11 @@ export default async ({ req, res, error }) => {
         if (body.command === 'delete') { await db.deleteDocument(databaseId, 'presentation_peer_reviews', review.$id); return res.json({ ok: true }); }
         if (body.command === 'hide' || body.command === 'show') { await db.updateDocument(databaseId, 'presentation_peer_reviews', review.$id, { moderationStatus: body.command === 'hide' ? 'hidden' : 'visible', flagged: false, flagReason: '', updatedAt: new Date().toISOString() }); return res.json({ ok: true }); }
         if (body.command === 'update') {
-          const ratings = body.ratings || {}, keys = ['poise','voice','life','eyeContact','gestures','speed'];
-          if (keys.some(key => ![1,2,3].includes(Number(ratings[key])))) return res.json({ error: 'Invalid ratings' }, 400);
+          const ratingData = peerRatingData(activity,body.ratings);
+          if (!ratingData) return res.json({ error: 'Invalid ratings' }, 400);
           const strengthComment = String(body.strengthComment || '').trim(), nextStepComment = String(body.nextStepComment || '').trim();
           if (!strengthComment || !nextStepComment) return res.json({ error: 'Comments are required' }, 400);
-          await db.updateDocument(databaseId, 'presentation_peer_reviews', review.$id, { ...Object.fromEntries(keys.map(key=>[key,Number(ratings[key])])), strengthComment: strengthComment.slice(0,1000), nextStepComment: nextStepComment.slice(0,1000), flagged: false, flagReason: '', updatedAt: new Date().toISOString() });
+          await db.updateDocument(databaseId, 'presentation_peer_reviews', review.$id, { ...ratingData, strengthComment: strengthComment.slice(0,1000), nextStepComment: nextStepComment.slice(0,1000), flagged: false, flagReason: '', updatedAt: new Date().toISOString() });
           return res.json({ ok: true });
         }
         return res.json({ error: 'Invalid moderation command' }, 400);

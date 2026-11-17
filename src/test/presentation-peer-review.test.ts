@@ -14,3 +14,10 @@ describe('PVLEGS percentage scoring', () => {
     expect(scoreReview({poise:3,voice:3,life:3,eyeContact:3,gestures:3,speed:3})).toBe(100);
   });
 });
+
+it('weights custom criteria by their points instead of averaging row percentages',()=>{
+ const rubric={name:'Debate',columns:['Start','Strong'],rows:[{id:'evidence',label:'Evidence',description:'',points:[0,10]},{id:'clarity',label:'Clarity',description:'',points:[0,2]}]};
+ expect(scoreReview({ratingsJson:JSON.stringify({evidence:2,clarity:1})},rubric)).toBe(83);
+ expect(scoreReview({ratingsJson:JSON.stringify({evidence:1,clarity:1})},rubric)).toBe(0);
+ expect(scoreReview({ratingsJson:JSON.stringify({evidence:2,clarity:2})},rubric)).toBe(100);
+});

@@ -76,7 +76,14 @@ export interface PresentationLink {
   watchedAt: string | null;
 }
 
+export interface PeerRubric {
+  name: string;
+  columns: string[];
+  rows: { id: string; label: string; description: string; points: number[] }[];
+}
+
 export interface PeerReviewActivity {
+  rubricJson?: string;
   $id: string;
   classId: string;
   teacherId: string;
@@ -92,6 +99,7 @@ export interface PeerReviewActivity {
 export type PvlegsRating = 1 | 2 | 3;
 
 export interface PresentationPeerReview {
+  ratingsJson?: string;
   $id: string;
   activityId: string;
   classId: string;
