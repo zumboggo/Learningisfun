@@ -1,0 +1,120 @@
+{
+  "tool": "Built-in ImageGen",
+  "newScenes": [
+    [
+      "09-canal",
+      "The Suez Canal in the 1870s. Wide view from the Egyptian bank: a period steamship passing slowly through the narrow canal; Egyptian workers and cargo on shore; in the foreground on a customs-office desk, closed ledger, brass inkpot and small purse. Show the relationship between infrastructure, money and labour without caricatures. No modern containers or cranes. No readable text."
+    ],
+    [
+      "10-press",
+      "Cairo around 1900: modest newspaper printing workshop, two Egyptian intellectuals and a printer considering proofs beside a period letterpress, one woman reader by the open door. The pages are angled away or blank, no readable words or invented script. Historically plausible dress, wooden type cases, natural window light. Theme: Islamic reform, education and public argument. No named portraits."
+    ],
+    [
+      "11-prison",
+      "Egypt in the mid-twentieth century: restrained exterior view of a prison's heavy closed iron gate and sunlit courtyard wall; foreground a wooden table with a folded manuscript and blunt pencil. No prisoners or guards visible, no violence, no slogans, no flags. Somber image about repression and ideas written in confinement. Authentic understated ordinary architecture."
+    ],
+    [
+      "12-finance",
+      "Contemporary Cairo: woman small-business owner in modest everyday clothing and a male finance officer discussing a contract at her sewing workshop, sewing machines and neatly folded fabric behind them, documents angled away with no readable text. Both dignified and thoughtful, no exaggerated expressions. Theme: whether finance supports a real livelihood. Contemporary objects and ordinary light, not luxury bank imagery."
+    ]
+  ],
+  "corrections": [
+    [
+      "06-translators-v2",
+      "06-translators",
+      "Keep the three scholars and painterly art style. Correct historical setting to ninth-century Baghdad: replace all background skyline and window views with a plain interior plaster wall, shelves and a small high window showing only sky. Remove the blue bulbous dome, late mosque architecture, minarets and brass spherical instrument. Simplify robes to modest early medieval layered fabric without dense gold embroidery. Pages and scrolls should show only blank surfaces or turned edges, not invented writing. The composition must emphasize three people comparing manuscripts in an ordinary workshop, not a palace."
+    ],
+    [
+      "07-cordoba-v2",
+      "07-cordoba",
+      "Keep the two scholars, books, courtyard composition and painterly style. Correct historical setting to twelfth-century Islamic Cordoba: remove the background bell-tower/church skyline entirely and replace it with a plain ochre courtyard wall and foliage. Remove brass spherical instrument. Simplify oversized embroidered gold patterns on clothing. Preserve manuscripts as closed volumes with no text. All other elements remain a modest imagined medieval courtyard."
+    ]
+  ],
+  "records": [
+    {
+      "id": "islam_image_1",
+      "generatedFile": "exec-b6abe30a-fc71-4a00-af51-5e00b822c2ab.png",
+      "selected": true,
+      "finalFile": "images/01-caravan.webp"
+    },
+    {
+      "id": "02-market",
+      "generatedFile": "exec-aca69072-0c0c-406b-9184-12e89d54b255.png",
+      "selected": true,
+      "finalFile": "images/02-market.webp"
+    },
+    {
+      "id": "03-debt",
+      "generatedFile": "exec-2c92f2a5-413a-4029-8dec-ab24e0f9ce3c.png",
+      "selected": true,
+      "finalFile": "images/03-debt.webp"
+    },
+    {
+      "id": "04-ocean",
+      "generatedFile": "exec-bf6fb211-1ac2-4928-a1c5-0bcbab663551.png",
+      "selected": true,
+      "finalFile": "images/04-ocean.webp"
+    },
+    {
+      "id": "05-classroom",
+      "generatedFile": "exec-6f3981b5-1fa7-4cf1-8006-6fdf668cf096.png",
+      "selected": true,
+      "finalFile": "images/05-classroom.webp"
+    },
+    {
+      "id": "06-translators",
+      "generatedFile": "exec-b9af75c8-6e7b-4307-8c87-bb4f7106004c.png",
+      "selected": false,
+      "finalFile": "images/06-translators.webp"
+    },
+    {
+      "id": "07-cordoba",
+      "generatedFile": "exec-acfcd54e-825a-4b46-8090-87a4ba152eff.png",
+      "selected": false,
+      "finalFile": "images/07-cordoba.webp"
+    },
+    {
+      "id": "08-fountain",
+      "generatedFile": "exec-135c21e9-7738-4980-b404-859e238883d1.png",
+      "selected": true,
+      "finalFile": "images/08-fountain.webp"
+    },
+    {
+      "id": "09-canal",
+      "generatedFile": "exec-dd2482e8-294d-47af-a454-79f4045158cc.png",
+      "selected": true,
+      "finalFile": "images/09-canal.webp"
+    },
+    {
+      "id": "10-press",
+      "generatedFile": "exec-766d04db-a655-492d-b805-a4c19fd033e5.png",
+      "selected": true,
+      "finalFile": "images/10-press.webp"
+    },
+    {
+      "id": "11-prison",
+      "generatedFile": "exec-56bb891a-4abf-4a82-bccb-dce345634872.png",
+      "selected": true,
+      "finalFile": "images/11-prison.webp"
+    },
+    {
+      "id": "12-finance",
+      "generatedFile": "exec-744f81b6-4abe-44d2-8aee-8c603f86e051.png",
+      "selected": true,
+      "finalFile": "images/12-finance.webp"
+    },
+    {
+      "id": "06-translators-v2",
+      "generatedFile": "exec-281a36db-2465-44d2-9956-809482b3b392.png",
+      "selected": true,
+      "finalFile": "images/06-translators.webp"
+    },
+    {
+      "id": "07-cordoba-v2",
+      "generatedFile": "exec-8e9cc312-0dd1-4ddc-8e3d-866a8ba38e46.png",
+      "selected": true,
+      "finalFile": "images/07-cordoba.webp"
+    }
+  ],
+  "notes": "Original PNGs remain in the ImageGen output directory. Selected final images are encoded as WebP for portable delivery. Two variants correct later architectural features in medieval scenes."
+}

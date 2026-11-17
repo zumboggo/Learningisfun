@@ -1,0 +1,19 @@
+COMPLETED — November 17, 2026
+
+Three original illustrated readings for Ethics and Leadership / Ethics from China to Islam.
+1. What Do We Owe Each Other? — week of November 16, 2026.
+2. The Teacher Who Could Not Speak — first reading, week of November 23.
+3. When a Country Owes Money — second reading, week of November 23.
+All fall within the requested November 27 unit endpoint. No exact due dates invented.
+
+Open index.html locally. All twelve illustrations are included and work offline. External source links require internet access. Student prose contains no appended exercises or teacher notes.
+
+Editable text: part-1.source.html, part-2.source.html, part-3.source.html.
+Sources: sources.json, matched by the numbered citations in each reading.
+Rebuild: python3 build.py (Python standard library only).
+Manifest: content and image hashes, reading weeks, word counts, image captions and alt text.
+Image prompts and provenance: image-prompts.json and generation-record.json. Built-in ImageGen used; selected WebP assets are in images/. Original PNGs remain in the Codex generated_images directory for this chat. Two corrected variants remove anachronistic architecture. No image jobs remain outstanding.
+
+Checks: prose length 1500–1800 words for each; exactly four distinct images per reading; all images decode; local links, citation anchors and image paths validated. Desktop reader and narrow-screen index visually reviewed. Historical claims checked against the linked primary texts and scholarly/institutional sources; Graeber interpretations and imagined cases explicitly identified.
+
+No Canvas or LIF database publication/assignment was requested or performed. These are complete local deliverables. Repository commit/push follows the project publishing preference and is separate from classroom assignment.

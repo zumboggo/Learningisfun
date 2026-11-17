@@ -1,0 +1,122 @@
+{
+  "series": "Ethics in Islam: Debt, Knowledge, and Power",
+  "unit": "Ethics from China to Islam",
+  "timezone": "Asia/Shanghai",
+  "delivery": "Offline illustrated readings; no LMS assignments created",
+  "parts": [
+    {
+      "title": "What Do We Owe Each Other?",
+      "subtitle": "Islam’s beginnings, community, trade, and the obligations of creditors",
+      "week": "November 16–20, 2026",
+      "voice": "A",
+      "week_start": "2026-11-16",
+      "id": "islam-ethics-2026-part-1",
+      "word_count": 1522,
+      "source": "part-1.source.html",
+      "html": "part-1.html",
+      "sha256": "74ffd08f2692c814ba564eb3afbe33342526db51942b3b12f61628c56a97488a",
+      "images": [
+        {
+          "file": "images/01-caravan.webp",
+          "sha256": "afd9d0339521ed9538969cc67136799b824eaf2c55e9a2b3e2d0eb72255f604e",
+          "alt": "Travelers and pack animals approach a mud-brick oasis settlement.",
+          "caption": "Migration required shelter, protection, and new relationships. Imagined early Arabian setting; AI-generated illustration, not a depiction of Muhammad."
+        },
+        {
+          "file": "images/02-market.webp",
+          "sha256": "b95f0695813c15aaef95f7da2e73127af9e395b719be38bf13cb1221527a7e30",
+          "alt": "A merchant weighs dates on a balance while a customer watches.",
+          "caption": "Trade makes fair measurement an everyday ethical practice. Imagined scene; AI-generated illustration."
+        },
+        {
+          "file": "images/03-debt.webp",
+          "sha256": "638f39981d1ec22a8ff424a3167a30e973909f76aa780c06d9eb8b61f3070556",
+          "alt": "A scribe records an agreement while three adults discuss its terms.",
+          "caption": "Recording a debt can protect the parties without settling every moral question. Imagined scene; AI-generated illustration."
+        },
+        {
+          "file": "images/04-ocean.webp",
+          "sha256": "38511f807ae323fb83749eb57d0abdc01b93f4362351e6d2039f38c7d1d4b3b8",
+          "alt": "A merchant holds a folded letter beside a wooden trading vessel at Aden.",
+          "caption": "A voyage connected investors, sailors, merchants, and distant households. Imagined medieval harbour; AI-generated illustration."
+        }
+      ]
+    },
+    {
+      "title": "The Teacher Who Could Not Speak",
+      "subtitle": "Al-Ghazali, the purpose of wealth, and ideas that crossed into Europe",
+      "week": "November 23–27, 2026 · First reading",
+      "voice": "A",
+      "week_start": "2026-11-23",
+      "id": "islam-ethics-2026-part-2",
+      "word_count": 1579,
+      "source": "part-2.source.html",
+      "html": "part-2.html",
+      "sha256": "06b5222bd3b82e142878cf4f77f11ecb98fdd4f0ad827b0304f4e8a007b35d7c",
+      "images": [
+        {
+          "file": "images/05-classroom.webp",
+          "sha256": "76ba56a8f62ddf5e89775e3dd7f2010ac9bd65a118a96b94fe31196e699b695d",
+          "alt": "A scholar leaves a quiet teaching room with reading desks and manuscripts.",
+          "caption": "An imagined departure evokes al-Ghazali’s account of leaving Baghdad. AI-generated illustration, not an authentic portrait or reconstruction."
+        },
+        {
+          "file": "images/06-translators.webp",
+          "sha256": "e28c710ec4d1e57e20c2aa399dd548e1fccf64228298e4213f94cfcb83752ee9",
+          "alt": "Three scholars compare manuscripts in a simple interior workshop.",
+          "caption": "Translation required interpretation, collaboration, and support. Imagined workshop; AI-generated illustration."
+        },
+        {
+          "file": "images/07-cordoba.webp",
+          "sha256": "cfa90229187d027f4c06bf64da9faf952944cb338d9a7658bf26ed965456088d",
+          "alt": "Two scholars discuss manuscript volumes in an Andalusian courtyard.",
+          "caption": "Ibn Rushd argued for philosophical inquiry within Islamic learning. Imagined scene, not an authentic portrait; AI-generated illustration."
+        },
+        {
+          "file": "images/08-fountain.webp",
+          "sha256": "3817dd8dd7956062dd33e68531cf2662dabffa2a19fa39459f8a6e626bd0d3e7",
+          "alt": "Residents collect water from an ornate public fountain on a Cairo street.",
+          "caption": "An endowment could turn a gift into an ongoing public service. Imagined late medieval setting; AI-generated illustration."
+        }
+      ]
+    },
+    {
+      "title": "When a Country Owes Money",
+      "subtitle": "Colonialism, reform, modern fundamentalism, and the morality of finance",
+      "week": "November 23–27, 2026 · Second reading",
+      "voice": "B",
+      "week_start": "2026-11-23",
+      "id": "islam-ethics-2026-part-3",
+      "word_count": 1607,
+      "source": "part-3.source.html",
+      "html": "part-3.html",
+      "sha256": "15ae29b5a1342f59dbd8070b670435706601b05cc6da4d99c31513c91f2b4cab",
+      "images": [
+        {
+          "file": "images/09-canal.webp",
+          "sha256": "26eb004c67e776a27d3e0c1e915b0d41ebd0536470394cbcf51ccbaffc5e5f30",
+          "alt": "A steamship passes along the Suez Canal beside workers and a desk with a ledger.",
+          "caption": "Infrastructure, labour, and debt became entangled with imperial power. Imagined nineteenth-century scene; AI-generated illustration."
+        },
+        {
+          "file": "images/10-press.webp",
+          "sha256": "96cd971de34de509d548d2bd7eda91e1baa2d188d629f3c2faa83cdfa5a3c9ea",
+          "alt": "Readers and a printer discuss a proof sheet beside a printing press.",
+          "caption": "Education and public debate were central to projects of reform. Imagined Cairo workshop around 1900; AI-generated illustration."
+        },
+        {
+          "file": "images/11-prison.webp",
+          "sha256": "e50b7eb5e49e6cfac2606550723c001e7867dfecc85c4d1a3fabe8ebc3532a86",
+          "alt": "A folded manuscript and pencil sit before a closed prison gate.",
+          "caption": "Repression formed part of the setting for Qutb’s later writing. Symbolic imagined scene; AI-generated illustration, not a historical prison record."
+        },
+        {
+          "file": "images/12-finance.webp",
+          "sha256": "e37b3b0d438d1f084efbda1cd1a8b75174eed68adb23c125ce05dc159719b991",
+          "alt": "A woman who runs a sewing workshop discusses a contract with a finance officer.",
+          "caption": "A contract’s effects unfold in the livelihood it helps—or burdens. Imagined contemporary scene; AI-generated illustration."
+        }
+      ]
+    }
+  ]
+}

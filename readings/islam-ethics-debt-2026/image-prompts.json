@@ -1,0 +1,67 @@
+{
+  "mode": "built-in ImageGen",
+  "style": "Landscape 3:2; hand-painted gouache and fine ink on warm paper; indigo, terracotta, muted gold; realistic humane proportions; no readable writing, collage, logos or Muhammad depictions.",
+  "scenes": [
+    [
+      "01-caravan",
+      "Early seventh-century western Arabian ordinary travelers approaching oasis at dawn; vulnerability of migration; no identifiable religious figures."
+    ],
+    [
+      "02-market",
+      "Seventh-century western Arabian market. Close view of an ordinary merchant weighing dates in a simple metal balance for a customer; baskets, cloth awning, mud-brick walls. Honest measurement and a livelihood at stake. No identifiable historical figures or modern objects."
+    ],
+    [
+      "03-debt",
+      "Seventh-century Arabian oasis courtyard. An ordinary scribe with reed pen records an agreement between two modestly dressed adults at a low table, one witnesses attentively; rolled parchment, small coin pouch set aside. Documents angled away so no legible or invented writing. Focus on careful listening and unequal bargaining power, no caricature."
+    ],
+    [
+      "04-ocean",
+      "Early twelfth-century Aden harbour. A wooden Indian Ocean trading vessel with a triangular lateen sail, modest cargo bundles and sailors preparing for a voyage, a North African merchant on the quay holding a folded letter. Dramatic wide sea view, no European galleons, no modern port machinery."
+    ],
+    [
+      "05-classroom",
+      "Baghdad around 1095. Quiet madrasa teaching room with low reading desks, rolled manuscripts and woven mats; a single adult scholar in plain layered clothing stands at the doorway, viewed from behind, leaving the prestigious classroom. A visual interpretation of al-Ghazali's departure, no claim to authentic portrait. Architectural restraint, no Ottoman domes."
+    ],
+    [
+      "06-translators",
+      "Ninth-century Baghdad translation workshop: three adult scholars of varied West Asian appearance compare bound and rolled manuscripts around a low desk, discussing carefully, with reed pens, ink and shelves. Clothing historically plausible, no printed books or eyeglasses. Pages angled away with no readable or invented script. Intellectual collaboration, no fantasy grand library."
+    ],
+    [
+      "07-cordoba",
+      "Late twelfth-century Cordoba: adult Andalusian scholar seated in a shaded courtyard comparing two closed manuscript volumes while a younger scholar listens. Simple horseshoe arches, tiled basin, citrus tree, realistic restrained architecture. A visual interpretation of the world of Ibn Rushd, not an authenticated portrait. Manuscripts contain no visible script."
+    ],
+    [
+      "08-fountain",
+      "Late medieval Cairo public water fountain supported by a charitable endowment: ordinary residents with earthenware vessels receiving water from a modest carved-stone street fountain, nearby shops. Street-level view, women and men in historically plausible clothing, dignified everyday interaction, no readable inscriptions or invented writing."
+    ],
+    [
+      "09-canal",
+      "The Suez Canal in the 1870s. Wide view from the Egyptian bank: a period steamship passing slowly through the narrow canal; Egyptian workers and cargo on shore; in the foreground on a customs-office desk, closed ledger, brass inkpot and small purse. Show the relationship between infrastructure, money and labour without caricatures. No modern containers or cranes. No readable text."
+    ],
+    [
+      "10-press",
+      "Cairo around 1900: modest newspaper printing workshop, two Egyptian intellectuals and a printer considering proofs beside a period letterpress, one woman reader by the open door. The pages are angled away or blank, no readable words or invented script. Historically plausible dress, wooden type cases, natural window light. Theme: Islamic reform, education and public argument. No named portraits."
+    ],
+    [
+      "11-prison",
+      "Egypt in the mid-twentieth century: restrained exterior view of a prison's heavy closed iron gate and sunlit courtyard wall; foreground a wooden table with a folded manuscript and blunt pencil. No prisoners or guards visible, no violence, no slogans, no flags. Somber image about repression and ideas written in confinement. Authentic understated ordinary architecture."
+    ],
+    [
+      "12-finance",
+      "Contemporary Cairo: woman small-business owner in modest everyday clothing and a male finance officer discussing a contract at her sewing workshop, sewing machines and neatly folded fabric behind them, documents angled away with no readable text. Both dignified and thoughtful, no exaggerated expressions. Theme: whether finance supports a real livelihood. Contemporary objects and ordinary light, not luxury bank imagery."
+    ]
+  ],
+  "corrections": [
+    [
+      "06-translators-v2",
+      "06-translators",
+      "Keep the three scholars and painterly art style. Correct historical setting to ninth-century Baghdad: replace all background skyline and window views with a plain interior plaster wall, shelves and a small high window showing only sky. Remove the blue bulbous dome, late mosque architecture, minarets and brass spherical instrument. Simplify robes to modest early medieval layered fabric without dense gold embroidery. Pages and scrolls should show only blank surfaces or turned edges, not invented writing. The composition must emphasize three people comparing manuscripts in an ordinary workshop, not a palace."
+    ],
+    [
+      "07-cordoba-v2",
+      "07-cordoba",
+      "Keep the two scholars, books, courtyard composition and painterly style. Correct historical setting to twelfth-century Islamic Cordoba: remove the background bell-tower/church skyline entirely and replace it with a plain ochre courtyard wall and foliage. Remove brass spherical instrument. Simplify oversized embroidered gold patterns on clothing. Preserve manuscripts as closed volumes with no text. All other elements remain a modest imagined medieval courtyard."
+    ]
+  ],
+  "status": "All twelve selected images complete and visually inspected"
+}
