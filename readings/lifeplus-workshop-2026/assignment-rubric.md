@@ -1,32 +1,38 @@
 # David’s Copywork Analysis Portfolio: Assignment and Rubric
 
-Workshop reference: the assignment description and scoring rubric below reproduce the substantive instructions currently shown in David’s World Literature Canvas assignment, **Copywork Analysis – Nov 6th**, inspected November 13, 2026. This is a reference example, not an additional workshop submission. The workshop’s short interactive lesson is a scaled-down practice experience; the full student assignment requires four copied and two original paragraphs.
-
-[Original Canvas assignment](https://lifeplus.instructure.com/courses/21695/assignments/784829) — access requires membership of that Canvas course. The instructions are reproduced here so workshop participants can read them without joining the course. The original’s dated model attachment and deadline are not workshop requirements.
+Workshop reference, updated November 18, 2026 to match David’s current classroom progression. This is a model assignment for teachers to explore, not an additional workshop submission. The short interactive Copywork lesson is a scaled-down practice experience.
 
 ## Copywork Analysis Portfolio
 
-Study how a strong essay works, then extend its argument or inquiry with two paragraphs of your own.
+Every two weeks, study how a strong essay works, then extend its argument or inquiry with original writing. Keep the whole piece at **six paragraphs**, gradually shifting from imitation toward independence.
 
-Meeting all six core requirements and successfully using a minimum of two distinct writing and thinking moves earns at least 90% (9/10). The writing and thinking moves are assessed across your two original paragraphs together. You do not need to use every move in each paragraph.
+**Quarter 1:** copy **5** model paragraphs and write **1** original paragraph.
+
+**Quarter 2:** copy **4** model paragraphs and write **2** original paragraphs.
+
+**Second semester:** copy **3** model paragraphs and write **3** original paragraphs.
+
+Use the stage assigned by your teacher. Original paragraphs should fit the model’s structure and argument while adding new thinking.
+
+Meeting all six core requirements, including borrowing a model move and using **two additional, distinct thinking moves**, earns at least **90% (9/10)**. Assess the moves across the original writing as a whole, including the single original paragraph in Quarter 1.
 
 ## Before you write
 
-Read the assigned texts and the model essay posted in the module.
+Read the assigned texts and model essay. Note its author and title so copied language is clearly credited as copywork, and choose the model paragraphs specified by your teacher.
 
 ## Six core requirements
 
 ### 1. Copy accurately
 
-By hand, copy **four complete paragraphs** of the model essay. Aim to preserve every word, punctuation mark, and paragraph break. One or two copying mistakes total across the entire copied portion are acceptable for a 90%. Copy slowly enough to notice how the sentences work.
+By hand, copy **five, four, or three complete paragraphs** of the model essay according to the stage above. Aim to preserve every word, punctuation mark, and paragraph break. One or two copying mistakes total across the entire copied portion are acceptable for a 90%. Copy slowly enough to notice how the sentences work.
 
 ### 2. Notice three moves; borrow one
 
-In the margins beside your copied paragraphs, identify **three specific writing moves** the model uses. Explain what the writer does and mark where it happens. Use **at least one** of those moves in your own writing and **identify it in the margin**.
+Underline **three specific writing moves** in your copied paragraphs and explain each in the margin: what the writer does and how it works. Use **at least one** of those moves in your own writing and **identify it in the margin**.
 
 ### 3. Develop new thinking
 
-Write **two original paragraphs**, bringing your essay to six paragraphs altogether. Draw a box around your two paragraphs. Continue the model’s argument or inquiry and voice while developing ideas it has not already explained. You might analyse a passage it overlooked, address an unresolved objection, or explore a further implication. Each paragraph should add something new.
+Write **one, two, or three original paragraphs** according to your stage, bringing the essay to six paragraphs altogether. Draw a box around each original paragraph. Continue the model’s argument or inquiry and voice while developing ideas it has not already explained. You might analyse a passage it overlooked, address an unresolved objection, or explore a further implication. Each paragraph should add something new.
 
 ### 4. Develop a coherent line of thinking
 
@@ -49,9 +55,9 @@ Proofread your original paragraphs carefully. Follow the class MLA model for the
 
 One or two minor errors total in MLA format, grammar, spelling, and punctuation across the whole essay are acceptable for a 90%. This allowance is separate from the one or two copying mistakes allowed in the copied portion; it is not one or two errors per paragraph or per category.
 
-## Choose two writing and thinking moves
+## Choose two additional writing and thinking moves
 
-Use **a minimum of two distinct moves** from the following menu across your two original paragraphs. **Implement a minimum of two distinct moves in your original writing and label them.** Choose moves that help develop your argument or inquiry. You may use analytical, argumentative, reflective, or exploratory moves; your writing does not have to analyse another text.
+Use **two additional, distinct moves** from the menu below in your original writing, alongside the move borrowed from the model. Label all three: the borrowed move and the two additional thinking moves. Choose moves that develop your argument or inquiry; they may be analytical, argumentative, reflective, or exploratory.
 
 - **Zoom in on language:** Explain what a particular word or phrase contributes through its meaning, associations, or tone.
 - **Consider the audience:** Explain why a particular choice might affect this audience in this situation.
@@ -72,7 +78,7 @@ Use **a minimum of two distinct moves** from the following menu across your two 
 - **Trace how something came to be:** Explore a practice’s origins to help explain its present form.
 - **Follow an idea to a new implication:** Show how one discovery leads to another question or unexpected conclusion.
 
-Identify your chosen moves in the margins. You may distribute them unevenly between paragraphs, and one passage of analysis may accomplish more than one move. Repeating the same move counts as one type of move. Your borrowed move from requirement 2 may also count as one of your two writing and thinking moves if it meets the description in this menu. A label earns credit only when your writing actually performs the move. Develop your thinking first; use the labels to show where you have done the thinking.
+Identify your chosen moves in the margins. You may distribute them unevenly between paragraphs, and one passage of analysis may accomplish more than one move. Repeating the same move counts as one type of move. The two menu moves are additional to the borrowed move: do not count the same move twice. A passage may perform more than one move, but each must be evident in the writing. A label earns credit only when your writing actually performs the move. Develop your thinking first; use the labels to show where you have done the thinking.
 
 ## Submit
 
@@ -80,23 +86,23 @@ Submit your handwritten work as **one clear, readable PDF**, with all pages in o
 
 ## Grading
 
-- **9/10 guaranteed:** Meet all six core requirements and successfully demonstrate a minimum of two distinct writing and thinking moves.
+- **9/10 guaranteed:** Meet all six core requirements and borrow and label at least one model move and successfully demonstrate two additional, distinct thinking moves.
 - **10/10:** Meet those requirements and develop an especially perceptive, well-supported insight in your original paragraphs.
 
 You do not need to add more moves to earn the final point. It comes from the quality and depth of your thinking.
 
-## Attached Canvas rubric
+## Workshop rubric — 10 points
 
-The rubric’s saved title is **“Copywork Portfolio — six requirements + two moves (20)”**, but its displayed criterion and total are **10 points**. The parenthetical “(20)” is part of the existing title, not the score for this assignment.
+This rubric reflects the current progression and move requirements described above. The earlier [Canvas assignment](https://lifeplus.instructure.com/courses/21695/assignments/784829) is a historical classroom example; this workshop reference has been updated independently.
 
-**Criterion: Six core requirements and at least two distinct writing and thinking moves**
+**Criterion: Six core requirements, one borrowed move, and two additional thinking moves**
 
-Follow the paragraph split stated in this assignment. Meet all six core requirements: careful copywork; notice three moves and borrow at least one, identified in the margin; develop new thinking; coherent reasoning and logical sentence flow; integrated and explained support appropriate to the writing; and polished presentation. For 90%, one or two copying mistakes total across the copied portion are acceptable, and a separate one or two minor MLA, grammar, spelling, or punctuation errors total across the whole essay are acceptable. Implement a minimum of two distinct moves in your original writing and label them. Choose from the assignment’s writing and thinking moves menu, including analytical, argumentative, reflective, or exploratory options. Moves are assessed across the original writing as a whole; a label counts only when the writing performs the move. Meeting all requirements guarantees at least 9/10. Earn 10/10 by also developing an especially perceptive, well-supported insight. More moves are not required.
+Use the correct paragraph split for the assigned stage. Copy accurately; underline and explain three model moves; borrow and label at least one; develop original thinking with coherent reasoning, integrated and explained evidence, and polished presentation. Label two additional, distinct thinking moves from the menu. Assess these across the original writing as a whole. Labels count only when the writing performs the moves.
 
-**10 points — All requirements plus perceptive insight:** Meets all six core requirements, including the stated allowances of one or two copying mistakes and a separate one or two minor conventions errors total. Implements a minimum of two distinct writing and thinking moves in the original writing and labels them. Also develops an especially perceptive, well-supported insight in the original paragraphs.
+**10 points — All requirements plus perceptive insight:** Meet all six requirements and the move requirements, and develop an especially perceptive, well-supported insight. More moves are not required for the final point.
 
-**9 points — All checklist requirements met — 90% guaranteed:** Meets all six core requirements, including the stated allowances of one or two copying mistakes and a separate one or two minor conventions errors total. Implements a minimum of two distinct writing and thinking moves in the original writing and labels them. Moves are assessed across the original writing as a whole.
+**9 points — All checklist requirements met:** Meet all six requirements and the move requirements. One or two copying mistakes total across the copied portion are acceptable, plus a separate one or two minor conventions errors total across the whole essay. These are total allowances, not allowances per paragraph or category.
 
 **0 points — No Marks.**
 
-*These are the three rating descriptions currently displayed in Canvas. This reference does not invent intermediate bands or change the original assignment.*
+The existing 10/9/0 rating structure is retained; no new intermediate bands are introduced. The 90% guarantee applies when every stated requirement is met.

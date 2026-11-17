@@ -1,0 +1,39 @@
+{
+  "results": [
+    {
+      "id": "ws26-do-it-again",
+      "title": "Do It Again",
+      "paragraphs": 191,
+      "sha256": "691f1e45fe620d12e6d60ae1be91fc4a4e12ee1ca964fe069062c2f28a22360a",
+      "assignments": [
+        {
+          "id": "ws26-do-it-again-assignment",
+          "classId": "5a726282-4771-4774-8213-d9329c124bbc",
+          "assignedAt": "2026-11-16T08:00:00+08:00",
+          "dueDate": "2026-11-19",
+          "isAssignedReading": true,
+          "isCopywork": false
+        }
+      ],
+      "verifiedAt": "2026-11-17T18:48:12.905Z"
+    },
+    {
+      "id": "ws26-rubric",
+      "title": "David’s Copywork Analysis Portfolio: Assignment and Rubric",
+      "paragraphs": 43,
+      "sha256": "5d03415853846487a09f15ddd69f72cd8d6a3afe3a74230a3ab703df0cc08807",
+      "assignments": [
+        {
+          "id": "ws26-rubric-assignment",
+          "classId": "5a726282-4771-4774-8213-d9329c124bbc",
+          "assignedAt": "2026-11-16T12:00:00+08:00",
+          "dueDate": "",
+          "isAssignedReading": false,
+          "isCopywork": false
+        }
+      ],
+      "verifiedAt": "2026-11-17T18:48:29.692Z"
+    }
+  ],
+  "verifiedImages": 4
+}
