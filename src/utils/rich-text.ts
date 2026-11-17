@@ -31,15 +31,26 @@ function escapeHtml(value:string):string{return value.replace(/&/g,'&amp;').repl
 function inlineMarkdownToHtml(value:string):string{return escapeHtml(value).replace(/\[([^\]]+)\]\((https?:\/\/[^)]+|mailto:[^)]+|\/[^)]+)\)/g,'<a href="$2">$1</a>').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\*([^*]+)\*/g,'<em>$1</em>')}
 function markdownTableCells(line:string):string[]{return line.trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(cell=>cell.trim().replace(/\\\|/g,'|'))}
 
-function nodeToMarkdown(node: Node): string {
-  if (node.nodeType === Node.TEXT_NODE) return (node.textContent || '').replace(/\s+/g, ' ');
+function nodeToMarkdown(node: Node, inheritedBold=false, inheritedItalic=false): string {
+  if (node.nodeType === Node.TEXT_NODE) {
+    let parent=node.parentElement;
+    while(parent){if(['pre','pre-wrap','pre-line','break-spaces'].includes(parent.style.whiteSpace))return (node.textContent||'').replace(/\r\n?/g,'\n');parent=parent.parentElement;}
+    return (node.textContent || '').replace(/\s+/g, ' ');
+  }
   if (!(node instanceof HTMLElement)) return '';
-  const content = [...node.childNodes].map(child => nodeToMarkdown(child)).join('');
+  const weight=node.style.fontWeight,style=node.style.fontStyle;
+  const bold=weight ? weight==='bold'||weight==='bolder'||Number(weight)>=600 : ['STRONG','B'].includes(node.tagName);
+  const italic=style ? style==='italic'||style==='oblique' : ['EM','I'].includes(node.tagName);
+  let content = [...node.childNodes].map(child => nodeToMarkdown(child,inheritedBold||bold,inheritedItalic||italic)).join('');
+  const addBold=bold&&!inheritedBold,addItalic=italic&&!inheritedItalic;
+  if((addBold||addItalic)&&content.trim()){
+    const marker=addBold&&addItalic?'***':addBold?'**':'*';
+    content=content.replace(/^(\s*)([\s\S]*?)(\s*)$/,(_,before,text,after)=>`${before}${marker}${text}${marker}${after}`);
+  }
   const trimmed = content.trim();
 
   if (node.tagName === 'BR') return '\n';
-  if (['STRONG', 'B'].includes(node.tagName)) return trimmed ? `**${trimmed}**` : '';
-  if (['EM', 'I'].includes(node.tagName)) return trimmed ? `*${trimmed}*` : '';
+  if (['STRONG','B','EM','I'].includes(node.tagName)) return content;
   if (node.tagName === 'CODE' && node.parentElement?.tagName !== 'PRE') return trimmed ? `\`${trimmed}\`` : '';
   if (node.tagName === 'PRE') return trimmed ? `\n\n\`\`\`\n${node.textContent?.trim() || ''}\n\`\`\`\n\n` : '';
   if (node.tagName === 'A') {

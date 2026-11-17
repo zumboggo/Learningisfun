@@ -109,4 +109,23 @@ describe('Live writing prompt', () => {
     expect(update).toHaveBeenCalledWith('session-1',editor.value,true,'large','');
   });
 
+  it('keeps pasted formatting when saving an example response and a student answer',async()=>{
+    read.mockResolvedValue({...state,isTeacher:true});
+    const {LivePresentationPage}=await import('@/pages/LivePresentationPage');
+    const view=render(<MemoryRouter initialEntries={['/presentations/session-1/live']}><Routes><Route path="/presentations/:sessionId/live" element={<LivePresentationPage/>}/></Routes></MemoryRouter>);
+    await act(async()=>{await vi.advanceTimersByTimeAsync(1)});
+    fireEvent.click(screen.getByRole('button',{name:'Edit prompt'}));
+    fireEvent.paste(screen.getByRole('textbox',{name:'Example response'}),{clipboardData:{getData:()=>'<p><span style="font-weight:700">Claim</span></p><p><i>Evidence</i></p>'}});
+    fireEvent.click(screen.getByRole('button',{name:'Save prompt'}));
+    await act(async()=>{await Promise.resolve()});
+    expect(update).toHaveBeenCalledWith('session-1','Explain the ending.',true,'large','**Claim**\n\n*Evidence*');
+    view.unmount();read.mockResolvedValue(state);
+    render(<MemoryRouter initialEntries={['/presentations/session-1/live']}><Routes><Route path="/presentations/:sessionId/live" element={<LivePresentationPage/>}/></Routes></MemoryRouter>);
+    await act(async()=>{await vi.advanceTimersByTimeAsync(1)});
+    fireEvent.paste(screen.getByRole('textbox',{name:'Your response'}),{clipboardData:{getData:()=>'<p><b>My claim</b></p><p><em>My evidence</em></p>'}});
+    fireEvent.click(screen.getByRole('button',{name:'Submit response'}));
+    await act(async()=>{await Promise.resolve()});
+    expect(submit).toHaveBeenCalledWith('session-1','**My claim**\n\n*My evidence*');
+  });
+
 });

@@ -11,7 +11,7 @@ interface MarkdownProps {
   onHighlightClick?: (id: string) => void;
 }
 
-const INLINE_TOKEN = /(!\[[^\]]*\]\([^)]+\)|\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\)|\*[^*]+\*)/g;
+const INLINE_TOKEN = /(!\[[^\]]*\]\([^)]+\)|\*\*\*[^*]+\*\*\*|\*\*(?:(?!\*\*)[\s\S])+?\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\)|\*(?:\*\*[^*]+\*\*|[^*])+\*)/g;
 
 export function Markdown({ content, className = '', preserveLineBreaks = false, highlights, onHighlightClick }: MarkdownProps) {
   return (
@@ -162,8 +162,10 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
     if (token.startsWith('![')) {
       const image = /^!\[([^\]]*)\]\(([^)]+)\)$/.exec(token);
       if(image) nodes.push(<ReadingImage key={`${keyPrefix}-${index}`} source={image[2]} alt={image[1]}/>);
+    } else if (token.startsWith('***') && token.endsWith('***')) {
+      nodes.push(<strong key={`${keyPrefix}-${index}`}><em>{token.slice(3,-3)}</em></strong>);
     } else if (token.startsWith('**') && token.endsWith('**')) {
-      nodes.push(<strong key={`${keyPrefix}-${index}`}>{token.slice(2, -2)}</strong>);
+      nodes.push(<strong key={`${keyPrefix}-${index}`}>{renderInline(token.slice(2, -2), `${keyPrefix}-${index}-bold`)}</strong>);
     } else if (token.startsWith('`') && token.endsWith('`')) {
       nodes.push(<code key={`${keyPrefix}-${index}`} className="rounded bg-gray-100 px-1 py-0.5 text-sm">{token.slice(1, -1)}</code>);
     } else if (token.startsWith('[')) {
@@ -177,7 +179,7 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
         ) : token,
       );
     } else if (token.startsWith('*') && token.endsWith('*')) {
-      nodes.push(<em key={`${keyPrefix}-${index}`}>{token.slice(1, -1)}</em>);
+      nodes.push(<em key={`${keyPrefix}-${index}`}>{renderInline(token.slice(1, -1), `${keyPrefix}-${index}-italic`)}</em>);
     } else {
       nodes.push(token);
     }

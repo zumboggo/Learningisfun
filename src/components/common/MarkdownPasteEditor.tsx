@@ -6,9 +6,9 @@ import { htmlToMarkdown } from '@/utils/rich-text';
 type EditorProps = {
   value:string; onChange:(value:string)=>void; rows?:number; placeholder?:string;
   autoFocus?:boolean; preview?:boolean; maxLength?:number; images?:boolean;
-  baseUrl?:string; disabled?:boolean; onBusyChange?:(busy:boolean)=>void;
+  label?:string; onFocus?:()=>void; onBlur?:()=>void; baseUrl?:string; disabled?:boolean; onBusyChange?:(busy:boolean)=>void;
 };
-export function MarkdownPasteEditor({ value, onChange, rows=10, placeholder, autoFocus=false, preview=true, maxLength, images=false, baseUrl, disabled=false, onBusyChange }: EditorProps) {
+export function MarkdownPasteEditor({ value, onChange, rows=10, placeholder, autoFocus=false, preview=true, maxLength, images=false, label='Text content', onFocus, onBlur, baseUrl, disabled=false, onBusyChange }: EditorProps) {
   const [imageError,setImageError]=useState(''), [adding,setAdding]=useState(false);
   const fileInput=useRef<HTMLInputElement>(null), ref=useRef<HTMLTextAreaElement>(null);
   const limit=(next:string)=>maxLength?next.slice(0,maxLength):next;
@@ -50,11 +50,11 @@ export function MarkdownPasteEditor({ value, onChange, rows=10, placeholder, aut
       {images&&<Tool label="Add picture" onClick={()=>fileInput.current?.click()}/>}
     </div>
     {images&&<input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp,image/gif" aria-label="Upload picture" className="hidden" onChange={event=>{const file=event.target.files?.[0];event.target.value='';if(file)void addPicture(file);}}/>}
-    <textarea ref={ref} aria-label="Text content" autoFocus={autoFocus} rows={rows} maxLength={maxLength} className="w-full rounded-b-lg border px-3 py-3 font-mono text-sm leading-6" placeholder={placeholder} value={value} onChange={event=>onChange(event.target.value)} onPaste={paste}/>
+    <textarea ref={ref} aria-label={label} onFocus={onFocus} onBlur={onBlur} autoFocus={autoFocus} rows={rows} maxLength={maxLength} className="w-full rounded-b-lg border px-3 py-3 font-mono text-sm leading-6" placeholder={placeholder} value={value} onChange={event=>onChange(event.target.value)} onPaste={paste}/>
     <p className="text-xs text-gray-500">Paste from a webpage or document to keep headings, bold, italics, lists, links, quotes, and tables where possible. {images&&'Pictures are copied into app storage when you save. Keep the source URL above for relative image links. You can also upload or paste a picture at the cursor.'}</p>
     {adding&&<p role="status" className="text-sm text-gray-500">Adding picture…</p>}
     {imageError&&<p role="alert" className="text-sm text-red-700">{imageError}</p>}
-    {preview&&<div className="rounded-lg border bg-white p-4"><p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Preview</p><Markdown content={value||'*Nothing pasted yet.*'} className="text-base text-gray-800"/></div>}
+    {preview&&<div className="rounded-lg border bg-white p-4"><p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Preview</p><Markdown preserveLineBreaks content={value||'*Nothing pasted yet.*'} className="text-base text-gray-800"/></div>}
   </fieldset>;
 }
 function Tool({label,onClick,className=''}:{label:string;onClick:()=>void;className?:string}){

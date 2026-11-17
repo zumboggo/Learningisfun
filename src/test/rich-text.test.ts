@@ -40,3 +40,11 @@ describe('rich class notes conversion', () => {
       .toContain('<table><thead><tr><th>Term</th><th>Meaning</th></tr></thead>');
   });
 });
+
+it('preserves Word and Google Docs font styles without bolding their normal wrapper',()=>{
+ expect(htmlToMarkdown('<b style="font-weight:normal"><p><span style="font-weight:700">Claim</span> and <span style="font-style:italic">evidence</span>.</p><p><span style="font-weight:bold;font-style:italic">Both</span></p></b>')).toBe('**Claim** and *evidence*.\n\n***Both***');
+ expect(htmlToMarkdown('<p><b> Bold </b>words<i> in italics </i>here.</p>')).toBe('**Bold** words *in italics* here.');
+ expect(htmlToMarkdown('<span style="white-space:pre-wrap">First line\nSecond line\n\nNext paragraph</span>')).toBe('First line\nSecond line\n\nNext paragraph');
+});
+
+it('does not duplicate emphasis from nested document styles',()=>{expect(htmlToMarkdown('<b><span style="font-weight:700">Bold</span></b>')).toBe('**Bold**')});
