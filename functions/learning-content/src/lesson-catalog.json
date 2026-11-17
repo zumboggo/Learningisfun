@@ -3143,6 +3143,8 @@
   },
   {
     "id": "workshop-copywork-v1",
+    "assignedOn": "2026-11-16",
+    "dueOn": "2026-11-20",
     "title": "Copywork: Notice a Choice, Make a Choice",
     "objective": "Copy a short model accurately, explain the effect of specific wording, and transfer one writerly move into original writing.",
     "classIds": [
