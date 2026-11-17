@@ -489,8 +489,13 @@ const COLLECTIONS = [
   {
     id: 'peer_review_activities',
     name: 'Peer Review Activities',
-    attributes: [S('rubricJson', { size: 40000, required: false }), S('classId', { required: true }), S('teacherId', { required: true }), S('title', { required: true }), ENUM('assignmentType', ['presentation_pvlegs'], { required: true }), INT('reviewsRequired', { required: true, min: 1, max: 20 }), ENUM('status', ['active','closed'], { required: true }), DATE('createdAt', { required: true }), DATE('updatedAt', { required: true })],
+    attributes: [S('workMode', { size: 20, required: false }), S('instructions', { size: 5000, required: false }), S('rubricJson', { size: 40000, required: false }), S('classId', { required: true }), S('teacherId', { required: true }), S('title', { required: true }), ENUM('assignmentType', ['presentation_pvlegs'], { required: true }), INT('reviewsRequired', { required: true, min: 1, max: 20 }), ENUM('status', ['active','closed'], { required: true }), DATE('createdAt', { required: true }), DATE('updatedAt', { required: true })],
     indexes: [{ key: 'idx_classId', type: 'key', attributes: ['classId'] }, { key: 'idx_teacherId', type: 'key', attributes: ['teacherId'] }, { key: 'idx_status', type: 'key', attributes: ['status'] }],
+  },
+  {
+    id: 'peer_review_work', name: 'Peer Review Student Work',
+    attributes: [S('activityId', {required:true}), S('classId', {required:true}), S('studentId', {required:true}), S('title', {size:200,required:true}), S('text', {size:20000,required:true}), S('url', {size:2000,required:true}), S('fileId', {required:true}), S('fileName', {size:180,required:true}), S('createdAt', {size:40,required:true})],
+    indexes: [{key:'idx_activityId',type:'key',attributes:['activityId']},{key:'idx_studentId',type:'key',attributes:['studentId']}],
   },
   {
     id: 'presentation_peer_reviews',

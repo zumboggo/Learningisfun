@@ -1,3 +1,4 @@
+import {PEER_WORK_ACTIONS,peerWorkAction,listPeerWork,requirePeerWork} from './peer-work.js';
 import {validatePeerRubric,peerRatingData} from './peer-rubric.js';
 import {ethicsPresentationAction} from './ethics-presentation.js';
 import {textAuthoringAction,TEXT_ACTIONS} from './text-authoring.js';
@@ -223,6 +224,10 @@ export default async ({ req, res, error }) => {
       try { return res.json(await readingDiscussionAction({ body, profile, userId, memberClassIds, db, databaseId })); }
       catch (cause) { if([403,409].includes(cause.code))return res.json({error:cause.message},cause.code);throw cause; }
     }
+    if (PEER_WORK_ACTIONS.includes(body.action)) {
+      try { const studentClasses=new Set(memberships.documents.filter(row=>row.role==='student'&&(!row.expiresAt||Date.parse(row.expiresAt)>nowTime)).map(row=>row.classId)); return res.json(await peerWorkAction({body,profile,userId,memberClassIds:studentClasses,db,databaseId,storage:new Storage(client),tokens:new Tokens(client),endpoint:process.env.APPWRITE_ENDPOINT,projectId:process.env.APPWRITE_FUNCTION_PROJECT_ID})); }
+      catch(cause) { return res.json({error:cause.message},cause.code||500); }
+    }
     if (['uploadPresentationFile','downloadPresentationFile','uploadPlannerPresentation'].includes(body.action)) return res.json(await presentationFileAction({body,profile,userId,memberClassIds,db,databaseId,storage:new Storage(client),tokens:new Tokens(client),endpoint:process.env.APPWRITE_ENDPOINT,projectId:process.env.APPWRITE_FUNCTION_PROJECT_ID}));
     if (['importReadingImage','readReadingImage'].includes(body.action)) return res.json(await readingImageAction({body,profile,userId,memberClassIds,db,databaseId,storage:new Storage(client),tokens:new Tokens(client),endpoint:process.env.APPWRITE_ENDPOINT,projectId:process.env.APPWRITE_FUNCTION_PROJECT_ID}));
     if (['uploadOriginalPdf', 'readOriginalPdf'].includes(body.action)) return res.json(await originalPdfAction({ body, profile, userId, memberClassIds, db, databaseId, storage: new Storage(client), tokens: new Tokens(client), endpoint: process.env.APPWRITE_ENDPOINT, projectId: process.env.APPWRITE_FUNCTION_PROJECT_ID }));
@@ -275,7 +280,7 @@ export default async ({ req, res, error }) => {
     if (body.action === 'resetManagedUserAccount') {
       if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
       const target=await db.getDocument(databaseId,'users',body.targetUserId);if(!['student','parent'].includes(target.role))return res.json({error:'Teacher accounts cannot be reset here'},403);
-      const checks=[['card_reviews','userId'],['flashcard_review_events','userId'],['flashcard_study_sessions','userId'],['student_card_state','userId'],['student_deck_notes','userId'],['quiz_attempts','userId'],['writing_submissions','authorId'],['peer_reviews','reviewerId'],['presentation_peer_reviews','reviewerId'],['presentation_peer_reviews','presenterId'],['discussion_questions','authorId'],['discussion_answers','authorId'],['question_votes','userId'],['text_annotations','authorId'],['text_discussion_posts','authorId'],['text_discussion_votes','userId'],['copywork_entries','userId'],['nickname_reports','reporterId'],['nickname_reports','targetUserId']];
+      const checks=[['card_reviews','userId'],['flashcard_review_events','userId'],['flashcard_study_sessions','userId'],['student_card_state','userId'],['student_deck_notes','userId'],['quiz_attempts','userId'],['writing_submissions','authorId'],['peer_reviews','reviewerId'],['presentation_peer_reviews','reviewerId'],['presentation_peer_reviews','presenterId'],['peer_review_work','studentId'],['discussion_questions','authorId'],['discussion_answers','authorId'],['question_votes','userId'],['text_annotations','authorId'],['text_discussion_posts','authorId'],['text_discussion_votes','userId'],['copywork_entries','userId'],['nickname_reports','reporterId'],['nickname_reports','targetUserId']];
       for(const [collection,field] of checks){const result=await db.listDocuments(databaseId,collection,[Query.equal(field,target.$id),Query.limit(1)]);if(result.total)return res.json({error:'This account has student work. Change its role instead of resetting it.'},409);}
       const targetMemberships=await allRows(db,databaseId,'class_members',[Query.equal('userId',target.$id)]),owned=await allRows(db,databaseId,'classes',[Query.equal('teacherId',userId)]),ownedIds=new Set(owned.map(row=>row.$id));if(!targetMemberships.length||targetMemberships.some(row=>!ownedIds.has(row.classId)))return res.json({error:'This account belongs to a class you do not manage'},403);
       await users.delete({userId:target.$id});
@@ -1004,8 +1009,10 @@ export default async ({ req, res, error }) => {
       if (targetClass.teacherId !== userId) return res.json({ error: 'Not the class owner' }, 403);
       const title = String(body.title || '').trim(), reviewsRequired = Number(body.reviewsRequired || 3), now = new Date().toISOString();
       if (!title || title.length > 200 || !Number.isInteger(reviewsRequired) || reviewsRequired < 1 || reviewsRequired > 20) return res.json({ error: 'Invalid activity settings' }, 400);
+      if (body.workMode !== undefined && !['live','submitted'].includes(body.workMode)) return res.json({error:'Choose live presentation or submitted work.'},400);
+      if (typeof (body.instructions ?? '') !== 'string' || (body.instructions || '').length > 5000) return res.json({error:'Instructions must be at most 5,000 characters.'},400);
       if (body.rubric !== undefined && !validatePeerRubric(body.rubric)) return res.json({ error: 'Add a rubric name, named rows and columns, and non-negative points with a positive maximum for every row.' }, 400);
-      const activity = await db.createDocument(databaseId, 'peer_review_activities', ID.unique(), { classId: targetClass.$id, teacherId: userId, title, ...(body.rubric ? {rubricJson:JSON.stringify(body.rubric)} : {}), assignmentType: 'presentation_pvlegs', reviewsRequired, status: 'active', createdAt: now, updatedAt: now });
+      const activity = await db.createDocument(databaseId, 'peer_review_activities', ID.unique(), { classId: targetClass.$id, teacherId: userId, title, workMode:body.workMode||'live', instructions:body.instructions||'', ...(body.rubric ? {rubricJson:JSON.stringify(body.rubric)} : {}), assignmentType: 'presentation_pvlegs', reviewsRequired, status: 'active', createdAt: now, updatedAt: now });
       return res.json({ activity: clean(activity) });
     }
 
@@ -1030,7 +1037,7 @@ export default async ({ req, res, error }) => {
       const targetClass = await db.getDocument(databaseId, 'classes', activity.classId);
       const owns = profile.role === 'teacher' && targetClass.teacherId === userId;
       const enrolled = memberClassIds.has(activity.classId) && memberships.documents.some(row => row.classId === activity.classId && row.role === 'student');
-      if (!owns && !enrolled) return res.json({ error: 'Not enrolled' }, 403);
+      if (!owns && (!enrolled || profile.role !== 'student')) return res.json({ error: 'Not enrolled' }, 403);
 
       if (body.action === 'setPeerReviewActivityStatus') {
         if (!owns || !['active','closed'].includes(body.status)) return res.json({ error: 'Teacher role required' }, 403);
@@ -1043,6 +1050,9 @@ export default async ({ req, res, error }) => {
         if (body.presenterId === userId) return res.json({ error: 'You cannot review yourself' }, 400);
         const presenterMembership = await db.listDocuments(databaseId, 'class_members', [Query.equal('classId', activity.classId), Query.equal('userId', body.presenterId), Query.limit(10)]);
         if (!presenterMembership.documents.some(row => row.role === 'student')) return res.json({ error: 'Choose a student in this class' }, 400);
+        if (activity.workMode === 'submitted') {
+          try { await requirePeerWork(db,databaseId,activity,body.presenterId); } catch(cause) { return res.json({error:cause.message},cause.code||500); }
+        }
         const prior = await db.listDocuments(databaseId, 'presentation_peer_reviews', [Query.equal('activityId', activity.$id), Query.equal('presenterId', body.presenterId), Query.equal('reviewerId', userId), Query.limit(1)]);
         if (prior.total) return res.json({ error: 'Choose a different presenter next' }, 409);
         const ratingData = peerRatingData(activity,body.ratings);
@@ -1075,6 +1085,7 @@ export default async ({ req, res, error }) => {
         return res.json({ error: 'Invalid moderation command' }, 400);
       }
 
+      const submissions = await listPeerWork(db,databaseId,activity);
       const rosterResult = await db.listDocuments(databaseId, 'class_members', [Query.equal('classId', activity.classId), Query.equal('role', 'student'), Query.limit(100)]);
       const rosterIds = [...new Set(rosterResult.documents.filter(row=>row.role==='student').map(row=>row.userId))];
       const userResult = rosterIds.length ? await db.listDocuments(databaseId, 'users', [Query.equal('$id', rosterIds), Query.limit(100)]) : { documents: [] };
@@ -1082,14 +1093,14 @@ export default async ({ req, res, error }) => {
       const roster = rosterIds.map(id=>({id,name:names.get(id)||'Student'})).sort((a,b)=>a.name.localeCompare(b.name));
       if (owns) {
         const reviewResult = await db.listDocuments(databaseId, 'presentation_peer_reviews', [Query.equal('activityId', activity.$id), Query.limit(500)]);
-        return res.json({ activity: clean(activity), roster, reviews: reviewResult.documents.map(row=>({...clean(row),reviewerName:names.get(row.reviewerId)||'Student'})), writtenCount: 0, feedbackUnlocked: true, isTeacher: true });
+        return res.json({ activity: clean(activity), roster, submissions, reviews: reviewResult.documents.map(row=>({...clean(row),reviewerName:names.get(row.reviewerId)||'Student'})), writtenCount: 0, feedbackUnlocked: true, isTeacher: true });
       }
       const writtenResult = await db.listDocuments(databaseId, 'presentation_peer_reviews', [Query.equal('reviewerId', userId), Query.limit(500)]);
       const written = writtenResult.documents.filter(row=>row.activityId===activity.$id), feedbackUnlocked = written.length >= activity.reviewsRequired;
       const ownWritten = written.map(row=>clean(row));
       const receivedResult = feedbackUnlocked ? await db.listDocuments(databaseId, 'presentation_peer_reviews', [Query.equal('presenterId', userId), Query.limit(500)]) : { documents: [] };
       const received = receivedResult.documents.filter(row=>row.activityId===activity.$id&&row.moderationStatus==='visible').map(row=>{const projected=clean(row);delete projected.reviewerId;return projected;});
-      return res.json({ activity: clean(activity), roster, reviews: [...ownWritten,...received], writtenCount: written.length, feedbackUnlocked, isTeacher: false });
+      return res.json({ activity: clean(activity), roster, submissions, reviews: [...ownWritten,...received], writtenCount: written.length, feedbackUnlocked, isTeacher: false });
     }
 
     if (body.action === 'readAnnotationReport') {

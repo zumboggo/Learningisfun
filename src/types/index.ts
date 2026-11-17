@@ -82,7 +82,14 @@ export interface PeerRubric {
   rows: { id: string; label: string; description: string; points: number[] }[];
 }
 
+export interface PeerReviewWork {
+  $id:string; studentId:string; title:string; fileName:string; createdAt:string;
+}
+export interface PeerReviewWorkDetail extends PeerReviewWork { text:string; url:string }
+
 export interface PeerReviewActivity {
+  workMode?: 'live' | 'submitted';
+  instructions?: string;
   rubricJson?: string;
   $id: string;
   classId: string;

@@ -1,12 +1,12 @@
 import { executeLearningContent } from '@/services/learning-content.service';
-import type { PeerReviewActivity, PresentationPeerReview, PvlegsRating, PeerRubric } from '@/types';
+import type { PeerReviewActivity, PresentationPeerReview, PvlegsRating, PeerRubric, PeerReviewWork, PeerReviewWorkDetail } from '@/types';
 
 export const PVLEGS_CATEGORIES = ['poise','voice','life','eyeContact','gestures','speed'] as const;
 export const PVLEGS_LABELS: Record<(typeof PVLEGS_CATEGORIES)[number], string> = { poise:'Poise', voice:'Voice', life:'Life', eyeContact:'Eye Contact', gestures:'Gestures', speed:'Speed' };
 export const RATING_PERCENT: Record<PvlegsRating,number> = { 1:50, 2:75, 3:100 };
 
 export interface PeerReviewRosterStudent { id:string; name:string }
-export interface PeerReviewActivityData { activity:PeerReviewActivity; roster:PeerReviewRosterStudent[]; reviews:PresentationPeerReview[]; writtenCount:number; feedbackUnlocked:boolean; isTeacher:boolean }
+export interface PeerReviewActivityData { activity:PeerReviewActivity; submissions?:PeerReviewWork[]; roster:PeerReviewRosterStudent[]; reviews:PresentationPeerReview[]; writtenCount:number; feedbackUnlocked:boolean; isTeacher:boolean }
 
 const descriptions:Record<string,string>={poise:'Prepared, composed, and confident',voice:'Clear, expressive, and easy to hear',life:'Energy, interest, and expression',eyeContact:'Natural connection with the audience',gestures:'Movement that supports meaning',speed:'Comfortable pace and purposeful pauses'};
 export function activityRubric(activity:{rubricJson?:string}):PeerRubric {
@@ -21,9 +21,22 @@ export function scoreReview(review:Partial<PresentationPeerReview>,rubric=activi
   return Math.round(100*rubric.rows.reduce((sum,row)=>sum+(row.points[ratings[row.id]-1]??0),0)/max);
 }
 export async function listPeerReviewActivities(classId:string){return executeLearningContent<{activities:PeerReviewActivity[]}>({action:'listPeerReviewActivities',classId});}
-export async function createPeerReviewActivity(classId:string,title:string,reviewsRequired=3,rubric?:PeerRubric){return executeLearningContent<{activity:PeerReviewActivity}>({action:'createPeerReviewActivity',classId,title,reviewsRequired,rubric});}
+export async function createPeerReviewActivity(classId:string,title:string,reviewsRequired=3,rubric?:PeerRubric,workMode:'live'|'submitted'='live',instructions=''){return executeLearningContent<{activity:PeerReviewActivity}>({action:'createPeerReviewActivity',classId,title,reviewsRequired,rubric,workMode,instructions});}
 export async function readPeerReviewActivity(activityId:string){return executeLearningContent<PeerReviewActivityData>({action:'readPeerReviewActivity',activityId});}
 export async function setPeerReviewActivityStatus(activityId:string,status:'active'|'closed'){return executeLearningContent({action:'setPeerReviewActivityStatus',activityId,status});}
 export async function submitPresentationPeerReview(payload:{activityId:string;presenterId:string;ratings:Record<string,number>;strengthComment:string;nextStepComment:string}){return executeLearningContent({action:'submitPresentationPeerReview',...payload});}
 export async function flagPresentationPeerReview(reviewId:string,reason:string){return executeLearningContent({action:'flagPresentationPeerReview',reviewId,reason});}
 export async function moderatePresentationPeerReview(payload:{reviewId:string;command:'update'|'hide'|'show'|'delete';ratings?:Record<string,number>;strengthComment?:string;nextStepComment?:string}){return executeLearningContent({action:'moderatePresentationPeerReview',...payload});}
+
+export async function submitPeerReviewWork(payload:{activityId:string;title:string;text:string;url:string;file?:File}){
+ const {file,...fields}=payload;
+ let attachment: {name:string;data:string}|undefined;
+ if(file){
+  if(file.size>5*1024*1024)throw new Error('Files must be 5 MB or smaller.');
+  const data=await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(new Error('Could not read this file.'));reader.readAsDataURL(file)});
+  attachment={name:file.name,data};
+ }
+ return executeLearningContent<{work:PeerReviewWork}>({action:'submitPeerReviewWork',...fields,file:attachment});
+}
+export async function readPeerReviewWork(activityId:string,studentId:string){return executeLearningContent<{work:PeerReviewWorkDetail}>({action:'readPeerReviewWork',activityId,studentId});}
+export async function downloadPeerReviewWork(activityId:string,studentId:string){return executeLearningContent<{url:string}>({action:'downloadPeerReviewWork',activityId,studentId});}
