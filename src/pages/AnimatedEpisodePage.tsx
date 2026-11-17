@@ -1,7 +1,7 @@
 import {replayStory,validatePackage} from '../../functions/learning-content/src/story-engine.js';
 import {invalidateAnimatedLibrary} from '@/services/use-animated-library';
 import {useEffect,useRef,useState} from 'react';
-import {useParams} from 'react-router-dom';
+import {useParams,useSearchParams} from 'react-router-dom';
 import {useAuth} from '@/contexts/AuthContext';
 import {GameDisplay} from '@/components/GameDisplay';
 import {EpisodeNotebook} from '@/components/ethics/EpisodePortfolio';
@@ -10,6 +10,7 @@ import StoryPlayer,{type StoryProgress} from '@/components/animated/StoryPlayer'
 import {animatedCall,loadStoryCache,saveStoryCache} from '@/services/animated-stories';
 export default function AnimatedEpisodePage(){const {user}=useAuth(),{assignmentId=''}=useParams();return user?<Player key={user.$id+assignmentId} userId={user.$id} studentName={user.name||user.$id} assignmentId={assignmentId}/>:null;}
 function Player({userId,studentName,assignmentId}:{userId:string;studentName:string;assignmentId:string}){
+ const [params]=useSearchParams();
  const [data,setData]=useState<any>(null),[attempt,setAttempt]=useState<any>(null),[status,setStatus]=useState('Opening episode…'),[ready,setReady]=useState(false),chain=useRef(Promise.resolve()),alive=useRef(true),current=useRef<any>(null),retryAfter=useRef(0);
  const key=`animated-play:${userId}:${assignmentId}`;
  const cache=()=>{void saveStoryCache(key,{data,current:current.current}).catch(()=>setStatus('Device storage full. Keep this page open until account sync succeeds.'));};
@@ -28,6 +29,6 @@ let a=restoreLocal?local.current:(result.attempts||[]).filter((a:StoryProgress&{
  const replaying=useRef(false);
  const replay=async()=>{if(replaying.current)return;replaying.current=true;try{await chain.current;await sync();const previous=current.current;let a={id:crypto.randomUUID(),steps:[],quizzes:[],seed:1};if(!data.preview)a=await animatedCall('animatedSaveAttempt',{assignmentId,attemptId:a.id,steps:[],quizzes:[]});const updated={...data,attempts:[...(data.attempts||[]).filter((row:{id:string})=>row.id!==previous.id),previous]};setData(updated);current.current=a;setAttempt(a);await saveStoryCache(key,{data:updated,current:a});setStatus(data.preview?'Teacher preview · replay':'New replay · previous attempt preserved');}catch(e){setStatus(String(e));}finally{replaying.current=false;}};
  return <GameDisplay cinema userId={userId}>{ready&&data&&attempt?<StoryPlayer cinema key={attempt.id} pack={data.pack} mediaUrls={data.mediaUrls} initial={attempt} studentName={studentName} onProgress={progress} onReplay={()=>void replay()} status={status}
-  notebook={data.assignment.classId===STONE_CLASS_ID?<EpisodeNotebook userId={userId} classId={data.assignment.classId} preview={data.preview} source={{kind:'episode-notes',format:'animated',episode:data.assignment.id,assignmentId,version:data.assignment.version,title:data.pack.title}}/>:undefined}
+  openNotebook={params.get('notebook')==='1'} notebook={data.assignment.classId===STONE_CLASS_ID?<EpisodeNotebook userId={userId} classId={data.assignment.classId} preview={data.preview} source={{kind:'episode-notes',format:'animated',episode:data.assignment.id,assignmentId,version:data.assignment.version,title:data.pack.title}}/>:undefined}
   tools={<><button onClick={()=>void replay()}>Start a separate replay</button><button onClick={()=>{retryAfter.current=0;void sync();}}>Retry synchronization</button>{data.attempts?.length>0&&<details><summary>Previous attempts</summary>{data.attempts.map((a:any)=><p key={a.id}>{a.complete?`${a.score}/100 · complete`:'In progress'} <button onClick={()=>{current.current=a;setAttempt(a);cache();}}>Open attempt</button></p>)}</details>}</>}/>:<div className="cinema-loading"><p role="status">{status}</p><a href="#/game">← Episodes</a></div>}</GameDisplay>;
 }

@@ -129,3 +129,25 @@ test('teacher examples are available without a class and cannot request other me
  await assert.rejects(call({action:'animatedExampleMedia',id:'other-story'}),/Example not found/);
  assert.equal(records.size,0);
 });
+
+test('Ethics notebook assignment is opt-in, owner-only, and can be removed without removing play access',async()=>{
+ const {STONE_CLASS_ID}=await import('./stone-engine.js');
+ const {call}=harness({memberClasses:[STONE_CLASS_ID]});
+ await call({action:'animatedSaveDraft',id:'ethics-demo',revision:0,pack});
+ const v=await call({action:'animatedPublish',id:'ethics-demo',revision:1});
+ const assign={action:'animatedAssign',classId:STONE_CLASS_ID,versionId:v.versionId,date:'2026-01-01'};
+ const {assignmentId}=await call(assign);
+ const set={action:'animatedSetNotebookAssignment',assignmentId,assigned:true};
+ const studentAssignment=async()=>(await call({action:'animatedLibrary'},'student')).assignments.find(a=>a.assignmentId===assignmentId);
+ assert.notEqual((await studentAssignment()).notebookAssigned,true);
+ await assert.rejects(call(set,'student'),/Teacher/);
+ await assert.rejects(call(set,'teacher','other-teacher'),/class teacher/);
+ const other=await call({...assign,classId:'class'});
+ await assert.rejects(call({...set,assignmentId:other.assignmentId}),/Ethics/);
+ await call(set);
+ await call(assign);
+ assert.equal((await studentAssignment()).notebookAssigned,true);
+ await call({...set,assigned:false});
+ assert.equal((await studentAssignment()).notebookAssigned,false);
+ assert.equal((await call({action:'animatedRead',assignmentId},'student')).pack.title,pack.title);
+});

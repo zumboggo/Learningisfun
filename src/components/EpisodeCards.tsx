@@ -1,3 +1,5 @@
+import {STONE_CLASS_ID} from '@/services/stone.service';
+import {animatedCall} from '@/services/animated-stories';
 import { useState } from 'react';
 import { WeeklyMaterialRow } from './classes/WeeklyMaterialRow';
 const thumbnailAssets = import.meta.glob<string>('../assets/episode-thumbnails/*.webp', { eager: true, query: '?url', import: 'default' });
@@ -5,7 +7,7 @@ import EpisodePublicSharing from '@/components/animated/EpisodePublicSharing';
 import type {ReactNode} from 'react';
 import {EpisodeTopicBank,type TopicEntry} from './EpisodeTopicBank';
 import {episodeTopic} from '../../functions/learning-content/src/episode-topics.js';
-import {useAnimatedLibrary} from '@/services/use-animated-library';
+import {invalidateAnimatedLibrary,useAnimatedLibrary} from '@/services/use-animated-library';
 import {GameLaunchLink} from '@/components/GameLaunchLink';
 import {useLiveQuery} from 'dexie-react-hooks';
 import {assignedEpisodes} from '../../functions/learning-content/src/episode-catalog.js';
@@ -21,12 +23,15 @@ export function EpisodeCards({classId,userId,preview=false,week,groupByTopic=fal
  if(groupByTopic)return <EpisodeTopicBank entries={[...(extra?[{id:"teaching-stone",topic:"The Teaching Stone",order:0,content:extra}]:[]),...nativeCards,...legacyCards]}/>;
  if(compact){
   const cards = [
-   ...native.map((a:any)=>({key:a.assignmentId,id:a.id,title:a.title,date:a.date,to:'/game/play/'+a.assignmentId,versionId:a.versionId,status:a.completed&&a.assessmentMode==='none'?'Story complete':a.best==null?'Not started':`Highest score: ${a.best}/100`})),
-   ...catalog.map(e=>{const completed=rows.filter(a=>a.episode===e.id&&a.version===e.version&&a.status==='complete'&&!a.preview);const scores=completed.map(a=>a.score).filter((n):n is number=>typeof n==='number');return {key:e.assignmentId,id:e.id,title:e.title,date:e.assignedDate||'',to:`/classes/${classId}/episodes/${e.id}`,versionId:undefined,status:scores.length?`Highest score: ${Math.max(...scores)}/100`:completed.length?'Story complete':'Not started'};})
+   ...native.map((a:any)=>({key:a.assignmentId,id:a.id,title:a.title,date:a.date,to:'/game/play/'+a.assignmentId,versionId:a.versionId,notebookAssigned:a.notebookAssigned===true, animated:true,status:a.completed&&a.assessmentMode==='none'?'Story complete':a.best==null?'Not started':`Highest score: ${a.best}/100`})),
+   ...catalog.map(e=>{const completed=rows.filter(a=>a.episode===e.id&&a.version===e.version&&a.status==='complete'&&!a.preview);const scores=completed.map(a=>a.score).filter((n):n is number=>typeof n==='number');return {key:e.assignmentId,id:e.id,title:e.title,date:e.assignedDate||'',to:`/classes/${classId}/episodes/${e.id}`,versionId:undefined,notebookAssigned:false,animated:false,status:scores.length?`Highest score: ${Math.max(...scores)}/100`:completed.length?'Story complete':'Not started'};})
   ].sort((a,b)=>a.date.localeCompare(b.date)||a.title.localeCompare(b.title));
   return <WeeklyMaterialRow title="Episodes" count={cards.length} color="orange" columns={3}>{cards.map(card=><article className="weekly-episode" key={card.key}>
    <EpisodeThumbnail id={card.id}/>
    <div className="weekly-episode-copy"><p className="weekly-episode-date">{card.date?new Date(card.date+'T12:00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}):'Game episode'}</p><h4 className="weekly-episode-title">{card.title}</h4><GameLaunchLink aria-label={`${preview ? 'Preview' : 'Play / replay'} ${card.title}`} className="weekly-episode-launch" to={card.to}><span aria-hidden="true">▶</span>{preview?'Preview':'Play / replay'}<span className="sr-only"> {card.title}</span></GameLaunchLink>{!preview&&<p className="weekly-episode-status">{card.status}</p>}</div>
+   {card.animated&&classId===STONE_CLASS_ID&&(preview
+     ? <NotebookAssignmentButton assignmentId={card.key} assigned={card.notebookAssigned} userId={userId}/>
+     : card.notebookAssigned&&<GameLaunchLink aria-label={`Open notebook questions for ${card.title}`} title="Notebook Questions" className="self-start rounded-md border border-orange-300 px-2 py-1 font-semibold text-orange-950" to={card.to+'?notebook=1'}>Q</GameLaunchLink>)}
    {preview&&card.versionId&&<details className="weekly-episode-menu"><summary aria-label={`Sharing options for ${card.title}`}>⋮</summary><div><EpisodePublicSharing versionId={card.versionId}/></div></details>}
   </article>)}</WeeklyMaterialRow>;
  }
@@ -38,4 +43,25 @@ function EpisodeThumbnail({id}:{id:string}) {
  const [failed,setFailed]=useState(false);
  const path=thumbnailAssets[`../assets/episode-thumbnails/${id}.webp`];
  return path&&!failed?<img className="weekly-episode-art" src={path} alt="" loading="lazy" width={64} height={64} onError={()=>setFailed(true)}/>:<span className="weekly-episode-art" aria-hidden="true">▶</span>;
+}
+
+function NotebookAssignmentButton({assignmentId,assigned,userId}:{assignmentId:string;assigned:boolean;userId:string}) {
+ const [busy,setBusy]=useState(false);
+ const [error,setError]=useState('');
+ const label=assigned?'Unassign Notebook Questions':'Assign Notebook Questions';
+ async function toggle() {
+  setBusy(true);setError('');
+  try {
+   const result=await animatedCall('animatedSetNotebookAssignment',{assignmentId,assigned:!assigned});
+   if(result?.notebookAssigned!==!assigned)throw Error('Assignment was not confirmed');
+   invalidateAnimatedLibrary(userId);
+  } catch {
+   setError('Could not update notebook questions. Try again.');
+  } finally {setBusy(false);}
+ }
+ return <div className="group/notebook relative self-start">
+  <button type="button" aria-label={label} aria-pressed={assigned} disabled={busy} onClick={()=>void toggle()} className={`min-h-8 min-w-8 rounded-md border border-orange-300 font-semibold disabled:opacity-50 ${assigned?'bg-orange-800 text-white':'bg-white text-orange-950 hover:bg-orange-100'}`}>Q</button>
+  <span aria-hidden="true" className="pointer-events-none absolute bottom-full right-0 z-20 mb-1 hidden whitespace-nowrap rounded bg-gray-950 px-2 py-1 text-xs text-white group-hover/notebook:block group-focus-within/notebook:block">{label}</span>
+  {error&&<span role="alert" className="absolute right-0 top-full z-20 w-36 rounded border bg-white p-2 text-xs text-red-700">{error}</span>}
+ </div>;
 }

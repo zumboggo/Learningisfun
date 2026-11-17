@@ -1,3 +1,4 @@
+import { CurrentlyMissing } from '@/components/classes/CurrentlyMissing';
 import { PeerRubricEditor } from '@/components/teachers/PeerRubricEditor';
 import { activityRubric } from '@/services/presentation-peer-review.service';
 import type { PeerRubric } from '@/types';
@@ -378,6 +379,7 @@ export function ClassDetailPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-5 p-4 sm:space-y-6 sm:p-6">
       <ClassBanner cls={cls} editable={isOwner} />
+      {user?.role === 'student' && !isParent && <CurrentlyMissing key={user.$id + ':' + cls.$id} userId={user.$id} classId={cls.$id} />}
       {cls.$id===STONE_CLASS_ID && !isParent && user && <EthicsPresentationBuilder key={`${user.$id}:${cls.$id}`} classId={cls.$id} userId={user.$id} />}
       <AssignedCopywork classId={cls.$id} />
       {cls.$id===WORKSHOP_CLASS_ID && !isParent && <Link to="/lessons" className="block rounded-xl border border-teal-200 bg-teal-50 p-4 font-semibold text-teal-950">Workshop lesson · Copywork: Notice a Choice, Make a Choice →</Link>}

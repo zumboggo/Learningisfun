@@ -43,6 +43,57 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
       seen.add(id);
       return [{ id, textId: text.$id, classId: cls.$id,       title: text.title, className: `${cls.courseName || ''} · ${cls.name}`, date: a.dueDate || a.assignedAt.slice(0, 10), available: text.status === 'published' && textAssignmentAvailable(a) }];
     });
+    if (body.missingOnly === true) {
+      if (profile.role !== 'student') return { readings: [] };
+      const missing = [];
+      for (let offset = 0; offset < readings.length; offset += 100) {
+        const batch = readings.slice(offset, offset + 100);
+        const workspaces = [Query.equal('workspaceId', batch.map(row => row.id))];
+        const [settings, rounds] = await Promise.all([
+          list('reading_settings', [Query.equal('$id', batch.map(row => row.id))]),
+          list('reading_reply_rounds', workspaces),
+        ]);
+        const requirements = new Map(settings.map(row => [row.workspaceId, JSON.parse(row.dataJson).requirements]));
+        const pending = new Map();
+        for (const row of rounds) {
+          const round = JSON.parse(row.dataJson);
+          if (round.type === 'voting') continue;
+          const count = round.assignments.filter(a => a.studentId === userId && a.status === 'pending').length;
+          pending.set(row.workspaceId, (pending.get(row.workspaceId) || 0) + count);
+        }
+        const withRequirements = [...requirements].filter(([, r]) => r?.questions || r?.replies).map(([id]) => id);
+        const rows = withRequirements.length ? await list('reading_posts', [Query.equal('workspaceId', withRequirements)]) : [];
+        const posts = rows.map(row => ({ ...JSON.parse(row.dataJson), id: row.$id, workspaceId: row.workspaceId, authorId: row.authorId }));
+        const byId = new Map(posts.map(post => [post.id, post]));
+        const counts = new Map();
+        for (const post of posts) {
+          if (post.authorId !== userId || !requirements.get(post.workspaceId)) continue;
+          // Count work using the same withdrawal and quotation rules as the teacher's completion report.
+          let current = post, valid = true;
+          const visited = new Set();
+          while (current) {
+            if (current.withdrawn || visited.has(current.id) || visited.size > 3 || current.workspaceId !== post.workspaceId) { valid = false; break; }
+            visited.add(current.id);
+            current = current.parentId ? byId.get(current.parentId) : null;
+          }
+          if (!valid) continue;
+          const own = counts.get(post.workspaceId) || { questions: 0, replies: 0, quotedReplies: 0 };
+          if (post.parentId) {
+            own.replies++;
+            if (post.quotation?.trim()) own.quotedReplies++;
+          } else if (post.category === 'question') own.questions++;
+          counts.set(post.workspaceId, own);
+        }
+        for (const row of batch) {
+          const requirement = requirements.get(row.id), own = counts.get(row.id);
+          const questions = Math.max(0, (requirement?.questions || 0) - (own?.questions || 0));
+          const replies = Math.max(0, (requirement?.replies || 0) - ((requirement?.replyQuoteRequired ? own?.quotedReplies : own?.replies) || 0));
+          const assignedReplies = pending.get(row.id) || 0;
+          if (questions || replies || assignedReplies) missing.push({ ...row, questions, replies, quoteRequired: requirement?.replyQuoteRequired === true, assignedReplies });
+        }
+      }
+      return { readings: missing };
+    }
     if(body.includeActivity===false)return {readings};
     const activity = new Map();
     for(let offset=0;offset<readings.length;offset+=100) {

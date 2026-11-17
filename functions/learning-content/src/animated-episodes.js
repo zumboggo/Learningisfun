@@ -1,3 +1,4 @@
+import {STONE_CLASS_ID} from './stone-engine.js';
 import {privateMediaUrls} from './private-media.js';
 import {verifiedWorldLitClasses} from './journal-catalog.js';
 import {packageAssetEntries,packageContentBytes} from './acting-library.js';
@@ -58,6 +59,15 @@ export async function animatedEpisodeAction({body,profile,userId,memberClassIds,
   }
   if(!prior||prior.revision!==body.revision)fail('Save the latest draft before publishing',409);const pack=await getPack(prior.fileId);if(pack.authoring?.sourceReviewRequired&&!pack.authoring.sourceReviewed)fail('Review the sources before publishing.');const validation=validatePackage(pack,{requireEnglishCornerWriting:true});if(validation.errors.length)fail(validation.errors.map(e=>`Line ${e.line}: ${e.message}`).join('\n'));if(pack.authoring){delete pack.authoring.messages;delete pack.authoring.brief;delete pack.authoring.guidance;}const publicFileId=await storePack(pack);const versionId=hash(scope+body.id+':published:'+prior.revision),published={...prior,fileId:publicFileId,type:'animated-version',version:prior.revision,versionId};try{await write(versionId,scope,'animated-version',published);}catch(e){if(e.code!==409)throw e;}return published;
  }
+ if(body.action==='animatedSetNotebookAssignment'){
+  if(!teacher)fail('Teacher account required',403);
+  if(!safeId(body.assignmentId)||typeof body.assigned!=='boolean')fail('Invalid notebook assignment');
+  const a=await read(body.assignmentId);
+  if(a.type!=='animated-assignment'||a.classId!==STONE_CLASS_ID||a.archived)fail('Choose an active Ethics episode',403);
+  await owned(a.classId);
+  await db.updateDocument(databaseId,collection,body.assignmentId,{dataJson:JSON.stringify({...a,notebookAssigned:body.assigned})});
+  return {notebookAssigned:body.assigned};
+ }
  if(body.action==='animatedArchiveAssignment'){
   if(typeof body.archived!=='boolean')fail('Choose whether to archive this assignment');
   const a=await read(body.assignmentId);if(a.type!=='animated-assignment')fail('Invalid assignment');
@@ -78,8 +88,9 @@ export async function animatedEpisodeAction({body,profile,userId,memberClassIds,
    if(old.versionId===v.versionId)return finishAssignment({...old,assignmentId});
    const rows=await list([Query.equal('classId',body.classId)]);
    if(rows.some(r=>{const t=JSON.parse(r.dataJson);return ['animated-attempt','animated-result'].includes(t.type)&&t.assignmentId===assignmentId;}))fail('Students have started this assignment; preserve its version and assign a separate replay',409);
-   await db.updateDocument(databaseId,collection,assignmentId,{dataJson:JSON.stringify(a)});
-   return finishAssignment({...a,assignmentId});
+   const updated={...a,...(old.notebookAssigned===true?{notebookAssigned:true}:{})};
+   await db.updateDocument(databaseId,collection,assignmentId,{dataJson:JSON.stringify(updated)});
+   return finishAssignment({...updated,assignmentId});
   }
   try{await write(assignmentId,body.classId,'animated-assignment',a);}catch(e){if(e.code!==409)throw e;}return finishAssignment({...a,assignmentId});
  }
