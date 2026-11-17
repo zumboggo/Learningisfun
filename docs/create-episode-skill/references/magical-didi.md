@@ -11,4 +11,6 @@ For new Story 2 episodes, put `label taxi_arrival` immediately before a readable
 
 Playback is deliberate, with sound or silent controls, captions, a text description and skip/failure fallback. No video autoplay or background movie download. Reduced-motion users can skip or deliberately play. Media stays outside the 5 MB immutable episode package and saved attempts/quiz rules are unchanged. The serious sunglasses driver still gives four knowledge questions; three correct pays the fare, with review/retry preserving progress.
 
-World Literature uses the journal and Ethics the Teaching Stone unless David explicitly requests a taxi journey. Other custom video generation remains opt-in. Old detailed contracts are archived under legacy/.
+Retain the World Literature journal and Ethics Teaching Stone. For Ethics, writing the question summons the shared taxi for the learner’s solo journey. Other custom video generation remains opt-in. Old detailed contracts are archived under legacy/.
+
+For Ethics, the learner boards and enters the destination alone. Kevin and the teacher stay at school; their presence in the classroom setup does not imply they travel. The driver supplies transport only. Follow the [first-person student journey](ethics-and-leadership.md#first-person-student-journey).

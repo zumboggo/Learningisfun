@@ -1,16 +1,31 @@
 {
   "id": "the-stolen-camel",
   "title": "The Stolen Camel",
-  "status": "published-unassigned",
+  "status": "published-assigned",
   "version": 1,
   "versionId": "42fa6e96dd8b21d42f1244ce7ca79af6",
   "bytes": 525167,
   "publishedBytesVerified": true,
   "privatePreviewVerified": true,
   "signedMediaVerified": true,
-  "assignmentsCreated": 0,
+  "assignmentsCreated": 1,
   "existingAssignmentsPreserved": true,
   "studentAttemptsCreated": 0,
   "studioUrl": "https://zumboggo.github.io/Learningisfun/#/game/create?draft=the-stolen-camel",
-  "previewUrl": "https://zumboggo.github.io/Learningisfun/#/game/story-preview/the-stolen-camel"
+  "previewUrl": "https://zumboggo.github.io/Learningisfun/#/game/story-preview/the-stolen-camel",
+  "assigned": true,
+  "assignments": [
+    {
+      "classId": "e24ec8d9-21d7-4c32-a30e-08655c2f4e65",
+      "className": "Ethics and Leadership",
+      "sectionName": "Section 1",
+      "date": "2026-11-17",
+      "releaseAt": "2026-11-13T00:00:00.000Z",
+      "assignmentId": "81f3e555efa9bbc724f22476d981b1ef",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/81f3e555efa9bbc724f22476d981b1ef"
+    }
+  ],
+  "studentAccessVerified": true,
+  "studentLibraryVerified": true,
+  "assignmentVerifiedAt": "2026-11-17T01:21:17.627Z"
 }
