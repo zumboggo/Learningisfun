@@ -109,12 +109,12 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
           current=current.parentId?byId.get(current.parentId):null;
         }
         if(!visible)continue;
-        const counts=activity.get(post.workspaceId)||{questionCount:0,replyCount:0};
-        if(post.parentId)counts.replyCount++;else if(post.category==='question')counts.questionCount++;
+        const counts=activity.get(post.workspaceId)||{questionCount:0,replyCount:0,observationCount:0};
+        if(post.parentId)counts.replyCount++;else if(post.category==='question')counts.questionCount++;else counts.observationCount++;
         activity.set(post.workspaceId,counts);
       }
     }
-    return {readings:readings.map(row=>({...row,...(activity.get(row.id)||{questionCount:0,replyCount:0})}))};
+    return {readings:readings.map(row=>({...row,...(activity.get(row.id)||{questionCount:0,replyCount:0,observationCount:0})}))};
   }
   let writing = body.writingSessionId ? await db.getDocument(databaseId,'class_sessions',body.writingSessionId) : null;
   if(writing && writing.discussionType!=='presentation')fail('Not a writing prompt');
@@ -148,6 +148,8 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
   const savedSettings=settings?JSON.parse(settings.dataJson):{};
   const requirements = savedSettings.requirements || null;
   const questionLimit = Math.max(3, requirements?.questions || 0);
+  const liveNominations = savedSettings.liveNominations || {};
+  const nominationKey = key(workspaceId, userId);
   const showStudentNames = !writing && savedSettings.showStudentNames===true;
   if(body.action==='setWritingDiscussionSettings'){
     const next={...config};
@@ -360,6 +362,7 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
       posts: posts.filter(visible).map(p => {
         const { authorId, ...safe } = p;
         return { ...safe, everReplied:p.everReplied||posts.some(r=>r.parentId===p.id), mine: authorId === userId, ...(teacher ? {authorId} : {}), ...(showNames ? {username:people.find(person=>person.$id===authorId)?.name||p.label} : {}),
+          ...(!writing ? {fireCount:Object.values(liveNominations).filter(id=>id===p.id).length, nominated:liveNominations[nominationKey]===p.id} : {}),
           score: votes.filter(v => v.postId === p.id).length,
           voted: votes.some(v => v.postId === p.id && v.userId === userId),
           ...(teacher ? { reports: reports.filter(r => r.postId === p.id).map(r => ({ id: r.$id, reason: r.reason })) } : {}) };
@@ -384,9 +387,11 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
     const category = parent?.category || body.category;
     if (!categories.includes(category)) fail('Choose a contribution category');
     if(!teacher&&!parent&&category==='question'&&publishedCount>=questionLimit)fail(`You can publish at most ${questionLimit===3?'three':questionLimit} questions per text discussion`);
-    const paragraph = body.paragraph === '' || body.paragraph == null ? null : Number(body.paragraph);
+    const inheritedQuote = !writing && parent && body.useParentQuotation === true ? ancestors(parent).find(p=>p.quotation?.trim()) : null;
+    if(body.useParentQuotation === true && !inheritedQuote)fail('This thread has no quotation to use');
+    const paragraph = inheritedQuote ? inheritedQuote.paragraph : body.paragraph === '' || body.paragraph == null ? null : Number(body.paragraph);
     if (paragraph !== null && (!Number.isInteger(paragraph) || paragraph < 1 || paragraph > 10000)) fail('Use a paragraph number between 1 and 10000');
-    const data = { parentId: parent?.id || null, category, content, quotation: quotationText(body.quotation), paragraph,
+    const data = { parentId: parent?.id || null, category, content, quotation: inheritedQuote ? inheritedQuote.quotation : quotationText(body.quotation), paragraph,
       label: teacher ? 'Teacher' : `Reader ${key(workspaceId, userId).slice(0, 6).toUpperCase()}`, teacher,
       createdAt: new Date().toISOString(), hidden: false, locked: false, pinned: false };
     try { await db.createDocument(databaseId, 'reading_posts', id, { workspaceId, authorId: userId, dataJson: JSON.stringify(data) }, []); }
@@ -410,6 +415,18 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
     if(paragraph!==null&&(!Number.isInteger(paragraph)||paragraph<1||paragraph>10000))fail('Use a paragraph number between 1 and 10000');
     const {id,authorId,...saved}=selected;
     await db.updateDocument(databaseId,'reading_posts',id,{dataJson:JSON.stringify({...saved,content,quotation,paragraph,updatedAt:new Date().toISOString()})});
+    return {ok:true};
+  }
+  if (body.action === 'nominateReadingDiscussion') {
+    if(writing)fail('Live nominations are for text discussions');
+    if(ancestors(selected).some(p=>p.hidden||p.withdrawn))fail('Contribution is hidden');
+    if(typeof body.nominated!=='boolean')fail('Choose nominate or remove');
+    const next={...liveNominations};
+    if(body.nominated)next[nominationKey]=selected.id;
+    else if(next[nominationKey]===selected.id)delete next[nominationKey];
+    const payload={workspaceId,dataJson:JSON.stringify({...savedSettings,liveNominations:next})};
+    if(settings)await db.updateDocument(databaseId,'reading_settings',workspaceId,payload);
+    else await db.createDocument(databaseId,'reading_settings',workspaceId,payload,[]);
     return {ok:true};
   }
   if (body.action === 'voteReadingDiscussion') {

@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { MemoryRouter } from 'react-router-dom';
 import { DiscussionComposer } from '@/pages/ReadingDiscussionPage';
 import { ParagraphCard } from '@/pages/TextReaderPage';
-import { readingWeek, sortedReadingPosts, type ReadingDiscussionPost } from '@/services/reading-discussion.service';
+import { readingWeek, sortedReadingPosts, discussionFeed, type ReadingDiscussionPost } from '@/services/reading-discussion.service';
 beforeEach(()=>localStorage.clear());afterEach(cleanup);
 it('preserves draft, quote and reference across unmounts and category-specific storage',()=>{
   const props={storageKey:'user:text:blue:thought',category:'thought' as const,busy:false,onSubmit:vi.fn(),onCancel:vi.fn()};
@@ -47,4 +47,32 @@ it('sorts by new/top/unanswered and resolves Monday without local-time shifts',(
   expect(sortedReadingPosts(posts,'question','top')[0].id).toBe('old');
   expect(sortedReadingPosts(posts,'question','unanswered').map(p=>p.id)).toEqual(['new']);
   expect(readingWeek('2026-09-15')).toBe('2026-09-14');
+});
+
+it('offers observation guidance without losing writing when the help is expanded',()=>{
+ render(<DiscussionComposer storageKey="observation" category="thought" busy={false} onSubmit={vi.fn()}/>);
+ const input=screen.getByRole('textbox',{name:'Your observation'});
+ fireEvent.change(input,{target:{value:'The silence suggests hesitation.'}});
+ fireEvent.click(screen.getByText('How to respond?'));
+ expect(input).toHaveValue('The silence suggests hesitation.');
+ expect(screen.getByText(/last name/)).toBeInTheDocument();
+ expect(screen.getByRole('button',{name:'Post observation'})).toBeEnabled();
+});
+it('explicitly reuses a thread quote, but a new passage takes precedence',async()=>{
+ const submit=vi.fn().mockRejectedValue(Error('Keep draft'));
+ render(<DiscussionComposer storageKey="reply-quote" category="question" busy={false} onSubmit={submit} onCancel={()=>{}} parentQuote={{quotation:'Quoted passage',paragraph:2}}/>);
+ fireEvent.change(screen.getByRole('textbox',{name:'Your reply'}),{target:{value:'This suggests hesitation.'}});
+ fireEvent.click(screen.getByRole('checkbox'));
+ fireEvent.click(screen.getByRole('button',{name:'Post reply'}));
+ await waitFor(()=>expect(submit).toHaveBeenCalledWith(expect.objectContaining({useParentQuotation:true})));
+ fireEvent.change(screen.getByRole('textbox',{name:'Quotation'}),{target:{value:'A different passage'}});
+ fireEvent.click(screen.getByRole('button',{name:'Post reply'}));
+ await waitFor(()=>expect(submit).toHaveBeenLastCalledWith(expect.objectContaining({useParentQuotation:false,quotation:'A different passage'})));
+});
+
+it('live feed ranks nominated nested replies with their root context',()=>{
+ const base={category:'question',parentId:null,pinned:false,hidden:false,score:0,createdAt:'2026-09-01'} as ReadingDiscussionPost;
+ const posts=[{...base,id:'question',fireCount:1},{...base,id:'observation',category:'thought' as const},{...base,id:'reply',parentId:'observation'},{...base,id:'nested',parentId:'reply',fireCount:3},{...base,id:'quiet'}];
+ expect(discussionFeed(posts,true).map(p=>p.id)).toEqual(['observation','question']);
+ expect(discussionFeed(posts).map(p=>p.id)).toContain('quiet');
 });

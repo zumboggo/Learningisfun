@@ -97,3 +97,32 @@ Backend tests cover release boundaries, class separation, role denial, immediate
 visibility, replies, duplicate retries, upvotes, moderation, reporting and quote
 preservation. UI tests cover draft persistence, typing focus, quote copying and
 sorting. Existing TQE tests continue to validate legacy privacy projections.
+
+## Questions, observations, and live discussion
+
+The text discussion has one feed. Questions and observations start threads;
+replies develop either one. Observations use the existing `thought` category,
+and earlier thoughts/connections appear as observations without rewriting data.
+Question ballots and reply assignments still select only question roots. Each
+composer has a category-specific local draft and expandable original response
+models, including textual evidence, explanation, connections, complications,
+and referring to the author by last name. Models are optional guidance.
+
+Passage selection supports Question, Observation, and Reply in both readers.
+Replies may explicitly reuse the nearest ancestor's quotation; the backend
+copies that passage and paragraph as a snapshot. This also counts as a quoted
+reply under existing requirements. No new universal posting requirement is added.
+
+Upvotes remain independent from **🔥 Discuss live** nominations. Each person has
+one active nomination per text/class, movable to any visible root or reply.
+`nominateReadingDiscussion` stores a private hashed-user → post map in the
+existing server-only `reading_settings` JSON, under the workspace transaction
+guard. Clients receive only per-post totals and their own selection. Read-only
+accounts cannot nominate; hidden/withdrawn ancestors prevent nominations.
+No new collection or schema migration is needed. The live filter ranks threads
+by their nomination total and expands replies to retain their context.
+
+This is an invitation to oral discussion, not a score or endorsement. Teachers
+can keep the opening question-only by directing students to Ask a question,
+then invite observations/replies after prioritizing. The existing question
+ballot and manual-refresh behavior remain unchanged.

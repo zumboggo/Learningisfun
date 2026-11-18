@@ -187,3 +187,41 @@ test('ordinary class discussion links never read post history',async()=>{
  expect(result.readings[0]).not.toHaveProperty('questionCount');
  expect(db.listDocuments.mock.calls.some(c=>c[1]==='reading_posts')).toBe(false);
 });
+
+test('one private live nomination per person moves across questions, observations, and nested replies',async()=>{
+ const {call,storage,teacher}=harness();
+ await call(post('question','question'));const questionId=storage.reading_posts[0].$id;
+ await call(post('observation','thought'));const observationId=storage.reading_posts[1].$id;
+ await call(post('reply','thought',{parentId:observationId}));const replyId=storage.reading_posts[2].$id;
+ await call({action:'voteReadingDiscussion',postId:questionId,upvoted:true});
+ const nominate=postId=>call({action:'nominateReadingDiscussion',postId,nominated:true,userId:'impersonation'});
+ await nominate(questionId);await nominate(replyId);await nominate(replyId);
+ let read=await call({action:'readReadingDiscussion'});
+ expect(read.posts.find(p=>p.id===questionId)).toMatchObject({fireCount:0,nominated:false,score:1});
+ expect(read.posts.find(p=>p.id===replyId)).toMatchObject({fireCount:1,nominated:true});
+ expect(read).not.toHaveProperty('liveNominations');
+ await call({action:'nominateReadingDiscussion',postId:replyId,nominated:true},{userId:'peer',role:'student',classIds:['blue']});
+ expect((await call({action:'readReadingDiscussion'},teacher)).posts.find(p=>p.id===replyId)).toMatchObject({fireCount:2,nominated:false});
+ // Stale remove requests must not remove a nomination moved to another post.
+ await nominate(observationId);await call({action:'nominateReadingDiscussion',postId:replyId,nominated:false});
+ expect((await call({action:'readReadingDiscussion'})).posts.find(p=>p.id===observationId).nominated).toBe(true);
+ await Promise.all([nominate(questionId),nominate(replyId)]);
+ read=await call({action:'readReadingDiscussion'});expect(read.posts.filter(p=>p.nominated)).toHaveLength(1);
+ await call({action:'moderateReadingDiscussion',postId:observationId,operation:'hide'},teacher);
+ await expect(nominate(replyId)).rejects.toThrow();
+ expect((await call({action:'readReadingDiscussion'})).posts.some(p=>p.id===replyId)).toBe(false);
+ await expect(call({action:'nominateReadingDiscussion',postId:questionId,nominated:true},{userId:'parent',role:'parent',classIds:['blue']})).rejects.toThrow('read-only');
+ await expect(call({action:'nominateReadingDiscussion',postId:questionId,nominated:true,classId:'red'})).rejects.toThrow('Class access');
+});
+test('reply can explicitly reuse nearest ancestor quotation as a saved snapshot',async()=>{
+ const {call,storage}=harness();
+ await call(post('root','thought',{quotation:'Everyone nodded.',paragraph:2}));const root=storage.reading_posts[0].$id;
+ await call(post('reply','thought',{parentId:root}));const parent=storage.reading_posts[1].$id;
+ await call(post('quoted-reply','thought',{parentId:parent,useParentQuotation:true,quotation:'Forged quote',paragraph:9}));
+ const reply=(await call({action:'readReadingDiscussion'})).posts.find(p=>p.parentId===parent);
+ expect(reply).toMatchObject({quotation:'Everyone nodded.',paragraph:2});
+ const original=(await call({action:'readReadingDiscussion'})).posts.find(p=>p.id===root);
+ await call({action:'editReadingDiscussion',postId:root,expectedUpdatedAt:original.createdAt,content:'Revised',quotation:'New words',paragraph:3});
+ expect((await call({action:'readReadingDiscussion'})).posts.find(p=>p.id===reply.id).quotation).toBe('Everyone nodded.');
+ await expect(call(post('invalid','thought',{useParentQuotation:true}))).rejects.toThrow('no quotation');
+});

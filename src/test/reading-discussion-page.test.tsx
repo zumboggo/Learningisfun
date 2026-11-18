@@ -82,13 +82,13 @@ it('focus and elapsed time update no server data until manual refresh',async()=>
  vi.useRealTimers();fireEvent.click(screen.getByRole('button',{name:'Refresh discussion'}));await waitFor(()=>expect(readCount()).toBe(before+1));
 });
 
-it.each(['question','reply'])('accepts a %s quote passed from the Texts reader',async(destination)=>{
+it.each(['question','observation','reply'])('accepts a %s quote passed from the Texts reader',async(destination)=>{
  render(<MemoryRouter initialEntries={[{pathname:'/discussions/texts/text/blue',state:{selectedQuote:{quotation:'A selected passage.',paragraph:4,token:'reader-selection',destination}}}]}><Routes><Route path="/discussions/texts/:textId/:classId" element={<ReadingDiscussionPage/>}/></Routes></MemoryRouter>);
  await screen.findByRole('heading',{name:'Reading example',level:1});
  if(destination==='reply')fireEvent.click(screen.getByRole('button',{name:'Reply'}));
- const form=screen.getByRole('textbox',{name:destination==='question'?'Your question':'Your reply'}).closest('form')!;
+ const form=screen.getByRole('textbox',{name:`Your ${destination}`}).closest('form')!;
  await waitFor(()=>expect(form.querySelector('textarea[aria-label="Quotation"]')).toHaveValue('A selected passage.'));
- expect(form.querySelector('blockquote')).toHaveClass('reading-quote');
+ expect(form.querySelector('blockquote.reading-quote')).toHaveClass('reading-quote');
  expect(form.querySelector('input[type="number"]')).toHaveValue(4);
 });
 
@@ -107,4 +107,26 @@ it('does not offer rhetorical practice in other courses or read-only discussions
  expect(screen.queryByRole('button',{name:/Rhetorical Situation/})).not.toBeInTheDocument();first.unmount();
  fixture.canWrite=false;mount(apClassId);await screen.findByRole('heading',{name:'Reading example',level:1});
  expect(screen.queryByRole('button',{name:/Rhetorical Situation/})).not.toBeInTheDocument();
+});
+
+it('keeps separate question and observation drafts in one shared discussion',async()=>{
+ mount();await screen.findByRole('textbox',{name:'Your question'});
+ fireEvent.change(screen.getByRole('textbox',{name:'Your question'}),{target:{value:'Why the silence?'}});
+ fireEvent.click(screen.getByRole('button',{name:'Share an observation'}));
+ fireEvent.change(screen.getByRole('textbox',{name:'Your observation'}),{target:{value:'The silence feels uncertain.'}});
+ fireEvent.click(screen.getByRole('button',{name:'Ask a question'}));
+ expect(screen.getByRole('textbox',{name:'Your question'})).toHaveValue('Why the silence?');
+ fireEvent.click(screen.getByRole('button',{name:'Share an observation'}));
+ expect(screen.getByRole('textbox',{name:'Your observation'})).toHaveValue('The silence feels uncertain.');
+ fireEvent.click(screen.getByRole('button',{name:'Post observation'}));
+ await waitFor(()=>expect(executeLearningContent).toHaveBeenCalledWith(expect.objectContaining({action:'postReadingDiscussion',category:'thought',content:'The silence feels uncertain.'})));
+});
+it('nominates independently of upvotes and explains the empty live discussion filter',async()=>{
+ mount();await screen.findByRole('textbox',{name:'Your question'});
+ fireEvent.click(screen.getByRole('button',{name:'Nominate for live discussion: 0'}));
+ await waitFor(()=>expect(executeLearningContent).toHaveBeenCalledWith(expect.objectContaining({action:'nominateReadingDiscussion',postId:'q',nominated:true})));
+ fireEvent.click(screen.getByRole('button',{name:'🔥 Discuss live'}));
+ expect(screen.getByText(/No live nominations yet/)).toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'All posts'}));
+ expect(screen.getByText('Why does the narrator change?')).toBeInTheDocument();
 });

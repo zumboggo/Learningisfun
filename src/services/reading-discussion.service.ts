@@ -4,7 +4,7 @@ export const readingCategories: Record<ReadingCategory, string> = { thought: 'Th
 export interface ReadingDiscussionPost {
   id: string; parentId: string|null; category: ReadingCategory; content: string; quotation: string; paragraph: number|null;
   label: string; teacher: boolean; mine: boolean; authorId?: string; username?: string; createdAt: string; updatedAt?: string;
-  everReplied?:boolean; withdrawn?:boolean; hidden: boolean; locked: boolean; pinned: boolean; score: number; voted: boolean; reports?: {id:string;reason:string}[];
+  fireCount?:number; nominated?:boolean; everReplied?:boolean; withdrawn?:boolean; hidden: boolean; locked: boolean; pinned: boolean; score: number; voted: boolean; reports?: {id:string;reason:string}[];
 }
 export interface ReplyAssignment {studentId:string;questionId:string|null;status:'pending'|'completed'|'cancelled'|'gap';roundId?:string;createdAt?:string;replyId?:string;cancelledReason?:string}
 export interface QuestionVoting {
@@ -22,7 +22,7 @@ export interface ReadingDiscussion {
   title:string; className:string; teacher:boolean; showStudentNames?:boolean; canWrite:boolean; posts:ReadingDiscussionPost[];
   participation:{id:string;name:string;thought:number;question:number;connection:number;replies:number;quotedReplies?:number}[];
 }
-export interface ReadingDiscussionListing { id:string;textId:string;classId:string;title:string;className:string;date:string;available:boolean;questionCount?:number;replyCount?:number }
+export interface ReadingDiscussionListing { id:string;textId:string;classId:string;title:string;className:string;date:string;available:boolean;questionCount?:number;replyCount?:number;observationCount?:number }
 export const readingDiscussion = <T>(action:string, textId:string, classId:string, fields:Record<string,unknown>={}) => executeLearningContent<T>({action,textId,classId,...fields});
 export function readingWeek(date:string):string {
   const d = new Date(`${date.slice(0,10)}T12:00:00Z`);
@@ -45,7 +45,7 @@ export function currentReadingWeek(now = new Date()) {
   return readingWeek(schoolDate);
 }
 
-export const hasReadingDiscussionActivity=(row:ReadingDiscussionListing)=>(row.questionCount||0)+(row.replyCount||0)>0;
+export const hasReadingDiscussionActivity=(row:ReadingDiscussionListing)=>(row.questionCount||0)+(row.replyCount||0)+(row.observationCount||0)>0;
 
 export type DiscussionTarget = {kind:'text';textId:string;classId:string}|{kind:'writing';sessionId:string};
 export const discussionCall = <T>(action:string,target:DiscussionTarget,fields:Record<string,unknown>={}) => target.kind==='text'
@@ -54,4 +54,18 @@ export const discussionCall = <T>(action:string,target:DiscussionTarget,fields:R
 
 export function readingCompletion(counts:ReadingDiscussion['participation'][number], requirements:ReadingRequirements) {
   return counts.question>=requirements.questions && (requirements.replyQuoteRequired?(counts.quotedReplies||0):counts.replies)>=requirements.replies;
+}
+
+// Keep nominated replies in their thread context, including nested replies.
+export function discussionFeed(posts: ReadingDiscussionPost[], liveOnly=false) {
+  const byId=new Map(posts.map(post=>[post.id,post]));
+  const counts=new Map<string,number>();
+  for(const post of posts) {
+    if(!post.fireCount||post.hidden)continue;
+    let root=post; const seen=new Set<string>();
+    while(root.parentId&&byId.has(root.parentId)&&!seen.has(root.id)){seen.add(root.id);root=byId.get(root.parentId)!;}
+    if(!root.hidden)counts.set(root.id,(counts.get(root.id)||0)+post.fireCount);
+  }
+  return posts.filter(post=>!post.parentId&&(!liveOnly||counts.has(post.id)))
+    .sort((a,b)=>(liveOnly?(counts.get(b.id)||0)-(counts.get(a.id)||0):0)||Number(b.pinned)-Number(a.pinned)||b.score-a.score||b.createdAt.localeCompare(a.createdAt));
 }
