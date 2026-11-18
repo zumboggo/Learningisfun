@@ -2,6 +2,8 @@
 
 Students learn from a model essay by copying four paragraphs by hand, noticing the writer’s choices, and then writing two original paragraphs that extend its thinking. They annotate the moves they use and submit the six-paragraph piece as a PDF. The assignment below shows the full instructions, writing-and-thinking-moves menu, and grading rubric. This is a classroom example for Workshop participants to explore.
 
+**A note on handwriting and AI:** A student could still use AI to generate the original paragraphs. Even then, handwriting the whole essay, identifying writing moves, and explaining what they notice and what their own paragraphs are doing can still support learning. That benefit depends on attending to the language and ideas rather than copying mechanically, and it is much smaller than the benefit of developing the thinking and writing themselves.
+
 ## Current Canvas assignment
 
 Assignment wording reproduced from [Copywork Analysis - Nov 6th](https://lifeplus.instructure.com/courses/21695/assignments/784829), checked November 18, 2026. For this Workshop, the model essay links below have been updated to **Please Stop Improving My Life**.

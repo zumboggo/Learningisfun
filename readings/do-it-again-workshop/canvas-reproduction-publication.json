@@ -3,8 +3,8 @@
     {
       "id": "ws26-rubric",
       "title": "David’s Copywork Analysis Portfolio: Assignment and Rubric",
-      "paragraphs": 49,
-      "sha256": "c3e8dccf27d7da01d3d0b23c623760df35c0be36458e56a3785754979d98d543",
+      "paragraphs": 50,
+      "sha256": "a777be583310212b33533233bec56009e42f36831daef0e182cf7faf79787975",
       "assignments": [
         {
           "id": "ws26-rubric-assignment",
@@ -15,7 +15,7 @@
           "isCopywork": false
         }
       ],
-      "verifiedAt": "2026-11-18T02:56:33.529Z"
+      "verifiedAt": "2026-11-18T03:01:38.242Z"
     }
   ],
   "verifiedImages": 0
