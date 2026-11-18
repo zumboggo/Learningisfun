@@ -4,11 +4,13 @@ Students learn from a model essay by copying four paragraphs by hand, noticing t
 
 ## Current Canvas assignment
 
-Reproduced from [Copywork Analysis - Nov 6th](https://lifeplus.instructure.com/courses/21695/assignments/784829), checked November 18, 2026.
+Assignment wording reproduced from [Copywork Analysis - Nov 6th](https://lifeplus.instructure.com/courses/21695/assignments/784829), checked November 18, 2026. For this Workshop, the model essay links below have been updated to **Please Stop Improving My Life**.
 
 ## Copywork Analysis Portfolio
 
-[Copywork Essay - The Alchemist - What Success Cannot Tell Us.pdf](https://lifeplus.instructure.com/courses/21695/files/4118700?wrap=1)
+**[Read the model essay: Please Stop Improving My Life](https://zumboggo.github.io/Learningisfun/#/texts/cw_enough_20261106?workshop=5a726282-4771-4774-8213-d9329c124bbc)**
+
+Available here in Learning is Fun for Workshop participants, with writerly-move notes and the original annotated PDF.
 
 Study how a strong essay works, then extend its argument or inquiry with two paragraphs of your own.
 
@@ -105,9 +107,9 @@ Submit your handwritten work as **one clear, readable PDF**, with all pages in o
 
 You do not need to add more moves to earn the final point. It comes from the quality and depth of your thinking.
 
-### Model essay for October 26–30
+### Workshop model essay
 
-[What Success Cannot Tell Us — The Alchemist](https://zumboggo.github.io/Learningisfun/#/texts/cw_alchemist_20261026?classId=09d7f0a7-4c29-462c-820f-e11ea914d375)
+**[Please Stop Improving My Life — The Alchemist and Chesterton](https://zumboggo.github.io/Learningisfun/#/texts/cw_enough_20261106?workshop=5a726282-4771-4774-8213-d9329c124bbc)**
 
 Sign in with your class account. The reading includes the essay, writerly-move notes, and the original annotated PDF.
 

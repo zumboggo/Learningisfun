@@ -6,7 +6,7 @@
     "source": "Canvas assignment 21695/784829, verified November 18, 2026; exact assignment wording and rubric with brief Workshop introduction.",
     "status": "published",
     "createdAt": "2026-11-13T12:00:00+08:00",
-    "updatedAt": "2026-11-18T02:49:57.615Z",
+    "updatedAt": "2026-11-18T02:50:19.208Z",
     "contentMode": "full",
     "externalUrl": "",
     "originalPdfId": null,
@@ -16,7 +16,7 @@
     "$sequence": "124",
     "$id": "ws26-rubric",
     "$createdAt": "2026-11-13T07:54:18.992+00:00",
-    "$updatedAt": "2026-11-18T02:49:59.208+00:00",
+    "$updatedAt": "2026-11-18T02:50:20.770+00:00",
     "$permissions": [],
     "$databaseId": "main",
     "$collectionId": "texts"
@@ -145,7 +145,7 @@
     {
       "id": "ws26-rubric-p24",
       "sortOrder": 24,
-      "content": "- Name the author when the source would otherwise be unclear. \n- Describe what the author is doing when that helps your analysis. \n- Place your explanation before or after the quotation, wherever it makes most sense. \n- Make the connection to the paragraph’s claim and the essay’s thesis clear. You do not need to restate the thesis after every quotation."
+      "content": "- Name the author when the source would otherwise be unclear.\n- Describe what the author is doing when that helps your analysis.\n- Place your explanation before or after the quotation, wherever it makes most sense.\n- Make the connection to the paragraph’s claim and the essay’s thesis clear. You do not need to restate the thesis after every quotation."
     },
     {
       "id": "ws26-rubric-p25",
@@ -220,7 +220,7 @@
     {
       "id": "ws26-rubric-p39",
       "sortOrder": 39,
-      "content": "- **9/10 guaranteed:** Meet all six core requirements and successfully demonstrate a minimum of two distinct writing and thinking moves. \n- **10/10:** Meet those requirements and develop an especially perceptive, well-supported insight in your original paragraphs."
+      "content": "- **9/10 guaranteed:** Meet all six core requirements and successfully demonstrate a minimum of two distinct writing and thinking moves.\n- **10/10:** Meet those requirements and develop an especially perceptive, well-supported insight in your original paragraphs."
     },
     {
       "id": "ws26-rubric-rev-p40",

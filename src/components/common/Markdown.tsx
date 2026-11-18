@@ -110,16 +110,16 @@ function renderBlocks(content: string, preserveLineBreaks = false): ReactNode[] 
       continue;
     }
 
-    const heading = /^(#{1,3})\s+(.+)$/.exec(trimmed);
+    const heading = /^(#{1,6})\s+(.+)$/.exec(trimmed);
     if (heading) {
       const level = heading[1].length;
       const text = heading[2];
       const classes = level === 1
-        ? 'text-2xl font-bold'
+        ? 'text-[1.5em] font-bold'
         : level === 2
-          ? 'text-xl font-semibold'
-          : 'text-lg font-semibold';
-      const Tag = (`h${level}` as 'h1' | 'h2' | 'h3');
+          ? 'text-[1.3em] font-semibold'
+          : 'text-[1.15em] font-semibold';
+      const Tag = (`h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6');
       blocks.push(
         <Tag key={`h-${index}`} className={classes}>
           {renderInline(text, `h-${index}`)}
@@ -132,7 +132,7 @@ function renderBlocks(content: string, preserveLineBreaks = false): ReactNode[] 
     const paragraph: string[] = [];
     while (index < lines.length) {
       const next = lines[index].trim();
-      if (!next || next.startsWith('- ') || next.startsWith('* ') || next.startsWith('>') || /^\d+\.\s+/.test(next) || /^#{1,3}\s+/.test(next)) break;
+      if (!next || next.startsWith('- ') || next.startsWith('* ') || next.startsWith('>') || /^\d+\.\s+/.test(next) || /^#{1,6}\s+/.test(next)) break;
       paragraph.push(next);
       index += 1;
     }
