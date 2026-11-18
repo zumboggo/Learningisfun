@@ -31,7 +31,7 @@ export function TextReaderPage({publicReading}:{publicReading?:PublicReading}={}
   const shell=useRef<HTMLDivElement>(null);
   const [fullscreen,setFullscreen]=useState(false),[fullscreenError,setFullscreenError]=useState('');
   useEffect(()=>{const changed=()=>setFullscreen(document.fullscreenElement===shell.current);document.addEventListener('fullscreenchange',changed);return()=>document.removeEventListener('fullscreenchange',changed);},[]);
-  const [mode,setMode]=useState<'article'|'original'>('article'),[panel,setPanel]=useState<ReaderPanel>(null),[fontSize,setFontSize]=useState(22);
+  const [mode,setMode]=useState<'article'|'original'>(()=>search.get('view')==='original'?'original':'article'),[panel,setPanel]=useState<ReaderPanel>(null),[fontSize,setFontSize]=useState(22);
   const [level,setLevel]=useState<'original'|TextSupportLevel>('original'),[compare,setCompare]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState('');
   const cachedText=useLiveQuery(()=>textId&&!publicReading?db.texts.get(textId):undefined,[textId,publicReading]);
   const text=publicReading?.text||cachedText;

@@ -1,6 +1,6 @@
 # David’s Copywork Analysis Portfolio: Assignment and Rubric
 
-Students learn from a model essay by copying four paragraphs by hand, noticing the writer’s choices, and then writing two original paragraphs that extend its thinking. They annotate the moves they use and submit the six-paragraph piece as a PDF. The assignment below shows the full instructions, writing-and-thinking-moves menu, and grading rubric. This is a classroom example for Workshop participants to explore.
+Students learn from a model essay by copying paragraphs by hand, noticing the writer’s choices, and writing original paragraphs that extend its thinking. The six-paragraph assignment gradually builds towards independence: **Quarter 1: five copied paragraphs and one original; Quarter 2: four copied and two original; second semester: three copied and three original.** Students annotate the moves they use and submit the whole piece as a PDF. The current Quarter 2 assignment below shows the full instructions, writing-and-thinking-moves menu, and grading rubric. This is a classroom example for Workshop participants to explore.
 
 **A note on handwriting and AI:** A student could still use AI to generate the original paragraphs. Even then, handwriting the whole essay, identifying writing moves, and explaining what they notice and what their own paragraphs are doing can still support learning. That benefit depends on attending to the language and ideas rather than copying mechanically, and it is much smaller than the benefit of developing the thinking and writing themselves.
 
@@ -10,9 +10,9 @@ Assignment wording reproduced from [Copywork Analysis - Nov 6th](https://lifeplu
 
 ## Copywork Analysis Portfolio
 
-**[Read the model essay: Please Stop Improving My Life](https://zumboggo.github.io/Learningisfun/#/texts/cw_enough_20261106?workshop=5a726282-4771-4774-8213-d9329c124bbc)**
+**[View the annotated PDF: Please Stop Improving My Life](https://zumboggo.github.io/Learningisfun/#/texts/cw_enough_20261106?view=original&workshop=5a726282-4771-4774-8213-d9329c124bbc)**
 
-Available here in Learning is Fun for Workshop participants, with writerly-move notes and the original annotated PDF.
+The link opens the original annotated PDF in Learning is Fun, showing the same handout layout and writerly-move notes students receive.
 
 Study how a strong essay works, then extend its argument or inquiry with two paragraphs of your own.
 
@@ -111,7 +111,7 @@ You do not need to add more moves to earn the final point. It comes from the qua
 
 ### Workshop model essay
 
-**[Please Stop Improving My Life — The Alchemist and Chesterton](https://zumboggo.github.io/Learningisfun/#/texts/cw_enough_20261106?workshop=5a726282-4771-4774-8213-d9329c124bbc)**
+**[Please Stop Improving My Life — The Alchemist and Chesterton](https://zumboggo.github.io/Learningisfun/#/texts/cw_enough_20261106?view=original&workshop=5a726282-4771-4774-8213-d9329c124bbc)**
 
 Sign in with your class account. The reading includes the essay, writerly-move notes, and the original annotated PDF.
 

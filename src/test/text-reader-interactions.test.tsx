@@ -2,15 +2,15 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { TextReaderPage } from '@/pages/TextReaderPage';
 import type { ReactNode } from 'react';
-const course = vi.hoisted(()=>({name:'Literature',assigned:true}));
-beforeEach(()=>{course.name='Literature';course.assigned=true;});
+const course = vi.hoisted(()=>({name:'Literature',assigned:true,search:''}));
+beforeEach(()=>{course.name='Literature';course.assigned=true;course.search='';});
 const notes = vi.hoisted(()=>[{$id:'note',textId:'text',classId:'class',paragraphId:'p1',authorId:'student',anonymousLabel:'Reader',type:'observation',content:'The contrast suggests that the narrator feels uncertain about the journey.',selectedText:'quiet light',kind:'annotation',visibility:'class',moderationStatus:'visible',createdAt:'2026-09-10T01:00:00Z'}]);
-vi.mock('react-router-dom',()=>({useNavigate:()=>vi.fn(),useParams:()=>({textId:'text'}),useSearchParams:()=>[new URLSearchParams(),vi.fn()],Link:({children,to}:{children:ReactNode;to:string})=><a href={to}>{children}</a>}));
+vi.mock('react-router-dom',()=>({useNavigate:()=>vi.fn(),useParams:()=>({textId:'text'}),useSearchParams:()=>[new URLSearchParams(course.search),vi.fn()],Link:({children,to}:{children:ReactNode;to:string})=><a href={to}>{children}</a>}));
 vi.mock('@/contexts/AuthContext',()=>({useAuth:()=>({user:{$id:'student'},isTeacher:false,isParent:false})}));
 vi.mock('@/services/sync-policy',()=>({runCachedSync:vi.fn()}));
 vi.mock('dexie-react-hooks',()=>({useLiveQuery:(fn:()=>unknown)=>{
   const code=fn.toString();
-  if(code.includes('db.texts.get'))return {$id:'text',title:'The road beyond the window',author:'A reading sample',annotationMode:'regular',contentMode:'full',status:'published'};
+  if(code.includes('db.texts.get'))return {$id:'text',title:'The road beyond the window',author:'A reading sample',annotationMode:'regular',contentMode:'full',status:'published',originalPdfId:'pdf'};
   if(code.includes('db.text_paragraphs'))return [{$id:'p1',textId:'text',sortOrder:0,content:'There was a **quiet light** over the hills that morning. The path curved away from the house, towards a place she had only imagined. She stood at the window and wondered whether leaving was another way of coming home.'},{$id:'p2',textId:'text',sortOrder:1,content:'Outside, the trees moved slowly in the wind. Nothing hurried her, and yet everything seemed to be waiting. She opened the door.'}];
   if(code.includes('db.classes.bulkGet'))return [{$id:'class',courseName:course.name,name:'Blue'}];
   if(code.includes('[textId+classId]'))return {isAssignedReading:course.assigned};
@@ -43,4 +43,14 @@ it('offers rhetorical practice only for AP Language assigned readings',()=>{
 });
 it('keeps rhetorical practice out of other subjects',()=>{
  render(<TextReaderPage/>);expect(screen.queryByRole('button',{name:/Rhetorical Situation/})).not.toBeInTheDocument();
+});
+
+vi.mock('@/components/texts/OriginalPdf',()=>({OriginalPdf:()=> <div>Annotated PDF preview</div>}));
+it('opens a direct original-view link in PDF mode and still allows article mode',()=>{
+ course.search='view=original';
+ render(<TextReaderPage/>);
+ expect(screen.getByText('Annotated PDF preview')).toBeInTheDocument();
+ expect(screen.queryByLabelText('Reading text')).not.toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'Article Mode'}));
+ expect(screen.getByLabelText('Reading text')).toBeInTheDocument();
 });
