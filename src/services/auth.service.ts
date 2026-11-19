@@ -1,4 +1,4 @@
-import { account } from '@/lib/appwrite';
+import { account, functions } from '@/lib/appwrite';
 import { executeLearningContent } from './learning-content.service';
 import { db, selectAccountDatabase, selectGuestDatabase, SIGN_OUT_LOCK } from '@/db/schema';
 import { generateDeviceId, getTimestamp } from '@/utils/helpers';
@@ -7,11 +7,18 @@ import { ID } from 'appwrite';
 
 export const UNCONFIRMED_SIGN_OUT = 'learning-unconfirmed-sign-out';
 
-export async function register(email: string, password: string, name: string, role: UserRole = 'student'): Promise<User> {
+export async function register(email: string, password: string, name: string, role: UserRole = 'student', joinCode?: string): Promise<User> {
   if (role !== 'student') throw new Error('Teacher accounts must be provisioned by an administrator.');
   const lock = localStorage.getItem(SIGN_OUT_LOCK);
   await clearAnyExistingSession();
-  await account.create(ID.unique(), email, password, name);
+  let created = false;
+  if (joinCode) {
+    const execution = await functions.createExecution('workshop-signup', JSON.stringify({joinCode, email, password, name}));
+    const result = JSON.parse(execution.responseBody || '{}');
+    if (result.error) throw new Error(result.error);
+    created = result.created === true;
+  }
+  if (!created) await account.create(ID.unique(), email, password, name);
   const session = await account.createEmailPasswordSession(email, password);
   return completeSignIn(session.userId, lock);
 }

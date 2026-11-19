@@ -77,7 +77,7 @@ describe('JoinClassPage', () => {
     await user.type(screen.getByLabelText('Password'), 'password123');
     await user.click(screen.getByRole('button', { name: 'Create account & join' }));
 
-    await waitFor(() => expect(register).toHaveBeenCalledWith('sam@example.com', 'password123', 'Sam', 'student'));
+    await waitFor(() => expect(register).toHaveBeenCalledWith('sam@example.com', 'password123', 'Sam', 'student', 'ABC123'));
     expect(joinClass).toHaveBeenCalledWith('student-1', 'ABC123', 'student');
     expect(navigate).toHaveBeenCalledWith('/dashboard', { replace: true });
   });
@@ -183,7 +183,7 @@ describe('JoinClassPage', () => {
     expect(await screen.findByText(/Joining .* as a parent observer/)).toBeInTheDocument();
     expect(screen.getByLabelText('Parent code')).toHaveValue('ABC123');
     await user.type(screen.getByLabelText('Nickname'),'Pat'); await user.type(screen.getByLabelText('Email'),'pat@example.com'); await user.type(screen.getByLabelText('Password'),'password123'); await user.click(screen.getByRole('button',{name:'Create account & join'}));
-    await waitFor(()=>expect(register).toHaveBeenCalledWith('pat@example.com','password123','Pat','parent'));
+    await waitFor(()=>expect(register).toHaveBeenCalledWith('pat@example.com','password123','Pat','parent','ABC123'));
     expect(joinClass).toHaveBeenCalledWith('student-1','ABC123','parent');
   });
 
@@ -193,7 +193,7 @@ describe('JoinClassPage', () => {
     await user.click(screen.getByRole('button',{name:'Substitute'}));
     expect(await screen.findByText(/temporary substitute/)).toBeInTheDocument();
     await user.type(screen.getByLabelText('Nickname'),'Ms Lee'); await user.type(screen.getByLabelText('Email'),'lee@example.com'); await user.type(screen.getByLabelText('Password'),'password123'); await user.click(screen.getByRole('button',{name:'Create account & join'}));
-    await waitFor(()=>expect(register).toHaveBeenCalledWith('lee@example.com','password123','Ms Lee','substitute'));
+    await waitFor(()=>expect(register).toHaveBeenCalledWith('lee@example.com','password123','Ms Lee','substitute','ABC123'));
     expect(joinClass).toHaveBeenCalledWith('student-1','ABC123','substitute');
   });
 });
