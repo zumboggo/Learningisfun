@@ -23,7 +23,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<User>;
-  register: (email: string, password: string, name: string, role?: UserRole, joinCode?: string) => Promise<User>;
+  register: (email: string, password: string, name: string, role?: UserRole) => Promise<User>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   viewAsStudent: boolean;
@@ -218,8 +218,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return u;
   }, [syncUserData]);
 
-  const registerHandler = useCallback(async (email: string, password: string, name: string, role?: UserRole, joinCode?: string) => {
-    const u = await authService.register(email, password, name, role || 'student', joinCode);
+  const registerHandler = useCallback(async (email: string, password: string, name: string, role?: UserRole) => {
+    const u = await authService.register(email, password, name, role || 'student');
     setUser(u);
     syncService.setupSyncListeners();
     void syncUserData(u.$id);

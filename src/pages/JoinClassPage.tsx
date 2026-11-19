@@ -98,7 +98,7 @@ export function JoinClassPage() {
     setSubmitting(true);
     try {
       const account = mode === 'signup'
-        ? await register(email, password, name, joinRole, code)
+        ? await register(email, password, name, joinRole)
         : await login(email, password);
       await enrol(account.$id);
     } catch (err) {
