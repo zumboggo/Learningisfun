@@ -32,6 +32,7 @@ export function QuestionVoting({ data, busy, mutate }: { data: ReadingDiscussion
     </Modal>
   </section>;
   if (!voting || !data.canWrite) return null;
+  if (!voting.active || voting.completed) return <details className="discussion-voting-summary"><summary>{voting.active?'Voting complete':'Voting ended'}</summary><p>You chose {voting.choices?.length || 0} questions. Your choices help guide your teacher’s next assignments.</p></details>;
   const options = (voting.questionIds || []).flatMap(id => {
     const post = data.posts.find(p => p.id === id); return post ? [post] : [];
   });

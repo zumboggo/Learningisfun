@@ -66,6 +66,6 @@ export function discussionFeed(posts: ReadingDiscussionPost[], liveOnly=false) {
     while(root.parentId&&byId.has(root.parentId)&&!seen.has(root.id)){seen.add(root.id);root=byId.get(root.parentId)!;}
     if(!root.hidden)counts.set(root.id,(counts.get(root.id)||0)+post.fireCount);
   }
-  return posts.filter(post=>!post.parentId&&(!liveOnly||counts.has(post.id)))
-    .sort((a,b)=>(liveOnly?(counts.get(b.id)||0)-(counts.get(a.id)||0):0)||Number(b.pinned)-Number(a.pinned)||b.score-a.score||b.createdAt.localeCompare(a.createdAt));
+  return posts.filter(post=>!post.parentId)
+    .sort((a,b)=>(liveOnly?(counts.get(b.id)||0)-(counts.get(a.id)||0):Number(b.pinned)-Number(a.pinned))||b.score-a.score||b.createdAt.localeCompare(a.createdAt));
 }

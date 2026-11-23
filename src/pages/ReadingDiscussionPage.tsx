@@ -12,7 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/common/Button';
 import { ParallelReading } from '@/components/texts/ParallelReading';
 import '@/components/texts/reading-discussion.css';
-import { readingDiscussion, sortedReadingPosts, discussionFeed, type ReadingDiscussion } from '@/services/reading-discussion.service';
+import { readingDiscussion, discussionFeed, type ReadingDiscussion } from '@/services/reading-discussion.service';
 
 export function ReadingDiscussionPage() {
   const {textId='',classId=''}=useParams();
@@ -26,6 +26,7 @@ function DiscussionWorkspace({textId,classId}:{textId:string;classId:string}) {
   useEffect(()=>{if(incomingQuote)navigate(location.pathname+location.search,{replace:true,state:null});},[incomingQuote,location.pathname,location.search,navigate]);
   const [category,setCategory]=useState<'question'|'thought'>(incomingQuote?.destination==='observation'?'thought':'question');
   const [liveOnly,setLiveOnly]=useState(false);
+  const [composerOpen,setComposerOpen]=useState(Boolean(incomingQuote && incomingQuote.destination!=='reply'));
   const [anonymous,setAnonymous]=useState(()=>{try{return localStorage.getItem('teacher-anonymous:'+classId)==='true';}catch{return false;}});
   const [data,setData]=useState<ReadingDiscussion>(),[error,setError]=useState(''),[busy,setBusy]=useState(false),[view,setView]=useState<'text'|'discussion'|'parallel'>('parallel');
   const [activeReply,setActiveReply]=useState<string|null>(null),[pendingQuote,setPendingQuote]=useState<{quotation:string;paragraph:number;token:string}|undefined>(incomingQuote?.destination==='reply'?incomingQuote:undefined);
@@ -82,36 +83,45 @@ function DiscussionWorkspace({textId,classId}:{textId:string;classId:string}) {
   const votedPosts=data.posts.map(post => Object.prototype.hasOwnProperty.call(optimisticVotes,post.id)
     ? {...post,voted:optimisticVotes[post.id],score:post.score+Number(optimisticVotes[post.id])-Number(post.voted)} : post);
   const visiblePosts=votedPosts;
-  const roots=sortedReadingPosts(visiblePosts,'question','top');
   const shown=discussionFeed(visiblePosts,liveOnly);
   const readUrl=`/texts/${textId}?classId=${encodeURIComponent(classId)}`;
   return <div className={`reading-discussion ${view==='parallel'?'reading-parallel':''} mx-auto space-y-3 p-4 sm:p-5`}>
-    <header className="mb-3 space-y-2"><div className="flex flex-wrap items-center justify-between gap-2"><Link to="/discussions" className="text-sm text-slate-600">← Discussions</Link><div className="flex flex-wrap gap-2"><div className="reading-view-toggle" role="group" aria-label="Reading view">{([['text','Text only'],['discussion','Discussion only'],['parallel','Parallel']] as const).map(([mode,label])=><button key={mode} type="button" aria-pressed={view===mode} onClick={()=>setView(mode)}>{label}</button>)}</div><div className="flex flex-wrap items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 p-2"><Button size="lg" disabled={busy||refreshing} onClick={()=>void refresh()}>{refreshing?'Refreshing…':'Refresh discussion'}</Button><span className="text-sm text-slate-600">{refreshedAt?`Updated ${Math.floor((clock-refreshedAt)/60000)<1?'just now':Math.floor((clock-refreshedAt)/60000)+' minutes ago'}`:'Not refreshed yet'} · Manual refresh</span></div><PresentQuestions picker={data.teacher ? {classId,students:data.participation} : undefined} questions={roots.filter(p=>!p.hidden).map(p=>p.content)} /></div></div><p className="text-sm text-slate-500">{data.className}</p><h1 className="font-serif text-3xl text-slate-900">{data.title}</h1><Link to={readUrl} className="inline-flex min-h-11 items-center rounded-xl bg-blue-50 px-4 font-semibold text-blue-800">Read text →</Link></header>
+    <header className="discussion-header">
+      <div className="discussion-breadcrumb"><Link to="/discussions">← Discussions</Link><span>{data.className}</span></div>
+      <div className="discussion-title-row"><h1>{data.title}</h1><div className="reading-view-toggle" role="group" aria-label="Reading view">{([['text','Text'],['discussion','Discussion'],['parallel','Parallel']] as const).map(([mode,label])=><button key={mode} type="button" aria-pressed={view===mode} onClick={()=>setView(mode)}>{label}</button>)}</div></div>
+      <div className="discussion-toolbar"><Link to={readUrl}>Open reading ↗</Link><div className="discussion-toolbar-actions"><button className="discussion-quiet-button" aria-label="Refresh discussion" disabled={busy||refreshing} onClick={()=>void refresh()}>{refreshing?'Refreshing…':'↻ Refresh'}</button><span className="discussion-updated">{refreshedAt?`Updated ${Math.floor((clock-refreshedAt)/60000)<1?'just now':Math.floor((clock-refreshedAt)/60000)+' minutes ago'}`:'Not refreshed yet'}</span><PresentQuestions picker={data.teacher ? {classId,students:data.participation} : undefined} questions={shown.filter(p=>!p.hidden).map(p=>p.content)} /></div></div>
+    </header>
     {user&&data.canWrite&&isApLanguageCourse(data.className,classId)&&<RhetoricalSituation key={`${user.$id}:${textId}:${classId}`} textId={textId} classId={classId}/>}
-    {data.teacher&&<details className="reading-settings"><summary>Teacher settings</summary>    {data.teacher&&<label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={anonymous} onChange={e=>{setAnonymous(e.target.checked);try{localStorage.setItem('teacher-anonymous:'+classId,String(e.target.checked));}catch{/* session preference still works */}}}/>Anonymous names in my view</label>}
+    <p className="discussion-privacy">{data.showStudentNames?'Classmates can see usernames on posts and replies.':'Posts and replies are anonymous to classmates. Your teacher can see who wrote them.'}</p>
+    {error&&<p role="alert" className="rounded-xl bg-red-50 p-3 text-red-800">{error}</p>}
+    <div className="reading-columns">
+    <div hidden={view==='discussion'}><ParallelReading textId={textId} classId={classId} onUseQuote={data.canWrite?(quote,destination)=>{const selected={...quote,token:crypto.randomUUID()};if(destination!=='reply'){setCategory(destination==='observation'?'thought':'question');setQuestionQuote(selected);setComposerOpen(true);}else{setPendingQuote(selected);}if(view==='text')setView('parallel');requestAnimationFrame(()=>document.querySelector<HTMLTextAreaElement>(`textarea[aria-label="Your ${destination}"]`)?.focus());}:undefined}/></div>
+    <section hidden={view==='text'} className="reading-conversation" aria-label="Questions, observations, and replies">
+    <div className="reading-feed-heading"><h2>Discussion <span>{visiblePosts.filter(p=>!p.parentId).length}</span></h2><div className="reading-view-toggle" role="group" aria-label="Discussion feed"><button aria-pressed={!liveOnly} onClick={()=>setLiveOnly(false)}>All posts</button><button aria-label="Sort by fire nominations" title="Most fire nominations first, then upvotes" aria-pressed={liveOnly} onClick={()=>setLiveOnly(true)}>🔥</button></div></div>
+    {data.teacher&&data.voting&&<p className="discussion-voting-status">{data.voting.active?'Voting open':'Voting ended'}</p>}
+    {data.teacher?<details className="discussion-manage"><summary>Manage discussion</summary><div className="discussion-manage-content">
+    {data.curatedReady&&<QuestionVoting {...{data,busy,mutate}}/>}
+    {data.curatedReady&&<ReplyAssignments {...{data,textId,classId,busy,mutate}} onReply={openReply}/>}
+    {data.teacher&&<details className="reading-settings"><summary>Names & participation settings</summary>    {data.teacher&&<label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={anonymous} onChange={e=>{setAnonymous(e.target.checked);try{localStorage.setItem('teacher-anonymous:'+classId,String(e.target.checked));}catch{/* session preference still works */}}}/>Anonymous names in my view</label>}
     <ReadingRequirementsPanel textId={textId} classId={classId} data={data} onSaved={refresh} showRoster/>
     {data.teacher&&<div className="rounded-xl border p-3"><label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" disabled={busy} checked={data.showStudentNames===true} onChange={e=>{const enabled=e.target.checked;if(enabled&&!window.confirm('Show usernames to classmates for all existing and future posts and replies in this text discussion? Confirm that you have discussed this with the class. Names already seen cannot be taken back.'))return;void mutate('setReadingDiscussionIdentity',{showStudentNames:enabled}).catch(()=>{});}}/>Show usernames to classmates</label><p className="text-xs text-slate-500">Applies only to this text and class, including existing contributions.</p></div>}
 </details>}
-    <p className="text-xs text-slate-500">{data.showStudentNames?'Classmates can see usernames on posts and replies.':'Posts and replies are anonymous to classmates. Your teacher can see who wrote them.'}</p>
-    {error&&<p role="alert" className="rounded-xl bg-red-50 p-3 text-red-800">{error}</p>}
-    <div className="reading-columns">
-    <div hidden={view==='discussion'}><ParallelReading textId={textId} classId={classId} onUseQuote={data.canWrite?(quote,destination)=>{const selected={...quote,token:crypto.randomUUID()};if(destination!=='reply'){setCategory(destination==='observation'?'thought':'question');setQuestionQuote(selected);}else{setPendingQuote(selected);}if(view==='text')setView('parallel');requestAnimationFrame(()=>document.querySelector<HTMLTextAreaElement>(`textarea[aria-label="Your ${destination}"]`)?.focus());}:undefined}/></div>
-    <section hidden={view==='text'} className="reading-conversation" aria-label="Questions, observations, and replies">
-    <div className="reading-feed-heading"><h2>Discussion <span>{visiblePosts.filter(p=>!p.parentId).length}</span></h2><div className="reading-view-toggle" role="group" aria-label="Discussion feed"><button aria-pressed={!liveOnly} onClick={()=>setLiveOnly(false)}>All posts</button><button aria-pressed={liveOnly} onClick={()=>setLiveOnly(true)}>🔥 Discuss live</button></div></div>
-    {data.curatedReady&&<QuestionVoting {...{data,busy,mutate}}/>}
+    {data.teacher&&<details className="mt-6 rounded-xl border border-slate-200 p-4"><summary className="cursor-pointer text-sm font-semibold">Participation</summary><p className="my-2 text-sm text-slate-500">Votes help choose what to discuss; they are not grades.</p><div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr>{['Student','Questions','Replies','Observations'].map(t=><th className="p-2" key={t}>{t}</th>)}</tr></thead><tbody>{data.participation.map(p=><tr key={p.id}><td className="p-2">{p.name}</td><td>{p.question}</td><td>{p.replies}</td><td>{p.thought+p.connection}</td></tr>)}</tbody></table></div></details>}
+    </div></details>:data.curatedReady&&<QuestionVoting {...{data,busy,mutate}}/>}
     <>
-    {data.curatedReady&&<ReplyAssignments {...{data,textId,classId,busy,mutate}} onReply={openReply}/>}
+    {!data.teacher&&data.curatedReady&&<ReplyAssignments {...{data,textId,classId,busy,mutate}} onReply={openReply}/>}
     {pendingQuote&&!activeReply&&<p role="status" className="rounded-lg bg-blue-50 p-3 text-sm">Passage retained. Choose a contribution and select Reply to use it.</p>}
     {data.canWrite&&!data.teacher&&Boolean(data.notebook?.length)&&<QuestionNotebook {...{data,busy,mutate}} storageKey={`question-notebook:${user?.$id}:${textId}:${classId}`}/>}
+    {data.canWrite&&<div className="discussion-compose-toggle"><button className={composerOpen?'discussion-quiet-button':'discussion-add-button'} aria-expanded={composerOpen} aria-controls="discussion-composer" onClick={()=>setComposerOpen(!composerOpen)}>{composerOpen?'Close composer':'+ Add a question'}</button></div>}
+    <div id="discussion-composer" hidden={!composerOpen}>
     {data.canWrite&&<div role="group" aria-label="Start a conversation" className="reading-view-toggle"><button aria-pressed={category==='question'} onClick={()=>setCategory('question')}>Ask a question</button><button aria-pressed={category==='thought'} onClick={()=>setCategory('thought')}>Share an observation</button></div>}
     {data.canWrite&&<DiscussionComposer quote={questionQuote} onQuoteUsed={()=>setQuestionQuote(undefined)} key={`${user?.$id}:${category}`} storageKey={`reading-draft:${user?.$id}:${textId}:${classId}:${category}`} category={category} busy={busy} onSubmit={fields=>mutate('postReadingDiscussion',{...fields,category})}/>}
-    <p className="mb-2 text-xs text-slate-500">↑ Interesting or helpful · 🔥 Bring this to the room. One active fire nomination per person; choose another to move it. You do not have to agree.</p>
+    </div>
 
-    {liveOnly&&<p className="rounded-xl bg-orange-50 p-3 text-sm text-orange-900">Explore a tension, surprising interpretation, or unresolved question together. After talking: what would you now add, qualify, or change?</p>}
-    <div className="space-y-2">{shown.map(post=><ReadingThread liveOnly={liveOnly} {...replyTools} key={post.id} post={showNames?{...post,label:post.username||post.label}:post} posts={visiblePosts.map(p=>showNames?{...p,label:p.username||p.label}:p)} teacher={data.teacher} canWrite={data.canWrite} busy={busy} mutate={mutate} readUrl={readUrl} draftPrefix={`reading-draft:${user?.$id}:${textId}:${classId}`} present={false} onSelect={()=>{}}/>)}{!shown.length&&<p className="rounded-2xl bg-slate-50 p-5 text-slate-600">{liveOnly?'No live nominations yet. Use 🔥 on a question, observation, or reply worth exploring together.':'Ask a question or share an observation about this reading.'}</p>}</div>
+
+    <div className="space-y-2">{shown.map(post=><ReadingThread {...replyTools} key={post.id} post={showNames?{...post,label:post.username||post.label}:post} posts={visiblePosts.map(p=>showNames?{...p,label:p.username||p.label}:p)} teacher={data.teacher} canWrite={data.canWrite} busy={busy} mutate={mutate} readUrl={readUrl} draftPrefix={`reading-draft:${user?.$id}:${textId}:${classId}`} present={false} onSelect={()=>{}}/>)}{!shown.length&&<p className="rounded-2xl bg-slate-50 p-5 text-slate-600">Ask a question or share an observation about this reading.</p>}</div>
 
     </>
-    {data.teacher&&<details className="mt-6 rounded-xl border border-slate-200 p-4"><summary className="cursor-pointer text-sm font-semibold">Participation</summary><p className="my-2 text-sm text-slate-500">Votes help choose what to discuss; they are not grades.</p><div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr>{['Student','Questions','Replies','Observations'].map(t=><th className="p-2" key={t}>{t}</th>)}</tr></thead><tbody>{data.participation.map(p=><tr key={p.id}><td className="p-2">{p.name}</td><td>{p.question}</td><td>{p.replies}</td><td>{p.thought+p.connection}</td></tr>)}</tbody></table></div></details>}
     </section></div>
   </div>;
 }

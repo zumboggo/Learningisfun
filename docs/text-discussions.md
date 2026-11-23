@@ -126,3 +126,18 @@ This is an invitation to oral discussion, not a score or endorsement. Teachers
 can keep the opening question-only by directing students to Ask a question,
 then invite observations/replies after prioritizing. The existing question
 ballot and manual-refresh behavior remain unchanged.
+
+## Compact discussion workspace (November 2026)
+
+Parallel reading remains the default. Text and Discussion switches preserve drafts
+and reading position; Discussion uses a wider single-column feed. The composer
+opens on demand or when a selected passage is sent to a question or observation.
+Teacher voting, reply assignments, names, and participation tools live under
+Manage discussion. Post reporting, editing, withdrawal, and moderation remain
+available through the ellipsis menu.
+
+The icon-only fire toggle sorts every thread by total nominations on its root
+and replies, descending, then root upvotes, then newest creation time. Zero-fire
+threads remain visible and replies remain collapsed. Each person still has one
+active fire nomination. Present snapshots the displayed root-post order, including
+observations, without exposing author identities.

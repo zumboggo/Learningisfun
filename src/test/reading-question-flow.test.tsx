@@ -1,3 +1,4 @@
+import './dialog-mock';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
@@ -56,15 +57,16 @@ it('loads the actual reading beside the discussion without replacing the questio
   mount(); await screen.findByRole('heading', { name: 'The reading', level: 1 });
   expect(screen.getByRole('button', { name: 'Parallel' })).toHaveAttribute('aria-pressed', 'true');
   expect(await screen.findByRole('complementary', { name: 'Reading text' })).toBeVisible();
+  fireEvent.click(screen.getByRole('button',{name:'+ Add a question'}));
   const input = screen.getByRole('textbox', { name: 'Your question' });
   fireEvent.change(input, { target: { value: 'My unfinished question' } });
   fireEvent.click(screen.getByRole('button', { name: 'Parallel' }));
   expect(await screen.findByText('An exact paragraph from the reading.')).toBeInTheDocument();
   expect(screen.getByRole('textbox', { name: 'Your question' })).toBe(input);
   expect(input).toHaveValue('My unfinished question');
-  fireEvent.click(screen.getByRole('button', { name: 'Discussion only' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Discussion' }));
   expect(screen.queryByRole('complementary', { name: 'Reading text' })).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'Text only' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Text' }));
   expect(screen.getByRole('complementary', { name: 'Reading text' })).toBeVisible();
   expect(screen.queryByRole('textbox', { name: 'Your question' })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Parallel' }));
@@ -131,6 +133,7 @@ it('posts directly to the shared feed without a private notebook, including duri
  expect(screen.queryByText('Your private question notebook')).not.toBeInTheDocument();
  expect(screen.getByRole('heading',{name:'Vote on Questions · Round 1 of 3'})).toBeVisible();
  expect(screen.getByText('Second question?')).toBeVisible();
+ fireEvent.click(screen.getByRole('button',{name:'+ Add a question'}));
  fireEvent.change(screen.getByRole('textbox',{name:'Your question'}),{target:{value:'A directly shared question?'}});
  fireEvent.click(screen.getByRole('button',{name:'Post question'}));
  expect(await screen.findByText('A directly shared question?')).toBeVisible();
@@ -159,4 +162,18 @@ it.each(['Question', 'Reply'])('routes a selected passage to Use in %s with quot
   expect(form.querySelector('blockquote.reading-quote')).toHaveTextContent('An exact paragraph from the reading.');
   expect(within(form).getByRole('spinbutton')).toHaveValue(1);
   expect(editor).toHaveValue('');
+});
+
+it('keeps the composer collapsed and presents the fire-sorted feed including observations',async()=>{
+ state.posts[1].fireCount=2;state.posts[4].fireCount=3;
+ mount();await screen.findByRole('heading',{name:'The reading',level:1});
+ expect(screen.queryByRole('textbox',{name:'Your question'})).not.toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'Sort by fire nominations'}));
+ expect(screen.getAllByRole('article').map(el=>el.id)).toEqual(['question-Earlier thought','question-Second question?','question-First question?']);
+ expect(screen.queryByText('High reply')).not.toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'Present Questions'}));
+ const slides=within(screen.getByRole('dialog'));
+ expect(slides.getByText('Earlier thought')).toBeVisible();
+ fireEvent.click(slides.getByRole('button',{name:'Next'}));
+ expect(slides.getByText('Second question?')).toBeVisible();
 });

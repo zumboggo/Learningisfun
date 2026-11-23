@@ -26,6 +26,7 @@ it('student sees peer questions immediately with upvotes and replies, but no tea
 });
 it('refresh updates vote totals without replacing the composer or losing typing',async()=>{
   mount();await screen.findByRole('heading',{name:'Reading example',level:1});
+  fireEvent.click(screen.getByRole('button',{name:'+ Add a question'}));
   const input=screen.getByRole('textbox',{name:'Your question'});fireEvent.change(input,{target:{value:'Another question'}});input.focus();
   fixture.score=5;fireEvent.click(screen.getByRole('button',{name:'Refresh discussion'}));
   await screen.findByRole('button',{name:'Upvote: 5'});expect(screen.getByRole('textbox',{name:'Your question'})).toBe(input);expect(input).toHaveValue('Another question');
@@ -34,7 +35,7 @@ it('parent has read-only access and teacher has moderation/presentation controls
   fixture.canWrite=false;const {unmount}=mount();await screen.findByRole('heading',{name:'Reading example',level:1});
   expect(screen.queryByRole('textbox',{name:'Your question'})).not.toBeInTheDocument();unmount();
   fixture.teacher=true;fixture.canWrite=true;mount();await screen.findByRole('button',{name:'Present Questions'});
-  fireEvent.click(screen.getByText('Moderate ▾'));expect(screen.getByRole('button',{name:'hide'})).toBeInTheDocument();
+  fireEvent.click(screen.getByLabelText('More post actions'));fireEvent.click(screen.getByText('Moderate ▾'));expect(screen.getByRole('button',{name:'hide'})).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button',{name:'Present Questions'}));const slides=within(screen.getByRole('dialog'));expect(slides.getByText('Why does the narrator change?')).toBeInTheDocument();expect(slides.queryByText('Student name')).not.toBeInTheDocument();expect(slides.queryByText('Reader 123ABC')).not.toBeInTheDocument();expect(slides.queryByRole('textbox')).not.toBeInTheDocument();expect(slides.getByRole('button',{name:'Exit presentation'})).toBeInTheDocument();
 });
 
@@ -42,7 +43,7 @@ it('teachers see usernames by default and can switch back to anonymous labels',a
  fixture.teacher=true;mount();await screen.findByRole('button',{name:'Present Questions'});
 
  expect(screen.getByText('Student name')).toBeInTheDocument();
- fireEvent.click(screen.getByText('Teacher settings'));fireEvent.click(screen.getByRole('checkbox',{name:'Anonymous names in my view'}));
+ fireEvent.click(screen.getByText('Manage discussion'));fireEvent.click(screen.getByText('Names & participation settings'));fireEvent.click(screen.getByRole('checkbox',{name:'Anonymous names in my view'}));
  expect(screen.getByText('Reader 123ABC')).toBeInTheDocument();
  expect(screen.queryByText('Student name')).not.toBeInTheDocument();
 });
@@ -58,7 +59,7 @@ it('students see usernames only when the teacher enables classmate names',async(
 
 it('places Vote on Questions before Assign questions for the teacher',async()=>{
  fixture.teacher=true;fixture.curatedReady=true;mount();
- const button=await screen.findByRole('button',{name:'Vote on Questions'});
+ await screen.findByText('Manage discussion');fireEvent.click(screen.getByText('Manage discussion'));const button=screen.getByRole('button',{name:'Vote on Questions'});
  const assign=screen.getByText('Assign questions');
  expect(button.compareDocumentPosition(assign)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });
@@ -70,7 +71,7 @@ it('keeps class questions and posting available during voting',async()=>{
  expect(screen.getByRole('button',{name:'Reply'})).toBeVisible();
  expect(screen.queryByRole('textbox',{name:'Draft question'})).not.toBeInTheDocument();
  expect(screen.getByRole('button',{name:/Upvote/})).toBeVisible();
- expect(screen.getByRole('textbox',{name:'Your question'})).toBeVisible();
+ fireEvent.click(screen.getByRole('button',{name:'+ Add a question'}));expect(screen.getByRole('textbox',{name:'Your question'})).toBeVisible();
 });
 
 it('focus and elapsed time update no server data until manual refresh',async()=>{
@@ -99,7 +100,7 @@ it('opens rhetorical practice in an AP text discussion using the same text and c
  expect(button).toHaveAttribute('aria-expanded','false');
  fireEvent.click(button);
  await waitFor(()=>expect(executeLearningContent).toHaveBeenCalledWith({action:'readRhetoricalSituation',textId:'text',classId:apClassId}));
- fireEvent.click(screen.getByRole('button',{name:'Discussion only'}));
+ fireEvent.click(screen.getByRole('button',{name:'Discussion'}));
  expect(button).toBeVisible();
 });
 it('does not offer rhetorical practice in other courses or read-only discussions',async()=>{
@@ -110,7 +111,7 @@ it('does not offer rhetorical practice in other courses or read-only discussions
 });
 
 it('keeps separate question and observation drafts in one shared discussion',async()=>{
- mount();await screen.findByRole('textbox',{name:'Your question'});
+ mount();await screen.findByRole('heading',{name:'Reading example',level:1});fireEvent.click(screen.getByRole('button',{name:'+ Add a question'}));
  fireEvent.change(screen.getByRole('textbox',{name:'Your question'}),{target:{value:'Why the silence?'}});
  fireEvent.click(screen.getByRole('button',{name:'Share an observation'}));
  fireEvent.change(screen.getByRole('textbox',{name:'Your observation'}),{target:{value:'The silence feels uncertain.'}});
@@ -121,12 +122,12 @@ it('keeps separate question and observation drafts in one shared discussion',asy
  fireEvent.click(screen.getByRole('button',{name:'Post observation'}));
  await waitFor(()=>expect(executeLearningContent).toHaveBeenCalledWith(expect.objectContaining({action:'postReadingDiscussion',category:'thought',content:'The silence feels uncertain.'})));
 });
-it('nominates independently of upvotes and explains the empty live discussion filter',async()=>{
- mount();await screen.findByRole('textbox',{name:'Your question'});
+it('nominates independently of upvotes and keeps zero-fire posts visible when sorting',async()=>{
+ mount();await screen.findByRole('heading',{name:'Reading example',level:1});fireEvent.click(screen.getByRole('button',{name:'+ Add a question'}));
  fireEvent.click(screen.getByRole('button',{name:'Nominate for live discussion: 0'}));
  await waitFor(()=>expect(executeLearningContent).toHaveBeenCalledWith(expect.objectContaining({action:'nominateReadingDiscussion',postId:'q',nominated:true})));
- fireEvent.click(screen.getByRole('button',{name:'🔥 Discuss live'}));
- expect(screen.getByText(/No live nominations yet/)).toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'Sort by fire nominations'}));
+ expect(screen.getByText('Why does the narrator change?')).toBeInTheDocument();
  fireEvent.click(screen.getByRole('button',{name:'All posts'}));
  expect(screen.getByText('Why does the narrator change?')).toBeInTheDocument();
 });

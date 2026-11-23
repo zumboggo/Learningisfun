@@ -36,7 +36,7 @@ it('shows only the current three options, submits one choice, and resumes at the
   expect(screen.getByRole('heading',{name:'Vote on Questions · Round 2 of 3'})).toBeInTheDocument();
   expect(screen.queryByText('Question 1?')).not.toBeInTheDocument();
   rerender(<QuestionVoting data={{...student,voting:{...student.voting,completed:true,completedRounds:3,choices:['q1','q3','q7'],questionIds:[]}}} busy={false} mutate={mutate}/>);
-  expect(screen.getByRole('heading',{name:'Voting complete'})).toBeInTheDocument();
+  expect(screen.getByText('Voting complete')).toBeInTheDocument();
   expect(screen.queryByRole('button',{name:'Choose this question'})).not.toBeInTheDocument();
 });
 

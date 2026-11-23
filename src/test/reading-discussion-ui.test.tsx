@@ -73,6 +73,12 @@ it('explicitly reuses a thread quote, but a new passage takes precedence',async(
 it('live feed ranks nominated nested replies with their root context',()=>{
  const base={category:'question',parentId:null,pinned:false,hidden:false,score:0,createdAt:'2026-09-01'} as ReadingDiscussionPost;
  const posts=[{...base,id:'question',fireCount:1},{...base,id:'observation',category:'thought' as const},{...base,id:'reply',parentId:'observation'},{...base,id:'nested',parentId:'reply',fireCount:3},{...base,id:'quiet'}];
- expect(discussionFeed(posts,true).map(p=>p.id)).toEqual(['observation','question']);
+ expect(discussionFeed(posts,true).map(p=>p.id)).toEqual(['observation','question','quiet']);
  expect(discussionFeed(posts).map(p=>p.id)).toContain('quiet');
+});
+
+it('fire sorting keeps every root and breaks nomination ties by upvotes, not pins',()=>{
+ const base={category:'question',parentId:null,pinned:false,hidden:false,score:0,createdAt:'2026-09-01'} as ReadingDiscussionPost;
+ const posts=[{...base,id:'pinned',pinned:true,fireCount:2,score:1},{...base,id:'popular',fireCount:2,score:9},{...base,id:'most-fire',fireCount:3},{...base,id:'quiet',score:100}];
+ expect(discussionFeed(posts,true).map(p=>p.id)).toEqual(['most-fire','popular','pinned','quiet']);
 });
