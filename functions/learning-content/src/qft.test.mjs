@@ -10,3 +10,17 @@ describe('QFT permissions, anonymity and votes',()=>{
  it('enforces stacking toggle and prevents invalidating existing ballots',async()=>{const h=await start();const q=(await h.call('addQftQuestion',{content:'Question'})).questions[0];await h.call('updateQft',{settings:{votingOpen:true,allowStackedVotes:false}});await h.call('voteQft',{questionId:q.id,delta:1},'student');await expect(h.call('voteQft',{questionId:q.id,delta:1},'student')).rejects.toThrow('not available');await h.call('updateQft',{settings:{allowStackedVotes:true}});await h.call('voteQft',{questionId:q.id,delta:1},'student');await expect(h.call('updateQft',{settings:{allowStackedVotes:false}})).rejects.toThrow('Existing votes');await expect(h.call('updateQft',{settings:{votesPerStudent:1}})).rejects.toThrow('Existing votes');});
  it('rejects outsiders, parent participation and student controls',async()=>{const h=await start();await expect(h.call('updateQft',{settings:{votingOpen:true}},'student')).rejects.toThrow('Teacher');await expect(qftAction({body:{action:'readQft',sessionId:h.sessionId},profile:{role:'parent'},userId:'parent',memberClassIds:new Set(['blue']),db:h.db,databaseId:'main'})).rejects.toThrow('Class access');await expect(qftAction({body:{action:'readQft',sessionId:h.sessionId},profile:{role:'student'},userId:'other',memberClassIds:new Set(['red']),db:h.db,databaseId:'main'})).rejects.toThrow('Class access');});
 });
+it('lets students and teachers switch and clear a shared question type without names',async()=>{
+ const h=await start();const q=(await h.call('addQftQuestion',{content:'Why?'})).questions[0];
+ expect(q.questionType).toBeUndefined();
+ let result=await h.call('classifyQftQuestion',{questionId:q.id,questionType:'closed'},'student');
+ expect(result.questions[0].questionType).toBe('closed');
+ result=await h.call('classifyQftQuestion',{questionId:q.id,questionType:'open'});
+ expect(result.questions[0].questionType).toBe('open');
+ result=await h.call('readQft',{},'student');expect(result.questions[0].questionType).toBe('open');
+ result=await h.call('classifyQftQuestion',{questionId:q.id,questionType:null},'student');
+ expect(result.questions[0].questionType).toBeNull();expect(result.questions[0]).not.toHaveProperty('authorId');
+ await expect(h.call('classifyQftQuestion',{questionId:q.id,questionType:'anything'},'student')).rejects.toThrow('Choose closed');
+ await expect(h.call('classifyQftQuestion',{questionId:'missing',questionType:'open'},'student')).rejects.toThrow('unavailable');
+ await expect(qftAction({body:{action:'classifyQftQuestion',sessionId:h.sessionId,questionId:q.id,questionType:'open'},profile:{role:'student'},userId:'outsider',memberClassIds:new Set(['red']),db:h.db,databaseId:'main'})).rejects.toThrow('Class access');
+});

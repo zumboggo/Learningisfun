@@ -2,7 +2,7 @@ import {randomUUID} from 'node:crypto';
 import {ID} from 'node-appwrite';
 import {atomic,readRecord,writeRecord,fail} from './teacher-workspace.js';
 import {ownsImage,IMAGE_BUCKET} from './reading-images.js';
-export const QFT_ACTIONS=['createQft','readQft','updateQft','addQftQuestion','editQftQuestion','replyQft','voteQft'];
+export const QFT_ACTIONS=['createQft','readQft','updateQft','addQftQuestion','editQftQuestion','classifyQftQuestion','replyQft','voteQft'];
 export const defaults={studentQuestions:false,studentReplies:false,anonymousReplies:true,votesPerStudent:5,allowStackedVotes:true,votingOpen:false,votingStarted:false};
 export function settings(input,previous=defaults){
  const next={...previous};
@@ -43,6 +43,10 @@ export async function qftAction(args){
    }else if(body.action==='editQftQuestion'){
     if(!teacher)fail('Teacher corrections only.',403);
     const question=state.questions.find(q=>q.id===body.questionId);if(!question)fail('Question unavailable.');question.content=content(body.content);
+   }else if(body.action==='classifyQftQuestion'){
+    if(!['closed','open',null].includes(body.questionType))fail('Choose closed, open, or clear the question type.');
+    const question=state.questions.find(q=>q.id===body.questionId);if(!question)fail('Question unavailable.');
+    question.questionType=body.questionType;
    }else if(body.action==='replyQft'){
     if(!teacher&&!c.studentReplies)fail('Your teacher is recording replies.',403);
     if(!state.questions.some(q=>q.id===body.questionId))fail('Question unavailable.');
