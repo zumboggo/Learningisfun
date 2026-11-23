@@ -27,7 +27,7 @@ export function GameDisplay({userId,children,cinema=false}:{userId:string;childr
   const fullscreen=async()=>{saveGameDisplay(userId,true);setExpanded(true);setNotice('');if(!await enterGameFullscreen())setNotice('Fullscreen is unavailable here. The game fills this window instead.');};
   return <GameDisplayContext.Provider value={{native,fullscreen,windowed}}><section aria-label="Game player" className={cinema?'game-display-cinema':expanded?'game-display-expanded fixed inset-0 z-50 flex flex-col bg-stone-50':'game-display-windowed'}>
     {!cinema&&<div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-stone-200 bg-white px-3 py-2 text-sm" style={{paddingTop:'max(.5rem, env(safe-area-inset-top))'}}>
-      <Link className="rounded-lg px-3 py-2 font-semibold text-teal-900" to="/game" onClick={()=>void exitGameFullscreen()}>← The Game</Link>
+      <Link className="rounded-lg px-3 py-2 font-semibold text-teal-900" to="/game" onClick={()=>void exitGameFullscreen()}>← Episodes</Link>
       <div className="flex flex-wrap gap-2">
         {!native&&<button className="min-h-11 rounded-lg bg-teal-900 px-3 py-2 font-semibold text-white" onClick={()=>void fullscreen()}>Full screen</button>}
         {(expanded||native)&&<button className="min-h-11 rounded-lg border border-stone-300 px-3 py-2" onClick={windowed}>{native?'Exit full screen':'Play in browser window'}</button>}

@@ -73,7 +73,7 @@ export default function TeachingStonePage({teacherPreview=false}:{teacherPreview
  };
  if(!user)return null;
  return <main className="mx-auto max-w-5xl p-3 sm:p-6">
-  <Link to={`/classes/${classId}/game`} className="text-sm text-teal-800">← The Game</Link>
+  <Link to={`/classes/${classId}/game`} className="text-sm text-teal-800">← Episodes</Link>
   <div className="my-4 flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs uppercase tracking-widest text-teal-800">The Teaching Stone</p><h1 className="text-2xl font-bold">The Grain We Keep</h1></div><p role="status" className="max-w-md text-xs text-gray-600">{status}</p></div>
   {error&&<p role="alert" className="mb-4 rounded-lg bg-red-50 p-4 text-red-900">{error}</p>}
   {allowed&&attempt&&!playing&&<section className="rounded-2xl bg-[#f4efdf] p-6 sm:p-10"><p className="text-xs uppercase tracking-widest text-teal-800">Episode 01 · Egypt · Historical fiction</p><h2 className="my-4 font-serif text-4xl">A village needs more<br/>than good intentions.</h2><p className="max-w-xl text-gray-700">A new body. A borrowed seal. Food for today—or seed for tomorrow? Meet the people who will live with your choices.</p><p className="my-4 text-sm">10–15 minutes · Ten decisions · No timer · Unlimited replays</p><button onClick={()=>void start()} className="rounded-lg bg-teal-900 px-6 py-3 font-semibold text-white">{attempt.choices.length?'Continue this life':'Begin a new life'}</button><p className="mt-4 text-xs text-gray-600">The opening includes a brief, non-graphic traffic accident. The stone assesses decisions, not your worth as a person.</p></section>}

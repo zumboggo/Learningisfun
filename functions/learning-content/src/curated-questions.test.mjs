@@ -25,17 +25,17 @@ test('publishing selected drafts is atomic and retry-idempotent; hidden question
  await call(publish);await call(publish);
  let data=await call(read);expect(data.posts).toHaveLength(3);expect(data.publishedCount).toBe(3);expect(data.notebook).toHaveLength(1);
  await call({action:'moderateReadingDiscussion',postId:data.posts[0].id,operation:'hide'},teacher);
- data=await call(read);expect(data.publishedCount).toBe(3);expect(data.remainingSpaces).toBe(0);
- await expect(call({action:'publishReadingQuestions',draftIds:[drafts[3].id]})).rejects.toThrow('three');
- await expect(call(question('old-client-bypass'))).rejects.toThrow('three');
+ data=await call(read);expect(data.publishedCount).toBe(3);expect(data.remainingSpaces).toBeUndefined();
+ await call({action:'publishReadingQuestions',draftIds:[drafts[3].id]});
+ await call(question('fourth-and-beyond'));expect((await call(read)).publishedCount).toBe(5);
  for(let i=0;i<5;i++)await call(question(`teacher-${i}`),teacher);
 });
-test('concurrent tabs cannot publish a fourth question',async()=>{
+test('concurrent tabs can publish beyond three questions',async()=>{
  const {call,storage}=harness();const results=await Promise.allSettled([0,1,2,3].map(i=>call(question(`concurrent-${i}`))));
- expect(results.filter(r=>r.status==='fulfilled')).toHaveLength(3);expect(storage.reading_posts).toHaveLength(3);
- expect((await call(read)).publishedCount).toBe(3);
+ expect(results.filter(r=>r.status==='fulfilled')).toHaveLength(4);expect(storage.reading_posts).toHaveLength(4);
+ expect((await call(read)).publishedCount).toBe(4);
 });
-test('withdrawal retains history, frees a slot and never transfers votes',async()=>{
+test('withdrawal retains history and never transfers votes',async()=>{
  const {call,storage}=harness();await call(question('original'));const original=(await call(read)).posts[0];
  await call({action:'voteReadingDiscussion',postId:original.id,upvoted:true});
  await call({action:'withdrawReadingQuestion',postId:original.id});await call({action:'withdrawReadingQuestion',postId:original.id});
@@ -62,7 +62,7 @@ test('replied questions retain their thread and can be edited, including hidden 
 test('legacy students above three retain editing and unlimited replies',async()=>{
  const {call,storage,teacher}=harness();for(let i=0;i<5;i++)await call(question(`old-${i}`),teacher);
  storage.reading_posts.forEach(r=>{r.authorId='student';});const data=await call(read);expect(data.publishedCount).toBe(5);
- await expect(call(question('new'))).rejects.toThrow('three');
+ await call(question('new'));expect((await call(read)).publishedCount).toBe(6);
  for(let i=0;i<8;i++)await call({...question(`reply-${i}`),parentId:data.posts[0].id});
  expect((await call(read)).posts.filter(p=>p.parentId)).toHaveLength(8);
 });
@@ -116,3 +116,5 @@ test('roster validation and self-answer exclusion are enforced on publication',a
  const preview=await call({action:'previewReadingAssignments',studentIds:['peer']},teacher);storage.class_members=storage.class_members.filter(m=>m.userId!=='peer');
  await expect(call({action:'publishReadingAssignments',studentIds:['peer'],requestId:'gone',assignments:preview.assignments},teacher)).rejects.toThrow('roster');
 });
+
+test('publishes more than three drafts in one batch without duplicates',async()=>{const {call}=harness();for(let i=0;i<6;i++)await call(save(String(i)));const draftIds=(await call(read)).notebook.map(d=>d.id);await call({action:'publishReadingQuestions',draftIds});await call({action:'publishReadingQuestions',draftIds});expect((await call(read)).publishedCount).toBe(6);});

@@ -31,7 +31,7 @@ it('offers discussion navigation, numbered paragraphs and no annotation workspac
   expect(screen.queryByRole('button',{name:/TQE|Notes|annotation/i})).not.toBeInTheDocument();
   expect(screen.getByRole('link',{name:'Discuss text →'})).toHaveAttribute('href','/discussions/texts/text/class');
   fireEvent.click(screen.getByRole('button',{name:/More/}));
-  expect(screen.getByRole('link',{name:/legacy/})).toHaveAttribute('href','/texts/text/legacy?classId=class');
+  expect(screen.queryByRole('link',{name:/legacy/})).not.toBeInTheDocument();
 });
 
 it('offers rhetorical practice only for AP Language assigned readings',()=>{

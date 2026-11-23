@@ -25,12 +25,12 @@ function Library({userId,role}:{userId:string;role:string}) {
     const ids=[...new Set(memberships.filter(m=>m.role==='student'&&(!m.expiresAt||Date.parse(m.expiresAt)>Date.now())).map(m=>m.classId))];
     return ids.length?db.classes.where('$id').anyOf(ids).toArray():[];
   },[userId,role,teacher]);
-  if(!teacher&&role!=='student')return <p role="alert" className="p-6">The Game is available to students and class teachers.</p>;
+  if(!teacher&&role!=='student')return <p role="alert" className="p-6">Episodes are available to students and class teachers.</p>;
   const stoneClass=classes?.find(c=>c.$id===STONE_CLASS_ID)?.$id;
   const visible=classes?.filter(c=>teacher||c.$id===stoneClass||assignedEpisodes(c.$id,teacher).length||animated?.assignments.some((a:any)=>a.classId===c.$id));
   const selected=teacher?classes?.find(c=>c.$id===selectedClass):undefined;
   return <main className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6">
-    <header><h1 className="text-3xl font-bold">The Game</h1><p className="mt-2 text-gray-600">{teacher?'Play and test episodes across your classes. Teacher previews never enter student rankings.':'Your released episodes, highest scores, and past adventures—all here for unlimited replay.'}</p></header>
+    <header><h1 className="text-3xl font-bold">Episodes</h1><p className="mt-2 text-gray-600">{teacher?'Play and test episodes across your classes. Teacher previews never enter student rankings.':'Your released episodes, highest scores, and past adventures—all here for unlimited replay.'}</p></header>
     <div className={teacher?"teacher-library-grid":""}><div className="teacher-library-main space-y-5">
     <AnimatedLibrary userId={userId} teacher={teacher} classId={selectedClass}/>
     <label className="flex items-center gap-3 rounded-xl border border-orange-200 bg-orange-50 p-4"><input type="checkbox" checked={fullscreen} onChange={e=>{setFullscreen(e.target.checked);saveGameDisplay(userId,e.target.checked);}} className="h-5 w-5"/><span><span className="font-semibold">Open episodes in full screen</span><span className="mt-1 block text-xs text-gray-600">Uncheck to play inside the browser window. Your choice is remembered on this device. Unsupported browsers use a full-window view.</span></span></label>

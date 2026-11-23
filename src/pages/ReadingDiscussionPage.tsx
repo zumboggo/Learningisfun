@@ -112,7 +112,6 @@ function DiscussionWorkspace({textId,classId}:{textId:string;classId:string}) {
 
     </>
     {data.teacher&&<details className="mt-6 rounded-xl border border-slate-200 p-4"><summary className="cursor-pointer text-sm font-semibold">Participation</summary><p className="my-2 text-sm text-slate-500">Votes help choose what to discuss; they are not grades.</p><div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr>{['Student','Questions','Replies','Observations'].map(t=><th className="p-2" key={t}>{t}</th>)}</tr></thead><tbody>{data.participation.map(p=><tr key={p.id}><td className="p-2">{p.name}</td><td>{p.question}</td><td>{p.replies}</td><td>{p.thought+p.connection}</td></tr>)}</tbody></table></div></details>}
-    <Link className="mt-6 block text-xs text-slate-400 underline" to={`/texts/${textId}/legacy?classId=${encodeURIComponent(classId)}`}>Legacy annotations & TQE archive</Link>
     </section></div>
   </div>;
 }

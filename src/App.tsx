@@ -45,7 +45,6 @@ import { LivePresentationPage } from '@/pages/LivePresentationPage';
 import { TextsPage } from '@/pages/TextsPage';
 import { TextReaderPage, TextPublicReaderPage } from '@/pages/TextReaderPage';
 import { ReadingDiscussionPage } from '@/pages/ReadingDiscussionPage';
-import { TextLegacyArchivePage } from '@/pages/TextLegacyArchivePage';
 import { PeerReviewPage } from '@/pages/PeerReviewPage';
 import { StudentProgressPage } from '@/pages/StudentProgressPage';
 import { ClassesListPage } from '@/pages/ClassesListPage';
@@ -169,7 +168,6 @@ export default function App() {
           <Route path="/presentations/:sessionId/live" element={<ProtectedRoute><LivePresentationPage /></ProtectedRoute>} />
           <Route path="/texts" element={<ProtectedRoute><TextsPage /></ProtectedRoute>} />
           <Route path="/texts/:textId" element={<ReadingRoute />} />
-          <Route path="/texts/:textId/legacy" element={<ProtectedRoute><TextLegacyArchivePage /></ProtectedRoute>} />
           <Route path="/texts/:textId/present" element={<FullscreenTeacherRoute><TextPresentPage /></FullscreenTeacherRoute>} />
           <Route path="/peer-reviews/:activityId" element={<ProtectedRoute><PeerReviewPage /></ProtectedRoute>} />
 
@@ -188,9 +186,9 @@ export default function App() {
           <Route path="/game/play/:assignmentId" element={<ProtectedRoute><Suspense fallback={<p>Opening episode…</p>}><AnimatedEpisodePage /></Suspense></ProtectedRoute>} />
           <Route path="/game/examples/:slug" element={<ProtectedRoute><TeacherRoute><Suspense fallback={<p>Opening episode…</p>}><EpisodeExamplePage/></Suspense></TeacherRoute></ProtectedRoute>} />
           <Route path="/game/chinese/:slug" element={<ProtectedRoute><TeacherRoute><Suspense fallback={<p>Opening Mandarin story…</p>}><ChineseDemoPage/></Suspense></TeacherRoute></ProtectedRoute>} />
-          <Route path="/game" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening The Game…</p>}><GamePage /></Suspense></ProtectedRoute>} />
+          <Route path="/game" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening Episodes…</p>}><GamePage /></Suspense></ProtectedRoute>} />
           <Route path="/classes/:classId/principles" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening portfolio…</p>}><PrinciplesPortfolioPage /></Suspense></ProtectedRoute>} />
-          <Route path="/classes/:classId/game" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening The Game…</p>}><ClassGamePage /></Suspense></ProtectedRoute>} />
+          <Route path="/classes/:classId/game" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening Episodes…</p>}><ClassGamePage /></Suspense></ProtectedRoute>} />
           <Route path="/classes/:classId/game/preview/teaching-stone" element={<ProtectedRoute><TeacherRoute><Suspense fallback={<p className="p-6">Opening teacher preview…</p>}><PrivateEpisodeGate stone><TeachingStonePage teacherPreview /></PrivateEpisodeGate></Suspense></TeacherRoute></ProtectedRoute>} />
           <Route path="/classes/:classId/teaching-stone" element={<ProtectedRoute><Suspense fallback={<p className="p-6">Opening the Teaching Stone…</p>}><PrivateEpisodeGate stone><TeachingStonePage /></PrivateEpisodeGate></Suspense></ProtectedRoute>} />
           <Route path="/classes/:classId" element={<ProtectedRoute><ClassDetailPage /></ProtectedRoute>} />

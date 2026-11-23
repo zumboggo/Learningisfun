@@ -147,7 +147,6 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
   catch (error) { if(error.code!==404)throw error; }
   const savedSettings=settings?JSON.parse(settings.dataJson):{};
   const requirements = savedSettings.requirements || null;
-  const questionLimit = Math.max(3, requirements?.questions || 0);
   const liveNominations = savedSettings.liveNominations || {};
   const nominationKey = key(workspaceId, userId);
   const showStudentNames = !writing && savedSettings.showStudentNames===true;
@@ -316,9 +315,9 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
     if(body.action==='deleteReadingQuestionDraft'){const draft=drafts.find(d=>d.id===body.draftId);if(!draft||draft.publishedId)fail('Private draft is not available');await db.deleteDocument(databaseId,'reading_question_drafts',draft.id);return {ok:true};}
     if(body.action==='publishReadingQuestions'){
       const ids=[...new Set(Array.isArray(body.draftIds)?body.draftIds:[])];
-      if(!ids.length||ids.length>questionLimit)fail(`Choose up to ${questionLimit} saved drafts`);
+      if(!ids.length)fail('Choose at least one saved draft');
       const chosen=ids.map(id=>drafts.find(d=>d.id===id));if(chosen.some(d=>!d))fail('Private draft is not available');
-      const fresh=chosen.filter(d=>!d.publishedId);if(fresh.length&&publishedCount+fresh.length>questionLimit)fail(`You can publish at most ${questionLimit===3?'three':questionLimit} questions per text discussion`);
+      const fresh=chosen.filter(d=>!d.publishedId);
       for(const draft of fresh){
         const id=key(workspaceId,userId,'published',draft.id);
         const data={parentId:null,category:'question',content:draft.content,quotation:'',paragraph:null,label:`Reader ${key(workspaceId,userId).slice(0,6).toUpperCase()}`,teacher:false,createdAt:new Date().toISOString(),hidden:false,locked:false,pinned:false};
@@ -355,7 +354,7 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
     return {
       ...(writing?{discussionMode:config.discussionMode,studentsCanView:config.studentsCanView,canSubmit:eligible&&Boolean(writing.assignmentId)&&profile.role==='student',canReply:eligible&&config.discussionMode&&(teacher||config.studentsCanView)}:{}),
       ...(voting?{voting}:{}),
-      curatedReady:true, ...(profile.role==='student'?{notebook:drafts.filter(d=>!d.publishedId).map(({id,content,draftId,updatedAt})=>({id,content,draftId,updatedAt})),publishedCount,remainingSpaces:Math.max(0,questionLimit-publishedCount),assignments:(writing&&!config.studentsCanView?[]:rounds).flatMap(r=>r.assignments.filter(a=>a.studentId===userId).map(a=>({...a,roundId:r.id,createdAt:r.createdAt})))}:{}),
+      curatedReady:true, ...(profile.role==='student'?{notebook:drafts.filter(d=>!d.publishedId).map(({id,content,draftId,updatedAt})=>({id,content,draftId,updatedAt})),publishedCount,assignments:(writing&&!config.studentsCanView?[]:rounds).flatMap(r=>r.assignments.filter(a=>a.studentId===userId).map(a=>({...a,roundId:r.id,createdAt:r.createdAt})))}:{}),
       ...(teacher?{rounds:rounds.map(round=>({...round,assignments:round.assignments.map(a=>a.status==='pending'&&!studentIds.includes(a.studentId)?{...a,status:'cancelled',cancelledReason:'Student left class'}:a)})),awaitingReplies:posts.filter(p=>!p.parentId&&p.category==='question'&&!p.withdrawn&&!p.hidden&&!posts.some(r=>r.parentId===p.id)).map(p=>p.id)}:{}),
       requirements,
       title: text.title, className: `${cls.courseName || ''} · ${cls.name}`, teacher, showStudentNames, canWrite: eligible && (teacher || profile.role === 'student') && (!writing || (config.discussionMode && (teacher||config.studentsCanView))),
@@ -386,7 +385,6 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
     if (parent && ancestors(parent).length >= 4) fail('Replies may be nested three levels');
     const category = parent?.category || body.category;
     if (!categories.includes(category)) fail('Choose a contribution category');
-    if(!teacher&&!parent&&category==='question'&&publishedCount>=questionLimit)fail(`You can publish at most ${questionLimit===3?'three':questionLimit} questions per text discussion`);
     const inheritedQuote = !writing && parent && body.useParentQuotation === true ? ancestors(parent).find(p=>p.quotation?.trim()) : null;
     if(body.useParentQuotation === true && !inheritedQuote)fail('This thread has no quotation to use');
     const paragraph = inheritedQuote ? inheritedQuote.paragraph : body.paragraph === '' || body.paragraph == null ? null : Number(body.paragraph);

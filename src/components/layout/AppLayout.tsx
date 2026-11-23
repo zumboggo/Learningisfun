@@ -82,7 +82,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         { to: '/texts', label: 'Texts', icon: 'T' },
         { to: '/lessons', label: 'Lessons', icon: 'L' },
         { to: '/writing', label: 'Writing', icon: 'W' },
-        { to: '/game', label: 'The Game', icon: 'G' },
+        { to: '/game', label: 'Episodes', icon: 'E' },
         { to: '/settings', label: 'Settings', icon: '?' },
       ]
     : isParent ? [
@@ -96,7 +96,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         { to: '/decks', label: 'Cards', icon: 'cards' },
         { to: '/texts', label: 'Texts', icon: 'read' },
         { to: '/lessons', label: 'Lessons', icon: 'quiz' },
-        { to: '/game', label: 'The Game', icon: 'game' },
+        { to: '/game', label: 'Episodes', icon: 'game' },
         { to: '/brainstorming', label: 'Planner', icon: 'write' },
       ];
 
