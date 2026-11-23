@@ -1,3 +1,4 @@
+import {QftDiscussion} from '@/components/discussions/QftDiscussion';
 import { PresentQuestions } from '@/components/discussions/PresentQuestions';
 import {executeLearningContent} from '@/services/learning-content.service';
 import { validOptionalSourceLink } from '@/utils/source-link';
@@ -449,6 +450,8 @@ export function DiscussionPage() {
   if (!session) {
     return <div className="p-4 text-gray-400">Loading...</div>;
   }
+
+  if(session.notesMarkdown==='{"qftVersion":2}')return <QftDiscussion sessionId={session.$id}/>;
 
   if (session.discussionType && session.discussionType !== 'qft') {
     return <RedditDiscussionPage session={session} />;

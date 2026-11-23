@@ -1,3 +1,4 @@
+import {CreateQftModal} from '@/components/discussions/QftDiscussion';
 import {CreateWritingPromptModal} from '@/components/discussions/CreateWritingPromptModal';
 import {syncPresentationLinks} from '@/services/presentation.service';
 import {useEffect,useState} from 'react';
@@ -44,7 +45,7 @@ export function DiscussionsListPage() {
 export function StartTextDiscussionModal({teacherId,initialClassId='',onClose}:{teacherId:string;initialClassId?:string;onClose:()=>void}) {
  const navigate=useNavigate();
  const [classId,setClassId]=useState(initialClassId),[textId,setTextId]=useState('');
- const [kind,setKind]=useState('text'),[writing,setWriting]=useState(false);
+ const [kind,setKind]=useState('text'),[writing,setWriting]=useState(false),[qft,setQft]=useState(false);
  const classes=useLiveQuery(()=>db.classes.where('teacherId').equals(teacherId).toArray(),[teacherId]);
  const selectedClassId=classId||classes?.[0]?.$id||'';
  const texts=useLiveQuery(async()=>{
@@ -52,13 +53,14 @@ export function StartTextDiscussionModal({teacherId,initialClassId='',onClose}:{
    const ids=[...new Set((await db.text_assignments.where('classId').equals(selectedClassId).toArray()).filter(item=>item.isAssignedReading===true).map(item=>item.textId))];
    return ids.length?db.texts.where('$id').anyOf(ids).and(text=>text.status!=='archived').toArray():[];
  },[selectedClassId]);
+ if(qft)return <CreateQftModal classId={selectedClassId} onClose={()=>setQft(false)} onCreated={id=>{onClose();navigate(`/discussions/${id}`);}}/>;
  if(writing)return <CreateWritingPromptModal classId={selectedClassId} onClose={()=>setWriting(false)} onCreated={id=>{onClose();navigate(`/presentations/${id}/live`);}}/>;
  return <Modal open onClose={onClose} title="Start discussion"><div className="space-y-4">
-   <label className="block text-sm">Type<select className={input} value={kind} onChange={e=>setKind(e.target.value)}><option value="text">Text discussion</option><option value="writing">Writing prompt</option></select></label>
+   <label className="block text-sm">Type<select className={input} value={kind} onChange={e=>setKind(e.target.value)}><option value="text">Text discussion</option><option value="writing">Writing prompt</option><option value="qft">QFT (Question Formulation Technique)</option></select></label>
    <label className="block text-sm">Class<select className={input} value={selectedClassId} onChange={event=>{setClassId(event.target.value);setTextId('');}}>{classes?.map(cls=><option key={cls.$id} value={cls.$id}>{classLabel(cls)}</option>)}</select></label>
    {kind==='text'&&<><label className="block text-sm">Text<select className={input} value={textId} onChange={event=>setTextId(event.target.value)}><option value="">Choose a text</option>{texts?.map(text=><option key={text.$id} value={text.$id}>{text.title}</option>)}</select></label>
    {texts?.length===0&&<p className="text-sm text-slate-500">Mark a text as Assigned Reading to discuss it here.</p>}</>}
-   <Button disabled={!selectedClassId||(kind==='text'&&!texts?.some(text=>text.$id===textId))} onClick={()=>{if(kind==='writing'){setWriting(true);return;}navigate(`/discussions/texts/${textId}/${selectedClassId}`);onClose();}}>{kind==='writing'?'Create writing prompt':'Open text discussion'}</Button>
+   <Button disabled={!selectedClassId||(kind==='text'&&!texts?.some(text=>text.$id===textId))} onClick={()=>{if(kind==='qft'){setQft(true);return;}if(kind==='writing'){setWriting(true);return;}navigate(`/discussions/texts/${textId}/${selectedClassId}`);onClose();}}>{kind==='qft'?'Create QFT':kind==='writing'?'Create writing prompt':'Open text discussion'}</Button>
  </div></Modal>;
 }
 const input='mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm';
@@ -69,9 +71,9 @@ export function WritingPromptsList({classId}:{classId?:string}) {
   if(!user)return [];
   const classes=isTeacher?await db.classes.where('teacherId').equals(user.$id).toArray():await db.classes.where('$id').anyOf((await db.class_members.where('userId').equals(user.$id).toArray()).map(m=>m.classId)).toArray();
   const selected=classes.filter(c=>!classId||c.$id===classId);if(!selected.length)return [];
-  return (await db.class_sessions.where('classId').anyOf(selected.map(c=>c.$id)).toArray()).filter(s=>s.discussionType==='presentation'&&['active','published'].includes(s.status)).sort((a,b)=>b.sessionDate.localeCompare(a.sessionDate)).map(session=>({session,className:classLabel(selected.find(c=>c.$id===session.classId)!)}));
+  return (await db.class_sessions.where('classId').anyOf(selected.map(c=>c.$id)).toArray()).filter(s=>(s.discussionType==='presentation'||(s.discussionType==='qft'&&s.notesMarkdown==='{"qftVersion":2}'))&&['active','published'].includes(s.status)).sort((a,b)=>b.sessionDate.localeCompare(a.sessionDate)).map(session=>({session,className:classLabel(selected.find(c=>c.$id===session.classId)!)}));
  },[user?.$id,isTeacher,classId]);
  useEffect(()=>{if(!user)return;void(async()=>{const classes=isTeacher?await db.classes.where('teacherId').equals(user.$id).toArray():await db.classes.where('$id').anyOf((await db.class_members.where('userId').equals(user.$id).toArray()).map(m=>m.classId)).toArray();await syncPresentationLinks(classes.filter(c=>!classId||c.$id===classId).map(c=>c.$id));})().catch(()=>{});},[user,isTeacher,classId]);
  if(!rows?.length)return null;
- return <section aria-label="Writing prompt discussions" className="my-5 space-y-2"><h2 className="text-lg font-semibold">Writing prompts</h2>{rows.map(({session,className})=><Link key={session.$id} to={`/presentations/${session.$id}/live`} className="flex items-center justify-between gap-3 rounded-xl border p-4"><span><span className="text-xs text-slate-500">Writing prompt · {className} · {session.sessionDate.slice(0,10)}</span><strong className="block line-clamp-2">{session.promptMarkdown||session.title}</strong></span><StatusBadge status={session.status}/></Link>)}</section>;
+ return <section aria-label="Class discussions" className="my-5 space-y-2"><h2 className="text-lg font-semibold">Class discussions</h2>{rows.map(({session,className})=><Link key={session.$id} to={session.discussionType==='qft'?`/discussions/${session.$id}`:`/presentations/${session.$id}/live`} className="flex items-center justify-between gap-3 rounded-xl border p-4"><span><span className="text-xs text-slate-500">{session.discussionType==='qft'?'QFT':'Writing prompt'} · {className} · {session.sessionDate.slice(0,10)}</span><strong className="block line-clamp-2">{session.promptMarkdown||session.title}</strong></span><StatusBadge status={session.status}/></Link>)}</section>;
 }

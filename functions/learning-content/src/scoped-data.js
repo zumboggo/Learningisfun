@@ -26,7 +26,7 @@ export async function scopedDataAction({body,profile,userId,db,databaseId}){
   if(collection==='flashcard_cards')return Query.equal('deckId',[...await readDeckIds(),'__none__']);
   return Query.equal('userId',userId);
  };
- const sanitize=row=>collection==='class_sessions'&&!ownedIds.has(row.classId)?{...row,notesMarkdown:''}:collection==='classes'&&!ownedIds.has(row.$id)?{...row,joinCode:'',parentCode:'',parentCodeActive:false,substituteCode:'',substituteCodeActive:false}:row;
+ const sanitize=row=>collection==='class_sessions'&&!ownedIds.has(row.classId)?{...row,notesMarkdown:row.discussionType==='qft'&&row.notesMarkdown==='{"qftVersion":2}'?row.notesMarkdown:''}:collection==='classes'&&!ownedIds.has(row.$id)?{...row,joinCode:'',parentCode:'',parentCodeActive:false,substituteCode:'',substituteCodeActive:false}:row;
  if(['list','get'].includes(operation)){
   const queries=(body.queries||[]).map(q=>{let parsed;try{parsed=JSON.parse(q)}catch{fail('Invalid query')};if(!['equal','notEqual','lessThan','lessThanEqual','greaterThan','greaterThanEqual','orderAsc','orderDesc','limit','offset','cursorAfter','cursorBefore','contains','isNull','isNotNull','or','and','startsWith'].includes(parsed.method))fail('Unsupported query');return q;});
   // A code lookup reveals only the class invitation landing data, never another code or roster.
