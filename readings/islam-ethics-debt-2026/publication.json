@@ -1,7 +1,7 @@
 {
   "className": "Ethics and Leadership",
   "section": "Section 1",
-  "verifiedAt": "2026-11-17T05:43:14.474Z",
+  "verifiedAt": "2026-11-23T00:13:50.895Z",
   "readings": [
     {
       "part": 1,
@@ -13,6 +13,28 @@
       "images": 4,
       "paragraphs": 50,
       "url": "https://zumboggo.github.io/Learningisfun/#/texts/islam-ethics-2026-part-1?classId=e24ec8d9-21d7-4c32-a30e-08655c2f4e65"
+    },
+    {
+      "part": 2,
+      "title": "The Teacher Who Could Not Speak",
+      "textId": "islam-ethics-2026-part-2",
+      "date": "2026-11-27",
+      "voice": "A",
+      "wordCount": 1579,
+      "images": 4,
+      "paragraphs": 57,
+      "url": "https://zumboggo.github.io/Learningisfun/#/texts/islam-ethics-2026-part-2?classId=e24ec8d9-21d7-4c32-a30e-08655c2f4e65"
+    },
+    {
+      "part": 3,
+      "title": "When a Country Owes Money",
+      "textId": "islam-ethics-2026-part-3",
+      "date": "2026-11-27",
+      "voice": "B",
+      "wordCount": 1607,
+      "images": 4,
+      "paragraphs": 54,
+      "url": "https://zumboggo.github.io/Learningisfun/#/texts/islam-ethics-2026-part-3?classId=e24ec8d9-21d7-4c32-a30e-08655c2f4e65"
     }
   ]
 }

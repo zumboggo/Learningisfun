@@ -17,3 +17,6 @@ Image prompts and provenance: image-prompts.json and generation-record.json. Bui
 Checks: prose length 1500–1800 words for each; exactly four distinct images per reading; all images decode; local links, citation anchors and image paths validated. Desktop reader and narrow-screen index visually reviewed. Historical claims checked against the linked primary texts and scholarly/institutional sources; Graeber interpretations and imagined cases explicitly identified.
 
 No Canvas or LIF database publication/assignment was requested or performed. These are complete local deliverables. Repository commit/push follows the project publishing preference and is separate from classroom assignment.
+
+PUBLICATION UPDATE — November 23, 2026
+David requested parts 2 and 3 assigned this week. Published both existing illustrated readings to Ethics and Leadership, Section 1, with assigned date November 23 and due date November 27. Part 1 remains due November 20. Live text, paragraph, image, and assignment verification is recorded in publication.json. No Canvas assignments created. The unauthenticated browser requires class sign-in, so authenticated reader layout was not visually checked in this session.
