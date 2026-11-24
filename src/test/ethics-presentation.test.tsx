@@ -16,7 +16,7 @@ describe('Ethics presentation builder',()=>{
  });
  it('preserves the assessment boundaries and exact placeholder',()=>{
   const prompt=buildPresentationPrompt(emptyDraft());
-  for(const text of ['Class Connection','Students fill in how this connects to the class here','speaker notes completely empty','CURRENT UNIT','EXACTLY THREE','ONE minute of buffer','Do NOT write my individual reflection','NO automatic penalty','November 13, 2026 at 11:59 p.m. China time'])expect(prompt).toContain(text);
+  for(const text of ['Class Connection','Students fill in how this connects to the class here','speaker notes completely empty','CURRENT UNIT','EXACTLY THREE','ONE minute of buffer','Do NOT write my individual reflection','one new fact','an actual classmate’s reason','three minutes'])expect(prompt).toContain(text);
  });
  it('waits for selection and a student reason, then generates an editable prompt',async()=>{
   vi.mocked(executeLearningContent).mockResolvedValue({options:[{text:'Consider affected people',why:'Reveals competing interests'},{text:'Test consistency',why:'Checks fairness'},{text:'Set a boundary',why:'Protects care'}]});

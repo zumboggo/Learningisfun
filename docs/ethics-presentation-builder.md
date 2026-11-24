@@ -12,7 +12,7 @@ Retain the **current-unit** requirement and the existing ten-point rubric. No au
 
 > The builder creates a slide titled “Class Connection”. Its only body text is centered: “Students fill in how this connects to the class here”. Its speaker notes are empty. Replace the placeholder and write its explanation yourselves, in your own words without AI-generated wording. Name a specific Episode moment, assigned passage, or class discussion from our current unit; explain the relevant idea and how it connects to your lesson. Recent material is encouraged. You may consult class materials.
 
-The prompt and final checklist reflect the supplied November 12, 2026 presentation and November 13, 2026, 11:59 p.m. China-time submission. It plans nine minutes plus a one-minute buffer within the hard ten-minute rotation. Update these dates before reusing for another assignment. This implementation does not edit the external Canvas assignment.
+The prompt connects the selected skill to a worked example, a changed fact, audience reasoning, and a transfer question. It plans nine minutes plus a one-minute buffer. Reflection and submission logistics appear beside the copy button. The assignment supplies the dates. This implementation does not edit the external Canvas assignment.
 
 ## Checks
 
