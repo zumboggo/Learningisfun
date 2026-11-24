@@ -1,0 +1,30 @@
+[
+  {
+    "device": "desktop",
+    "choices": 6,
+    "steps": 74,
+    "resumed": true,
+    "listener": true,
+    "pair": true,
+    "taxis": 2,
+    "score": 100,
+    "contextParagraphs": 2,
+    "reducedMotion": "no-preference",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "device": "phone",
+    "choices": 6,
+    "steps": 74,
+    "resumed": true,
+    "listener": true,
+    "pair": true,
+    "taxis": 2,
+    "score": 100,
+    "contextParagraphs": 2,
+    "reducedMotion": "reduce",
+    "overflow": false,
+    "errors": []
+  }
+]

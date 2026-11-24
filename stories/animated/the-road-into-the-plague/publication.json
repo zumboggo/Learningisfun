@@ -1,0 +1,27 @@
+{
+  "id": "the-road-into-the-plague",
+  "title": "The Road into the Plague",
+  "status": "published-assigned",
+  "version": 1,
+  "versionId": "f39db318589ac44219852632642897ef",
+  "bytes": 392782,
+  "activeMembershipsVerified": true,
+  "liveTeacherReadVerified": true,
+  "publishedBytesVerified": true,
+  "studentAccess": "Live student library and package read verified. No student attempts created.",
+  "privatePreviewVerified": true,
+  "existingAssignmentsPreserved": true,
+  "studioUrl": "https://zumboggo.github.io/Learningisfun/#/game/create?draft=the-road-into-the-plague",
+  "previewUrl": "https://zumboggo.github.io/Learningisfun/#/game/story-preview/the-road-into-the-plague",
+  "assignments": [
+    {
+      "classId": "e24ec8d9-21d7-4c32-a30e-08655c2f4e65",
+      "className": "Section 1",
+      "courseName": "Ethics and Leadership",
+      "date": "2026-11-24",
+      "releaseAt": "2026-11-20T00:00:00.000Z",
+      "assignmentId": "4211752e79e25cb3ab2504fb472944c3",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/4211752e79e25cb3ab2504fb472944c3"
+    }
+  ]
+}

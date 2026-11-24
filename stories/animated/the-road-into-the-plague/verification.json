@@ -1,0 +1,15 @@
+{
+  "routes": 216,
+  "allOptions": 15,
+  "choicesPerRoute": 6,
+  "words": {
+    "min": 1464,
+    "max": 1536
+  },
+  "replayAndCallbacks": true,
+  "essentialFactsAllRoutes": true,
+  "quizMaximum": 100,
+  "threeCorrectPass": true,
+  "firstPerson": true,
+  "noOpeningVideo": true
+}

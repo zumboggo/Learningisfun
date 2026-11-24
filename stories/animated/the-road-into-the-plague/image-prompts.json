@@ -1,0 +1,7 @@
+{
+  "tool": "built-in imagegen",
+  "prompt": "Use case: historical-scene. Asset type: landscape 16:9 background for an animated educational story. Empty roadside stopping place at Sargh on the route from western Arabia toward greater Syria, seventh century CE. Low dry rocky hills, a dusty road receding toward a distant mountain pass, modest dark woven travel tents clustered at far right, a small shade awning and closed clay water jars at far left, one distant acacia. Wide empty flat foreground for animated characters, eye level. Art direction: sophisticated wax crayon texture with manhua composition and Bauhaus geometric simplification; clearly readable landscape, sandstone ochre, indigo shadows, muted sage, warm ivory. Restrained texture and contrast so polished vector actors remain legible. Warm late afternoon light, thoughtful tense atmosphere, beautiful richly illustrated scenery. No people, no animals, no text, no logos, no modern items, no mosque domes or minarets. Not a map; no panels. Saveable project asset.",
+  "source": "exec-a921e7f0-5f75-45fc-a15f-035e5de03969.png",
+  "asset": "sargh-v1.webp",
+  "inspection": "Clear empty foreground, no people or text, suitable for phone crop; optimized to 1440px WebP."
+}

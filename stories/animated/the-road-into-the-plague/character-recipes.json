@@ -1,0 +1,42 @@
+[
+  {
+    "id": "Rashid",
+    "name": "Rashid · carrying family news",
+    "palette": {
+      "skin": "#ae7850",
+      "hair": "#332a28",
+      "shirt": "#9a6348"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "swept",
+      "facialHair": "full",
+      "outfit": "robe",
+      "face": "angular",
+      "eyes": "keen"
+    },
+    "version": 1,
+    "finish": "polished",
+    "provenance": "Original supporting dramatic role; not a historical portrait. Generic robe/tunic, not an exact costume reconstruction. See authoring notes."
+  },
+  {
+    "id": "Nadir",
+    "name": "Nadir · caring for the travellers",
+    "palette": {
+      "skin": "#c08a61",
+      "hair": "#363438",
+      "shirt": "#526f72"
+    },
+    "appearance": {
+      "age": "elder",
+      "hair": "cropped",
+      "facialHair": "full",
+      "outfit": "tunic",
+      "face": "broad",
+      "eyes": "gentle"
+    },
+    "version": 1,
+    "finish": "polished",
+    "provenance": "Original supporting dramatic role; not a historical portrait. Generic robe/tunic, not an exact costume reconstruction. See authoring notes."
+  }
+]
