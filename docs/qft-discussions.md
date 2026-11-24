@@ -4,7 +4,7 @@ From a class, choose Discussion → QFT (Question Formulation Technique). Add a 
 
 New discussions default to teacher-only question capture and replies, anonymous student replies, five votes per student, and multiple votes per question. Question author identities are never recorded. Teacher replies always say “Teacher”; the student reply anonymity setting applies to existing replies as well as new ones.
 
-Enter captures a question verbatim; Shift+Enter inserts a newline. Teachers can correct wording. Questions remain in arrival order. Open voting / Close voting controls only voting, not question or reply entry. Students can add or remove allocations while voting is open. Aggregate totals appear only after closing voting (including for teachers). Reopening hides totals again and preserves allocations.
+Enter captures a question verbatim; Shift+Enter inserts a newline. Questions use compact rows with inline C/O controls and collapsed replies. Refresh reloads questions and ranks them by descending vote totals after voting closes; ties keep arrival order. Background updates do not move rows, and question numbers remain stable. The wording-correction control is no longer shown. Open voting / Close voting controls only voting, not question or reply entry. Students can add or remove allocations while voting is open. Aggregate totals appear only after closing voting (including for teachers). Reopening hides totals again and preserves allocations.
 
 Changing the vote allowance or stacking rule cannot invalidate existing ballots: the server rejects that change with an explanation. Students can withdraw votes while voting is open before the teacher retries.
 
