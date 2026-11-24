@@ -1,0 +1,27 @@
+{
+  "id": "who-should-lead-us",
+  "title": "Who Should Lead Us?",
+  "status": "published-assigned",
+  "version": 1,
+  "versionId": "a57e368f9dc3d1e7a434b80e3b74cc2a",
+  "bytes": 388460,
+  "activeMembershipsVerified": true,
+  "liveTeacherReadVerified": true,
+  "publishedBytesVerified": true,
+  "studentAccess": "Live student library and package read verified. No student attempts created.",
+  "privatePreviewVerified": true,
+  "existingAssignmentsPreserved": true,
+  "studioUrl": "https://zumboggo.github.io/Learningisfun/#/game/create?draft=who-should-lead-us",
+  "previewUrl": "https://zumboggo.github.io/Learningisfun/#/game/story-preview/who-should-lead-us",
+  "assignments": [
+    {
+      "classId": "e24ec8d9-21d7-4c32-a30e-08655c2f4e65",
+      "className": "Section 1",
+      "courseName": "Ethics and Leadership",
+      "date": "2026-11-27",
+      "releaseAt": "2026-11-20T00:00:00.000Z",
+      "assignmentId": "660372c222113c7902873051ea96cf71",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/660372c222113c7902873051ea96cf71"
+    }
+  ]
+}

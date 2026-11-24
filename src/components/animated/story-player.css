@@ -204,3 +204,6 @@
 .animated-story.story-cinema .story-writing strong { color:#fff2c6; opacity:1; text-transform:none; letter-spacing:normal; }
 
 .story-writing-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.animated-story .story-writing-heading .story-writing-edit{display:inline-flex;align-items:center;justify-content:center;flex:0 0 44px;width:44px;min-height:44px;padding:10px;margin:0}
+
+/* Keep the speaker label distinct when narrow choice context wraps inline. */
+@media(max-width:600px){.story-cinema .story-dialogue .cinema-choice-context strong{margin-inline-end:.5em}}

@@ -1,0 +1,7 @@
+{
+  "tool": "built-in imagegen",
+  "prompt": "Use case: historical-scene. Asset type: 16:9 landscape background for an animated historical educational story, Medina in 632 CE. Empty modest residential courtyard opening onto a narrow lane; low mudbrick houses, simple flat roofs, palm-trunk shade structure at left edge, a few clay jars and folded woven mats at edges, date palms beyond roofs. No grand monumental buildings. Eye-level view, broad clear earthen foreground to stage two full-body animated characters; unobstructed center. Art direction locked: acrylic painting with readable American-comic environmental composition and Bauhaus geometric simplification. Warm ivory, terracotta, dusty teal and deep indigo; crisp restrained dark contours, visible subtle acrylic brush texture, late afternoon shadows, solemn humane atmosphere. Detailed and beautiful but lower contrast at center for actors. No people, no animals, no text, no calligraphy, no logos, no domes, no minarets, no modern objects. Evocative setting, not claimed reconstruction of Saqifa or Muhammad's house.",
+  "source": "exec-79014649-1b31-45ba-a82c-ff156f2b7b60.png",
+  "asset": "medina-v1.webp",
+  "inspection": "Empty clear playable foreground, simple mudbrick and palm shade, no people/text/modern monuments. No claim of exact Saqifa reconstruction."
+}

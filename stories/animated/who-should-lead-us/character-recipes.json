@@ -1,0 +1,42 @@
+[
+  {
+    "id": "Hisham",
+    "name": "Hisham",
+    "palette": {
+      "skin": "#b17b57",
+      "hair": "#34312c",
+      "shirt": "#677b65"
+    },
+    "appearance": {
+      "age": "elder",
+      "hair": "swept",
+      "facialHair": "full",
+      "outfit": "robe",
+      "face": "broad",
+      "eyes": "gentle"
+    },
+    "version": 1,
+    "finish": "polished",
+    "provenance": "Original supporting dramatic character, not an identified historical companion or a likeness of a religious leader. Generic stylized clothing. See sources and outline."
+  },
+  {
+    "id": "Bashir",
+    "name": "Bashir",
+    "palette": {
+      "skin": "#a56c49",
+      "hair": "#282a30",
+      "shirt": "#775c79"
+    },
+    "appearance": {
+      "age": "adult",
+      "hair": "cropped",
+      "facialHair": "full",
+      "outfit": "tunic",
+      "face": "lean",
+      "eyes": "keen"
+    },
+    "version": 1,
+    "finish": "polished",
+    "provenance": "Original supporting dramatic character, not an identified historical companion or a likeness of a religious leader. Generic stylized clothing. See sources and outline."
+  }
+]
