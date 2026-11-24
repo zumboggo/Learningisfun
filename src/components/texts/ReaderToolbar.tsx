@@ -7,7 +7,7 @@ export function ReaderToolbar({mode,panel,onArticle,onOriginal,onPanel,size,onSi
     <div className="flex flex-wrap items-center gap-2">
       <button className={style(mode==='article'&&!panel)} aria-pressed={mode==='article'&&!panel} onClick={onArticle}>Article Mode</button>
       <button className={style(mode==='original')} aria-pressed={mode==='original'} onClick={onOriginal}>Original Text</button>
-      {(['support','more'] as const).map(key=><button key={key} className={style(panel===key)} aria-expanded={panel===key} aria-controls="reader-options-panel" onClick={()=>onPanel(panel===key?null:key)}>{key[0].toUpperCase()+key.slice(1)} <span aria-hidden="true">{panel===key?'⌃':'⌄'}</span></button>)}
+      {(['support','more'] as const).map(key=><button key={key} className={style(panel===key)} aria-expanded={panel===key} aria-controls="reader-options-panel" onClick={()=>onPanel(panel===key?null:key)}>{key==='support'?'Extra Support':'More'} <span aria-hidden="true">{panel===key?'⌃':'⌄'}</span></button>)}
       <div className="ml-auto flex items-center gap-1"><button aria-label="Smaller text" className={style(false)} disabled={size<=16||mode==='original'} onClick={()=>onSize(Math.max(16,size-2))}>A−</button><output aria-label="Font size" className="sr-only">{size}px</output><button aria-label="Larger text" className={style(false)} disabled={size>=56||mode==='original'} onClick={()=>onSize(Math.min(56,size+2))}>A+</button></div>
     </div>
     {panel&&<div id="reader-options-panel" className="mt-3 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:p-4">{children}</div>}
