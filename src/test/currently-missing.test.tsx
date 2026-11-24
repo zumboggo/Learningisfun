@@ -15,7 +15,8 @@ vi.mock('@/components/WorkshopLink', async () => ({ WorkshopLink: (await import(
 afterEach(cleanup);
 
 it('links to unfinished reading discussions and opens only explicitly assigned, unsubmitted Ethics notebooks', async () => {
- mocks.entries = [{ submitted: true, source: { kind: 'episode-notes', format: 'animated', episode: 'done' } }];
+ mocks.entries = [{ submitted: true, answers: ['one','two','three'], source: { kind: 'episode-notes', format: 'animated', episode: 'done' } }];
+ mocks.entries.push({ submitted: true, answers: ['first', ' ', 'third'], source: { kind: 'episode-notes', format: 'animated', episode: 'active' } });
  mocks.readings.mockResolvedValue({ readings: [
   { id: 'reading', textId: 'text', classId: STONE_CLASS_ID, title: 'A reading', questions: 0, replies: 1, quoteRequired: true, assignedReplies: 0 },
  ] });
@@ -30,6 +31,7 @@ it('links to unfinished reading discussions and opens only explicitly assigned, 
  expect(await panel.findByRole('link', { name: /A reading/ })).toHaveAttribute('href', `/discussions/texts/text/${STONE_CLASS_ID}`);
  expect(panel.getByText('1 reply with a quote left')).toBeVisible();
  expect(panel.getByRole('link', { name: /Assigned notebook/ })).toHaveAttribute('href', '/game/play/active-assignment?notebook=1');
+ expect(panel.getByText('1 notebook answer left')).toBeVisible();
  expect(panel.queryByText('Optional episode')).toBeNull();
  expect(panel.queryByText('Already submitted')).toBeNull();
  mocks.readings.mockResolvedValue({ readings: [] });

@@ -55,8 +55,16 @@ export function CurrentlyMissing({ classId, userId }: { classId: string; userId:
     };
   }, [classId, userId, ethics]);
   // The portfolio keeps one notebook per story across replays and versions.
-  const submitted = new Set(entries.flatMap(entry => entry.submitted && !entry.preview && entry.source.kind === 'episode-notes' && entry.source.format === 'animated' ? [entry.source.episode] : []));
-  const notebooks = (result?.notebooks || []).filter(row => !submitted.has(row.id));
+  const progress = new Map<string, { remaining: number; submitted: boolean }>();
+  for (const entry of entries) {
+    if (entry.preview || entry.source.kind !== 'episode-notes' || entry.source.format !== 'animated') continue;
+    const answered = entry.answers.filter(answer => answer.trim()).length;
+    progress.set(entry.source.episode, { remaining: Math.max(0, 3 - answered), submitted: entry.submitted });
+  }
+  const notebooks = (result?.notebooks || []).flatMap(row => {
+    const { remaining, submitted } = progress.get(row.id) || { remaining: 3, submitted: false };
+    return remaining || !submitted ? [{ ...row, remaining }] : [];
+  });
   const count = (result?.readings.length || 0) + notebooks.length;
   return <section aria-label="Currently Missing">
     <button type="button" aria-expanded={open} aria-controls="currently-missing-work" onClick={() => setOpen(value => !value)} className={`inline-flex min-h-11 items-center gap-2 rounded-t-lg border border-purple-200 px-4 font-semibold text-purple-950 hover:bg-purple-100 ${open ? 'bg-purple-100' : 'bg-purple-50'}`}>
@@ -77,7 +85,7 @@ export function CurrentlyMissing({ classId, userId }: { classId: string; userId:
         </Link></li>)}
         {notebooks.map(row => <li key={row.assignmentId}><GameLaunchLink className="block rounded-md px-2 py-2 hover:bg-purple-50" to={`/game/play/${row.assignmentId}?notebook=1`}>
           <strong className="block text-purple-950">{row.title}</strong>
-          <span className="text-sm text-gray-700">Notebook questions · submit your answers</span>
+          <span className="text-sm text-gray-700">{row.remaining ? quantity(row.remaining, 'notebook answer', 'notebook answers') + ' left' : 'Submit your notebook answers'}</span>
         </GameLaunchLink></li>)}
       </ul>}
     </div>
