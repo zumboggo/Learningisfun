@@ -23,7 +23,7 @@ export default function StoryInterlude({media,onContinue,disabled=false,reduced=
    {error&&<p role="status">{error}</p>}
    <button disabled={disabled} onClick={finish}>Continue without opening →</button>
   </>:<>
-   <div className={`crawl-viewport ${still||finished?'crawl-static':''}`}>
+   <div onClick={finish} style={{cursor:disabled?undefined:'pointer'}} className={`crawl-viewport ${still||finished?'crawl-static':''}`}>
     <div className="crawl-text" style={{animationDuration:`${media.seconds}s`,animationPlayState:paused||hidden?'paused':'running'}} onAnimationEnd={()=>{setFinished(true);}}>
      <p className="crawl-kicker">{media.kicker}</p><h2>{media.title}</h2>{media.paragraphs.map(p=><p key={p}>{p}</p>)}
     </div>
