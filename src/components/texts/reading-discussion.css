@@ -114,3 +114,7 @@
   .reading-discussion .reading-question > .reading-post-actions > span:first-child { position: absolute; top: 1.4rem; left: .1rem; width: 3.2rem; display: flex; flex-direction: column; gap: 0; padding-bottom: .5rem; }
   .reading-discussion .reading-question > .reading-post-actions > span:first-child button { width: 100%; }
 }
+
+/* Keep long conversations readable without limiting reply depth. */
+.reading-replies-flat { margin-left: 0; border-left: 0; }
+.reading-replies-flat > .reading-reply { padding-left: 0; }

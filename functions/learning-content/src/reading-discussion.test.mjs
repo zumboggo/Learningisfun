@@ -53,10 +53,13 @@ test('all categories immediately visible with anonymous authors; retries do not 
   expect(read.posts).toHaveLength(3);expect(read.posts[0]).not.toHaveProperty('authorId');expect(read.posts[0].label).toMatch(/^Reader /);
   const report=await call({action:'readReadingDiscussion'},teacher);expect(report.participation[0]).toMatchObject({thought:1,question:1,connection:1});
 });
-test('replies stay in their workspace, inherit category and stop at three levels',async()=>{
+test('replies stay in their workspace, inherit category and support long reply chains',async()=>{
   const {call,storage}=harness();await call(post('root','question'));let parentId=storage.reading_posts[0].$id;
-  for(let i=0;i<3;i++){await call(post(`reply${i}`,'thought',{parentId}));parentId=storage.reading_posts.at(-1).$id;}
-  await expect(call(post('too-deep','question',{parentId}))).rejects.toThrow('three levels');
+  for(let i=0;i<12;i++){await call(post(`reply${i}`,'thought',{parentId}));parentId=storage.reading_posts.at(-1).$id;}
+  const read=await call({action:'readReadingDiscussion'});
+  expect(read.posts).toHaveLength(13);
+  expect(read.posts.filter(p=>p.parentId)).toHaveLength(12);
+  await call({action:'editReadingDiscussion',postId:parentId,content:'A deeper reply, revised.',expectedUpdatedAt:read.posts.at(-1).createdAt});
   expect(JSON.parse(storage.reading_posts[1].dataJson).category).toBe('question');
   await expect(call(post('cross','thought',{parentId,classId:'red'}),{userId:'peer',role:'student',classIds:['red']})).rejects.toThrow('hidden or locked');
 });

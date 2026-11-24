@@ -141,3 +141,8 @@ and replies, descending, then root upvotes, then newest creation time. Zero-fire
 threads remain visible and replies remain collapsed. Each person still has one
 active fire nomination. Present snapshots the displayed root-post order, including
 observations, without exposing author identities.
+
+Questions, observations, and replies have no per-student count cap. Replies can
+continue at any depth; visual indentation stops increasing after a few levels.
+Teacher locks and visibility controls still apply. Individual contribution text
+retains its 10,000-character limit.

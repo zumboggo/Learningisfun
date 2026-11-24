@@ -1,3 +1,4 @@
+import { ReadingThread } from '@/components/discussions/DiscussionThread';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
@@ -81,4 +82,15 @@ it('fire sorting keeps every root and breaks nomination ties by upvotes, not pin
  const base={category:'question',parentId:null,pinned:false,hidden:false,score:0,createdAt:'2026-09-01'} as ReadingDiscussionPost;
  const posts=[{...base,id:'pinned',pinned:true,fireCount:2,score:1},{...base,id:'popular',fireCount:2,score:9},{...base,id:'most-fire',fireCount:3},{...base,id:'quiet',score:100}];
  expect(discussionFeed(posts,true).map(p=>p.id)).toEqual(['most-fire','popular','pinned','quiet']);
+});
+
+it('allows replying beyond the former nesting limit while preserving teacher locks',()=>{
+ const post={id:'deep',parentId:'parent',category:'question',content:'Continue the conversation',createdAt:'2026-11-24T00:00:00Z',label:'Reader',score:0} as ReadingDiscussionPost;
+ const setActiveReply=vi.fn();
+ const props={post,posts:[post],teacher:false,canWrite:true,busy:false,mutate:vi.fn(),readUrl:'/texts/t',draftPrefix:'deep',present:false,onSelect:vi.fn(),depth:12,activeReply:null,setActiveReply,consumeQuote:vi.fn()};
+ const {rerender}=render(<MemoryRouter><ReadingThread {...props}/></MemoryRouter>);
+ fireEvent.click(screen.getByRole('button',{name:'Reply'}));
+ expect(setActiveReply).toHaveBeenCalledWith('deep');
+ rerender(<MemoryRouter><ReadingThread {...props} ancestorLocked/></MemoryRouter>);
+ expect(screen.queryByRole('button',{name:'Reply'})).not.toBeInTheDocument();
 });

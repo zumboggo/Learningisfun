@@ -194,9 +194,10 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
   };
   const byId = new Map(posts.map(p => [p.id, p]));
   const ancestors = post => {
-    const result = []; let current = post;
+    const result = []; const seen = new Set(); let current = post;
     while (current) {
-      if (result.length > 3 || result.some(p => p.id === current.id)) fail('Invalid reply thread');
+      if (seen.has(current.id)) fail('Invalid reply thread');
+      seen.add(current.id);
       result.push(current); current = current.parentId ? byId.get(current.parentId) : null;
     }
     return result;
@@ -382,7 +383,6 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
     const parent = body.parentId ? byId.get(body.parentId) : null;
     if(writing&&!parent)fail('Submit your response using the writing prompt');
     if (body.parentId && (!parent || ancestors(parent).some(p => p.withdrawn || p.hidden || p.locked))) fail('This thread is hidden or locked');
-    if (parent && ancestors(parent).length >= 4) fail('Replies may be nested three levels');
     const category = parent?.category || body.category;
     if (!categories.includes(category)) fail('Choose a contribution category');
     const inheritedQuote = !writing && parent && body.useParentQuotation === true ? ancestors(parent).find(p=>p.quotation?.trim()) : null;
