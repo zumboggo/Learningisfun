@@ -4,7 +4,7 @@ import {Button} from '@/components/common/Button';
 import {CopyButton} from '@/components/common/CopyButton';
 import {downloadBlob} from '@/services/qti-export';
 import {executeLearningContent} from '@/services/learning-content.service';
-import {activities, voices, questions, emptyDraft, updateChoice, choiceComplete, buildPresentationPrompt, type PresentationDraft} from '@/services/ethics-presentation';
+import {brainstormingQuestion, activities, voices, questions, emptyDraft, updateChoice, choiceComplete, buildPresentationPrompt, type PresentationDraft} from '@/services/ethics-presentation';
 const headings = ['What interesting ethical question do you want classmates to think about?', 'What tool, principle, or practical skill could help classmates think through this question?', 'What situation would you like classmates to explore?', 'How would you like classmates to practise?', 'What kind of voice do you want your presentation to have?'];
 const hints = ['Choose a decision classmates can recognize. Connect it to specific material from our current unit; recent material is encouraged.', 'For example: checking who is affected, testing whether a rule is fair, or disagreeing respectfully.', 'Use a recognizable everyday situation, clearly identified fiction, or a historical or news example you can verify.', 'Choose one activity that classmates can try in about three minutes.', 'Choose as many as you like. Two or three usually give the clearest direction. Every presentation should be clear, specific, accessible, and useful.'];
 type Suggestion = {text: string; why: string};
@@ -16,6 +16,7 @@ export function EthicsPresentationBuilder({classId, userId}: {classId: string; u
  });
  const [open,setOpen]=useState(false), [step,setStep]=useState(0), [busy,setBusy]=useState(false), [error,setError]=useState(''), [storageError,setStorageError]=useState(false);
  const [options,setOptions]=useState<Suggestion[]>([]), [prompt,setPrompt]=useState('');
+ const angleRound = useRef(Math.floor(Math.random() * 5));
  const request = useRef(0), heading = useRef<HTMLHeadingElement>(null);
  // Report browser storage failures so students know to export before leaving.
  // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -26,7 +27,7 @@ export function EthicsPresentationBuilder({classId, userId}: {classId: string; u
  function go(next:number) {request.current++;setBusy(false);setOptions([]);setError('');setStep(next);}
  async function suggest() {
   const id=++request.current;setBusy(true);setError('');setOptions([]);
-  try {const result=await executeLearningContent<{options:Suggestion[]}>({action:'ethicsPresentationSuggestions',classId,step:['','tool','situation','activity'][step],question:draft.choices[0].text,tool:draft.choices[1].text,situation:draft.choices[2].text});if(id===request.current)setOptions(result.options);}
+  try {const result=await executeLearningContent<{options:Suggestion[]}>({action:'ethicsPresentationSuggestions',classId,step:['','tool','situation','activity'][step],question:brainstormingQuestion(draft.choices[0].text,step,angleRound.current++),tool:draft.choices[1].text,situation:draft.choices[2].text});if(id===request.current)setOptions(result.options);}
   catch(cause){if(id===request.current)setError((cause instanceof Error?cause.message:'Suggestions are unavailable.')+' You can still write your own answer.');}
   finally{if(id===request.current)setBusy(false);}
  }
@@ -46,7 +47,7 @@ export function EthicsPresentationBuilder({classId, userId}: {classId: string; u
      {step<4&&<>
       <textarea aria-labelledby="ethics-step-heading" maxLength={1500} rows={4} className="w-full rounded-xl border p-3" placeholder={step===0?'For example: When does being a good friend mean saying no?':'Write your answer here, or request ideas below.'} value={choice.text} onChange={e=>change(step,e.target.value)}/>
       {choice.stale&&<div className="rounded-lg bg-amber-50 p-3 text-sm"><p>An earlier choice changed. Check that this answer and your reason still fit.</p><Button variant="secondary" size="sm" onClick={()=>setDraft(d=>({...d,choices:d.choices.map((c,i)=>i===step?{...c,stale:false}:c)}))}>I checked: this still fits</Button></div>}
-      {step>0&&<Button variant="secondary" loading={busy} disabled={busy||!draft.choices.slice(0,step).every(choiceComplete)} onClick={()=>void suggest()}>Suggest three {step===1?'ideas':step===2?'situations':'activities'}</Button>}
+      {step>0&&<Button variant="secondary" loading={busy} disabled={busy||!draft.choices.slice(0,step).every(choiceComplete)} onClick={()=>void suggest()}>{options.length?'Explore three more':'Suggest three'} {step===1?'ideas':step===2?'situations':'activities'}</Button>}
       {busy&&<p role="status" className="text-sm text-gray-600">Finding three options for your choices…</p>}
       {error&&<p role="alert" className="text-sm text-red-700">{error}</p>}
       {options.length>0&&<div className="space-y-2"><p className="text-sm font-medium">Choose one, then explain why it fits. You can edit your choice.</p>{options.map((o,i)=><button key={i} className="block w-full rounded-xl border p-4 text-left hover:border-amber-600 hover:bg-amber-50" onClick={()=>change(step,o.text,true)}><strong className="block text-sm">{o.text}</strong><span className="mt-1 block text-sm text-gray-600">{o.why}</span></button>)}</div>}
