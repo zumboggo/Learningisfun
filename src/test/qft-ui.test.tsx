@@ -29,9 +29,10 @@ it('refreshes and ranks questions by votes with stable arrival-order ties',async
  render(<MemoryRouter><QftDiscussion sessionId="session"/></MemoryRouter>);
  await screen.findByText('First question');expect(screen.queryByText('Correct wording')).not.toBeInTheDocument();
  const contents=()=>screen.getAllByRole('article').map(row=>row.querySelector('p')?.textContent);
- expect(contents()).toEqual(['First question','Favourite question','Another favourite']);
+ expect(contents()).toEqual(['Favourite question','Another favourite','First question']);
+ mock.execute.mockResolvedValue({...data,questions:[{...questions[0],votes:8},...questions.slice(1)]});
  fireEvent.click(screen.getByRole('button',{name:'Refresh'}));
- await waitFor(()=>expect(contents()).toEqual(['Favourite question','Another favourite','First question']));
+ await waitFor(()=>expect(contents()).toEqual(['First question','Favourite question','Another favourite']));
  expect(screen.getByRole('button',{name:'Closed question 2'}).closest('article')).toHaveTextContent('Favourite question');
  expect(screen.getByLabelText('Replies to question 2').closest('details')).not.toHaveAttribute('open');
 });

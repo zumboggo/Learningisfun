@@ -68,5 +68,13 @@ export async function qftAction(args){
  const {value:state}=await read(db),c=state.config,own=state.ballots[userId]||{},reveal=c.votingStarted&&!c.votingOpen;
  let imageUrl='';
  if(state.imageId&&args.tokens){const token=await args.tokens.createFileToken({bucketId:IMAGE_BUCKET,fileId:state.imageId,expire:new Date(Date.now()+5*60000).toISOString()});const url=new URL(`${args.endpoint.replace(/\/$/,'')}/storage/buckets/${IMAGE_BUCKET}/files/${state.imageId}/view`);url.searchParams.set('project',args.projectId);url.searchParams.set('token',token.secret);imageUrl=url.href;}
- return {title:session.title,classId:cls.$id,teacher,config:c,paragraph:state.paragraph,imageUrl,remaining:c.votesPerStudent-Object.values(own).reduce((a,b)=>a+b,0),questions:state.questions.map(q=>({...q,mineVotes:own[q.id]||0,...(reveal?{votes:Object.values(state.ballots).reduce((sum,b)=>sum+(b[q.id]||0),0)}:{})})),replies:state.replies.map(r=>({id:r.id,questionId:r.questionId,content:r.content,label:r.teacher?'Teacher':c.anonymousReplies?'Anonymous':r.name}))};
+ const totals = new Map();
+ for (const ballot of Object.values(state.ballots)) {
+  for (const [id,count] of Object.entries(ballot)) totals.set(id,(totals.get(id)||0)+count);
+ }
+ const questions = state.questions.map((q,index)=>({
+  ...q, number:index+1, mineVotes:own[q.id]||0,
+  ...(reveal ? {votes:totals.get(q.id)||0} : {})
+ })).sort((a,b)=>(totals.get(b.id)||0)-(totals.get(a.id)||0));
+ return {title:session.title,classId:cls.$id,teacher,config:c,paragraph:state.paragraph,imageUrl,remaining:c.votesPerStudent-Object.values(own).reduce((a,b)=>a+b,0),questions,replies:state.replies.map(r=>({id:r.id,questionId:r.questionId,content:r.content,label:r.teacher?'Teacher':c.anonymousReplies?'Anonymous':r.name}))};
 }
