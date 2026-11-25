@@ -12,6 +12,8 @@ import {useTeacherPreferences} from "@/services/teacher-preferences";
 import TeachingDefaults from '@/components/teachers/TeachingDefaults';
 import VocabularySchedule from '@/components/teachers/VocabularySchedule';
 import {STONE_CLASS_ID} from '@/services/stone.service';
+import { CreateQftModal } from '@/components/discussions/QftDiscussion';
+import { executeLearningContent } from '@/services/learning-content.service';
 import {CreateWritingPromptModal} from '@/components/discussions/CreateWritingPromptModal';
 import { ReadingParticipationExport } from '@/components/reports/ReadingParticipationExport';
 import { MarkdownPasteEditor } from '@/components/common/MarkdownPasteEditor';
@@ -258,8 +260,8 @@ export function ClassDetailPage() {
   const weeklyMaterials = useLiveQuery(async (): Promise<WeeklyMaterial[]> => {
     if (!classId) return [];
     const sessions = await db.class_sessions.where('classId').equals(classId).toArray();
-    const sessionMaterials: WeeklyMaterial[] = sessions.filter(session=>['text','notes','presentation'].includes(session.discussionType||''))
-      .filter(session => session.discussionType === 'presentation' ? session.status === 'published' : session.status === 'published' || (session.discussionType !== 'notes' && session.status === 'active'))
+    const sessionMaterials: WeeklyMaterial[] = sessions.filter(session=>['qft','text','notes','presentation'].includes(session.discussionType||''))
+      .filter(session => session.status === 'published' || (session.discussionType !== 'notes' && session.status === 'active'))
       .map(session => ({ kind: session.discussionType === 'presentation' ? 'writingPrompt' : session.discussionType === 'notes' ? 'notes' : 'discussion', date: session.sessionDate, session }));
     const assignments = await db.text_assignments.where('classId').equals(classId).toArray();
     const texts = await Promise.all(assignments.map(assignment => db.texts.get(assignment.textId)));
@@ -997,6 +999,19 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
   useEffect(() => {
     if (!isOwner) localStorage.setItem(`class-open-weeks:${classId}`, JSON.stringify([...openWeeks]));
   }, [classId, isOwner, openWeeks]);
+  const navigate = useNavigate();
+  const [creatingDiscussion, setCreatingDiscussion] = useState<'writing' | 'qft' | null>(null);
+  const removeSession = async (session: ClassSession) => {
+    try {
+      await executeLearningContent({ action: 'deleteClassDiscussion', sessionId: session.$id });
+      await db.class_sessions.delete(session.$id);
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : 'Could not delete the discussion.');
+    }
+  };
+  const deleteControl = (session: ClassSession) => isOwner && <button type="button" className="p-2 font-bold text-red-700" aria-label={`Delete ${session.title}`} onClick={() => {
+    if (window.confirm(`Delete “${session.title}” and all its replies?`)) void removeSession(session);
+  }}>×</button>;
   const [quickAdd, setQuickAdd] = useState<{ kind: 'text' | 'link'; week: string } | null>(null);
   const [title, setTitle] = useState('');
   const [url, setUrl] = useState('');
@@ -1055,7 +1070,7 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
               <span className="font-semibold">{isOpen ? '▾' : '▸'} {weekLabel}</span>
               <span className="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">{itemCount} {itemCount === 1 ? 'item' : 'items'}</span>
             </button>
-              {isOwner && isOpen && <div className="flex flex-wrap gap-2"><Button size="sm" onClick={() => openQuickAdd('link', week)}>+ Link</Button><Button size="sm" variant="secondary" onClick={() => openQuickAdd('text', week)}>+ Text</Button></div>}
+              {isOwner && isOpen && <div className="flex flex-wrap gap-2"><Button size="sm" onClick={() => openQuickAdd('link', week)}>+ Link</Button><Button size="sm" variant="secondary" onClick={() => openQuickAdd('text', week)}>+ Text</Button>{week === currentWeek && <><Button size="sm" variant="secondary" onClick={() => setCreatingDiscussion('writing')}>+ Writing prompt</Button><Button size="sm" variant="secondary" onClick={() => setCreatingDiscussion('qft')}>+ QFT</Button></>}</div>}
             </div>
             {isOpen && <div className="weekly-board border-t border-slate-100 p-3 sm:p-4">
               {texts.length > 0 && <WeeklyMaterialRow title="Texts" count={texts.length} color="emerald">{texts.map(item => <div key={item.assignment.$id} className="border-t border-emerald-100 px-4 py-2.5 hover:bg-emerald-100/50"><div className="flex items-start gap-3"><span className="weekly-resource-icon" aria-hidden="true">▤</span><TextMaterialLink item={item} compact />{isOwner && <details className="weekly-episode-menu"><summary aria-label={`Options for ${item.text.title}`}>⋮</summary><div><button className="text-sm font-semibold text-emerald-800" onClick={() => setEditingText(item.text)}>Edit text</button></div></details>}<TextDiscussionButton compact discussion={textDiscussions.find(row => row.textId === item.text.$id)} /></div></div>)}</WeeklyMaterialRow>}
@@ -1078,8 +1093,8 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
               </WeeklyMaterialRow>}
               {presentations.length > 0 && <WeeklyMaterialRow title="Links" count={presentations.length} color="fuchsia">{presentations.map(item => <div key={item.presentation.$id} className="flex items-center gap-3 border-t border-fuchsia-100 px-4 py-2.5"><input aria-label={`Mark ${item.presentation.title} viewed`} type="checkbox" className="h-5 w-5" checked={Boolean(item.presentation.watchedAt)} disabled={!isOwner} onChange={event => void setPresentationWatched(item.presentation.$id, event.target.checked)} />{item.presentation.url.startsWith('presentation-file:')?<PresentationDownload id={item.presentation.$id} className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-fuchsia-950">{item.presentation.title}</span><span className="text-xs text-fuchsia-800">{item.presentation.watchedAt ? 'Viewed' : 'Posted'} · {formatDate(item.date)}</span></PresentationDownload>:<a href={item.presentation.url || undefined} target="_blank" rel="noreferrer" className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-fuchsia-950">{item.presentation.title}</span><span className="text-xs text-fuchsia-800">{item.presentation.watchedAt ? 'Viewed' : 'Posted'} · {formatDate(item.date)}</span></a>}{isOwner && <details className="weekly-episode-menu"><summary aria-label={`Options for ${item.presentation.title}`}>⋮</summary><div><button className="text-sm font-semibold text-red-700" onClick={() => window.confirm('Delete this link?') && void deletePresentationLink(item.presentation.$id)}>Delete link</button></div></details>}</div>)}</WeeklyMaterialRow>}
               {notes.length > 0 && <WeeklyMaterialRow title="Class notes" count={notes.length} color="slate">{notes.map(item => <article key={item.session.$id} className="border-t border-blue-100 px-4 py-3"><div className="mb-2 flex items-center justify-between gap-3"><p className="text-xs font-semibold text-blue-700">{formatDate(item.date)}</p>{isOwner && <Link to={`/classes/${classId}/notes/${item.session.$id}/edit`} className="text-xs font-semibold text-blue-800 underline">Edit notes</Link>}</div><details><summary className="weekly-note-summary">Class notes</summary><Markdown content={item.session.publishedNotesMarkdown} className="mt-3 text-base leading-7 text-gray-800" /></details></article>)}</WeeklyMaterialRow>}
-              {writingPrompts.length > 0 && <WeeklyMaterialRow title="Writing prompts" count={writingPrompts.length} color="cyan">{writingPrompts.map(item => <article key={item.session.$id} className="border-t border-cyan-100 px-4 py-3"><div className="mb-2 flex items-center justify-between gap-3"><p className="text-xs font-semibold text-cyan-800">{formatDate(item.date)}</p>{isOwner&&<button className="text-xs font-semibold text-cyan-900 underline" onClick={()=>setEditingWritingPrompt(item.session)}>Edit prompt</button>}</div><p className="mb-2 line-clamp-2 whitespace-pre-wrap text-sm text-gray-800">{item.session.promptMarkdown}</p><Link to={`/presentations/${item.session.$id}/live`} className="font-semibold text-blue-700 underline">Open writing prompt</Link></article>)}</WeeklyMaterialRow>}
-              {discussions.length > 0 && <WeeklyMaterialRow title="Discussions" count={discussions.length} color="violet">{discussions.map(item => <Link key={item.session.$id} to={`/discussions/${item.session.$id}`} className="block border-t border-violet-100 px-4 py-3 hover:bg-violet-100/50"><span className="block text-sm font-semibold text-violet-950">{item.session.title}</span><span className="text-xs text-violet-800">{formatDate(item.date)}</span></Link>)}</WeeklyMaterialRow>}
+              {writingPrompts.length > 0 && <WeeklyMaterialRow title="Writing prompts" count={writingPrompts.length} color="cyan">{writingPrompts.map(item => <article key={item.session.$id} className="border-t border-cyan-100 px-4 py-3"><div className="mb-2 flex items-center justify-between gap-3"><p className="text-xs font-semibold text-cyan-800">{formatDate(item.date)}</p>{isOwner&&<button className="text-xs font-semibold text-cyan-900 underline" onClick={()=>setEditingWritingPrompt(item.session)}>Edit prompt</button>}{deleteControl(item.session)}</div><p className="mb-2 line-clamp-2 whitespace-pre-wrap text-sm text-gray-800">{item.session.promptMarkdown}</p><Link to={`/presentations/${item.session.$id}/live`} className="font-semibold text-blue-700 underline">Open writing prompt</Link></article>)}</WeeklyMaterialRow>}
+              {discussions.length > 0 && <WeeklyMaterialRow title="Discussions" count={discussions.length} color="violet">{discussions.map(item => <div className="flex items-center" key={item.session.$id}><Link to={`/discussions/${item.session.$id}`} className="block flex-1 border-t border-violet-100 px-4 py-3 hover:bg-violet-100/50"><span className="block text-sm font-semibold text-violet-950">{item.session.discussionType === 'qft' ? 'QFT · ' : ''}{item.session.title}</span><span className="text-xs text-violet-800">{formatDate(item.date)}</span></Link>{deleteControl(item.session)}</div>)}</WeeklyMaterialRow>}
               {quizzes.length > 0 && <WeeklyMaterialRow title="Quizzes" count={quizzes.length} color="amber">{quizzes.map(item => {
                 const attempts = attemptsByQuiz?.[item.quiz.$id] || [];
                 const completed = attempts.filter(attempt => attempt.completedAt && attempt.totalQuestions > 0);
@@ -1098,6 +1113,8 @@ function WeeklyClassMaterials({ classId, materials, isOwner, onOpenQuizResults }
       </div>}
     </section>
     {otherWeekCount > 0 && <button type="button" aria-expanded={showOtherWeeks} className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-left text-sm font-medium text-gray-600 hover:bg-gray-50" onClick={()=>setShowOtherWeeks(value=>!value)}>{showOtherWeeks ? '▾ Hide earlier and later weeks' : `▸ Earlier and later weeks (${otherWeekCount})`}</button>}
+    {creatingDiscussion === 'writing' && <CreateWritingPromptModal classId={classId} onClose={() => setCreatingDiscussion(null)} onCreated={id => navigate(`/presentations/${id}/live`)} />}
+    {creatingDiscussion === 'qft' && <CreateQftModal classId={classId} onClose={() => setCreatingDiscussion(null)} onCreated={id => navigate(`/discussions/${id}`)} />}
     {quickAdd?.kind==='text' && user && <CreateTextModal teacherId={user.$id} classes={(teacherClasses||[]).map(cls=>({id:cls.$id,name:classLabel(cls)}))} initialClassIds={[classId]} initialMode="link" allowTitleOnly assignedAt={new Date(`${quickAdd.week}T12:00:00`).toISOString()} onClose={()=>setQuickAdd(null)}/>}
     {quickAdd?.kind==='link' && <Modal open onClose={() => !adding && setQuickAdd(null)} title={`Add link · ${formatWeek(quickAdd.week)}`}><div className="space-y-4">
       {addError && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{addError}</p>}

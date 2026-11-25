@@ -445,6 +445,16 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
   }
   if (body.action === 'moderateReadingDiscussion') {
     if (!teacher) fail('Only the class teacher may moderate');
+    if(body.operation==='delete'){
+      const branch=posts.filter(post=>ancestors(post).some(ancestor=>ancestor.id===selected.id));
+      for(const post of branch){
+        for(const collection of ['reading_votes','reading_reports']){
+          for(const row of await list(collection,[...queries,Query.equal('postId',post.id)])) await db.deleteDocument(databaseId,collection,row.$id);
+        }
+        await db.deleteDocument(databaseId,post.writingRoot?'discussion_answers':'reading_posts',post.id);
+      }
+      return {ok:true};
+    }
     const fields = { hide: ['hidden', true], show: ['hidden', false], lock: ['locked', true], unlock: ['locked', false], pin: ['pinned', true], unpin: ['pinned', false] };
     if (body.operation === 'dismissReports') {
       const reports = await list('reading_reports', [...queries, Query.equal('postId', selected.id)]);

@@ -609,6 +609,35 @@ export default async ({ req, res, error }) => {
       });
     }
 
+    if (body.action === 'deleteClassDiscussion') {
+      const session = await db.getDocument(databaseId, 'class_sessions', body.sessionId);
+      const cls = await db.getDocument(databaseId, 'classes', session.classId);
+      if (profile.role !== 'teacher' || cls.teacherId !== userId) return res.json({error:'Class teacher required'},403);
+      if (!['qft','text','presentation'].includes(session.discussionType)) return res.json({error:'Choose a discussion or writing prompt'},400);
+      await atomicDiscussion({body,db,databaseId}, async ({db}) => {
+        const removeRows = async (collection, field, value) => {
+          const rows = await listAll(db,databaseId,collection,[Query.equal(field,value)]);
+          for (const row of rows) await db.deleteDocument(databaseId,collection,row.$id);
+        };
+        if (session.discussionType === 'presentation') {
+          const workspace = writingWorkspace(session.$id);
+          await guardWorkspace(db,databaseId,workspace);
+          for (const collection of ['reading_posts','reading_reports','reading_votes','reading_settings','reading_reply_rounds'])
+            await removeRows(collection,'workspaceId',workspace);
+        }
+        if (session.notesMarkdown === '{"qftVersion":2}') await removeRows('teacher_workspace','ownerId',session.$id);
+        const questions = await listAll(db,databaseId,'discussion_questions',[Query.equal('classSessionId',session.$id)]);
+        for (const question of questions) {
+          await removeRows('discussion_answers','questionId',question.$id);
+          await db.deleteDocument(databaseId,'discussion_questions',question.$id);
+        }
+        for (const collection of ['question_votes','text_discussion_votes','text_discussion_posts','class_session_items'])
+          await removeRows(collection,'classSessionId',session.$id);
+        await db.deleteDocument(databaseId,'class_sessions',session.$id);
+      });
+      return res.json({ok:true});
+    }
+
     if (body.action === 'setClassSessionStatus') {
       if (profile.role !== 'teacher') return res.json({ error: 'Teacher role required' }, 403);
       const session = await db.getDocument(databaseId, 'class_sessions', body.sessionId);

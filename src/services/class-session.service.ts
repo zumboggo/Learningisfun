@@ -185,12 +185,20 @@ export async function addSessionItem(
 export async function syncClassSessionsFromServer(classIds: string[]): Promise<boolean> {
   if (classIds.length === 0) return true;
   try {
-    const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.class_sessions, [
-      Query.equal('classId', classIds),
-      Query.limit(200),
-    ]);
-
-    for (const doc of result.documents as unknown as Array<Record<string, unknown>>) {
+    const cached = await db.class_sessions.where('classId').anyOf(classIds).toArray();
+    const documents: Array<Record<string, unknown>> = [];
+    let cursor: string | undefined;
+    do {
+      const page = await databases.listDocuments(DATABASE_ID, COLLECTIONS.class_sessions, [
+        Query.equal('classId', classIds), Query.limit(200),
+        ...(cursor ? [Query.cursorAfter(cursor)] : []),
+      ]);
+      documents.push(...page.documents);
+      cursor = page.documents.length === 200 ? page.documents[199].$id : undefined;
+    } while (cursor);
+    const remoteIds = new Set(documents.map(doc => doc.$id));
+    await db.class_sessions.bulkDelete(cached.filter(row => row.syncStatus === 'synced' && !remoteIds.has(row.$id)).map(row => row.$id));
+    for (const doc of documents) {
       const id = doc.$id as string;
       // Never clobber a local edit that has not reached the server yet.
       const local = await db.class_sessions.get(id);
