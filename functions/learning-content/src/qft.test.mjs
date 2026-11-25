@@ -24,3 +24,16 @@ it('lets students and teachers switch and clear a shared question type without n
  await expect(h.call('classifyQftQuestion',{questionId:'missing',questionType:'open'},'student')).rejects.toThrow('unavailable');
  await expect(qftAction({body:{action:'classifyQftQuestion',sessionId:h.sessionId,questionId:q.id,questionType:'open'},profile:{role:'student'},userId:'outsider',memberClassIds:new Set(['red']),db:h.db,databaseId:'main'})).rejects.toThrow('Class access');
 });
+
+it('gives the teacher and student independent equal ballots', async () => {
+ const h = await start();
+ const questionId = (await h.call('addQftQuestion', {content:'Why?'})).questions[0].id;
+ await h.call('updateQft', {settings:{votingOpen:true, votesPerStudent:1}});
+ for (const user of ['teacher','student']) {
+  const vote = () => h.call('voteQft', {questionId,delta:1}, user);
+  expect((await vote()).remaining).toBe(0);
+  await expect(vote()).rejects.toThrow('all your votes');
+ }
+ const result = await h.call('updateQft', {settings:{votingOpen:false}});
+ expect(result.questions[0].votes).toBe(2);
+});

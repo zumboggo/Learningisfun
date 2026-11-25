@@ -55,7 +55,7 @@ export async function qftAction(args){
     if(!state.questions.some(q=>q.id===body.questionId))fail('Question unavailable.');
     state.replies.push({id:randomUUID(),questionId:body.questionId,content:content(body.content),teacher,authorId:teacher?null:userId,name:teacher?'Teacher':profile.name||profile.username||'Student'});
    }else if(body.action==='voteQft'){
-    if(!student||!c.votingOpen)fail('Voting is closed.',403);
+    if(!c.votingOpen)fail('Voting is closed.',403);
     if(!state.questions.some(q=>q.id===body.questionId)||![1,-1].includes(body.delta))fail('Invalid vote.');
     const ballot=state.ballots[userId]||{},count=(ballot[body.questionId]||0)+body.delta;
     if(count<0||(!c.allowStackedVotes&&count>1))fail('This vote is not available.');
@@ -65,7 +65,7 @@ export async function qftAction(args){
    await writeRecord(db,databaseId,session.$id,'qft',state,record.revision);
   });
  }
- const {value:state}=await read(db),c=state.config,own=student?state.ballots[userId]||{}:{},reveal=c.votingStarted&&!c.votingOpen;
+ const {value:state}=await read(db),c=state.config,own=state.ballots[userId]||{},reveal=c.votingStarted&&!c.votingOpen;
  let imageUrl='';
  if(state.imageId&&args.tokens){const token=await args.tokens.createFileToken({bucketId:IMAGE_BUCKET,fileId:state.imageId,expire:new Date(Date.now()+5*60000).toISOString()});const url=new URL(`${args.endpoint.replace(/\/$/,'')}/storage/buckets/${IMAGE_BUCKET}/files/${state.imageId}/view`);url.searchParams.set('project',args.projectId);url.searchParams.set('token',token.secret);imageUrl=url.href;}
  return {title:session.title,classId:cls.$id,teacher,config:c,paragraph:state.paragraph,imageUrl,remaining:c.votesPerStudent-Object.values(own).reduce((a,b)=>a+b,0),questions:state.questions.map(q=>({...q,mineVotes:own[q.id]||0,...(reveal?{votes:Object.values(state.ballots).reduce((sum,b)=>sum+(b[q.id]||0),0)}:{})})),replies:state.replies.map(r=>({id:r.id,questionId:r.questionId,content:r.content,label:r.teacher?'Teacher':c.anonymousReplies?'Anonymous':r.name}))};
