@@ -53,7 +53,11 @@ it('opens preserved QFTs from the archive at the bottom and keeps student drafts
 it('teacher creation offers only a class and assigned text, opening the text workspace',async()=>{
  mock.teacher=true;mock.execute.mockResolvedValue({readings:[]});render(<MemoryRouter><DiscussionsListPage/></MemoryRouter>);
  fireEvent.click(screen.getByRole('button',{name:'Start discussion'}));
- const modal=within(screen.getByRole('dialog'));await modal.findByRole('option',{name:'Essay'});
+ const modal=within(screen.getByRole('dialog'));const type=modal.getByLabelText('Type');
+ expect(type).toHaveValue('qft');
+ expect(within(type).getAllByRole('option').map(option=>option.textContent)).toEqual(['QFT (Question Formulation Technique)','Writing Prompt','Text Discussion']);
+ fireEvent.change(type,{target:{value:'text'}});
+ await modal.findByRole('option',{name:'Essay'});
  expect(modal.queryByRole('button',{name:'QFT'})).not.toBeInTheDocument();
  const open=modal.getByRole('button',{name:'Open text discussion'});expect(open).toBeDisabled();
  fireEvent.change(modal.getByLabelText('Text'),{target:{value:'essay'}});expect(open).toBeEnabled();

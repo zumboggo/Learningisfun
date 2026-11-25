@@ -45,7 +45,7 @@ export function DiscussionsListPage() {
 export function StartTextDiscussionModal({teacherId,initialClassId='',onClose}:{teacherId:string;initialClassId?:string;onClose:()=>void}) {
  const navigate=useNavigate();
  const [classId,setClassId]=useState(initialClassId),[textId,setTextId]=useState('');
- const [kind,setKind]=useState('text'),[writing,setWriting]=useState(false),[qft,setQft]=useState(false);
+ const [kind,setKind]=useState('qft'),[writing,setWriting]=useState(false),[qft,setQft]=useState(false);
  const classes=useLiveQuery(()=>db.classes.where('teacherId').equals(teacherId).toArray(),[teacherId]);
  const selectedClassId=classId||classes?.[0]?.$id||'';
  const texts=useLiveQuery(async()=>{
@@ -55,8 +55,8 @@ export function StartTextDiscussionModal({teacherId,initialClassId='',onClose}:{
  },[selectedClassId]);
  if(qft)return <CreateQftModal classId={selectedClassId} onClose={()=>setQft(false)} onCreated={id=>{onClose();navigate(`/discussions/${id}`);}}/>;
  if(writing)return <CreateWritingPromptModal classId={selectedClassId} onClose={()=>setWriting(false)} onCreated={id=>{onClose();navigate(`/presentations/${id}/live`);}}/>;
- return <Modal open onClose={onClose} title="Start discussion"><div className="space-y-4">
-   <label className="block text-sm">Type<select className={input} value={kind} onChange={e=>setKind(e.target.value)}><option value="text">Text discussion</option><option value="writing">Writing prompt</option><option value="qft">QFT (Question Formulation Technique)</option></select></label>
+ return <Modal open onClose={onClose} title="Discussion Prompt"><div className="space-y-4">
+   <label className="block text-sm">Type<select className={input} value={kind} onChange={e=>setKind(e.target.value)}><option value="qft">QFT (Question Formulation Technique)</option><option value="writing">Writing Prompt</option><option value="text">Text Discussion</option></select></label>
    <label className="block text-sm">Class<select className={input} value={selectedClassId} onChange={event=>{setClassId(event.target.value);setTextId('');}}>{classes?.map(cls=><option key={cls.$id} value={cls.$id}>{classLabel(cls)}</option>)}</select></label>
    {kind==='text'&&<><label className="block text-sm">Text<select className={input} value={textId} onChange={event=>setTextId(event.target.value)}><option value="">Choose a text</option>{texts?.map(text=><option key={text.$id} value={text.$id}>{text.title}</option>)}</select></label>
    {texts?.length===0&&<p className="text-sm text-slate-500">Mark a text as Assigned Reading to discuss it here.</p>}</>}

@@ -115,7 +115,6 @@ export function ClassDetailPage() {
   const [copiedQuizId, setCopiedQuizId] = useState('');
   const [generatingPracticeQuiz, setGeneratingPracticeQuiz] = useState(false);
   const [practiceQuizError, setPracticeQuizError] = useState('');
-  const [showWritingPrompt, setShowWritingPrompt] = useState(false);
   const [showTimerSetup, setShowTimerSetup] = useState(false);
   const [timerMinutes, setTimerMinutes] = useState(5);
   const [resultsQuiz, setResultsQuiz] = useState<Quiz | null>(null);
@@ -396,8 +395,7 @@ export function ClassDetailPage() {
         {isOwner ? (
           <div className="flex flex-wrap gap-2 sm:justify-end">
             <Link to={`/classes/${cls.$id}/notes/today`}><Button size="sm">Today&apos;s Notes</Button></Link>
-            <Button onClick={() => setShowWritingPrompt(true)} size="sm">Writing Prompt</Button>
-            <Button onClick={() => setShowDiscussionModal(true)} size="sm" variant="secondary">Discussion</Button>
+            <Button onClick={() => setShowDiscussionModal(true)} size="sm">Discussion Prompt</Button>
             <Button onClick={() => setShowTimerSetup(true)} size="sm" variant="secondary">Timer</Button>
             <details className="relative">
               <summary className="inline-flex min-h-9 cursor-pointer list-none items-center rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-950">More <span className="ml-1 text-xs" aria-hidden="true">▾</span></summary>
@@ -747,7 +745,6 @@ export function ClassDetailPage() {
         /><AssignTextsToClassModal open={showAssignTexts} classId={cls.$id} teacherId={user.$id} onClose={() => setShowAssignTexts(false)} />
         {showCreateQuiz && <CreateQuizModal classes={(teacherClasses || []).map(item => ({ id: item.$id, name: classLabel(item) }))} sourceClassId={cls.$id} onClose={() => setShowCreateQuiz(false)} onCreated={() => setShowCreateQuiz(false)} />}</>
       )}
-      {isOwner && showWritingPrompt && <CreateWritingPromptModal classId={cls.$id} onClose={() => setShowWritingPrompt(false)} onCreated={sessionId => navigate(`/presentations/${sessionId}/live`)} />}
       {isOwner&&showTimerSetup&&<Modal open onClose={()=>setShowTimerSetup(false)} title="Class timer"><div className="space-y-4"><p className="text-sm text-gray-500">Enter any whole number from 0 to 90 minutes. The timer opens on a clean white presentation screen.</p><label className="block text-sm font-medium">Minutes<input autoFocus type="number" min={0} max={90} step={1} className="mt-1 w-full rounded-lg border px-3 py-3 text-2xl font-semibold" value={timerMinutes} onChange={event=>setTimerMinutes(Math.min(90,Math.max(0,Number(event.target.value)||0)))}/></label><div className="grid grid-cols-4 gap-2">{[3,5,10,15].map(value=><button key={value} type="button" onClick={()=>setTimerMinutes(value)} className={`rounded-lg border px-2 py-2 text-sm font-semibold ${timerMinutes===value?'border-gray-950 bg-gray-950 text-white':'hover:bg-gray-50'}`}>{value} min</button>)}</div><Button className="w-full" onClick={()=>navigate(`/classes/${cls.$id}/timer?minutes=${timerMinutes}`)}>Open timer</Button></div></Modal>}
 
       {isOwner && (
