@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { WorkshopLink as Link } from '@/components/WorkshopLink';
 import { GameLaunchLink } from '@/components/GameLaunchLink';
@@ -13,6 +13,7 @@ type NotebookAssignment = { assignmentId: string; classId: string; id: string; t
 const quantity = (count: number, singular: string, plural: string) => count ? count + ' ' + (count === 1 ? singular : plural) : '';
 
 export function CurrentlyMissing({ classId, userId }: { classId: string; userId: string }) {
+  const panelId = useId();
   const ethics = classId === STONE_CLASS_ID;
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState<{ readings: MissingReading[]; notebooks: NotebookAssignment[]; failed: boolean }>();
@@ -66,11 +67,13 @@ export function CurrentlyMissing({ classId, userId }: { classId: string; userId:
     return remaining || !submitted ? [{ ...row, remaining }] : [];
   });
   const count = (result?.readings.length || 0) + notebooks.length;
-  return <section aria-label="Currently Missing">
-    <button type="button" aria-expanded={open} aria-controls="currently-missing-work" onClick={() => setOpen(value => !value)} className={`inline-flex min-h-11 items-center gap-2 rounded-t-lg border border-purple-200 px-4 font-semibold text-purple-950 hover:bg-purple-100 ${open ? 'bg-purple-100' : 'bg-purple-50'}`}>
-      Currently Missing{result && !result.failed && <span className="rounded-full bg-white px-2 text-sm">{count}</span>}<span aria-hidden="true">{open ? '▴' : '▾'}</span>
+  return <section aria-label="Missing assignments" className="overflow-hidden rounded-xl border border-purple-200 bg-white">
+    <button type="button" aria-expanded={open} aria-controls={panelId} onClick={() => setOpen(value => !value)} className="flex min-h-14 w-full items-center justify-between gap-3 bg-purple-50 px-4 py-3 text-left text-purple-950 hover:bg-purple-100 focus-visible:outline-2 focus-visible:outline-purple-700 focus-visible:-outline-offset-2">
+      <span><strong className="block">Missing assignments{result && !result.failed && <span className="ml-2 rounded-full bg-white px-2 text-sm">{count}</span>}</strong><span className="text-sm">{open ? 'Select an assignment to finish it' : 'Expand to see what you still need to finish'}</span></span>
+      <span className="shrink-0 text-sm font-semibold" aria-hidden="true">{open ? 'Hide ▴' : 'Show ▾'}</span>
     </button>
-    <div id="currently-missing-work" hidden={!open} className="rounded-b-xl rounded-tr-xl border border-purple-200 bg-white p-4">
+    <div id={panelId} hidden={!open}>
+    {open && <div className="border-t border-purple-200 p-4">
       {!result && <p role="status" className="text-sm text-gray-600">Checking assigned work…</p>}
       {result?.failed && <p role="status" className="mb-2 text-sm text-amber-900">Some assignments couldn’t be checked. Use Refresh class to try again.</p>}
       {result && !result.failed && !count && <p className="text-sm text-gray-600">You’re all caught up.</p>}
@@ -88,6 +91,7 @@ export function CurrentlyMissing({ classId, userId }: { classId: string; userId:
           <span className="text-sm text-gray-700">{row.remaining ? quantity(row.remaining, 'notebook answer', 'notebook answers') + ' left' : 'Submit your notebook answers'}</span>
         </GameLaunchLink></li>)}
       </ul>}
+    </div>}
     </div>
   </section>;
 }

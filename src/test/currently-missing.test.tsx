@@ -26,14 +26,22 @@ it('links to unfinished reading discussions and opens only explicitly assigned, 
   { id: 'done', assignmentId: 'new-edition', classId: STONE_CLASS_ID, title: 'Already submitted', notebookAssigned: true },
  ] });
  render(<MemoryRouter><CurrentlyMissing classId={STONE_CLASS_ID} userId="student" /></MemoryRouter>);
- fireEvent.click(screen.getByRole('button', { name: 'Currently Missing' }));
- const panel = within(screen.getByRole('region', { name: 'Currently Missing' }));
+ const toggle = screen.getByRole('button', { name: /Missing assignments/ });
+ expect(toggle).toHaveAttribute('aria-expanded', 'false');
+ expect(screen.queryByRole('link')).toBeNull();
+ fireEvent.click(toggle);
+ const panel = within(screen.getByRole('region', { name: /Missing assignments/ }));
  expect(await panel.findByRole('link', { name: /A reading/ })).toHaveAttribute('href', `/discussions/texts/text/${STONE_CLASS_ID}`);
  expect(panel.getByText('1 reply with a quote left')).toBeVisible();
  expect(panel.getByRole('link', { name: /Assigned notebook/ })).toHaveAttribute('href', '/game/play/active-assignment?notebook=1');
  expect(panel.getByText('1 notebook answer left')).toBeVisible();
  expect(panel.queryByText('Optional episode')).toBeNull();
  expect(panel.queryByText('Already submitted')).toBeNull();
+ fireEvent.click(toggle);
+ expect(toggle).toHaveAttribute('aria-expanded', 'false');
+ expect(panel.queryByRole('link')).toBeNull();
+ fireEvent.click(toggle);
+ expect(panel.getAllByRole('link')).toHaveLength(2);
  mocks.readings.mockResolvedValue({ readings: [] });
  mocks.library.mockResolvedValue({ assignments: [] });
  fireEvent(window, new CustomEvent('class-materials-refreshed', { detail: STONE_CLASS_ID }));
