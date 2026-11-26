@@ -49,3 +49,11 @@
 @media (pointer:coarse) {
  .writing-discussion .reading-post-actions button,.writing-discussion .reading-post-actions summary,.writing-read-more { min-height:2.75rem; }
 }
+.writing-discussion { display:flex; flex-wrap:wrap; align-items:flex-start; gap:0 1.25rem; }
+.writing-toolbar,.writing-filter,.writing-answer-list { width:100%; }
+.writing-discussion > section[aria-label="Assigned submissions"] { margin:.75rem 0; font-size:.8rem; }
+.writing-discussion > section[aria-label="Assigned submissions"] > h2 { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+.writing-discussion > section[aria-label="Assigned submissions"] > details { margin:0; padding:.5rem 0; border:0; border-radius:0; color:#365e50; }
+.writing-discussion > section[aria-label="Assigned submissions"]:has(details[open]),
+.writing-discussion > section[aria-label="Assigned submissions"]:has(> div),
+.writing-settings[open] { flex-basis:100%; }
