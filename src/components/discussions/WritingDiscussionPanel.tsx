@@ -1,3 +1,4 @@
+import './writing-discussion.css';
 import { PresentQuestions } from '@/components/discussions/PresentQuestions';
 import {useEffect,useRef,useState} from 'react';
 import {useAuth} from '@/contexts/AuthContext';
@@ -38,8 +39,8 @@ export function WritingDiscussionPanel({sessionId,classId,data,refresh}:{session
    const a=document.createElement('a');a.href=url;a.download=`writing-responses-${result.date}.${format}`;a.click();window.setTimeout(()=>URL.revokeObjectURL(url),1000);setExporting(false);
   }catch(e){setError(e instanceof Error?e.message:'Could not export responses');}finally{setBusy(false);}
  };
- return <div ref={surface} className={present?'reading-workspace fixed inset-0 z-50 overflow-y-auto bg-white p-5 text-slate-900 sm:p-10':'reading-workspace rounded-2xl bg-white p-4 text-slate-900'}>
-  <div className={present?'sticky top-0 z-10 flex flex-wrap gap-2 bg-white p-3 shadow-sm':'flex flex-wrap items-center gap-3'}>
+ return <div ref={surface} className={present?'reading-workspace fixed inset-0 z-50 overflow-y-auto bg-white p-5 text-slate-900 sm:p-10':'reading-workspace writing-discussion bg-white text-slate-900'}>
+  <div className={present?'sticky top-0 z-10 flex flex-wrap gap-2 bg-white p-3 shadow-sm':'writing-toolbar flex flex-wrap items-center gap-3'}>
    {present?<><Button variant="secondary" onClick={exit}>Exit presentation</Button><Button disabled={!roots.length||selected===0} onClick={()=>jump(selected-1)}>Previous</Button><Button disabled={!roots.length||selected>=roots.length-1} onClick={()=>jump(selected+1)}>Next</Button><span className="self-center">{roots.length?selected+1:0} / {roots.length}</span></>:<>
     <h2 className="mr-auto text-xl font-bold">Submissions</h2>
     {(data.teacher||data.studentsCanView)&&<PresentQuestions picker={data.teacher ? {classId,students:data.participation} : undefined} questions={shown.filter(p=>!p.hidden).map(p=>p.content)} />}
@@ -48,16 +49,16 @@ export function WritingDiscussionPanel({sessionId,classId,data,refresh}:{session
    </>}
   </div>
   {error&&<p role="alert" className="my-3 text-red-700">{error}</p>}
-  {!present&&data.teacher&&<div className="my-4 flex flex-wrap gap-5 rounded-xl bg-slate-50 p-4">
+  {!present&&data.teacher&&<details className="writing-settings"><summary>Discussion settings</summary><div className="flex flex-wrap gap-4 p-3">
    <label className="flex items-center gap-2"><input type="checkbox" checked={Boolean(data.discussionMode)} disabled={busy} onChange={e=>settings({discussionMode:e.target.checked})}/>Discussion Mode</label>
    <label className="flex items-center gap-2"><input type="checkbox" checked={Boolean(data.studentsCanView)} disabled={busy} onChange={e=>settings({studentsCanView:e.target.checked})}/>Students can see submissions</label>
    <p className="w-full text-sm text-slate-600">Student submissions and replies are anonymous to classmates. Hiding submissions pauses student discussion.</p>
-  </div>}
+  </div></details>}
   {!present&&(data.teacher||data.studentsCanView)&&<>
    {(data.discussionMode||Boolean(data.rounds?.length)||Boolean(data.assignments?.length))&&<ReplyAssignments data={data} target={target} textId="" classId="" busy={busy} mutate={mutate} onReply={id=>{setActiveReply(id);requestAnimationFrame(()=>document.getElementById(`question-${id}`)?.scrollIntoView({behavior:'smooth',block:'center'}));}}/>}
-   <input aria-label="Filter responses" className="my-3 w-full rounded-lg border p-3" placeholder="Filter responses…" value={filter} onChange={e=>setFilter(e.target.value)}/>
+   <input aria-label="Filter responses" className="writing-filter my-3 w-full rounded-lg border p-3" placeholder="Filter responses…" value={filter} onChange={e=>setFilter(e.target.value)}/>
   </>}
-  {!data.teacher&&!data.studentsCanView?<p className="py-5 text-slate-600">Your teacher has not shared classmates’ submissions.</p>:<div className={present?'mx-auto max-w-5xl space-y-10 text-2xl':'space-y-3'}>
+  {!data.teacher&&!data.studentsCanView?<p className="py-5 text-slate-600">Your teacher has not shared classmates’ submissions.</p>:<div className={present?'mx-auto max-w-5xl space-y-10 text-2xl':'writing-answer-list'}>
    {shown.map(post=><ReadingThread key={`${post.id}:${present}`} writing post={!present&&data.teacher?{...post,label:post.username?`${post.label} · ${post.username}`:post.label}:post} posts={data.posts.map(p=>!present&&data.teacher&&p.username?{...p,label:`${p.label} · ${p.username}`}:p)} teacher={data.teacher&&!present} canWrite={data.canWrite&&!present} busy={busy} mutate={mutate} readUrl="" draftPrefix={`writing:${user?.$id}:${sessionId}`} present={present} onSelect={()=>jump(roots.findIndex(p=>p.id===post.id))} activeReply={activeReply} setActiveReply={setActiveReply} consumeQuote={()=>{}}/>)}
    {!shown.length&&<p className="p-5 text-slate-500">{filter?'No matching submissions.':'No submissions yet.'}</p>}
   </div>}

@@ -1,0 +1,51 @@
+.writing-page { min-height: calc(100vh - 4rem); padding: 1rem 1.5rem 2rem; background: #fff; color: #253c34; }
+.writing-page-inner { max-width: 100rem; margin: auto; }
+.writing-prompt-header { display:flex; flex-wrap:wrap; align-items:center; gap:1rem 2rem; padding:1.3rem 1.5rem; background:#e9efe4; border-radius:.7rem; }
+.writing-prompt-heading { flex:1; min-width: min(100%, 25rem); }
+.writing-prompt-heading h1 { margin:.65rem 0; font:600 .75rem/1.2 system-ui; text-transform:uppercase; letter-spacing:.15em; }
+.writing-prompt-heading .writing-prompt-content { font-family:Charter,'Iowan Old Style',Georgia,serif; font-size:clamp(1.5rem,2.3vw,2.2rem); line-height:1.25; }
+.writing-prompt-heading .writing-prompt-standard { font-size:1.2rem; }
+.writing-prompt-heading .writing-prompt-extra-large { font-size:clamp(1.8rem,3vw,3rem); }
+.writing-prompt-actions { display:flex; flex-wrap:wrap; gap:.6rem; }
+.writing-progress { margin-top:.8rem; font-size:.85rem; }
+.writing-example { flex-basis:100%; border-top:1px solid #c6cec2; padding-top:.75rem; }
+.writing-example summary { cursor:pointer; }
+.writing-discussion { padding:1rem 0; color:#253c34; container-type:inline-size; }
+.writing-toolbar h2 { font-size:.9rem; font-weight:600; }
+.writing-toolbar button { font-size:.8rem; }
+.writing-settings { margin:.75rem 0; border-bottom:1px solid #dce3d9; font-size:.8rem; }
+.writing-settings summary { cursor:pointer; padding:.5rem 0; color:#365e50; }
+.writing-filter { border-color:#b9c6bd; font-size:.85rem; }
+.writing-answer-list { display:grid; gap:.5rem; }
+.writing-discussion .writing-answer-row { display:grid; grid-template-columns:9rem minmax(0,1fr) auto; align-items:center; gap:.5rem 1rem; border:1px solid #aab9af; border-radius:.65rem; padding:.65rem 1rem; }
+.writing-answer-row > .reading-post-meta { margin:0; display:flex; flex-direction:column; align-items:flex-start; gap:.2rem; border-right:1px solid #d4dcd6; padding-right:.75rem; color:#59685f; }
+.writing-answer-row > .reading-post-meta strong { color:#294d3e; font-size:.8rem; }
+.writing-answer-row > .reading-post-content { min-width:0; }
+.writing-answer-preview { display:flex; align-items:center; gap:.8rem; }
+.writing-answer-excerpt { flex:1; min-width:0; max-height:2.9em; overflow:hidden; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+.writing-answer-row .writing-answer-preview .text-sm { font:400 1.1rem/1.4 Charter,'Iowan Old Style',Georgia,serif; color:#263d32; }
+.writing-answer-excerpt p,.writing-answer-excerpt ul,.writing-answer-excerpt ol { margin:0; }
+.writing-read-more { flex-shrink:0; color:#365e50; text-decoration:underline; text-underline-offset:3px; min-height:2.25rem; font-size:.8rem; font-weight:600; }
+.writing-answer-preview:has(.writing-answer-full) { align-items:flex-start; flex-direction:column; }
+.writing-answer-full { width:100%; }
+.writing-answer-row > .reading-post-actions { margin:0; flex-wrap:nowrap; }
+.writing-answer-row > :not(.reading-post-meta):not(.reading-post-content):not(.reading-post-actions) { grid-column:1/-1; }
+.writing-discussion .reading-post-actions button,.writing-discussion .reading-post-actions summary { min-height:2.25rem; }
+.writing-discussion button:focus-visible,.writing-discussion summary:focus-visible { outline:2px solid #365e50; outline-offset:3px; }
+@container (max-width: 58rem) {
+ .writing-discussion .writing-answer-row { grid-template-columns:minmax(0,1fr) auto; gap:.4rem .7rem; }
+ .writing-answer-row > .reading-post-meta { grid-column:1/-1; flex-direction:row; border:0; }
+}
+@container (max-width: 38rem) {
+ .writing-discussion .writing-answer-row { grid-template-columns:minmax(0,1fr); padding:.8rem; }
+ .writing-answer-row > .reading-post-actions { flex-wrap:wrap; }
+ .writing-answer-preview { gap:.5rem; }
+}
+@media (max-width:640px) {
+ .writing-page { padding:.75rem; }
+ .writing-prompt-header { padding:1rem; }
+ .writing-prompt-actions button { min-height:2.75rem; }
+}
+@media (pointer:coarse) {
+ .writing-discussion .reading-post-actions button,.writing-discussion .reading-post-actions summary,.writing-read-more { min-height:2.75rem; }
+}

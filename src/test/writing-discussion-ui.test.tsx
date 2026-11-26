@@ -30,3 +30,15 @@ it('presents writing contributions one at a time without author labels or replie
  fireEvent.keyDown(document,{key:'ArrowRight'});
  expect(slide.getByText('Second submission')).toBeInTheDocument();
 });
+
+it('expands the complete answer and presents only that response anonymously',()=>{
+ const content='A long answer. '.repeat(100)+'The final insight.';
+ show({...data,posts:[{...data.posts[0],content}]});
+ fireEvent.click(screen.getByRole('button',{name:'Read More'}));
+ expect(screen.getByRole('button',{name:'Show less'})).toHaveAttribute('aria-expanded','true');
+ expect(screen.getByText(/The final insight/)).toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'Present answer'}));
+ const slide=within(screen.getByRole('dialog'));
+ expect(slide.getByText(content)).toBeInTheDocument();
+ expect(slide.queryByText(/Alice/)).not.toBeInTheDocument();
+});

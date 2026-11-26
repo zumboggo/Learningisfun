@@ -1,3 +1,4 @@
+import {PresentQuestions} from './PresentQuestions';
 import {ResponseHelp} from './ResponseHelp';
 import {useEffect,useRef,useState} from 'react';
 import {Link} from 'react-router-dom';
@@ -37,25 +38,19 @@ export function ReadingThread({post,posts,teacher,canWrite,busy,mutate,readUrl,d
   const quoteSeen=new Set<string>();
   while(quoteSource&&!quoteSource.quotation&&!quoteSeen.has(quoteSource.id)){quoteSeen.add(quoteSource.id);quoteSource=posts.find(p=>p.id===quoteSource?.parentId);}
   const locked=ancestorLocked||post.locked||post.hidden;
-  return <article id={`question-${post.id}`} className={`scroll-mt-24 reading-thread ${depth>0?'reading-reply':'reading-question'} ${post.hidden?'opacity-60':''}`}>
+  return <article id={`question-${post.id}`} className={`scroll-mt-24 reading-thread ${writing&&!present&&depth===0?'writing-answer-row':''} ${depth>0?'reading-reply':'reading-question'} ${post.hidden?'opacity-60':''}`}>
     <div className="reading-post-meta mb-1 flex flex-wrap gap-2 text-xs text-slate-500">{!writing&&<span className="rounded bg-slate-100 px-2 py-0.5 font-semibold">{post.parentId?'Reply':post.category==='question'?'Question':'Observation'}</span>}<strong>{post.mine&&!present?'You':post.label}</strong><time title={new Date(post.createdAt).toLocaleString()}>{new Date(post.createdAt).toLocaleDateString()}</time>{post.updatedAt&&<span>Edited</span>}{post.pinned&&<span>📌 Pinned</span>}{post.locked&&<span>Locked</span>}{post.hidden&&<span>Hidden</span>}</div>
     {post.quotation&&<blockquote className="reading-quote"><ExpandableContribution content={post.quotation} present={present} quote/></blockquote>}
     {post.paragraph&&<Link className="mb-2 inline-block text-sm text-blue-700 underline" to={`${readUrl}&paragraph=${post.paragraph}`}>Read paragraph {post.paragraph} ↗</Link>}
-    {editing?<EditReadingContribution writing={writing} post={post} busy={busy} onCancel={()=>setEditing(false)} onSave={fields=>mutate('editReadingDiscussion',{postId:post.id,...fields})}/>:<div className="reading-post-content"><ExpandableContribution content={post.content} present={present}/></div>}
+    {editing?<EditReadingContribution writing={writing} post={post} busy={busy} onCancel={()=>setEditing(false)} onSave={fields=>mutate('editReadingDiscussion',{postId:post.id,...fields})}/>:<div className="reading-post-content"><ExpandableContribution content={post.content} present={present} compact={writing&&depth===0}/></div>}
     {(!writing||!present)&&<div className="reading-post-actions mt-1 flex flex-wrap items-center gap-1 text-sm">
-      {teacher&&!present&&<button type="button" aria-label="Delete contribution" className="p-2 font-bold text-red-700" disabled={busy} onClick={()=>window.confirm('Delete this contribution and its replies?')&&send('moderateReadingDiscussion',{operation:'delete'})}>×</button>}
+      {teacher&&!present&&!writing&&<button type="button" aria-label="Delete contribution" className="p-2 font-bold text-red-700" disabled={busy} onClick={()=>window.confirm('Delete this contribution and its replies?')&&send('moderateReadingDiscussion',{operation:'delete'})}>×</button>}
+      {writing&&!present&&!post.parentId&&!post.hidden&&<PresentQuestions questions={[post.content]} label="Present answer"/>}
       <DiscussionVote announceScore score={post.score} value={post.voted?1:0} disabled={!canWrite||busy||post.hidden} upvoteTitle={writing?'Upvote':'This is interesting or helpful'} onVote={value=>mutate('voteReadingDiscussion',{postId:post.id,upvoted:value===1})}/>
       {!writing&&<button type="button" className={`min-h-11 rounded-lg border px-3 text-sm ${post.nominated?'border-orange-300 bg-orange-100 text-orange-900':'border-transparent text-slate-600 hover:bg-orange-50'}`} aria-pressed={post.nominated===true} aria-label={`${post.nominated?'Remove live nomination':'Nominate for live discussion'}: ${post.fireCount||0}`} title="Bring this to the room. One active nomination per person; you can move it. You do not have to agree." disabled={!canWrite||busy||post.hidden} onClick={()=>send('nominateReadingDiscussion',{nominated:!post.nominated})}>🔥 <span>{post.fireCount||0}</span></button>}
       {canWrite&&!locked&&<Button size="sm" variant="secondary" onClick={()=>setReply(!reply)}>{reply?'Cancel reply':'Reply'}</Button>}
-      {writing?<>
-      {!writing&&canWrite&&!teacher&&post.mine&&!post.parentId&&post.category==='question'&&!post.everReplied&&!children.length&&!post.locked&&<Button size="sm" variant="secondary" disabled={busy} onClick={()=>send('withdrawReadingQuestion',{})}>Withdraw question</Button>}
-      {canWrite&&post.mine&&!locked&&(!writing||Boolean(post.parentId))&&<Button size="sm" variant="secondary" onClick={()=>setEditing(!editing)}>{editing?'Cancel edit':'Edit'}</Button>}
-
-      {canWrite&&<button className="min-h-11 px-2 text-slate-500" onClick={()=>setReport(!report)}>{report?'Cancel report':'Report'}</button>}
-      {present&&<Button size="sm" variant="secondary" onClick={onSelect}>Focus</Button>}
-      {teacher&&!present&&<DiscussionModeration disabled={busy} actions={(['pin','hide','lock'] as const).map(operation=>{const active=operation==='pin'?post.pinned:operation==='hide'?post.hidden:post.locked;const action=active?({pin:'unpin',hide:'show',lock:'unlock'} as const)[operation]:operation;return {label:action,run:()=>mutate('moderateReadingDiscussion',{postId:post.id,operation:action})};})}/>}
-
-       </>: <details className="discussion-post-menu"><summary aria-label="More post actions" title="More post actions">⋯</summary><div className="discussion-post-menu-content">
+      {<details className="discussion-post-menu"><summary aria-label="More post actions" title="More post actions">⋯</summary><div className="discussion-post-menu-content">
+      {writing&&teacher&&!present&&<button type="button" disabled={busy} onClick={()=>window.confirm('Delete this contribution and its replies?')&&send('moderateReadingDiscussion',{operation:'delete'})}>Delete contribution</button>}
       {!writing&&canWrite&&!teacher&&post.mine&&!post.parentId&&post.category==='question'&&!post.everReplied&&!children.length&&!post.locked&&<Button size="sm" variant="secondary" disabled={busy} onClick={()=>send('withdrawReadingQuestion',{})}>Withdraw question</Button>}
       {canWrite&&post.mine&&!locked&&(!writing||Boolean(post.parentId))&&<Button size="sm" variant="secondary" onClick={()=>setEditing(!editing)}>{editing?'Cancel edit':'Edit'}</Button>}
 

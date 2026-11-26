@@ -5,7 +5,7 @@ import './present-questions.css';
 import { StudentPicker, type StudentPickerRoster } from './StudentPicker';
 
 /** Accept only question text so author details never enter the presentation. */
-export function PresentQuestions({ questions, picker }: { questions: string[]; picker?: StudentPickerRoster }) {
+export function PresentQuestions({ questions, picker, label="Present Questions" }: { questions: string[]; picker?: StudentPickerRoster; label?:string }) {
   const [slides, setSlides] = useState<string[] | null>(null);
   const surface = useRef<HTMLDivElement>(null);
   return <>
@@ -13,7 +13,7 @@ export function PresentQuestions({ questions, picker }: { questions: string[]; p
       // Snapshot the order: incoming votes and refreshes must not move slides.
       flushSync(() => setSlides([...questions]));
       void surface.current?.requestFullscreen?.().catch(() => { /* The full-window view also works without browser fullscreen. */ });
-    }}>Present Questions</Button>
+    }}>{label}</Button>
     {slides && createPortal(<QuestionSlides questions={slides} picker={picker} surface={surface} onClose={() => setSlides(null)} />, document.body)}
   </>;
 }
