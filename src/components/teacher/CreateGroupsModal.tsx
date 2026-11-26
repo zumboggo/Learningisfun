@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Modal } from '@/components/common/Modal';
 import { Button } from '@/components/common/Button';
 import { CopyButton } from '@/components/common/CopyButton';
-import { groupCountFor, makeRandomGroups, type Pickable } from '@/services/class-picker';
+import { groupCountFor, makeRandomGroups, moveGroupStudent, type Pickable } from '@/services/class-picker';
 
 /**
  * Deals the class into random groups of roughly the chosen size. Sizes never
@@ -26,7 +26,7 @@ function GroupSession({students,onClose}:{students:Pickable[];onClose:()=>void})
   const present=students.filter(student=>!absent.has(student.id));
   const exclude=(id:string)=>{
     setAbsent(current=>new Set(current).add(id));
-    setGroups(current=>current?.map(group=>group.filter(student=>student.id!==id)).filter(group=>group.length) || null);
+    setGroups(current=>current?.map(group=>group.filter(student=>student.id!==id)) || null);
   };
   const restore=(id:string)=>{
     setAbsent(current=>{const next=new Set(current);next.delete(id);return next;});
@@ -35,6 +35,17 @@ function GroupSession({students,onClose}:{students:Pickable[];onClose:()=>void})
   const [sides,setSides]=useState(false);
   const [targetSize, setTargetSize] = useState(4);
   const [groups, setGroups] = useState<Pickable[][] | null>(null);
+
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<number | null>(null);
+  const [announcement, setAnnouncement] = useState('');
+  const moveStudent = (id: string, destination: number) => {
+    const student = groups?.flat().find(student => student.id === id);
+    setGroups(current => current ? moveGroupStudent(current, id, destination) : current);
+    setDraggedId(null);
+    setDropTarget(null);
+    if (student) setAnnouncement(`${student.name} moved to Group ${destination + 1}.`);
+  };
 
   // Shown before dealing so the teacher can see what a size will produce.
   const preview = useMemo(() => {
@@ -52,7 +63,7 @@ function GroupSession({students,onClose}:{students:Pickable[];onClose:()=>void})
       .join('\n');
 
   return (
-    <Modal open onClose={onClose} title="Create groups">
+    <Modal open onClose={onClose} title="Create groups" panelClassName="sm:max-w-3xl">
       <div className="space-y-4">
         {students.length === 0 ? (
           <p className="text-sm text-gray-500">
@@ -96,18 +107,51 @@ function GroupSession({students,onClose}:{students:Pickable[];onClose:()=>void})
 
             {groups && groups.length>0 && (
               <div className="space-y-3">
+                <p className="text-sm text-gray-600">Drag a name into another group, or choose a group beside their name.</p>
+                <p role="status" className="sr-only">{announcement}</p>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {groups.map((group, i) => (
-                    <div key={i} className="rounded-lg border border-gray-200 p-3">
+                    <div key={i} role="region" aria-label={`Group ${i + 1}`}
+                      onDragOver={event => {
+                        if (!draggedId) return;
+                        event.preventDefault();
+                        event.dataTransfer.dropEffect = 'move';
+                        setDropTarget(i);
+                      }}
+                      onDragLeave={event => {
+                        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropTarget(null);
+                      }}
+                      onDrop={event => {
+                        event.preventDefault();
+                        if (draggedId) moveStudent(draggedId, i);
+                      }}
+                      className={`min-w-0 rounded-lg border-2 p-3 transition-colors ${dropTarget === i ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
                       <h3 className="mb-1 text-sm font-semibold text-gray-900">
                         Group {i + 1}
                         <span className="ml-1 font-normal text-gray-400">({group.length})</span>
                       </h3>
                       <ul className="space-y-0.5 text-sm text-gray-600">
                         {group.map((student,index) => (
-                          <li key={student.id} className="flex items-center justify-between gap-2"><span>{sides&&<strong className="mr-2 text-blue-700">{index<Math.ceil(group.length/2)?'A':'B'}</strong>}{student.name}</span><button type="button" aria-label={`Mark ${student.name} absent`} title="Exclude from these groups" className="min-h-10 min-w-10 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-700" onClick={()=>exclude(student.id)}>×</button></li>
+                          <li key={student.id} className="flex flex-wrap items-center justify-between gap-1 rounded-lg bg-white p-1">
+                            <span draggable onDragStart={event => {
+                              event.dataTransfer.setData('text/plain', student.id);
+                              event.dataTransfer.effectAllowed = 'move';
+                              setDraggedId(student.id);
+                            }} onDragEnd={() => { setDraggedId(null); setDropTarget(null); }}
+                              title="Drag to another group"
+                              className={`min-w-0 flex-1 cursor-grab break-words py-2 active:cursor-grabbing ${draggedId === student.id ? 'opacity-40' : ''}`}>
+                              <span aria-hidden="true" className="mr-1 text-gray-400">⠿</span>
+                              {sides&&<strong className="mr-2 text-blue-700">{index<Math.ceil(group.length/2)?'A':'B'}</strong>}{student.name}
+                            </span>
+                            <select aria-label={`Move ${student.name} to group`} value={i}
+                              onChange={event => moveStudent(student.id, Number(event.target.value))}
+                              className="min-h-10 max-w-full rounded border border-gray-300 bg-white px-1 text-xs">
+                              {groups.map((_, destination) => <option key={destination} value={destination}>Group {destination + 1}</option>)}
+                            </select>
+                            <button type="button" aria-label={`Mark ${student.name} absent`} title="Exclude from these groups" className="min-h-10 min-w-10 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-700" onClick={()=>exclude(student.id)}>×</button></li>
                         ))}
                       </ul>
+                      {group.length === 0 && <p className="py-4 text-sm text-gray-500">Drop a student here or use their group dropdown.</p>}
                     </div>
                   ))}
                 </div>

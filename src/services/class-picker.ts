@@ -86,3 +86,14 @@ export function makeRandomGroups<T extends Pickable>(students: T[], targetSize: 
   if (students.length === 0) return [];
   return splitEvenly(shuffle(students), groupCountFor(students.length, targetSize));
 }
+
+/** Move one student without reshuffling others or renumbering empty groups. */
+export function moveGroupStudent<T extends Pickable>(groups: T[][], id: string, destination: number): T[][] {
+  if (!Number.isInteger(destination) || destination < 0 || destination >= groups.length) return groups;
+  const source = groups.findIndex(group => group.some(student => student.id === id));
+  if (source < 0 || source === destination) return groups;
+  const student = groups[source].find(student => student.id === id)!;
+  return groups.map((group, index) => index === source
+    ? group.filter(member => member.id !== id)
+    : index === destination ? [...group, student] : group);
+}
