@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSyncStatus } from '@/hooks/useSyncStatus';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { SyncIndicator } from './SyncIndicator';
+import { ForceRefreshButton } from './ForceRefreshButton';
 import { isRememberablePage, lastPageKey } from '@/utils/last-page';
 
 interface AppLayoutProps {
@@ -107,7 +108,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div className={`student-shell min-h-screen ${!isParent ? 'student-studio' : ''}`}>
         {/* Account controls sit in the page flow rather than floating over the
             hero, so nothing overlaps on narrow screens. */}
-        <div data-app-chrome className={`${isStudyRoute ? 'hidden' : 'flex'} mx-auto w-full max-w-[46rem] items-center justify-end gap-3 px-[clamp(1rem,4vw,1.5rem)] pt-3`}>
+        <div data-app-chrome className={`${isStudyRoute ? 'hidden' : 'flex'} mx-auto w-full max-w-[46rem] flex-wrap items-center justify-end gap-3 px-[clamp(1rem,4vw,1.5rem)] pt-3`}>
           {isActualTeacher && (
             <button
               onClick={() => setViewAsStudent(!viewAsStudent)}
@@ -122,6 +123,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             </button>
           )}
           <SyncIndicator {...syncState} online={online} friendly />
+          <ForceRefreshButton />
           <button
             onClick={() => void logout()}
             className="text-xs font-semibold text-slate-500 hover:text-slate-800"
@@ -193,6 +195,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             </button>
           )}
           <SyncIndicator {...syncState} online={online} friendly />
+          <ForceRefreshButton />
           <button
             onClick={() => void logout()}
             className="text-sm text-gray-500 hover:text-gray-700"
