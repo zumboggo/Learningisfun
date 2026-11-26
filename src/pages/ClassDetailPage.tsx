@@ -380,6 +380,7 @@ export function ClassDetailPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-5 p-4 sm:space-y-6 sm:p-6">
       <ClassBanner cls={cls} editable={isOwner} />
+      {cls.$id === '88421c66-9cda-4002-8e15-086312b7805e' && <a href={`${import.meta.env.BASE_URL}resources/ap-lang-exam-texts.html`} target="_blank" rel="noopener noreferrer" className="block text-sm font-medium text-teal-800 underline underline-offset-4">Final semester exam · Choose your texts ↗</a>}
       {user?.role === 'student' && !isParent && <CurrentlyMissing key={user.$id + ':' + cls.$id} userId={user.$id} classId={cls.$id} />}
       {cls.$id===STONE_CLASS_ID && !isParent && user && <EthicsPresentationBuilder key={`${user.$id}:${cls.$id}`} classId={cls.$id} userId={user.$id} />}
       <AssignedCopywork classId={cls.$id} />
