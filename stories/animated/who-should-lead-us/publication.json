@@ -1,10 +1,23 @@
 {
+  "previousVersionPreserved": true,
+  "preservedStartedAssignment": true,
+  "originalAssignments": [
+    {
+      "classId": "e24ec8d9-21d7-4c32-a30e-08655c2f4e65",
+      "className": "Section 1",
+      "courseName": "Ethics and Leadership",
+      "date": "2026-11-27",
+      "releaseAt": "2026-11-20T00:00:00.000Z",
+      "assignmentId": "660372c222113c7902873051ea96cf71",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/660372c222113c7902873051ea96cf71"
+    }
+  ],
   "id": "who-should-lead-us",
   "title": "Who Should Lead Us?",
   "status": "published-assigned",
-  "version": 1,
-  "versionId": "a57e368f9dc3d1e7a434b80e3b74cc2a",
-  "bytes": 388460,
+  "version": 2,
+  "versionId": "56bfaa0735a68386c3d0eb527a73afe1",
+  "bytes": 389601,
   "activeMembershipsVerified": true,
   "liveTeacherReadVerified": true,
   "publishedBytesVerified": true,
@@ -20,8 +33,8 @@
       "courseName": "Ethics and Leadership",
       "date": "2026-11-27",
       "releaseAt": "2026-11-20T00:00:00.000Z",
-      "assignmentId": "660372c222113c7902873051ea96cf71",
-      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/660372c222113c7902873051ea96cf71"
+      "assignmentId": "a63ec065d8cd646b1586b3161746ccfa",
+      "playUrl": "https://zumboggo.github.io/Learningisfun/#/game/play/a63ec065d8cd646b1586b3161746ccfa"
     }
   ]
 }

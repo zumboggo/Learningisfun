@@ -15,6 +15,12 @@ const {jwt}=await users.createJWT({userId:owner.$id,duration:900});
 const f=new Functions(new Client().setEndpoint(process.env.APPWRITE_ENDPOINT).setProject(process.env.APPWRITE_PROJECT_ID).setJWT(jwt));
 const call=async body=>{const r=await f.createExecution({functionId:'learning-content',body:JSON.stringify(body)});const d=JSON.parse(r.responseBody||'{}');if(r.responseStatusCode>=400||d.error)throw Error(d.error||'Episode request failed');return d;};
 const before=await call({action:'animatedLibrary'});
+const previousReceipt=JSON.parse(await readFile(`stories/animated/${id}/publication.json`,'utf8'));
+const storage=new Storage(admin);
+const oldRecord=await db.getDocument({databaseId,collectionId:'episode_records',documentId:previousReceipt.versionId});
+const oldPublished=JSON.parse(oldRecord.dataJson);
+const oldRaw=await storage.getFileDownload({bucketId:'animated-episodes',fileId:oldPublished.fileId});
+const oldPack=oldRaw?.format?oldRaw:JSON.parse(Buffer.from(oldRaw).toString());
 const weekly=before.assignments.filter(a=>a.classId===cls.$id&&a.date>='2026-11-23'&&a.date<='2026-11-29');
 // David explicitly requested an additional episode this Friday; preserve all other weekly assignments.
 const prior=weekly.filter(a=>a.id===id&&a.date===date);
@@ -22,12 +28,24 @@ if(process.argv.includes('--preflight')){console.log(JSON.stringify({class:{id:c
 const pack=JSON.parse(await readFile(`public/stories/animated/${id}/episode.json`,'utf8'));
 const {errors}=validatePackage(pack);if(errors.length)throw Error(JSON.stringify(errors));if(packageBytes(pack)>5000000)throw Error('Package too large');
 let draft=before.drafts.find(d=>d.id===id);
-if(draft){draft=await call({action:'animatedReadDraft',id});if(JSON.stringify(draft.pack)!==JSON.stringify(pack))throw Error('Existing draft differs; preserve teacher changes');}
+if(draft){
+ draft=await call({action:'animatedReadDraft',id});
+ if(JSON.stringify(draft.pack)!==JSON.stringify(pack)){
+  if(!process.argv.includes('--revise')||JSON.stringify(draft.pack)!==JSON.stringify(oldPack))throw Error('Existing draft differs; preserve teacher changes');
+  draft=await call({action:'animatedSaveDraft',id,revision:draft.revision,pack});
+ }
+}
 else draft=await call({action:'animatedSaveDraft',id,revision:0,pack});
 const version=await call({action:'animatedPublish',id,revision:draft.revision});
-if(prior.length>1||prior.some(a=>a.versionId!==version.versionId))throw Error('Conflicting weekly assignment');
-await call({action:'animatedAssign',versionId:version.versionId,classId:cls.$id,date,releaseAt,...(prior[0]?{assignmentId:prior[0].assignmentId}:{})});
-const library=await call({action:'animatedLibrary'}),assignments=library.assignments.filter(a=>a.id===id&&a.classId===cls.$id&&a.date===date);
+if(new Set(prior.map(a=>a.versionId)).size!==prior.length||prior.some(a=>a.versionId!==version.versionId&&(!process.argv.includes('--revise')||!([...previousReceipt.assignments,...(previousReceipt.originalAssignments||[])]).some(p=>p.assignmentId===a.assignmentId))))throw Error('Conflicting weekly assignment');
+let preservedStartedAssignment=false;
+try{await call({action:'animatedAssign',versionId:version.versionId,classId:cls.$id,date,releaseAt,...(prior[0]?{assignmentId:prior[0].assignmentId}:{})});}
+catch(error){
+ if(!process.argv.includes('--revise')||!String(error.message).includes('Students have started this assignment'))throw error;
+ preservedStartedAssignment=true;
+ await call({action:'animatedAssign',versionId:version.versionId,classId:cls.$id,date,releaseAt});
+}
+const library=await call({action:'animatedLibrary'}),assignments=library.assignments.filter(a=>a.id===id&&a.classId===cls.$id&&a.date===date&&a.versionId===version.versionId);
 if(assignments.length!==1)throw Error('Expected one assignment');const a=assignments[0];
 if(a.versionId!==version.versionId||Date.parse(a.releaseAt)!==Date.parse(releaseAt))throw Error('Version/release mismatch');
 const live=await call({action:'animatedRead',assignmentId:a.assignmentId});
@@ -35,12 +53,14 @@ if(!live.preview||JSON.stringify(live.pack)!==JSON.stringify(pack))throw Error('
 const record=await db.getDocument({databaseId,collectionId:'episode_records',documentId:version.versionId}),published=JSON.parse(record.dataJson);
 const raw=await new Storage(admin).getFileDownload({bucketId:'animated-episodes',fileId:published.fileId});
 if(JSON.stringify(raw?.format?raw:JSON.parse(Buffer.from(raw).toString()))!==JSON.stringify(pack))throw Error('Published bytes differ');
-const previewKey='private-preview:'+id,priorPreview=await readRecord(db,databaseId,'system',previewKey);if(priorPreview.value&&priorPreview.value.fileId!==published.fileId)throw Error('Preserve differing preview');if(!priorPreview.value)await writeRecord(db,databaseId,'system',previewKey,{fileId:published.fileId},priorPreview.revision);
+const previewKey='private-preview:'+id,priorPreview=await readRecord(db,databaseId,'system',previewKey);if(priorPreview.value&&priorPreview.value.fileId!==published.fileId&&(!process.argv.includes('--revise')||priorPreview.value.fileId!==oldPublished.fileId))throw Error('Preserve differing preview');if(priorPreview.value?.fileId!==published.fileId)await writeRecord(db,databaseId,'system',previewKey,{fileId:published.fileId},priorPreview.revision);
 const preview=await call({action:'readPrivateAnimatedPreview',slug:id});if(JSON.stringify(preview.pack)!==JSON.stringify(pack))throw Error('Private preview differs');
 const member=members.documents.find(m=>!m.expiresAt||Date.parse(m.expiresAt)>Date.now());const token=await users.createJWT({userId:member.userId,duration:120});const sf=new Functions(new Client().setEndpoint(process.env.APPWRITE_ENDPOINT).setProject(process.env.APPWRITE_PROJECT_ID).setJWT(token.jwt));
 const studentCall=async body=>{const r=await sf.createExecution({functionId:'learning-content',body:JSON.stringify(body)});const d=JSON.parse(r.responseBody||'{}');if(r.responseStatusCode>=400||d.error)throw Error(d.error||'Student read failed');return d;};
 const student=await studentCall({action:'animatedRead',assignmentId:a.assignmentId});if(student.preview||JSON.stringify(student.pack)!==JSON.stringify(pack))throw Error('Student package mismatch');
 const studentLibrary=await studentCall({action:'animatedLibrary'});if(!studentLibrary.assignments.some(n=>n.assignmentId===a.assignmentId))throw Error('Student assignment missing');
-for(const old of before.assignments.filter(n=>n.id!==id)){if(JSON.stringify(library.assignments.find(n=>n.assignmentId===old.assignmentId))!==JSON.stringify(old))throw Error('Unrelated assignment changed');}
-const receipt={id,title:pack.title,status:'published-assigned',version:version.version,versionId:version.versionId,bytes:packageBytes(pack),activeMembershipsVerified:true,liveTeacherReadVerified:true,publishedBytesVerified:true,studentAccess:'Live student library and package read verified. No student attempts created.',privatePreviewVerified:true,existingAssignmentsPreserved:true,studioUrl:'https://zumboggo.github.io/Learningisfun/#/game/create?draft='+id,previewUrl:'https://zumboggo.github.io/Learningisfun/#/game/story-preview/'+id,assignments:[{classId:cls.$id,className:cls.name,courseName:cls.courseName,date:a.date,releaseAt:a.releaseAt,assignmentId:a.assignmentId,playUrl:'https://zumboggo.github.io/Learningisfun/#/game/play/'+a.assignmentId}]};
+for(const old of before.assignments.filter(n=>n.id!==id||preservedStartedAssignment)){if(JSON.stringify(library.assignments.find(n=>n.assignmentId===old.assignmentId))!==JSON.stringify(old))throw Error('Unrelated assignment changed');}
+const oldRawAfter=await storage.getFileDownload({bucketId:'animated-episodes',fileId:oldPublished.fileId});
+if(JSON.stringify(oldRawAfter?.format?oldRawAfter:JSON.parse(Buffer.from(oldRawAfter).toString()))!==JSON.stringify(oldPack))throw Error('Previous immutable package changed');
+const receipt={previousVersionPreserved:true,preservedStartedAssignment,originalAssignments:preservedStartedAssignment?previousReceipt.assignments:[],id,title:pack.title,status:'published-assigned',version:version.version,versionId:version.versionId,bytes:packageBytes(pack),activeMembershipsVerified:true,liveTeacherReadVerified:true,publishedBytesVerified:true,studentAccess:'Live student library and package read verified. No student attempts created.',privatePreviewVerified:true,existingAssignmentsPreserved:true,studioUrl:'https://zumboggo.github.io/Learningisfun/#/game/create?draft='+id,previewUrl:'https://zumboggo.github.io/Learningisfun/#/game/story-preview/'+id,assignments:[{classId:cls.$id,className:cls.name,courseName:cls.courseName,date:a.date,releaseAt:a.releaseAt,assignmentId:a.assignmentId,playUrl:'https://zumboggo.github.io/Learningisfun/#/game/play/'+a.assignmentId}]};
 await writeFile(`stories/animated/${id}/publication.json`,JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt,null,2));

@@ -3,8 +3,8 @@
   "allOptions": 15,
   "choicesPerRoute": 6,
   "words": {
-    "min": 1723,
-    "max": 1776
+    "min": 1834,
+    "max": 1894
   },
   "replayAndCallbacks": true,
   "bothClaimsAndHistoricalLimitsAllRoutes": true,

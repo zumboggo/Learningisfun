@@ -16,17 +16,27 @@ scene courtyard
 show Hisham worried left
 show Bashir sad right
 camera two Hisham Bashir cut
-I: Medina, 632. The taxi leaves me beside a courtyard where two men are dividing bread for neighbouring households. Nobody calls across the lane. Muhammad has died.
-I: One man lifts a tray, then sets it down again. The other steadies his hand before anything falls.
-Bashir [sad]: Leave that one with me, Hisham. You have counted the same pieces three times.
-Hisham [worried]: I keep expecting someone to tell us he has recovered.
+I: Medina, 632. The taxi leaves me beside a courtyard. Two men are dividing bread for neighbouring households. Muhammad has died.
+I: One man moves a piece from one tray to the other. Then back again.
+Bashir [sad]: You counted that one, Hisham.
+Hisham [worried]: I know.
+I: He counts it again. Bashir puts his hand beneath the tray. For a moment neither lets go.
+camera listener Bashir over 0.65
+Hisham [sad]: I keep expecting someone to tell us he has recovered.
+I: Bashir opens his mouth. Nothing comes.
+camera two Hisham Bashir cut
 I: I help carry the tray into the shade. They give me water and a task: take their neighbours' questions, bring back what I can establish, and help finish the deliveries.
-Bashir [neutral]: I am Bashir. He is Hisham. People here are grieving. If you carry news, please carry the uncertainty with it.
-Hisham [determined]: There is already a gathering at Saqifa, the covered meeting place of Banu Sa'ida. People are discussing who will lead. We cannot leave everything unanswered.
+Bashir [neutral]: I am Bashir. If you hear something, tell us who said it. There are enough rumours already.
+I: Beyond the courtyard, voices hurry past. Hisham turns towards them.
+Hisham [worried]: They are gathering at Saqifa.
+Bashir [worried]: Already?
+Hisham [determined]: At the covered meeting place of Banu Sa'ida. To discuss who will lead.
+Bashir [sad]: We have not even—
+I: He stops. Hisham waits, but Bashir does not finish.
 I: The Ansar, Muslims of Medina who sheltered and supported Muhammad's community, have gathered there. They have their own claims and fears about leadership.
 Bashir [worried]: Ali and members of the Prophet's family are occupied with his funeral. What happens if the decision is made without them?
 Hisham [worried]: What happens if different groups each make a decision while everyone else waits? Our commitments reach far beyond this lane.
-I: Hisham wants an answer quickly enough to guide his own pledge of allegiance. Bashir wants a question heard before speed turns into something nobody can undo.
+I: Hisham has turned towards the lane. Bashir still holds the tray. Both are waiting for me.
 choice first_task
 option gather "Go with Hisham to seek news of the gathering; ask Bashir to keep his question for my return." -> go_news
 option absent "Stay to hear Bashir's question about those absent before going for news." -> hear_absent ; WaitedForAbsent = true
@@ -42,18 +52,24 @@ I: I help Bashir finish the tray and repeat his question accurately. Hisham leav
 goto claims
 label claims
 camera wide
-I: News reaches the lane: Abu Bakr, Umar and Abu Ubayda have joined the Ansar at Saqifa. Ali is not at that gathering. No whole-community vote is taking place.
+I: When we are together again, the news has names: Abu Bakr, Umar and Abu Ubayda have joined the Ansar at Saqifa. Ali is not at that gathering. No whole-community vote is taking place.
 I: The Ansar's service matters to their claim. Some want leadership from among themselves; a proposal for leaders from both groups also enters the discussion.
 camera two Hisham Bashir cut
 Hisham [determined]: They gave the emigrants a home when they needed one. Their fear of being pushed aside is not foolish. But two rival centres of command could pull us apart.
-Bashir [skeptical]: And one centre chosen without those missing could call their exclusion unity. We must ask what makes anyone entitled to lead.
+Bashir [skeptical]: Unity. Will you use that word when they ask why they were not there?
 I: Both men believe in one God and regard Muhammad as God's messenger. Neither is looking for another prophet. They disagree about how his guidance should continue.
-Hisham [neutral]: Abu Bakr was among the earliest believers, Muhammad's trusted companion. He shared danger with him. People know his judgement and devotion, not just his name.
-Hisham [determined]: We hear that Muhammad entrusted him with leading prayer during his illness. I see a reason for confidence. We need someone whose authority people beyond Medina can recognise.
-Bashir [curious]: Trust in prayer matters to you. Does it settle who should lead the whole community? That is the step in your argument I question.
-Bashir [determined]: Ali grew up close to Muhammad, learned from him and served beside him. He is his cousin and the husband of his daughter Fatima. But my case is not simply that a relative should inherit power.
+Hisham [neutral]: Abu Bakr was there early, when believing meant danger. Muhammad trusted him. People know his service, his judgement, his devotion.
+Hisham [determined]: We hear that Muhammad entrusted him with leading the prayer during his illness.
+Bashir [skeptical]: And you think that answers this?
+Hisham [worried]: I think it means something.
+Bashir [determined]: So do the words spoken about Ali.
+I: Hisham sets down the bread.
+Hisham [sad]: I have not forgotten them.
+Bashir [curious]: Then tell me what you believe they ask of you.
+Bashir [determined]: Ali grew up close to him. Learned from him. Served beside him. Yes, his cousin, and Fatima's husband—his daughter's husband. But it is not simply that a relative should inherit power.
 Bashir [determined]: At Ghadir Khumm, Muhammad spoke of Ali as mawla to those for whom he himself was mawla. I understand that as designating Ali's authority. If God has guided that choice, we are meant to recognise it.
-Hisham [skeptical]: I honour Ali too. I understand those words as requiring loyalty and affection toward him, not as naming the next ruler. Honouring him does not tell me I must reject Abu Bakr.
+Hisham [determined]: Loyalty and affection. That is what I understand those words to require. I honour Ali, Bashir. I do not hear an appointment of the next ruler.
+Hisham [worried]: We need someone people beyond Medina will recognise. Someone we trust to hold this community together. I believe Abu Bakr can do that.
 I: The word mawla carries several meanings. Their disagreement concerns the meaning of Muhammad's words and the kind of authority he entrusted—not whether either man deserves respect.
 choice test_reason
 option appointment "Ask Bashir why designation should outweigh a gathering's acceptance." -> ask_designation
@@ -62,39 +78,44 @@ option knowledge "Ask what each thinks leadership must preserve beyond keeping o
 label ask_designation
 Bashir [determined]: Because we do not create every duty by agreeing to it. If a trust has already been given, gathering quickly cannot give it to somebody else.
 Hisham [curious]: I can follow that if the designation is established. But we disagree about that very point. How do we act while we disagree?
-I: Bashir cannot answer merely by counting supporters. Hisham cannot answer merely by saying the meeting was urgent.
+I: Hisham waits for an answer. Bashir brushes crumbs from the tray, then stops, as though he has caught himself delaying.
 goto pressure
 label ask_acceptance
 Hisham [determined]: Recognition is not proof that someone is always right. It gives the community a way to act together under someone whose character and service we trust.
 Bashir [skeptical]: But people can accept a decision because it is already made. That cannot be the whole test of whether it was rightful.
-I: Hisham cannot turn acceptance into proof of truth. Bashir cannot make the need for a workable decision disappear.
+I: A voice calls from the lane, asking if we have heard anything more. Hisham looks towards it. Bashir keeps looking at him.
 goto pressure
 label ask_guidance
 Bashir [determined]: Leadership means guiding people in the faith, interpreting its demands and doing justice. Ali's closeness to Muhammad is knowledge and responsibility, not merely family advantage.
 Hisham [determined]: And I believe the community must keep faith through the Qur'an and Muhammad's teaching under a trustworthy leader. Choosing Abu Bakr is not choosing worldly convenience over religion.
-I: Neither is simply defending a favourite person. Each fears that the other path could betray what Muhammad entrusted to them.
+I: They both lower their voices when they speak of what Muhammad taught. I have to lean closer to hear them.
 goto pressure
 label pressure
 camera listener Hisham over 0.65
 Bashir [worried]: If you pledge now, will you still hear me tomorrow? Or will my question become disloyalty?
 express Hisham sad
 I: Hisham looks at the tray Bashir finished for him. He does not answer at once.
-Hisham [neutral]: You held my hand steady this morning. I will not pretend you stopped caring about this community because you disagree with me.
+Hisham [sad]: You held my hand steady this morning.
+I: He looks up at Bashir.
+Hisham [determined]: I will hear you. Tomorrow too.
 camera two Hisham Bashir cut
 Hisham [worried]: But if you ask me to wait, will you accept any responsibility for what delay allows? I cannot promise other people will wait with us.
-Bashir [sad]: I cannot promise that either. I fear losing something we cannot recover by apologising later.
-I: Hisham asks my advice about allegiance: a commitment of support. Bashir listens. My answer will shape what each trusts me to carry next.
+Bashir [sad]: I cannot promise that.
+I: He speaks more quietly.
+Bashir [worried]: But if this trust belongs to Ali, what will an apology put back?
+Hisham [worried]: If I give my allegiance—my promise of support—do you think I should give it to Abu Bakr?
+I: He is asking me. Bashir's hands go still.
 choice advise_pledge
 option support "Advise supporting Abu Bakr: trusted service and common leadership justify acting now." -> support_now ; Position = 1
 option withhold "Advise withholding support: Ali's claim must not be bypassed by a hurried decision." -> withhold_now ; Position = 2
 option wider "Advise seeking wider consultation before committing, accepting the risk of delay." -> consult_first
 label support_now
-Hisham [determined]: Then stand beside your reason when it becomes uncomfortable. Do not tell me you supported only the easy parts of unity.
+Hisham [determined]: Then come with me when people ask why. I may need help answering them.
 I: I agree to help carry accurate news, including objections to the decision I support.
 Bashir [sad]: You are asking me to live under an authority I believe should have belonged to Ali. Please do not describe that as a small disappointment.
 goto result
 label withhold_now
-Bashir [relieved]: Thank you for taking the claim seriously. If it is a trust, we cannot trade it away simply because the alternative is difficult.
+Bashir [relieved]: Then you hear what I am afraid of losing. A trust does not become ours to give away because keeping it is difficult.
 I: I agree to carry the objection without claiming I have been authorised to speak for Ali or his family.
 Hisham [worried]: And I still have to decide what to do today. Help me keep this lane working even if you cannot support the leader I recognise.
 goto result
@@ -105,12 +126,23 @@ Bashir [determined]: Being heard matters. But if the appointment is already righ
 goto result
 label result
 camera wide
-I: The news becomes definite: allegiance has been pledged to Abu Bakr at Saqifa, with Umar taking a leading part. Broader allegiance follows. Abu Bakr becomes the first caliph.
-I: That establishes who takes leadership. It does not establish that every Muslim consented, or that every question about rightful authority has been answered.
+I: Before we can say more, word reaches the courtyard: allegiance has been pledged to Abu Bakr at Saqifa. Umar has taken a leading part.
+express Hisham relieved
+camera listener Bashir over 0.65
+I: Hisham releases a breath. Bashir sees it.
+Bashir [sad]: You are relieved.
+camera two Hisham Bashir cut
+Hisham [worried]: That there is someone to lead? Yes.
+look Bashir away
+I: Bashir lowers his eyes to the tray. Hisham starts to speak, then waits.
+Hisham [worried]: And I am frightened.
+look Bashir auto
+Bashir [sad]: So am I.
+I: The report names a leader. It does not establish that every Muslim consented. Bashir is standing an arm's length from Hisham, and neither reaches for the bread.
 I: I have not decided the succession. I must decide what account of it to carry to households that have been waiting while we argue.
 camera two Hisham Bashir cut
 Hisham [determined]: Tell them who has received allegiance. People need reliable news. Do not make it sound as though no decision exists.
-Bashir [determined]: Tell them who was not there. Do not let an announcement of the outcome become a claim that all of us chose it.
+Bashir [determined]: And tell them who was not there. Please. If you leave that out, who will ask?
 choice carry_result
 option outcome "Carry the confirmed outcome first, and say I cannot claim universal agreement." -> report_outcome
 option objection "Carry the outcome with the objection that Ali and the family were absent." -> report_objection ; CarriedObjection = true
@@ -128,11 +160,11 @@ label reckoning
 if WaitedForAbsent == true -> absent_callback else early_callback
 label absent_callback
 Bashir [neutral]: You stayed to hear my question before the news hardened into a result. You kept the words accurately, even though the gathering did not wait for us.
-I: Listening did not halt events. It did change what I was able to explain when they arrived.
+I: I can still hear how he asked it, before we knew the result. I repeat it that way.
 goto position_callback
 label early_callback
 Bashir [determined]: You promised to come back for the question. Here it is again: who has the right to settle a trust while its claimant is absent?
-I: I return as promised and let him finish. Getting the news first did not release me from hearing what it left unresolved.
+I: I had thought I would be back with an answer. I sit beside him and let him finish the question.
 goto position_callback
 label position_callback
 if Position == 1 -> support_callback else other_position
@@ -174,7 +206,9 @@ Hisham [neutral]: They received the food. Tomorrow we must find a better arrange
 goto last_exchange
 label last_exchange
 camera two Hisham Bashir cut
-I: Before I leave, each man asks me to say the strongest reason against my own advice. Neither offers to change his belief in exchange.
+Hisham [curious]: When you tell people about us, what will you say?
+Bashir [worried]: Tell them why a person who loves this community could disagree with you. Can you do that?
+I: I try to put the hardest objection to my advice into words they will recognise.
 choice hardest_reason
 option duty "Say that a rightful designation cannot be cancelled merely because another choice gains support." -> reason_duty
 option community "Say that refusing workable common leadership can expose people to conflict they did not choose." -> reason_community
@@ -210,13 +244,24 @@ Bashir [neutral]: Thank you for taking the extra trip. Keeping my position disti
 Hisham [neutral]: Tomorrow, let us agree on the deliveries before the trays are ready. We can still owe each other that.
 goto departure_home
 label departure_home
-I: The food has reached the waiting households, and neither man's reason has been erased from the account I carry. Their disagreement remains. It feels heavier now that I know what each fears losing.
+express Hisham sad
+express Bashir sad
+I: The food has reached the waiting households. I have an account to carry home, and neither man's reason has been erased from it.
+camera two Hisham Bashir cut
+I: Hisham lifts the empty tray. This time his hand is steady. He reaches for Bashir's.
+camera listener Bashir over 0.65
+I: Bashir holds it a moment longer.
+camera action Hisham Bashir cut
+act Bashir give Hisham "Then he lets Hisham take it."
+I: Neither says anything.
 camera wide
 I: The taxi waits at the lane's end. I climb in safely. I came asking who should lead; I return asking what could make authority rightful to someone who does not accept my answer.
 scene classroom
-I: Back at the Teaching Stone, I open a history of the years after this day. Ali later becomes the fourth caliph. Later conflicts, including the killing of his son Husayn at Karbala in 680, deepen the divisions.
+I: Back at the Teaching Stone, I open a history. After the pledge at Saqifa, broader allegiance follows. Abu Bakr becomes the first caliph.
+I: I turn the page. Ali later becomes the fourth caliph. Later conflicts, including the killing of his son Husayn at Karbala in 680, deepen the divisions.
 I: Sunni tradition recognises Abu Bakr's succession and honours Ali among the rightly guided caliphs. Shia traditions hold that Ali was the rightful designated successor and give the Prophet's family a special role in religious guidance.
 I: These traditions develop over generations; each contains diversity. The people I met were not choosing between two fully formed denominations on a ballot.
-I: I write one final line: sharing a faith does not remove disagreement about who may interpret it, guide its community, and ask for its allegiance.
+I: I begin to write: they disagreed about who should lead. I stop. That is true, but I can still see Bashir's hand beneath Hisham's tray.
+I: Beneath it I add: each feared that, by following the other, he might fail the person they both loved.
 I: The driver adjusts his sunglasses. Four questions for the fare. I need to understand the claims, not declare one community the winner.
 end
