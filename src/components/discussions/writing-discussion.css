@@ -57,3 +57,7 @@
 .writing-discussion > section[aria-label="Assigned submissions"]:has(details[open]),
 .writing-discussion > section[aria-label="Assigned submissions"]:has(> div),
 .writing-settings[open] { flex-basis:100%; }
+.writing-prompt-heading .writing-prompt-content { color:#253c34; }
+.writing-prompt-heading .writing-prompt-content a { color:#365e50; }
+.writing-discussion button.bg-blue-600 { background:#365e50; }
+.writing-discussion button.bg-gray-100,.writing-prompt-actions button.bg-gray-100 { background:white; color:#365e50; border:1px solid #b9c6bd; }
