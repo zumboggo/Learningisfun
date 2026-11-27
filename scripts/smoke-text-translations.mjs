@@ -19,12 +19,19 @@ try{
  await create('text_paragraphs',paragraphId,{textId,sortOrder:0,content});
  const request={action:'generateTextTranslation',textId,paragraphId,content,level:'original',language:'zh-Hans'};
  await assert.rejects(()=>outsider.invoke(request),/not available/);
- const first=await student.invoke(request);assert.equal(first.status,'ready');assert.equal(first.pairs.map(p=>p.english).join(''),content);assert.ok(first.pairs.every(p=>p.translation.trim()));
- assert.deepEqual(await student.invoke({...request,action:'readTextTranslation'}),first);
- assert.deepEqual(await student.invoke(request),first);
- assert.equal((await student.invoke({...request,action:'reportTextTranslation'})).ok,true);
+ for(const language of ['zh-Hans','ja','ko']) {
+  const selected={...request,language};
+  const first=await student.invoke(selected);assert.equal(first.status,'ready');assert.equal(first.pairs.map(p=>p.english).join(''),content);assert.ok(first.pairs.every(p=>p.translation.trim()));
+  assert.deepEqual(await student.invoke({...selected,action:'readTextTranslation'}),first);
+  assert.deepEqual(await student.invoke(selected),first);
+  assert.equal((await student.invoke({...selected,action:'reportTextTranslation'})).ok,true);
+  console.log(`Live ${language}: exact English, translated sentences, cache reuse and reporting verified.`);
+ }
+ const receipts=await db.listDocuments(databaseId,'teacher_workspace',[Query.equal('ownerId',teacher.id),Query.startsWith('kind','ai-request:'),Query.limit(100)]);
+ assert.equal(receipts.documents.length,3);
+ for(const row of receipts.documents)assert.equal(JSON.parse(row.dataJson).model,'google/gemini-3.1-flash-lite');
  await assert.rejects(()=>new Databases(student.client).listDocuments({databaseId,collectionId:'text_translations'}));
- console.log('Live translation: exact English alignment, Chinese output, shared reuse, report, and access isolation verified.');
+ console.log('Verified Gemini model billing records and student access isolation.');
 }finally{
  for(const collectionId of ['text_translations','text_translation_locks']){
   const rows=await db.listDocuments({databaseId,collectionId,queries:[Query.limit(5000)]});

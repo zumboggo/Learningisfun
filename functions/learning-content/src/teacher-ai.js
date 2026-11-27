@@ -5,17 +5,23 @@ export {monthKey} from './ai-billing.js';
 import {Query} from 'node-appwrite';
 export const AI_MODEL='openai/gpt-4o-mini';
 // Provider routing is capped to these prices in USD per million tokens.
-const INPUT_PRICE=.15,OUTPUT_PRICE=.6,OUTPUT_TOKENS=8192;
-export function maximumCost(messages){return Math.ceil(((Buffer.byteLength(JSON.stringify(messages),'utf8')+2048)*INPUT_PRICE+OUTPUT_TOKENS*OUTPUT_PRICE)/1e6*1e6)/1e6;}
+const OUTPUT_TOKENS=8192;
+const COMPLETION_PROFILES={
+ general:{model:AI_MODEL,input:.15,output:.6,providers:['openai','azure']},
+ translation:{model:'google/gemini-3.1-flash-lite',input:.25,output:1.5,providers:['google-ai-studio','google-vertex/global']},
+};
+function completionProfile(purpose){const profile=COMPLETION_PROFILES[purpose];if(!profile)fail('Unsupported AI purpose');return profile;}
+export function maximumCost(messages,purpose='general'){const profile=completionProfile(purpose);return Math.ceil((Buffer.byteLength(JSON.stringify(messages),'utf8')+2048)*profile.input+OUTPUT_TOKENS*profile.output)/1e6;}
 export async function budgetStatus(args,owner=args.userId){const {db,databaseId}=args;const allowance=await readRecord(db,databaseId,owner,'ai-allowance'),ledger=await readRecord(db,databaseId,owner,'ai-month:'+monthKey());const limit=allowance.value?.usd??1;return {ownerId:owner,month:monthKey(),limit,used:ledger.value?.used||0,remaining:Math.max(0,limit-(ledger.value?.used||0)),pending:ledger.value?.pending||0};}
-export async function paidCompletion(args,{ownerId,messages,requestId=randomUUID(),json=false,learnerId,research=false,metadata=false}){
+export async function paidCompletion(args,{ownerId,messages,requestId=randomUUID(),json=false,learnerId,research=false,metadata=false,purpose='general'}){
  if(typeof requestId!=='string'||!/^[\w-]{1,80}$/.test(requestId))fail('A valid AI request ID is required.');
+ const modelProfile=completionProfile(purpose);
  const billing=await resolveBilling(args,ownerId,'openrouter');
  if(Buffer.byteLength(JSON.stringify(messages),'utf8')>100000)fail('Reduce the selected source material to under 100 KB.');
- const reservation=maximumCost(messages)+(research?.15:0),requestKey='ai-request:'+requestId;
- await reserveUsage(args,{ownerId,key:requestKey,reservation,billing,category:research?'research':'text',learnerId});
+ const reservation=maximumCost(messages,purpose)+(research?.15:0),requestKey='ai-request:'+requestId;
+ await reserveUsage(args,{ownerId,key:requestKey,reservation,billing,category:research?'research':'text',learnerId,details:{model:modelProfile.model}});
  // Network uncertainty intentionally leaves the reservation charged. No automatic retries.
- let response;try{response=await fetch('https://openrouter.ai/api/v1/chat/completions',{method:'POST',headers:{Authorization:`Bearer ${billing.token}`,'Content-Type':'application/json'},body:JSON.stringify({model:AI_MODEL,provider:{only:['openai','azure'],allow_fallbacks:false,max_price:{prompt:INPUT_PRICE,completion:OUTPUT_PRICE},require_parameters:true},max_tokens:OUTPUT_TOKENS,temperature:.5,...(research?{tools:[{type:'openrouter:web_search',parameters:{engine:'exa',mode:'fast',max_uses:2,max_results:3,max_total_results:6,max_characters:3000}}]}:{}),...(json?{response_format:{type:"json_object"}}:{}),messages,usage:{include:true}}),signal:AbortSignal.timeout(90000)});}catch{fail('The AI request could not be confirmed. Your work is saved; no automatic retry or billing fallback was made.',503);}
+ let response;try{response=await fetch('https://openrouter.ai/api/v1/chat/completions',{method:'POST',headers:{Authorization:`Bearer ${billing.token}`,'Content-Type':'application/json'},body:JSON.stringify({model:modelProfile.model,provider:{only:modelProfile.providers,allow_fallbacks:false,max_price:{prompt:modelProfile.input,completion:modelProfile.output},require_parameters:true},max_tokens:OUTPUT_TOKENS,temperature:purpose==='translation'?.2:.5,...(purpose==='translation'?{reasoning:{effort:'minimal',exclude:true}}:{}),...(research?{tools:[{type:'openrouter:web_search',parameters:{engine:'exa',mode:'fast',max_uses:2,max_results:3,max_total_results:6,max_characters:3000}}]}:{}),...(json?{response_format:{type:"json_object"}}:{}),messages,usage:{include:true}}),signal:AbortSignal.timeout(90000)});}catch{fail('The AI request could not be confirmed. Your work is saved; no automatic retry or billing fallback was made.',503);}
  if(!response.ok){if([400,401,402,403,404,422,429].includes(response.status))await settleUsage(args,ownerId,requestKey,0,{status:'rejected'});fail(billing.source==='personal'?'The teacher’s personal OpenRouter request failed. Check the key and credits in Settings. Your work is saved; no shared funds were used.':'AI generation failed. Your work is saved; no automatic retry was made.',503);}
  const result=await response.json();const content=result.choices?.[0]?.message?.content;if(typeof content!=='string')fail('AI returned no text. Your draft is safe.',503);
  const actual=result.usage?.cost;

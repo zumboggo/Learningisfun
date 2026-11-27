@@ -6,7 +6,7 @@ export interface TranslationRequest {textId:string;paragraphId:string;level:stri
 export interface TranslationCache {key:string;pairs:TranslationPair[]}
 export const translationLanguages=[['zh-Hans','Chinese · 简体中文'],['zh-Hant','Chinese · 繁體中文'],['ja','Japanese · 日本語'],['ko','Korean · 한국어'],['ar','Arabic · العربية'],['bn','Bengali · বাংলা'],['de','German · Deutsch'],['es','Spanish · Español'],['fa','Persian · فارسی'],['fr','French · Français'],['hi','Hindi · हिन्दी'],['id','Indonesian · Bahasa Indonesia'],['it','Italian · Italiano'],['ms','Malay · Bahasa Melayu'],['my','Burmese · မြန်မာ'],['ne','Nepali · नेपाली'],['pt','Portuguese · Português'],['ru','Russian · Русский'],['ta','Tamil · தமிழ்'],['th','Thai · ไทย'],['tr','Turkish · Türkçe'],['uk','Ukrainian · Українська'],['ur','Urdu · اردو'],['vi','Vietnamese · Tiếng Việt']];
 export async function translationKey(request:TranslationRequest,context:string) {
-  const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify([request,context,'bilingual-v2'])));
+  const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify([request,context,'bilingual-v3-gemini31'])));
   return Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,'0')).join('');
 }
 export async function getTranslation(request:TranslationRequest,context:string,active:()=>boolean):Promise<TranslationPair[]> {
