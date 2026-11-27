@@ -1,3 +1,4 @@
+import type {TranslationCache} from '@/services/text-translation.service';
 import Dexie, { type EntityTable } from 'dexie';
 import type {
   User,
@@ -43,6 +44,7 @@ import type {
 
 function createAccountDatabase(name:string){
 const db = new Dexie(name) as Dexie & {
+  text_translations: EntityTable<TranslationCache, 'key'>;
   users: EntityTable<User, '$id'>;
   classes: EntityTable<Class, '$id'>;
   class_members: EntityTable<ClassMember, '$id'>;
@@ -339,6 +341,7 @@ db.version(13).stores({
   text_version_paragraphs: '$id, versionId, textId, originalParagraphId, [versionId+sortOrder]',
 });
 
+db.version(14).stores({text_translations:'key'});
 return db;
 }
 export const SIGN_OUT_LOCK = 'learning-sign-out-lock';
