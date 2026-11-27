@@ -1,0 +1,22 @@
+import {fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {MemoryRouter} from 'react-router-dom';
+import {vi, test, expect} from 'vitest';
+import {MyResponses} from '@/components/classes/MyResponses';
+const request=vi.hoisted(()=>vi.fn());
+vi.mock('@/services/learning-content.service',()=>({executeLearningContent:request}));
+vi.mock('@/components/WorkshopLink',()=>({WorkshopLink:({children,to}:{children:React.ReactNode;to:string})=><a href={to}>{children}</a>}));
+const row={reading:{id:'r',textId:'text',classId:'blue',title:'A reading',date:'2026-11-20'},post:{id:'p',parentId:null,category:'thought',content:'Original',quotation:'',paragraph:null,createdAt:'2026-11-20T00:00:00Z'},canEdit:true,context:[],teacherReplies:[]};
+test('loads on expansion, filters, and keeps edits after failure before saving successfully',async()=>{
+ request.mockReset();request.mockImplementation(async body=>{if(body.action==='listMyReadingResponses')return {responses:[row]};throw Error('Save failed');});
+ render(<MemoryRouter><MyResponses classId="blue"/></MemoryRouter>);
+ expect(request).not.toHaveBeenCalled();fireEvent.click(screen.getByRole('button',{name:/My Responses/}));
+ await screen.findByText('Original');expect(request).toHaveBeenCalledWith({action:'listMyReadingResponses',listingClassId:'blue'});
+ fireEvent.change(screen.getByLabelText('Type'),{target:{value:'Reply'}});expect(screen.getByText('No responses match these filters.')).toBeInTheDocument();
+ fireEvent.change(screen.getByLabelText('Type'),{target:{value:'all'}});
+ fireEvent.click(screen.getByText('Edit response'));fireEvent.change(screen.getByLabelText('Edit contribution'),{target:{value:'Better response'}});
+ fireEvent.click(screen.getByText('Save changes'));await screen.findByText('Save failed');expect(screen.getByLabelText('Edit contribution')).toHaveValue('Better response');
+ request.mockImplementation(async body=>body.action==='listMyReadingResponses'?{responses:[{...row,post:{...row.post,content:'Better response'}}]}:{ok:true});
+ fireEvent.click(screen.getByText('Save changes'));await screen.findByText(/Response saved/);
+ await waitFor(()=>expect(screen.queryByLabelText('Edit contribution')).not.toBeInTheDocument());
+ expect(request).toHaveBeenCalledWith(expect.objectContaining({action:'editReadingDiscussion',classId:'blue',textId:'text',postId:'p',content:'Better response',expectedUpdatedAt:row.post.createdAt}));
+});

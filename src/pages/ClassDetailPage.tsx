@@ -1,3 +1,4 @@
+import { MyResponses } from '@/components/classes/MyResponses';
 import { CurrentlyMissing } from '@/components/classes/CurrentlyMissing';
 import { PeerRubricEditor } from '@/components/teachers/PeerRubricEditor';
 import { activityRubric } from '@/services/presentation-peer-review.service';
@@ -381,7 +382,7 @@ export function ClassDetailPage() {
     <div className="mx-auto max-w-5xl space-y-5 p-4 sm:space-y-6 sm:p-6">
       <ClassBanner cls={cls} editable={isOwner} />
       {cls.$id === '88421c66-9cda-4002-8e15-086312b7805e' && <a href={`${import.meta.env.BASE_URL}resources/ap-lang-exam-texts.html`} target="_blank" rel="noopener noreferrer" className="block text-sm font-medium text-teal-800 underline underline-offset-4">Final semester exam · Choose your texts ↗</a>}
-      {user?.role === 'student' && !isParent && <CurrentlyMissing key={user.$id + ':' + cls.$id} userId={user.$id} classId={cls.$id} />}
+      {user?.role === 'student' && !isParent && <div key={user.$id + ':' + cls.$id} className="grid items-start gap-4 md:grid-cols-2"><CurrentlyMissing userId={user.$id} classId={cls.$id} /><MyResponses classId={cls.$id} /></div>}
       {cls.$id===STONE_CLASS_ID && !isParent && user && <EthicsPresentationBuilder key={`${user.$id}:${cls.$id}`} classId={cls.$id} userId={user.$id} />}
       <AssignedCopywork classId={cls.$id} />
       {cls.$id===WORKSHOP_CLASS_ID && !isParent && <Link to="/lessons" className="block rounded-xl border border-teal-200 bg-teal-50 p-4 font-semibold text-teal-950">Workshop lesson · Copywork: Notice a Choice, Make a Choice →</Link>}

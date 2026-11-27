@@ -24,7 +24,9 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
     } while (cursor);
     return documents;
   };
-  if (body.action === 'listReadingDiscussions') {
+  if (body.action === 'listReadingDiscussions' || body.action === 'listMyReadingResponses') {
+    const ownResponses = body.action === 'listMyReadingResponses';
+    if (ownResponses && (profile.role !== 'student' || !memberClassIds.has(body.listingClassId))) fail('Class access required');
     const accessibleClasses = profile.role === 'teacher'
       ? await list('classes', [Query.equal('teacherId', userId)])
       : memberClassIds.size ? await list('classes', [Query.equal('$id', [...memberClassIds])]) : [];
@@ -43,6 +45,35 @@ async function discussionAction({ body, profile, userId, memberClassIds, db, dat
       seen.add(id);
       return [{ id, textId: text.$id, classId: cls.$id,       title: text.title, className: `${cls.courseName || ''} · ${cls.name}`, date: a.dueDate || a.assignedAt.slice(0, 10), available: text.status === 'published' && textAssignmentAvailable(a) }];
     });
+    if (ownResponses) {
+      const responses = [];
+      for (let offset = 0; offset < readings.length; offset += 100) {
+        const batch = readings.slice(offset, offset + 100);
+        const rows = await list('reading_posts', [Query.equal('workspaceId', batch.map(row => row.id))]);
+        const posts = rows.map(row => ({...JSON.parse(row.dataJson), id:row.$id, workspaceId:row.workspaceId, authorId:row.authorId}));
+        const byId = new Map(posts.map(post => [post.id, post]));
+        const chain = post => {
+          const result = [], seen = new Set(); let current = post;
+          while (current) {
+            if (seen.has(current.id) || current.workspaceId !== post.workspaceId || current.hidden || current.withdrawn) return null;
+            seen.add(current.id); result.push(current);
+            if (current.parentId && !byId.has(current.parentId)) return null;
+            current = current.parentId ? byId.get(current.parentId) : null;
+          }
+          return result;
+        };
+        const safe = post => ({id:post.id, parentId:post.parentId, category:post.category, content:post.content, quotation:post.quotation || '', paragraph:post.paragraph ?? null, label:post.label, teacher:post.teacher, mine:post.authorId===userId, createdAt:post.createdAt, updatedAt:post.updatedAt, hidden:false, locked:!!post.locked, pinned:!!post.pinned, score:0, voted:false});
+        for (const post of posts) {
+          if (post.authorId !== userId) continue;
+          const ancestors = chain(post);
+          if (!ancestors) continue;
+          const reading = batch.find(row => row.id === post.workspaceId);
+          responses.push({reading, post:safe(post), canEdit:!ancestors.some(row => row.locked), context:ancestors.slice(1).reverse().map(safe), teacherReplies:posts.filter(reply => reply.parentId===post.id && reply.teacher && chain(reply)).map(safe)});
+        }
+      }
+      responses.sort((a,b) => b.reading.date.localeCompare(a.reading.date) || a.reading.id.localeCompare(b.reading.id) || b.post.createdAt.localeCompare(a.post.createdAt) || a.post.id.localeCompare(b.post.id));
+      return {responses};
+    }
     if (body.missingOnly === true) {
       if (profile.role !== 'student') return { readings: [] };
       const missing = [];
