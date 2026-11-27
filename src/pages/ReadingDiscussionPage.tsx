@@ -10,6 +10,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {useLocation, useNavigate, useParams} from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/common/Button';
+import { RandomStudentModal } from '@/components/teacher/RandomStudentModal';
 import { ParallelReading } from '@/components/texts/ParallelReading';
 import '@/components/texts/reading-discussion.css';
 import { readingDiscussion, discussionFeed, type ReadingDiscussion } from '@/services/reading-discussion.service';
@@ -26,6 +27,7 @@ function DiscussionWorkspace({textId,classId}:{textId:string;classId:string}) {
   useEffect(()=>{if(incomingQuote)navigate(location.pathname+location.search,{replace:true,state:null});},[incomingQuote,location.pathname,location.search,navigate]);
   const [category,setCategory]=useState<'question'|'thought'>(incomingQuote?.destination==='observation'?'thought':'question');
   const [liveOnly,setLiveOnly]=useState(false);
+  const [showPicker,setShowPicker]=useState(false);
   const [composerOpen,setComposerOpen]=useState(Boolean(incomingQuote && incomingQuote.destination!=='reply'));
   const [anonymous,setAnonymous]=useState(()=>{try{return localStorage.getItem('teacher-anonymous:'+classId)==='true';}catch{return false;}});
   const [data,setData]=useState<ReadingDiscussion>(),[error,setError]=useState(''),[busy,setBusy]=useState(false),[view,setView]=useState<'text'|'discussion'|'parallel'>('parallel');
@@ -100,6 +102,7 @@ function DiscussionWorkspace({textId,classId}:{textId:string;classId:string}) {
     <div className="reading-feed-heading"><h2>Discussion <span>{visiblePosts.filter(p=>!p.parentId).length}</span></h2><div className="reading-view-toggle" role="group" aria-label="Discussion feed"><button aria-pressed={!liveOnly} onClick={()=>setLiveOnly(false)}>All posts</button><button aria-label="Sort by fire nominations" title="Most fire nominations first, then upvotes" aria-pressed={liveOnly} onClick={()=>setLiveOnly(true)}>🔥</button></div></div>
     {data.teacher&&data.voting&&<p className="discussion-voting-status">{data.voting.active?'Voting open':'Voting ended'}</p>}
     {data.teacher?<details className="discussion-manage"><summary>Manage discussion</summary><div className="discussion-manage-content">
+    <Button size="sm" variant="secondary" onClick={()=>setShowPicker(true)}>Pick a Student</Button>
     {data.curatedReady&&<QuestionVoting {...{data,busy,mutate}}/>}
     {data.curatedReady&&<ReplyAssignments {...{data,textId,classId,busy,mutate}} onReply={openReply}/>}
     {data.teacher&&<details className="reading-settings"><summary>Names & participation settings</summary>    {data.teacher&&<label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={anonymous} onChange={e=>{setAnonymous(e.target.checked);try{localStorage.setItem('teacher-anonymous:'+classId,String(e.target.checked));}catch{/* session preference still works */}}}/>Anonymous names in my view</label>}
@@ -123,6 +126,7 @@ function DiscussionWorkspace({textId,classId}:{textId:string;classId:string}) {
 
     </>
     </section></div>
+    {data.teacher&&<RandomStudentModal open={showPicker} students={data.participation} onClose={()=>setShowPicker(false)}/>}
   </div>;
 }
 
